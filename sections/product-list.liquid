@@ -1,8 +1,13 @@
-
-
 {% liquid
   assign max_items = section.settings.max_products
+  assign collection_list = section.settings.collection_list
+  
+  assign show_tabs = false
+  if collection_list != blank and collection_list.count > 1
+    assign show_tabs = true
+  endif
 %}
+
 
 <div class="section-background color-{{ section.settings.color_scheme }}"></div>
 <div
@@ -20,19 +25,97 @@
     {% render 'gap-style', value: section.settings.gap %}
   "
 >
-  <div class="section-resource-list__header">
-    {%- content_for 'block', type: '_product-list-content', id: 'static-header' -%}
-  </div>
+  {% if show_tabs %}
+    <div class="product-list-tabs-container">
+      <div class="product-list-tabs">
+        {% for collection in collection_list %}
+          <button 
+              class="product-list-tab {% if forloop.first %}active{% endif %}" 
+              data-target="{{ collection.handle }}"
+              type="button"
+              aria-controls="list-{{ collection.handle }}"
+              aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+            {{ collection.title }}
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+    
+    <div class="product-list-contents">
+      {% for collection in collection_list %}
+        <div class="product-list-content-wrapper {% unless forloop.first %}active{% endunless %}" id="list-{{ collection.handle }}" {% unless forloop.first %}style="display: none;"{% endunless %}>
+           {% capture list_items %}
+              {% if collection.products_count != 0 %}
+                {% paginate collection.products by max_items %}
+                  {% for product in collection.products limit: max_items %}
+                    <div class="resource-list__item">
+                      {% # theme-check-disable UniqueStaticBlockId %}
+                        {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+                      {% # theme-check-enable UniqueStaticBlockId %}
+                    </div>
+                    {% unless forloop.last %}<!--@list/split-->{% endunless %}
+                  {% endfor %}
+                {% endpaginate %}
+              {% else %}
+                 <!-- Empty state -->
+              {% endif %}
+           {% endcapture %}
+           
+           {% liquid
+             assign list_items_array = list_items | strip | split: '<!--@list/split-->'
+           %}
+           
+           {% render 'resource-list',
+             list_items: list_items,
+             list_items_array: list_items_array,
+             settings: section.settings,
+             slide_count: max_items,
+             content_type: 'products',
+             test_id: 'resource-list-grid'
+           %}
+        </div>
+      {% endfor %}
+    </div>
 
-  {% capture list_items %}
-    {% if section.settings.collection != blank and shop.products_count != 0 %}
-      {% paginate section.settings.collection.products by max_items %}
-        {% for product in section.settings.collection.products limit: max_items %}
+    {% if section.settings.enable_shop_all %}
+       <div class="product-list-footer">
+          {% assign first_col = collection_list | first %}
+          <a href="{{ first_col.url }}" class="button product-list-shop-all-btn">
+             Shop all <span class="shop-all-collection-name">{{ first_col.title }}</span>
+          </a>
+       </div>
+    {% endif %}
+
+  {% else %}
+    <!-- Single Collection or Fallback -->
+    <div class="section-resource-list__header">
+      {%- content_for 'block', type: '_product-list-content', id: 'static-header' -%}
+    </div>
+
+    {% capture list_items %}
+      {% if section.settings.collection != blank and shop.products_count != 0 %}
+        {% paginate section.settings.collection.products by max_items %}
+          {% for product in section.settings.collection.products limit: max_items %}
+            <div
+              class="resource-list__item"
+            >
+              {% # theme-check-disable UniqueStaticBlockId %}
+                {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+              {% # theme-check-enable UniqueStaticBlockId %}
+            </div>
+
+            {% unless forloop.last %}
+              <!--@list/split-->
+            {% endunless %}
+          {% endfor %}
+        {% endpaginate %}
+      {% else %}
+        {% for i in (1..max_items) %}
           <div
             class="resource-list__item"
           >
             {% # theme-check-disable UniqueStaticBlockId %}
-              {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+              {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: null %}
             {% # theme-check-enable UniqueStaticBlockId %}
           </div>
 
@@ -40,45 +123,148 @@
             <!--@list/split-->
           {% endunless %}
         {% endfor %}
-      {% endpaginate %}
-    {% else %}
-      {% for i in (1..max_items) %}
-        <div
-          class="resource-list__item"
-        >
-          {% # theme-check-disable UniqueStaticBlockId %}
-            {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: null %}
-          {% # theme-check-enable UniqueStaticBlockId %}
-        </div>
+      {% endif %}
+    {% endcapture %}
 
-        {% unless forloop.last %}
-          <!--@list/split-->
-        {% endunless %}
+    {% liquid
+      # Create an array from the list items to be used for different layout types
+      assign list_items_array = list_items | strip | split: '<!--@list/split-->'
+    %}
+
+    {% render 'resource-list',
+      list_items: list_items,
+      list_items_array: list_items_array,
+      settings: section.settings,
+      slide_count: max_items,
+      content_type: 'products',
+      test_id: 'resource-list-grid'
+    %}
+
+    <div
+      class="section-resource-list__content"
+      style="--horizontal-alignment: {{ section.settings.horizontal_alignment }};"
+    >
+      {%- content_for 'blocks' -%}
+    </div>
+  {% endif %}
+</div>
+
+<style>
+  .product-list-tabs-container {
+    display: flex;
+    justify-content: center; /* Center tabs by default, can be adjusted */
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    padding-bottom: 10px; /* Space for scrollbar if needed */
+  }
+  
+  .product-list-tabs {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .product-list-tab {
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 4px; /* Slightly rounded */
+    padding: 0.5rem 1.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+  }
+  
+  .product-list-tab:hover {
+    opacity: 1;
+  }
+  
+  .product-list-tab.active {
+    background: currentColor;
+    color: var(--color-background); /* Assumes variable exists, or inverse */
+    opacity: 1;
+    /* Invert colors for active state */
+    filter: invert(1) grayscale(1) invert(1); /* Simple trick if bg is transparent */
+    /* Better: use standard button styles from theme */
+  }
+
+  /* Assuming theme uses a button class or specific variables */
+  .product-list-tab.active {
+     background: var(--color-foreground, #000);
+     color: var(--color-background, #fff);
+  }
+
+  .product-list-content-wrapper {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .product-list-footer {
+    margin-top: 2rem;
+    text-align: center;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.product-list-tab');
+    const contents = document.querySelectorAll('.product-list-content-wrapper');
+    const shopAllBtn = document.querySelector('.product-list-shop-all-btn');
+    const shopAllText = document.querySelector('.shop-all-collection-name');
+    
+    // Store collection data for button updates
+    const collectionsData = {};
+    {% if section.settings.collection_list != blank %}
+      {% for collection in section.settings.collection_list %}
+        collectionsData['{{ collection.handle }}'] = {
+          title: "{{ collection.title | escape }}",
+          url: "{{ collection.url }}"
+        };
       {% endfor %}
     {% endif %}
-  {% endcapture %}
 
-  {% liquid
-    # Create an array from the list items to be used for different layout types
-    assign list_items_array = list_items | strip | split: '<!--@list/split-->'
-  %}
-
-  {% render 'resource-list',
-    list_items: list_items,
-    list_items_array: list_items_array,
-    settings: section.settings,
-    slide_count: max_items,
-    content_type: 'products',
-    test_id: 'resource-list-grid'
-  %}
-
-  <div
-    class="section-resource-list__content"
-    style="--horizontal-alignment: {{ section.settings.horizontal_alignment }};"
-  >
-    {%- content_for 'blocks' -%}
-  </div>
-</div>
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const targetHandle = this.dataset.target;
+        
+        // Update Tabs
+        tabs.forEach(t => {
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
+        });
+        this.classList.add('active');
+        this.setAttribute('aria-selected', 'true');
+        
+        // Update Content
+        contents.forEach(content => {
+          if (content.id === `list-${targetHandle}`) {
+             content.style.display = 'block';
+             // Trigger reflow for animation if needed
+             content.style.animation = 'none';
+             content.offsetHeight; /* trigger reflow */
+             content.style.animation = 'fadeIn 0.5s ease-out forwards';
+          } else {
+             content.style.display = 'none';
+          }
+        });
+        
+        // Update Shop All Button
+        if (shopAllBtn && collectionsData[targetHandle]) {
+           const data = collectionsData[targetHandle];
+           shopAllBtn.href = data.url;
+           if (shopAllText) {
+             shopAllText.textContent = data.title;
+           }
+        }
+      });
+    });
+  });
+</script>
 
 {% schema %}
 {
@@ -103,6 +289,19 @@
       "type": "collection",
       "id": "collection",
       "label": "t:settings.collection"
+    },
+    {
+      "type": "collection_list",
+      "id": "collection_list",
+      "label": "Collections",
+      "limit": 5,
+      "info": "Select multiple collections to enable tabs."
+    },
+    {
+       "type": "checkbox",
+       "id": "enable_shop_all",
+       "label": "Show 'Shop all' button",
+       "default": true
     },
     {
       "type": "select",
@@ -316,7 +515,7 @@
       "id": "color_scheme",
       "label": "t:settings.color_scheme",
       "default": "scheme-1"
-    },
+    }, 
     {
       "type": "header",
       "content": "t:content.padding"
