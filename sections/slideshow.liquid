@@ -39,6 +39,9 @@
   if section.blocks.size == 1
     assign slideshow_class = slideshow_class | append: ' slideshow--single-media'
   endif
+  if section.settings.content_position == 'below-media' and section.settings.image_position != blank
+    assign slideshow_class = slideshow_class | append: ' slideshow--image-' | append: section.settings.image_position
+  endif
   if section.settings.display_mode == 'with_hints'
     assign slideshow_class = slideshow_class | append: ' slideshow--with-hints'
     if section.settings.full_frame_on_mobile
@@ -137,6 +140,24 @@
       .slideshow--with-hints {
         gap: var(--slideshow-gap, 0);
         grid-column: 1 / -1;
+      }
+      .slideshow--content-below-media.slideshow--image-left slideshow-slide,
+      .slideshow--content-below-media.slideshow--image-right slideshow-slide {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+        align-items: center;
+      }
+      .slideshow--content-below-media.slideshow--image-left .slide__image-container {
+        grid-column: 1;
+      }
+      .slideshow--content-below-media.slideshow--image-left .slide__content {
+        grid-column: 2;
+      }
+      .slideshow--content-below-media.slideshow--image-right .slide__image-container {
+        grid-column: 2;
+      }
+      .slideshow--content-below-media.slideshow--image-right .slide__content {
+        grid-column: 1;
       }
 
       .slideshow--with-hints slideshow-slides {
@@ -280,9 +301,34 @@
         {
           "value": "below-media",
           "label": "t:options.below_media"
+        },
+        {
+          "value": "left",
+          "label": "Image left, text right"
+        },
+        {
+          "value": "right",
+          "label": "Image right, text left"
         }
       ],
       "default": "on-media"
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "t:settings.image_position",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:options.left"
+        },
+        {
+          "value": "right",
+          "label": "t:options.right"
+        }
+      ],
+      "default": "left",
+      "visible_if": "{{ section.settings.content_position == 'below-media' }}"
     },
     {
       "type": "color_scheme",
