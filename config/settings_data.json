@@ -1,5 +1,7 @@
 {
   "current": {
+    "logo_height": 36,
+    "logo_height_mobile": 28,
     "type_body_font": "inter_n4",
     "type_subheading_font": "inter_n5",
     "type_heading_font": "inter_n7",
@@ -13,12 +15,12 @@
     "type_case_h1": "none",
     "type_font_h2": "heading",
     "type_size_h2": "48",
-    "type_line_height_h2": "display-tight",
+    "type_line_height_h2": "display-normal",
     "type_letter_spacing_h2": "heading-normal",
     "type_case_h2": "none",
     "type_font_h3": "heading",
     "type_size_h3": "32",
-    "type_line_height_h3": "display-normal",
+    "type_line_height_h3": "display-tight",
     "type_letter_spacing_h3": "heading-normal",
     "type_case_h3": "none",
     "type_font_h4": "heading",
@@ -40,7 +42,7 @@
     "badge_sold_out_color_scheme": "scheme-3",
     "badge_text_transform": "none",
     "primary_button_border_width": 0,
-    "button_border_radius_primary": 14,
+    "button_border_radius_primary": 0,
     "secondary_button_border_width": 1,
     "button_border_radius_secondary": 14,
     "cart_type": "drawer",
@@ -65,6 +67,7 @@
     "variant_button_border_width": 1,
     "variant_button_radius": 14,
     "variant_button_width": "equal-width-buttons",
+    "content_for_index": [],
     "color_schemes": {
       "scheme-1": {
         "settings": {
@@ -112,7 +115,7 @@
           "foreground": "#000000cf",
           "primary": "#000000cf",
           "primary_hover": "#ffffff",
-          "border": "#DFDFDF",
+          "border": "#dfdfdf",
           "shadow": "#000000",
           "primary_button_background": "#000000",
           "primary_button_text": "#ffffff",
@@ -263,15 +266,15 @@
       },
       "scheme-6": {
         "settings": {
-          "background": "rgba(0,0,0,0)",
+          "background": "#f8f3ed",
           "foreground_heading": "#ffffff",
-          "foreground": "#ffffff",
+          "foreground": "#1d425a",
           "primary": "#ffffff",
           "primary_hover": "#ffffffb0",
           "border": "#e6e6e6",
           "shadow": "#000000",
-          "primary_button_background": "#ffffff",
-          "primary_button_text": "#000000",
+          "primary_button_background": "#7295bb",
+          "primary_button_text": "#ffffff",
           "primary_button_border": "#ffffff",
           "primary_button_hover_background": "#000000",
           "primary_button_hover_text": "#ffffff",
@@ -339,9 +342,7 @@
           "selected_variant_hover_border_color": "#1a1a1a"
         }
       }
-    },
-    "logo_height": 36,
-    "logo_height_mobile": 28
+    }
   },
   "presets": {
     "Horizon": {
