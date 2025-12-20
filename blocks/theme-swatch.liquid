@@ -1,0 +1,162 @@
+{% liquid
+  assign block_settings = block.settings
+  assign swatch_size = section.settings.swatch_size | default: 120
+  assign swatch_border_radius = section.settings.swatch_border_radius | default: 0
+%}
+
+<div class="theme-swatch-item" {{ block.shopify_attributes }}>
+  {% if block_settings.link_url != blank %}
+    <a
+      href="{{ block_settings.link_url }}"
+      class="theme-swatch-link"
+      {% if block_settings.link_text != blank %}
+        aria-label="{{ block_settings.link_text }}"
+      {% endif %}
+    >
+      <div 
+        class="theme-swatch-image-wrapper"
+        style="
+          width: var(--theme-swatch-size);
+          height: var(--theme-swatch-size);
+          border-radius: var(--theme-swatch-border-radius);
+        "
+      >
+        {% if block_settings.image %}
+          {{
+            block_settings.image
+            | image_url: width: 400
+            | image_tag: 
+              loading: 'lazy', 
+              class: 'theme-swatch-image',
+              sizes: '200px',
+              style: 'border-radius: ' | append: swatch_border_radius | append: 'px;'
+          }}
+        {% else %}
+          <div 
+            class="theme-swatch-placeholder"
+            style="border-radius: {{ swatch_border_radius }}px;"
+          ></div>
+        {% endif %}
+      </div>
+      {% if block_settings.link_text != blank %}
+        <span class="theme-swatch-title">{{ block_settings.link_text }}</span>
+      {% endif %}
+    </a>
+  {% else %}
+    <div class="theme-swatch-link">
+      <div 
+        class="theme-swatch-image-wrapper"
+        style="
+          width: var(--theme-swatch-size);
+          height: var(--theme-swatch-size);
+          border-radius: var(--theme-swatch-border-radius);
+        "
+      >
+        {% if block_settings.image %}
+          {{
+            block_settings.image
+            | image_url: width: 400
+            | image_tag: 
+              loading: 'lazy', 
+              class: 'theme-swatch-image',
+              sizes: '200px',
+              style: 'border-radius: ' | append: swatch_border_radius | append: 'px;'
+          }}
+        {% else %}
+          <div 
+            class="theme-swatch-placeholder"
+            style="border-radius: {{ swatch_border_radius }}px;"
+          ></div>
+        {% endif %}
+      </div>
+      {% if block_settings.link_text != blank %}
+        <span class="theme-swatch-title">{{ block_settings.link_text }}</span>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+
+{% stylesheet %}
+  .theme-swatch-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .theme-swatch-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    transition: transform var(--animation-speed) var(--animation-easing);
+    width: 100%;
+  }
+
+  .theme-swatch-link:hover {
+    transform: translateY(-4px);
+  }
+
+  .theme-swatch-image-wrapper {
+    overflow: hidden;
+    margin-bottom: var(--padding-xs);
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .theme-swatch-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .theme-swatch-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-foreground-muted);
+    opacity: 0.1;
+  }
+
+  .theme-swatch-title {
+    font-family: var(--font-body-family);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-body-weight);
+    color: var(--color-foreground);
+    text-align: center;
+    line-height: 1.3;
+    margin-top: var(--padding-2xs);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Theme Swatch",
+  "tag": null,
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Swatch Image"
+    },
+    {
+      "type": "text",
+      "id": "link_text",
+      "label": "Link Text",
+      "default": "Theme Name"
+    },
+    {
+      "type": "url",
+      "id": "link_url",
+      "label": "Link URL"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Theme Swatch",
+      "category": "Custom"
+    }
+  ]
+}
+{% endschema %}

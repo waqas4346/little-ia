@@ -1661,6 +1661,155 @@
         "padding-block-end": 48
       }
     },
+    "theme_swatches_KYBFfi": {
+      "type": "theme-swatches",
+      "blocks": {
+        "theme_swatch_HzcAbg": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/floral-swatch.png",
+            "link_text": "Floral",
+            "link_url": "shopify:\/\/collections\/enchanted-floral-collection"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_nzWYfB": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/seaworld_a2d965b9-fdc2-4abd-a848-ddc7036520f2.png",
+            "link_text": "Seaworld",
+            "link_url": "shopify:\/\/collections\/seaworld"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_e8Tcq3": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/footbal-swatch.png",
+            "link_text": "Football",
+            "link_url": "shopify:\/\/collections\/football-collection"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_3PCXEY": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/mermaid-swatch.png",
+            "link_text": "Mermaid",
+            "link_url": "shopify:\/\/collections\/mermaid"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_FhURkA": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/paw-patrol-swatch.png",
+            "link_text": "Paw Patrol",
+            "link_url": "shopify:\/\/collections\/paw-patrol-collection"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_QULGAC": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/unicorn-swatch.png",
+            "link_text": "Unicorn",
+            "link_url": "shopify:\/\/collections\/unicorn-collection"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_CCBKqH": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/dinosaur_a217f0a8-e82d-4173-804d-90c460b058b7.png",
+            "link_text": "Dinosaur",
+            "link_url": "shopify:\/\/collections\/dinosaur-collection"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_9LdTRa": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/super-hero-swatch.png",
+            "link_text": "Super Hero",
+            "link_url": "shopify:\/\/collections\/superhero-collection"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_nVrXhJ": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/pappa-pig-swatch.png",
+            "link_text": "Peppa Pig",
+            "link_url": ""
+          },
+          "blocks": {}
+        },
+        "theme_swatch_jJzkjg": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/jungle-swatch.png",
+            "link_text": "Jungle",
+            "link_url": "shopify:\/\/collections\/jungle-animal-collection"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_BfBFt6": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/transport-swatch.png",
+            "link_text": "Transport",
+            "link_url": "shopify:\/\/collections\/transport-collection"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_W68fax": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/rainbow-swatch.png",
+            "link_text": "Rainbow",
+            "link_url": ""
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "theme_swatch_HzcAbg",
+        "theme_swatch_nzWYfB",
+        "theme_swatch_e8Tcq3",
+        "theme_swatch_3PCXEY",
+        "theme_swatch_FhURkA",
+        "theme_swatch_QULGAC",
+        "theme_swatch_CCBKqH",
+        "theme_swatch_9LdTRa",
+        "theme_swatch_nVrXhJ",
+        "theme_swatch_jJzkjg",
+        "theme_swatch_BfBFt6",
+        "theme_swatch_W68fax"
+      ],
+      "name": "Theme Swatches",
+      "settings": {
+        "section_width": "page-width",
+        "gap": 20,
+        "swatch_size": 120,
+        "swatch_border_radius": 0,
+        "color_scheme": "scheme-6",
+        "padding-block-start": 36,
+        "padding-block-end": 36
+      }
+    },
     "section_EfcYck": {
       "type": "section",
       "blocks": {
@@ -1952,6 +2101,7 @@
     "hero_NAcLj6",
     "section_rhqnyD",
     "collection_list_7UkYMU",
+    "theme_swatches_KYBFfi",
     "section_EfcYck"
   ]
 }
