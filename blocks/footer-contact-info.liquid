@@ -1,0 +1,507 @@
+
+{% liquid
+  assign block_settings = block.settings
+%}
+
+<div
+  class="footer-contact-info spacing-style"
+  style="{% render 'spacing-style', settings: block_settings %}"
+  {{ block.shopify_attributes }}
+>
+  {% if block_settings.text != blank %}
+    <div class="footer-contact-info__text {{ block_settings.text_preset }}">
+      {{ block_settings.text }}
+    </div>
+  {% endif %}
+
+  {% if block_settings.email != blank %}
+    <div class="footer-contact-info__email">
+      <a href="mailto:{{ block_settings.email }}">{{ block_settings.email }}</a>
+    </div>
+  {% endif %}
+
+  {% if block_settings.phone != blank %}
+    <div class="footer-contact-info__phone">
+      <a href="tel:{{ block_settings.phone }}">{{ block_settings.phone }}</a>
+    </div>
+  {% endif %}
+
+  {% if block_settings.text_2 != blank %}
+    <div class="footer-contact-info__text-2 {{ block_settings.text_2_preset }}">
+      {{ block_settings.text_2 }}
+    </div>
+  {% endif %}
+
+  {% if block_settings.show_social_icons %}
+    <div class="footer-contact-info__social">
+      {% liquid
+        assign social_links = 'facebook_url,instagram_url,youtube_url,tiktok_url,twitter_url,threads_url,linkedin_url,bluesky_url,snapchat_url,pinterest_url,tumblr_url,vimeo_url,custom_url' | split: ','
+      %}
+
+      {% for link_key in social_links %}
+        {% liquid
+          assign link_url = block_settings[link_key]
+          assign render_icon = true
+
+          if link_url != blank
+            case link_key
+              when 'facebook_url'
+                assign platform = 'facebook'
+              when 'instagram_url'
+                assign platform = 'instagram'
+              when 'youtube_url'
+                assign platform = 'youtube'
+              when 'tiktok_url'
+                assign platform = 'tiktok'
+              when 'twitter_url'
+                assign platform = 'twitter'
+              when 'threads_url'
+                assign platform = 'threads'
+              when 'linkedin_url'
+                assign platform = 'linkedin'
+              when 'bluesky_url'
+                assign platform = 'bluesky'
+              when 'snapchat_url'
+                assign platform = 'snapchat'
+              when 'pinterest_url'
+                assign platform = 'pinterest'
+              when 'tumblr_url'
+                assign platform = 'tumblr'
+              when 'vimeo_url'
+                assign platform = 'vimeo'
+              when 'custom_url'
+                assign platform = link_url | split: '//' | last | remove: 'www.' | split: '.' | first
+                case platform
+                  when 'x'
+                    assign platform = 'twitter'
+                  else
+                    assign render_icon = false
+                endcase
+            endcase
+
+            assign url_parts = link_url | split: '//' | last | split: '/'
+            assign has_profile = false
+
+            if url_parts.size > 1 and url_parts[1] != ''
+              assign has_profile = true
+            endif
+
+            unless render_icon
+              assign has_profile = true
+            endunless
+          endif
+        %}
+
+        {% if link_url != blank %}
+          {% if request.design_mode or has_profile %}
+            <div
+              class="social-icons__icon-wrapper{% unless has_profile %} social-icons__icon-wrapper--disabled{% endunless %}"
+            >
+              <a
+                href="{{ link_url }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="{{ platform | capitalize }}"
+                {% unless has_profile %}
+                  {% if request.design_mode %}
+                    onclick="return false;"
+                    aria-disabled="true"
+                  {% endif %}
+                {% endunless %}
+              >
+                <span class="social-icons__icon-label">{{ platform | capitalize }}</span>
+                {% if render_icon %}
+                  <svg
+                    class="social-icons__icon icon-default"
+                    aria-hidden="true"
+                    focusable="false"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
+                    {%- render 'icon', icon: platform -%}
+                  </svg>
+                {% endif %}
+              </a>
+            </div>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if block_settings.show_payment_icons %}
+    <div
+      class="footer-contact-info__payment"
+      style="--icon-gap: {{ block_settings.payment_gap }}px; --alignment: {{ block_settings.payment_alignment }};"
+    >
+      <span class="visually-hidden">{{ 'blocks.payment_methods' | t }}</span>
+      <ul class="payment-icons__list" role="list">
+        {%- for type in shop.enabled_payment_types -%}
+          <li class="payment-icons__item">
+            {{ type | payment_type_svg_tag: class: 'icon icon--full-color' }}
+          </li>
+        {%- endfor -%}
+      </ul>
+    </div>
+  {% endif %}
+</div>
+
+{% stylesheet %}
+  .footer-contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm, 12px);
+  }
+
+  .footer-contact-info__text,
+  .footer-contact-info__text-2 {
+    display: block;
+    margin: 0;
+  }
+
+  .footer-contact-info__email a,
+  .footer-contact-info__phone a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .footer-contact-info__email a:hover,
+  .footer-contact-info__phone a:hover {
+    text-decoration: underline;
+  }
+
+  .footer-contact-info__social {
+    display: flex;
+    gap: var(--gap-sm);
+    flex-wrap: wrap;
+  }
+
+  .footer-contact-info__social .social-icons__icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--icon-size-lg);
+  }
+
+  .footer-contact-info__social .social-icons__icon {
+    display: flex;
+    flex-shrink: 0;
+    width: var(--icon-size-lg);
+    height: var(--icon-size-lg);
+  }
+
+  .footer-contact-info__social .social-icons__icon {
+    display: none;
+  }
+
+  .footer-contact-info__social .social-icons__icon-wrapper:has(.social-icons__icon path) {
+    width: var(--icon-size-lg);
+  }
+
+  .footer-contact-info__social .social-icons__icon-wrapper:has(.social-icons__icon path) .social-icons__icon {
+    display: block;
+  }
+
+  .footer-contact-info__social .social-icons__icon-wrapper:has(.social-icons__icon path) .social-icons__icon-label {
+    display: none;
+  }
+
+  .footer-contact-info__payment {
+    width: 100%;
+  }
+
+  .footer-contact-info__payment .payment-icons__list {
+    display: flex;
+    align-items: center;
+    justify-content: var(--alignment);
+    flex-wrap: wrap;
+    gap: var(--icon-gap);
+    margin: 0;
+    padding: 0;
+  }
+
+  .footer-contact-info__payment .payment-icons__item {
+    display: flex;
+    align-items: center;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Footer Contact Info",
+  "tag": null,
+  "settings": [
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text"
+    },
+    {
+      "type": "select",
+      "id": "text_preset",
+      "label": "t:settings.heading_preset",
+      "options": [
+        {
+          "value": "",
+          "label": "t:options.default"
+        },
+        {
+          "value": "paragraph",
+          "label": "t:options.paragraph"
+        },
+        {
+          "value": "h1",
+          "label": "t:options.h1"
+        },
+        {
+          "value": "h2",
+          "label": "t:options.h2"
+        },
+        {
+          "value": "h3",
+          "label": "t:options.h3"
+        },
+        {
+          "value": "h4",
+          "label": "t:options.h4"
+        },
+        {
+          "value": "h5",
+          "label": "t:options.h5"
+        },
+        {
+          "value": "h6",
+          "label": "t:options.h6"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "text",
+      "id": "email",
+      "label": "Email",
+      "info": "Enter email address"
+    },
+    {
+      "type": "text",
+      "id": "phone",
+      "label": "Phone",
+      "info": "Enter phone number"
+    },
+    {
+      "type": "richtext",
+      "id": "text_2",
+      "label": "Text 2"
+    },
+    {
+      "type": "select",
+      "id": "text_2_preset",
+      "label": "t:settings.heading_preset",
+      "options": [
+        {
+          "value": "",
+          "label": "t:options.default"
+        },
+        {
+          "value": "paragraph",
+          "label": "t:options.paragraph"
+        },
+        {
+          "value": "h1",
+          "label": "t:options.h1"
+        },
+        {
+          "value": "h2",
+          "label": "t:options.h2"
+        },
+        {
+          "value": "h3",
+          "label": "t:options.h3"
+        },
+        {
+          "value": "h4",
+          "label": "t:options.h4"
+        },
+        {
+          "value": "h5",
+          "label": "t:options.h5"
+        },
+        {
+          "value": "h6",
+          "label": "t:options.h6"
+        }
+      ],
+      "default": "h3"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_social_icons",
+      "label": "Show Social Icons",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Social Media Links"
+    },
+    {
+      "type": "url",
+      "id": "facebook_url",
+      "label": "t:options.facebook"
+    },
+    {
+      "type": "url",
+      "id": "instagram_url",
+      "label": "t:options.instagram"
+    },
+    {
+      "type": "url",
+      "id": "youtube_url",
+      "label": "t:options.youtube"
+    },
+    {
+      "type": "url",
+      "id": "tiktok_url",
+      "label": "t:options.tiktok"
+    },
+    {
+      "type": "url",
+      "id": "twitter_url",
+      "label": "t:options.twitter"
+    },
+    {
+      "type": "url",
+      "id": "threads_url",
+      "label": "t:options.threads"
+    },
+    {
+      "type": "url",
+      "id": "linkedin_url",
+      "label": "t:options.linkedin"
+    },
+    {
+      "type": "url",
+      "id": "bluesky_url",
+      "label": "t:options.bluesky"
+    },
+    {
+      "type": "url",
+      "id": "snapchat_url",
+      "label": "t:options.snapchat"
+    },
+    {
+      "type": "url",
+      "id": "pinterest_url",
+      "label": "t:options.pinterest"
+    },
+    {
+      "type": "url",
+      "id": "tumblr_url",
+      "label": "t:options.tumblr"
+    },
+    {
+      "type": "url",
+      "id": "vimeo_url",
+      "label": "t:options.vimeo"
+    },
+    {
+      "type": "url",
+      "id": "custom_url",
+      "label": "t:settings.custom_link"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_payment_icons",
+      "label": "Show Payment Icons",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Payment Icons"
+    },
+    {
+      "type": "select",
+      "id": "payment_alignment",
+      "label": "t:settings.alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.left"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.right"
+        },
+        {
+          "value": "space-between",
+          "label": "t:options.space_between"
+        }
+      ],
+      "default": "flex-start"
+    },
+    {
+      "type": "range",
+      "id": "payment_gap",
+      "label": "t:settings.gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 10
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Footer Contact Info",
+      "category": "t:categories.footer"
+    }
+  ]
+}
+{% endschema %}
