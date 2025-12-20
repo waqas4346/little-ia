@@ -54,14 +54,26 @@
             style="{% render 'submenu-font-styles', settings: block_settings %}"
           >
             {% assign list_id = 'MegaMenuList-' | append: forloop.index %}
-            {% render 'mega-menu',
-              section: section,
-              parent_link: link,
-              id: list_id,
-              menu_content_type: menu_content_type,
-              content_aspect_ratio: ratio,
-              image_border_radius: image_border_radius
-            %}
+            {%- comment -%} Check if this is the "shop by theme" menu (case-insensitive) {%- endcomment -%}
+            {%- assign link_title_lower = link.title | downcase -%}
+            {%- assign link_handle_lower = link.handle | downcase -%}
+            {%- if link_title_lower contains 'shop by theme' or link_handle_lower contains 'shop-by-theme' or link_handle_lower contains 'shop_by_theme' -%}
+              {% render 'mega-menu-theme',
+                section: section,
+                parent_link: link,
+                id: list_id,
+                image_border_radius: image_border_radius
+              %}
+            {%- else -%}
+              {% render 'mega-menu',
+                section: section,
+                parent_link: link,
+                id: list_id,
+                menu_content_type: menu_content_type,
+                content_aspect_ratio: ratio,
+                image_border_radius: image_border_radius
+              %}
+            {%- endif -%}
           </div>
         </div>
       {%- endif -%}
