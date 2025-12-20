@@ -20,6 +20,150 @@
       { once: true }
     );
   }
+
+  // Function to check if there are active filters
+  function hasActiveFilters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return Array.from(urlParams.keys()).some(key => key.startsWith('filter.'));
+  }
+
+  // Function to check if filters are manually hidden
+  function areFiltersManuallyHidden() {
+    const resultsList = document.querySelector('results-list');
+    return resultsList?.dataset.filtersManuallyHidden === 'true';
+  }
+
+  // Function to set manually hidden state
+  function setFiltersManuallyHidden(hidden) {
+    const resultsList = document.querySelector('results-list');
+    if (resultsList) {
+      if (hidden) {
+        resultsList.dataset.filtersManuallyHidden = 'true';
+      } else {
+        delete resultsList.dataset.filtersManuallyHidden;
+      }
+    }
+  }
+
+  // Function to check and show filters if active (only if not manually hidden and on desktop)
+  function checkAndShowFilters() {
+    const resultsList = document.querySelector('results-list');
+    if (!resultsList) return;
+    
+    // Only show filters on desktop (screen width >= 750px)
+    const isDesktop = window.innerWidth >= 750;
+    
+    // If there are active filters and they haven't been manually hidden, show the filters component (desktop only)
+    if (hasActiveFilters() && !areFiltersManuallyHidden() && isDesktop) {
+      resultsList.classList.add('filters-visible');
+    } else if (!isDesktop) {
+      // Remove filters-visible class on mobile
+      resultsList.classList.remove('filters-visible');
+    }
+  }
+
+  // Toggle filters visibility
+  document.addEventListener('DOMContentLoaded', () => {
+    const resultsList = document.querySelector('results-list');
+    
+    if (resultsList) {
+      // Check if there are active filters on page load
+      checkAndShowFilters();
+      
+      // Use event delegation so the handler persists after section re-renders
+      resultsList.addEventListener('click', (event) => {
+        const filtersButton = event.target.closest('#collection-filters-toggle');
+        if (filtersButton) {
+          const isVisible = resultsList.classList.contains('filters-visible');
+          resultsList.classList.toggle('filters-visible');
+          
+          // Track manual hide state
+          if (isVisible) {
+            // User is hiding the filters
+            setFiltersManuallyHidden(true);
+          } else {
+            // User is showing the filters
+            setFiltersManuallyHidden(false);
+          }
+        }
+      });
+
+      // Use MutationObserver to preserve filters-visible class during morph
+      // But only if filters haven't been manually hidden and we're on desktop
+      let isRestoring = false;
+      const observer = new MutationObserver((mutations) => {
+        if (isRestoring) return;
+        
+        const isDesktop = window.innerWidth >= 750;
+        
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const target = mutation.target;
+            if (target === resultsList && hasActiveFilters() && !areFiltersManuallyHidden() && isDesktop) {
+              // If filters-visible was removed but we have active filters and they're not manually hidden, restore it (desktop only)
+              if (!target.classList.contains('filters-visible')) {
+                isRestoring = true;
+                // Use requestAnimationFrame to avoid conflicts with morph
+                requestAnimationFrame(() => {
+                  if (hasActiveFilters() && !areFiltersManuallyHidden() && window.innerWidth >= 750 && !target.classList.contains('filters-visible')) {
+                    target.classList.add('filters-visible');
+                  }
+                  isRestoring = false;
+                });
+              }
+            } else if (target === resultsList && !isDesktop) {
+              // Remove filters-visible class on mobile
+              if (target.classList.contains('filters-visible')) {
+                target.classList.remove('filters-visible');
+              }
+            }
+          }
+        });
+      });
+
+      // Observe class changes on results-list
+      observer.observe(resultsList, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
+    }
+  });
+  
+  // Listen for filter updates to keep filters visible after applying
+  document.addEventListener('filter:update', () => {
+    // When new filters are applied, reset the manually hidden state and show filters
+    setFiltersManuallyHidden(false);
+    
+    // Mark that we should keep filters visible immediately (desktop only)
+    const resultsList = document.querySelector('results-list');
+    const isDesktop = window.innerWidth >= 750;
+    if (resultsList && hasActiveFilters() && isDesktop) {
+      resultsList.classList.add('filters-visible');
+    } else if (resultsList && !isDesktop) {
+      // Remove filters-visible class on mobile
+      resultsList.classList.remove('filters-visible');
+    }
+    
+    // Check after view transition completes (if using view transitions)
+    if (document.startViewTransition) {
+      // View transition is async, check after it completes
+      setTimeout(() => {
+        checkAndShowFilters();
+      }, 100);
+    }
+    
+    // Also check after morph completes - use requestAnimationFrame chain
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        checkAndShowFilters();
+      });
+    });
+    
+    // Final check after a longer delay to catch any late morphs
+    setTimeout(() => {
+      checkAndShowFilters();
+    }, 400);
+  });
 {% endjavascript %}
 
 {% comment %} We always render this full-width, as the child blocks have width: page/full settings {% endcomment %}
@@ -31,6 +175,12 @@
   infinite-scroll="{{ section.settings.enable_infinite_scroll }}"
 >
   {% render 'skip-to-content-link', href: '#ResultsList', text: 'accessibility.skip_to_results_list' %}
+
+  <div class="collection-filters-button-wrapper">
+    <button type="button" class="collection-filters-button" id="collection-filters-toggle" aria-label="Filters">
+      Filters
+    </button>
+  </div>
 
   <div
     class="collection-wrapper grid gap-style{% if section.settings.product_grid_width == 'full-width' %} collection-wrapper--grid-full-width{% endif %}"
@@ -77,6 +227,39 @@
 </results-list>
 
 {% stylesheet %}
+  .collection-filters-button-wrapper {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding-block-start: 16px;
+    padding-block-end: 16px;
+    padding-inline-start: var(--page-margin);
+    padding-inline-end: var(--page-margin);
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-filters-button-wrapper {
+      display: none;
+    }
+  }
+
+  .collection-filters-button {
+    padding: 12px 24px;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .collection-filters-button:hover {
+    background-color: var(--color-foreground);
+    color: var(--color-background);
+  }
+
   .main-collection-grid {
     grid-column: var(--grid-column--mobile);
 
@@ -146,6 +329,61 @@
     @media screen and (max-width: 749px) {
       margin-inline-start: calc(-1 * max(var(--padding-xs), var(--padding-inline-start)));
       margin-inline-end: calc(-1 * max(var(--padding-xs), var(--padding-inline-end)));
+    }
+  }
+
+  /* Hide filter component by default */
+  .facets-block-wrapper:not(#filters-drawer),
+  .facets-controls-wrapper {
+    display: none !important;
+  }
+
+  /* Show filter component when filters-visible class is added (desktop only) */
+  .filters-visible .facets-block-wrapper:not(#filters-drawer) {
+    @media screen and (min-width: 750px) {
+      display: block !important;
+    }
+  }
+
+  .filters-visible .facets-controls-wrapper {
+    @media screen and (min-width: 750px) {
+      display: flex !important;
+    }
+  }
+
+  /* Keep filters hidden on mobile even when filters-visible class is present */
+  @media screen and (max-width: 749px) {
+    .filters-visible .facets-block-wrapper:not(#filters-drawer),
+    .filters-visible .facets-controls-wrapper {
+      display: none !important;
+    }
+  }
+
+  /* Make main-collection-grid full width when filters are hidden */
+  .collection-wrapper .main-collection-grid {
+    @media screen and (min-width: 750px) {
+      grid-column: 1 / -1 !important;
+    }
+  }
+
+  /* When filters are visible, ensure they use the existing grid layout */
+  .filters-visible .collection-wrapper .facets-controls-wrapper {
+    @media screen and (min-width: 750px) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .filters-visible .collection-wrapper .facets-block-wrapper--vertical:not(#filters-drawer) {
+    @media screen and (min-width: 750px) {
+      display: block !important;
+      grid-column: 2 / var(--facets-vertical-col-width);
+    }
+  }
+
+  /* Position main-collection-grid next to filters when filters are visible */
+  .filters-visible .collection-wrapper .main-collection-grid {
+    @media screen and (min-width: 750px) {
+      grid-column: var(--facets-vertical-col-width) / -1 !important;
     }
   }
 {% endstylesheet %}
