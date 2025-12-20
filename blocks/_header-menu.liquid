@@ -13,6 +13,12 @@
 
 {% case variant %}
   {% when 'mobile' %}
+    {% liquid
+      assign mobile_linklist = block_settings.mobile_menu
+      if mobile_linklist == blank
+        assign mobile_linklist = block_settings.menu
+      endif
+    %}
     <div
       class="header__drawer desktop:hidden"
       ref="headerDrawerContainer"
@@ -20,13 +26,19 @@
     >
       {% render 'header-drawer',
         class: 'header__drawer--mobile',
-        linklist: block_settings.menu,
+        linklist: mobile_linklist,
         data_header_drawer_type: 'mobile-drawer'
       %}
     </div>
 
   {% when 'navigation_bar' %}
     {% if block_settings.navigation_bar == true %}
+      {% liquid
+        assign nav_linklist = block_settings.mobile_menu
+        if nav_linklist == blank
+          assign nav_linklist = block_settings.menu
+        endif
+      %}
       <div
         class="menu-list menu-list--mobile{% if transparent == blank %} color-{{ block_settings.color_scheme_navigation_bar }}{% endif %}"
         style="--menu-horizontal-gap: 15px; --mobile-nav-margin: auto;"
@@ -36,7 +48,7 @@
             class="menu-list__list list-unstyled"
             role="list"
           >
-            {% for link in block_settings.menu.links %}
+            {% for link in nav_linklist.links %}
               <li>
                 <a
                   href="{{ link.url }}"
@@ -783,6 +795,12 @@
     {
       "type": "header",
       "content": "t:content.mobile_layout"
+    },
+    {
+      "type": "link_list",
+      "id": "mobile_menu",
+      "label": "t:settings.mobile_menu",
+      "info": "t:info.mobile_menu_info"
     },
     {
       "type": "checkbox",

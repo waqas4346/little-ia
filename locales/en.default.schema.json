@@ -213,7 +213,8 @@
     "video_autoplay": "Videos will be muted by default",
     "video_external": "Use a YouTube or Vimeo URL",
     "pills_usage": "Used for applied filters, discount codes, and search suggestions",
-    "media_type_info": "Features are populated from your menu links"
+    "media_type_info": "Features are populated from your menu links",
+    "mobile_menu_info": "If no mobile menu is selected, the desktop menu will be used for mobile"
   },
   "names": {
     "column": "Column",
@@ -874,6 +875,7 @@
     "media_type": "Media type",
     "media_width": "Media width",
     "menu": "Menu",
+    "mobile_menu": "Mobile menu",
     "minimum_height": "Minimum height",
     "mobile_card_size": "Mobile card size",
     "mobile_columns": "Mobile columns",
