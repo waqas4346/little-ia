@@ -145,11 +145,17 @@
                     >
                       <summary
                         id="HeaderDrawer-{{ link.handle }}"
-                        class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset"
+                        class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.title == 'sale' or link.title == 'Sale' or link.title == 'SALE' %} menu-drawer__menu-item--sale{% endif %}"
                       >
-                        <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
-                        <span class="svg-wrapper icon-plus">
-                          {{- 'icon-plus.svg' | inline_asset_content -}}
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          {% render 'mobile-nav-icon', link: link %}
+                          <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                        </div>
+                        <span class="svg-wrapper icon-chevron-down">
+                          {{- 'icon-chevron-down.svg' | inline_asset_content -}}
+                        </span>
+                        <span class="svg-wrapper icon-chevron-up">
+                          {{- 'icon-chevron-up.svg' | inline_asset_content -}}
                         </span>
                       </summary>
                       {% liquid
@@ -202,12 +208,15 @@
                   <a
                     id="HeaderDrawer-{{ link.handle }}"
                     href="{{ link.url }}"
-                    class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.current %} menu-drawer__menu-item--active{% endif %}"
+                    class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.current %} menu-drawer__menu-item--active{% endif %}{% if link.title == 'sale' or link.title == 'Sale' or link.title == 'SALE' %} menu-drawer__menu-item--sale{% endif %}"
                     {% if link.current %}
                       aria-current="page"
                     {% endif %}
                   >
-                    <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      {% render 'mobile-nav-icon', link: link %}
+                      <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                    </div>
                   </a>
                   {% liquid
                     assign render_link_image = false
@@ -253,12 +262,15 @@
                   <a
                     id="HeaderDrawer-{{ link.handle }}"
                     href="{{ link.url }}"
-                    class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.current %} menu-drawer__menu-item--active{% endif %}"
+                    class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.current %} menu-drawer__menu-item--active{% endif %}{% if link.title == 'sale' or link.title == 'Sale' or link.title == 'SALE' %} menu-drawer__menu-item--sale{% endif %}"
                     {% if link.current %}
                       aria-current="page"
                     {% endif %}
                   >
-                    <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      {% render 'mobile-nav-icon', link: link %}
+                      <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                    </div>
                   </a>
                 {% endif %}
               </li>
@@ -292,11 +304,17 @@
                       >
                         <summary
                           id="HeaderDrawer-{{ link.handle }}"
-                          class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.child_active %} menu-drawer__menu-item--active{% endif %}"
+                          class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.child_active %} menu-drawer__menu-item--active{% endif %}{% if link.title == 'sale' or link.title == 'Sale' or link.title == 'SALE' %} menu-drawer__menu-item--sale{% endif %}"
                         >
-                          <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
-                          <span class="svg-wrapper icon-plus">
-                            {{- 'icon-plus.svg' | inline_asset_content -}}
+                          <div style="display: flex; align-items: center; gap: 8px;">
+                            {% render 'mobile-nav-icon', link: link %}
+                            <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                          </div>
+                          <span class="svg-wrapper icon-chevron-down">
+                            {{- 'icon-chevron-down.svg' | inline_asset_content -}}
+                          </span>
+                          <span class="svg-wrapper icon-chevron-up">
+                            {{- 'icon-chevron-up.svg' | inline_asset_content -}}
                           </span>
                         </summary>
                         {% liquid
@@ -325,10 +343,13 @@
                     >
                       <summary
                         id="HeaderDrawer-{{ link.handle }}"
-                        class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.child_active %} menu-drawer__menu-item--active{% endif %}"
+                        class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.child_active %} menu-drawer__menu-item--active{% endif %}{% if link.title == 'sale' or link.title == 'Sale' or link.title == 'SALE' %} menu-drawer__menu-item--sale{% endif %}"
                         on:click="header-drawer/open"
                       >
-                        <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          {% render 'mobile-nav-icon', link: link %}
+                          <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                        </div>
                         <span class="svg-wrapper icon-caret icon-caret--forward">
                           {{- 'icon-caret.svg' | inline_asset_content -}}
                         </span>
@@ -438,8 +459,11 @@
                                         <span class="menu-drawer__menu-item-text wrap-text">
                                           {{- childlink.title | escape -}}
                                         </span>
-                                        <span class="svg-wrapper icon-plus">
-                                          {{- 'icon-plus.svg' | inline_asset_content -}}
+                                        <span class="svg-wrapper icon-chevron-down">
+                                          {{- 'icon-chevron-down.svg' | inline_asset_content -}}
+                                        </span>
+                                        <span class="svg-wrapper icon-chevron-up">
+                                          {{- 'icon-chevron-up.svg' | inline_asset_content -}}
                                         </span>
                                       </summary>
                                       {% liquid
@@ -614,12 +638,15 @@
                   <a
                     id="HeaderDrawer-{{ link.handle }}"
                     href="{{ link.url }}"
-                    class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.current %} menu-drawer__menu-item--active{% endif %}"
+                    class="menu-drawer__menu-item menu-drawer__menu-item--mainlist menu-drawer__animated-element focus-inset{% if link.current %} menu-drawer__menu-item--active{% endif %}{% if link.title == 'sale' or link.title == 'Sale' or link.title == 'SALE' %} menu-drawer__menu-item--sale{% endif %}"
                     {% if link.current %}
                       aria-current="page"
                     {% endif %}
                   >
-                    <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      {% render 'mobile-nav-icon', link: link %}
+                      <span class="menu-drawer__menu-item-text wrap-text">{{ link.title | escape }}</span>
+                    </div>
                   </a>
                 {%- endif -%}
               </li>
@@ -733,8 +760,8 @@
 
   .header__icon--summary .header-drawer-icon {
     margin: auto;
-    width: var(--icon-size-xs);
-    height: var(--icon-size-xs);
+    width: 22px;
+    height: 18px;
   }
 
   .header__drawer {
@@ -947,6 +974,10 @@
     margin-block-end: 0;
   }
 
+  .menu-drawer__menu--childlist {
+    /* padding-left: 0; */
+    padding: 10px 28px 13px 0;
+  }
   .menu-drawer__list-item--flat .menu-drawer__menu--childlist {
     width: 100%;
     padding-inline-start: 0;
@@ -980,44 +1011,83 @@
     min-height: calc(2 * var(--padding-lg) + var(--icon-size-xs));
     font-family: var(--menu-top-level-font-family);
     font-style: var(--menu-top-level-font-style);
-    font-weight: var(--menu-top-level-font-weight);
-    font-size: var(--menu-top-level-font-size);
-    line-height: var(--menu-top-level-font-line-height);
-    text-transform: var(--menu-top-level-font-case);
-    color: var(--menu-top-level-font-color);
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 100%;
+    letter-spacing: 0px;
+    text-transform: uppercase;
+    color: #1D425A;
+    border-bottom: 0.5px solid #00000026;
     justify-content: space-between;
 
     &:hover {
-      color: var(--menu-top-level-font-color);
+      color: #1D425A;
+    }
+  }
+
+  .menu-drawer__menu-item--sale {
+    color: #D599AC;
+
+    &:hover {
+      color: #D599AC;
     }
   }
 
   .menu-drawer__menu-item--parent {
     font-family: var(--menu-parent-font-family);
     font-style: var(--menu-parent-font-style);
-    font-weight: var(--menu-parent-font-weight);
-    font-size: var(--menu-parent-font-size);
-    line-height: var(--menu-parent-font-line-height);
-    text-transform: var(--menu-parent-font-case);
-    color: var(--menu-parent-font-color);
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 130%;
+    text-transform: uppercase;
+    color: #1D425A;
+    border-bottom: 0.5px solid #00000026;
+    padding: 10px 0 10px 0 !important;
 
     &:hover {
-      color: var(--menu-parent-font-color);
+      color: #1D425A;
     }
   }
 
   .menu-drawer__menu-item--child {
     font-family: var(--menu-child-font-family);
     font-style: var(--menu-child-font-style);
-    font-weight: var(--menu-child-font-weight);
-    font-size: var(--menu-child-font-size);
-    line-height: var(--menu-child-font-line-height);
-    text-transform: var(--menu-child-font-case);
-    color: var(--menu-child-font-color);
-
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 130%;
+    text-transform: titlecase;
+    color: #1D425A;
+    border-bottom: 0.5px solid #00000026;
+    padding: 10px 0;
     &:hover {
-      color: var(--menu-child-font-color);
+      color: #1D425A;
     }
+  }
+
+  /* Remove border-bottom when nav is open/active */
+  .menu-drawer details[open] > summary.menu-drawer__menu-item,
+  .menu-drawer accordion-custom[open] details[open] > summary.menu-drawer__menu-item {
+    border-bottom: none;
+  }
+
+  /* Show chevron down when closed, chevron up when open */
+  .menu-drawer summary .icon-chevron-down {
+    display: inline-flex;
+  }
+
+  .menu-drawer summary .icon-chevron-up {
+    display: none;
+  }
+
+  /* Only affect the direct summary of the opened details, not nested ones */
+  .menu-drawer details[open] > summary .icon-chevron-down,
+  .menu-drawer accordion-custom[open] > details[open] > summary .icon-chevron-down {
+    display: none;
+  }
+
+  .menu-drawer details[open] > summary .icon-chevron-up,
+  .menu-drawer accordion-custom[open] > details[open] > summary .icon-chevron-up {
+    display: inline-flex;
   }
 
   .menu-drawer__menu--childlist summary.menu-drawer__menu-item {
@@ -1045,7 +1115,7 @@
 
   .menu-drawer__menu-item {
     display: flex;
-    padding: var(--padding-2xs) 0;
+    padding: 20px 12px 20px 0;
     position: relative;
     text-decoration: none;
     justify-content: space-between;
@@ -1095,9 +1165,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--padding-lg);
+    padding: 9px var(--padding-lg) 13px;
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
+    margin-bottom: 8px;
+    box-shadow: 0px 4px 20.2px 5px #0000000A;
   }
 
   .menu-drawer__logo {
@@ -1114,13 +1186,23 @@
     max-height: 60px;
   }
 
+  .menu-drawer__close-button .header-drawer-icon--close {
+    width: 25px;
+    height: 24px;
+  }
+
+  .menu-drawer__close-button .header-drawer-icon--close svg {
+    width: 25px;
+    height: 24px;
+  }
+
   .menu-drawer__close-button {
     position: relative;
     right: auto;
     top: auto;
     width: fit-content;
     height: fit-content;
-    padding: var(--padding-lg);
+    padding: 0;
     margin-left: var(--padding-lg);
     will-change: transform;
     flex-shrink: 0;
@@ -1161,7 +1243,7 @@
     width: fit-content;
     height: fit-content;
     margin: 0;
-    padding-block: var(--padding-lg);
+    /* padding-block: var(--padding-lg); */
     padding-inline-start: var(--padding-xl);
     flex-shrink: 0;
   }
@@ -1173,6 +1255,12 @@
   .menu-drawer svg {
     width: var(--icon-size-xs);
     height: var(--icon-size-xs);
+  }
+
+  .icon-chevron-down svg,
+  .icon-chevron-up svg {
+    width: 20px;
+    height: 20px;
   }
 
   .menu-drawer__submenu {

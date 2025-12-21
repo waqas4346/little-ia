@@ -1,0 +1,36 @@
+{%- doc -%}
+  Renders an icon for a navigation link based on its title or handle.
+  
+  @param {object} link - The link object from the menu
+  
+  @example
+  {% render 'mobile-nav-icon', link: link %}
+{%- enddoc -%}
+
+{%- liquid
+  assign link_handle = link.handle | downcase | strip
+  assign icon_url = ''
+  
+  comment
+    Automatically generates filename from nav link handle
+    Converts dashes to underscores to match file naming convention
+    Pattern: mobile-nav-icon-{handle-with-underscores}.png
+    Example: handle "shop-by-theme" → "mobile-nav-icon-shop_by_theme.png"
+    Example: handle "little-ia-x-brands" → "mobile-nav-icon-little_ia_x_brands.png"
+    Example: handle "sale" → "mobile-nav-icon-sale.png"
+    Files should be uploaded to Shopify Files with underscores in the name
+  endcomment
+  
+  if link_handle != ''
+    assign handle_with_underscores = link_handle | replace: '-', '_'
+    assign icon_filename = 'mobile-nav-icon-' | append: handle_with_underscores | append: '.png'
+    assign icon_url = icon_filename | file_url
+  endif
+-%}
+
+{%- if icon_url != '' -%}
+  <span class="menu-drawer__sale-icon">
+    <img src="{{ icon_url }}" alt="" width="18" height="18" style="max-width: 20px;" loading="lazy" onerror="this.parentElement.style.display='none'">
+  </span>
+{%- endif -%}
+

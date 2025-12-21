@@ -36,7 +36,7 @@
       <a
         href="{{ link.url }}"
         data-skip-node-update="true"
-        class="menu-list__link{% if link.active %} menu-list__link--active{% endif %}"
+        class="menu-list__link{% if link.active %} menu-list__link--active{% endif %}{% if link.title == 'sale' or link.title == 'Sale' or link.title == 'SALE' %} menu-list__link--sale{% endif %}"
         {%- if link.links != blank -%}
           aria-controls="submenu-{{ forloop.index }}"
           aria-haspopup="true"
