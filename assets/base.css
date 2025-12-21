@@ -2584,17 +2584,19 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) > *:not(.tax-note) {
 .cart-bubble__background {
   position: absolute;
   inset: 0;
-  background-color: var(--color-primary-button-background);
+  background-color: #FDF8E7;
   border-radius: var(--style-border-radius-lg);
 }
 
 .cart-bubble__text {
-  font-size: var(--font-size--2xs);
   z-index: var(--layer-flat);
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: #1D425A;
+  font-size: 12px;
+  font-weight: 600 !important;
 }
 
 /* Quantity selector */

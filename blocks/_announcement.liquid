@@ -21,12 +21,23 @@
       {% render 'typography-style', settings: block_settings, preset: 'custom' %}
       --width: 100%;
       --text-align: center;
-      --line-height: 1;
     "
     {{ block.shopify_attributes }}
     aria-hidden="{% if block_index == 0 %}false{% else %}true{% endif %}"
   >
     <p class="announcement-bar__text">
+      {% if block_settings.icon != blank %}
+        <span class="announcement-bar__icon">
+          <img
+            src="{{ block_settings.icon | image_url: width: 24 }}"
+            alt="{{ block_settings.text | strip_html }}"
+            class="announcement-bar__icon-image"
+            loading="lazy"
+            width="24"
+            height="24"
+          >
+        </span>
+      {% endif %}
       {{ block.settings.text }}
     </p>
 
@@ -112,6 +123,25 @@
   .text-block--align-right > * {
     margin-inline-start: auto;
   }
+
+  .announcement-bar__text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .announcement-bar__icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .announcement-bar__icon-image {
+    width: auto;
+    height: 1em;
+    display: block;
+  }
 {% endstylesheet %}
 
 {% schema %}
@@ -129,6 +159,11 @@
       "type": "url",
       "id": "link",
       "label": "t:settings.link"
+    },
+    {
+      "type": "image_picker",
+      "id": "icon",
+      "label": "Icon"
     },
     {
       "type": "header",
@@ -273,6 +308,26 @@
         }
       ],
       "default": ""
+    },
+    {
+      "type": "select",
+      "id": "line_height",
+      "label": "t:settings.line_height",
+      "options": [
+        {
+          "value": "tight",
+          "label": "t:options.tight"
+        },
+        {
+          "value": "normal",
+          "label": "t:options.normal"
+        },
+        {
+          "value": "loose",
+          "label": "t:options.loose"
+        }
+      ],
+      "default": "normal"
     },
     {
       "type": "select",

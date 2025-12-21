@@ -63,12 +63,12 @@
                       loading: 'lazy', 
                       class: 'mega-menu__theme-swatch-image',
                       sizes: '200px',
-                      style: 'border-radius: ' | append: image_border_radius | append: 'px;'
+                      style: 'border-radius: 100px;'
                   }}
                 {% else %}
                   <div 
                     class="mega-menu__theme-swatch-placeholder"
-                    style="border-radius: {{ image_border_radius }}px;"
+                    style="border-radius: 100px;"
                   ></div>
                 {% endif %}
               </div>
@@ -83,7 +83,7 @@
 
 {% style %}
   .mega-menu--theme {
-    --theme-swatch-size: 120px;
+    --theme-swatch-size: 100px;
     --theme-swatch-gap: var(--gap-lg);
   }
 
@@ -97,9 +97,12 @@
 
   .mega-menu__theme-swatches-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(var(--theme-swatch-size), 1fr));
-    gap: var(--theme-swatch-gap);
+    grid-template-columns: repeat(6, 1fr);
+    column-gap: 101px;
+    row-gap: 44px;
     justify-items: center;
+    max-width: 1105px;
+    margin: 0 auto;
   }
 
   .mega-menu__theme-swatch-item {
@@ -125,7 +128,8 @@
   .mega-menu__theme-swatch-image-wrapper {
     width: var(--theme-swatch-size);
     height: var(--theme-swatch-size);
-    border-radius: var(--menu-image-border-radius);
+    border-radius: 100px;
+    border: 1.49px solid #0000000A;
     overflow: hidden;
     margin-bottom: var(--padding-xs);
     position: relative;
@@ -145,21 +149,23 @@
   }
 
   .mega-menu__theme-swatch-title {
-    font-family: var(--menu-child-font-family);
-    font-size: var(--menu-child-font-size);
-    font-weight: var(--menu-child-font-weight);
+    font-family: var(--font-outfit--family);
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 160%;
+    letter-spacing: 0%;
+    text-transform: uppercase;
     color: var(--menu-child-font-color);
     text-align: center;
-    line-height: 1.3;
   }
 
   @media screen and (min-width: 990px) {
     .mega-menu__theme-swatches-list {
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      grid-template-columns: repeat(6, 1fr);
     }
     
     .mega-menu--theme {
-      --theme-swatch-size: 140px;
+      --theme-swatch-size: 100px;
     }
   }
 {% endstyle %}

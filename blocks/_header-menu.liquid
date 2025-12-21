@@ -191,7 +191,7 @@
     font-weight: var(--menu-top-level-font-weight);
     font-size: var(--menu-top-level-font-size);
     line-height: var(--menu-top-level-font-line-height);
-    text-transform: var(--menu-top-level-font-case);
+    text-transform: uppercase;
     color: var(--menu-top-level-font-color);
     transition: color var(--animation-speed) var(--animation-easing);
     text-decoration: none;
@@ -202,6 +202,7 @@
     &:hover,
     &:focus {
       color: var(--menu-top-level-font-color);
+      text-decoration: underline;
     }
 
     @media screen and (min-width: 750px) {
@@ -405,30 +406,32 @@
   .mega-menu__link {
     font-family: var(--menu-child-font-family);
     font-style: var(--menu-child-font-style);
-    font-weight: var(--menu-child-font-weight);
-    font-size: var(--menu-child-font-size);
+    font-weight: 400;
+    font-size: 16px;
     line-height: var(--menu-child-font-line-height);
-    text-transform: var(--menu-child-font-case);
-    color: var(--menu-child-font-color);
+    text-transform: titlecase;
+    color: #1D425A;
     white-space: normal;
     text-decoration: none;
     display: inline-flex;
     padding: var(--padding-2xs) 0;
-    transition: color var(--animation-speed) var(--animation-easing);
+    /* transition: color var(--animation-speed) var(--animation-easing); */
 
     &:hover {
-      color: var(--menu-child-active-font-color);
+      color: #6688AE;
+      text-decoration: underline;
     }
   }
 
   .mega-menu__link--parent {
     font-family: var(--menu-parent-font-family);
     font-style: var(--menu-parent-font-style);
-    font-weight: var(--menu-parent-font-weight);
-    font-size: var(--menu-parent-font-size);
+    font-weight: 500;
+    font-size: 16px;
     line-height: var(--menu-parent-font-line-height);
-    text-transform: var(--menu-parent-font-case);
-    color: var(--menu-parent-font-color);
+    text-transform: uppercase;
+    color: #1D425A;
+    margin-bottom: 24px;
 
     &:hover {
       color: var(--menu-parent-active-font-color);
@@ -553,6 +556,10 @@
 
     @media screen and (min-width: 990px) {
       grid-column: span var(--menu-columns-desktop);
+    }
+
+    .mega-menu__column:first-child {
+      border-right: 1px solid #E3E3E3;
     }
   }
 
