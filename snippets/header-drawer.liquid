@@ -327,12 +327,25 @@
                               assign render_link_image = true
                             endif
                           endif
+                          
+                          assign link_title_lower = link.title | downcase
+                          assign link_handle_lower = link.handle | downcase
+                          assign is_shop_by_theme = false
+                          if link_title_lower contains 'shop by theme' or link_handle_lower contains 'shop-by-theme' or link_handle_lower contains 'shop_by_theme'
+                            assign is_shop_by_theme = true
+                          endif
                         %}
+                        {% if is_shop_by_theme %}
+                          <div class="menu-drawer__theme-swatches details-content">
+                            {% render 'mega-menu-theme', parent_link: link, section: section %}
+                          </div>
+                        {% else %}
                         <ul
                           class="menu-drawer__menu menu-drawer__menu--childlist details-content{% if render_link_image and link.levels == 1 %} menu-drawer__menu--grid{% endif %}"
                           role="list"
                           tabindex="-1"
                         >
+                        {% endif %}
                   {% else %}
                     {%- comment -%}
                       Slide-in mode: Use details element with slide-in submenu when accordion is disabled
@@ -394,13 +407,27 @@
                                 assign render_link_image = true
                               endif
                             endif
+                            
+                            assign link_title_lower_slide = link.title | downcase
+                            assign link_handle_lower_slide = link.handle | downcase
+                            assign is_shop_by_theme_slide = false
+                            if link_title_lower_slide contains 'shop by theme' or link_handle_lower_slide contains 'shop-by-theme' or link_handle_lower_slide contains 'shop_by_theme'
+                              assign is_shop_by_theme_slide = true
+                            endif
                           %}
+                          {% if is_shop_by_theme_slide %}
+                            <div class="menu-drawer__theme-swatches">
+                              {% render 'mega-menu-theme', parent_link: link, section: section %}
+                            </div>
+                          {% else %}
                           <ul
                             class="menu-drawer__menu menu-drawer__menu--childlist{% if render_link_image and link.levels == 1 %} menu-drawer__menu--grid{% endif %}"
                             role="list"
                             tabindex="-1"
                           >
+                          {% endif %}
                   {% endif %}
+                          {% unless is_shop_by_theme or is_shop_by_theme_slide %}
                           {% assign first_accordion_open = false -%}
                           {%- for childlink in link.links -%}
                             <li
@@ -571,7 +598,10 @@
                               {%- endif -%}
                             </li>
                           {%- endfor -%}
+                          {% if is_shop_by_theme == false or is_shop_by_theme_slide == false %}
                         </ul>
+                          {% endif %}
+                          {% endunless %}
                         {% liquid
                           if eager_loading
                             if block_settings.menu_style == 'featured_collections'
