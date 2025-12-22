@@ -1,10 +1,13 @@
 {% # theme-check-disable %}
+{% comment %} Google Fonts preconnect {% endcomment %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 {% comment %} Google Fonts: Outfit with all weights (100-900) {% endcomment %}
 {%- if settings.type_body_font.family == 'Outfit' or settings.type_subheading_font.family == 'Outfit' or settings.type_heading_font.family == 'Outfit' or settings.type_accent_font.family == 'Outfit' -%}
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 {%- endif -%}
+{% comment %} Google Fonts: Sacramento (used in image-with-text block) {% endcomment %}
+<link href="https://fonts.googleapis.com/css2?family=Sacramento&display=swap" rel="stylesheet">
 {%- unless settings.type_body_font.system? -%}
   <link
     rel="preload"

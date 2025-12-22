@@ -109,6 +109,7 @@
 
     /* When the image is nested in a group, section, etc, respect the parent's horizontal alignment */
     justify-content: var(--horizontal-alignment, 'inline-start');
+    height: 100%;
   }
 
   .image-with-text-block__wrapper {
@@ -125,31 +126,76 @@
     aspect-ratio: var(--ratio);
     width: 100%;
     display: block;
+    height: 100%;
   }
 
   .image-with-text-block__card {
     position: absolute;
-    bottom: 20px;
+    bottom: 0px;
     left: 20px;
     right: 20px;
-    padding: 20px;
-    border-radius: 8px;
+    padding: 14px;
+    background-color: #FFFAF4;
+    max-width: 383px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 0;
+    margin-bottom: 32px;
+    display: flex;
+    flex-direction: column;
   }
 
   .image-with-text-block__heading {
-    margin: 0 0 8px 0;
-    font-size: 1.5rem;
-    font-weight: bold;
+    margin: 0 0 0 0;
+    font-family: Sacramento, sans-serif;
+    font-weight: 400;
+    font-size: 30.48px;
+    line-height: 150%;
+    text-align: center;
+    text-transform: lowercase;
+    color: #1D425A;
   }
 
   .image-with-text-block__sub-heading {
-    margin: 0 0 12px 0;
-    font-size: 1rem;
+    margin: 0 0 14px 0;
+    font-weight: 500;
+    font-size: 25.09px;
+    line-height: 150%;
+    text-align: center;
+    text-transform: uppercase;
+    color: #1D425A;
   }
 
   .image-with-text-block__link {
     display: inline-block;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 140%;
+    text-align: center;
+    text-transform: uppercase;
     text-decoration: underline;
+    color: #7295BB;
+  }
+
+  @media (max-width: 749px) {
+    .image-with-text-block__card {
+      margin-bottom: 9px;
+    }
+    .image-with-text-block__heading {
+      font-size: 22px;
+      line-height: 150%;
+    }
+
+    .image-with-text-block__sub-heading {
+      font-size: 25.09px;
+      line-height: 150%;
+    }
+
+    .image-with-text-block__link {
+      font-size: 16px;
+      line-height: 140%;
+      text-transform: uppercase;
+    }
   }
 {% endstylesheet %}
 
