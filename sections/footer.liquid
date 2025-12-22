@@ -44,6 +44,11 @@
   >
     {% content_for 'blocks' %}
   </div>
+  {% if section.settings.copyright_text != blank %}
+    <div class="footer-copyright">
+      {{ section.settings.copyright_text }}
+    </div>
+  {% endif %}
 </div>
 
 {% stylesheet %}
@@ -53,6 +58,7 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--footer-gap);
+    padding-bottom: 0;
   }
 
   @media screen and (min-width: 750px) and (max-width: 989px) {
@@ -89,6 +95,16 @@
     .footer-content--isolated-grid-item-desktop > :last-child {
       grid-column: 1 / -1;
     }
+  }
+
+  .footer-copyright {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+    text-align: center;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    border-top: 1px solid #E3E3E3;
   }
 {% endstylesheet %}
 
@@ -206,6 +222,16 @@
       "step": 1,
       "unit": "px",
       "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Copyright"
+    },
+    {
+      "type": "text",
+      "id": "copyright_text",
+      "label": "Copyright Text",
+      "default": "© 2025, LittleIA., All rights reserved"
     }
   ],
   "presets": [

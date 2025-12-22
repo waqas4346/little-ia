@@ -131,6 +131,70 @@
   .menu--plus .icon-caret {
     display: none;
   }
+
+  /* Footer menu specific styles */
+  footer .menu__heading,
+  .footer-content .menu__heading {
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 26px;
+    text-transform: uppercase;
+  }
+
+  @media screen and (max-width: 749px) {
+    footer .menu__heading,
+    .footer-content .menu__heading {
+      font-size: 16px;
+    }
+
+    footer .menu__details,
+    .footer-content .menu__details {
+      border-bottom: 0.5px solid #00000014;
+    }
+
+    footer .menu__heading {
+      padding: 20px 0;
+    }
+
+    .footer-content {
+      gap: 0;
+    }
+
+    footer .menu:not(:has(.menu__heading--empty)) .details-content,
+    .footer-content .menu:not(:has(.menu__heading--empty)) .details-content {
+      padding-bottom: 20px;
+    }
+  }
+
+  footer .menu__item a,
+  .footer-content .menu__item a {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 140%;
+  }
+
+  footer .menu__item a:hover,
+  .footer-content .menu__item a:hover {
+    color: #6688AE;
+    text-decoration: underline;
+  }
+
+  footer .menu__item + .menu__item,
+  .footer-content .menu__item + .menu__item {
+    margin-block-start: 10px;
+  }
+
+  footer .menu:not(:has(.menu__heading--empty)) .details-content,
+  .footer-content .menu:not(:has(.menu__heading--empty)) .details-content {
+    margin-block-start: 3px;
+  }
+
+  @media screen and (max-width: 749px) {
+    footer .menu--accordion .details-content,
+    .footer-content .menu--accordion .details-content {
+      margin-block-start: 3px;
+    }
+  }
 {% endstylesheet %}
 
 {% schema %}

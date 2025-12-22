@@ -13,6 +13,7 @@
             "image_upload": "shopify:\/\/shop_images\/little-ia-logo.png",
             "icon_width": 158,
             "image": "shopify:\/\/shop_images\/footer-image.png",
+            "hide_image_on_mobile": true,
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
@@ -90,7 +91,9 @@
             "text": "<p>Contact Us<\/p>",
             "text_preset": "h3",
             "email": "support@little-ia.com",
-            "phone": "Whatsapp - +971 50 579 5125",
+            "email_icon": "shopify:\/\/shop_images\/email-icon.png",
+            "phone": "+971 50 579 5125",
+            "whatsapp_icon": "shopify:\/\/shop_images\/whatsapp-icon.png",
             "text_2": "<p>Follow Us<\/p>",
             "text_2_preset": "h3",
             "show_social_icons": true,
@@ -131,7 +134,8 @@
         "gap": 20,
         "color_scheme": "scheme-6",
         "padding-block-start": 30,
-        "padding-block-end": 30
+        "padding-block-end": 30,
+        "copyright_text": "© 2025, LittleIA., All rights reserved"
       }
     },
     "footer_utilities_jLGE8U": {
