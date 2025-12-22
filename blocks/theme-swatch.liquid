@@ -90,12 +90,15 @@
     align-items: center;
     text-decoration: none;
     color: inherit;
-    transition: transform var(--animation-speed) var(--animation-easing);
     width: 100%;
   }
 
-  .theme-swatch-link:hover {
-    transform: translateY(-4px);
+  .theme-swatch-link:hover .theme-swatch-title {
+    color: #6688AE;
+    text-decoration: underline;
+    text-decoration-color: currentColor;
+    text-decoration-thickness: 0.075em;
+    text-underline-offset: 0.125em;
   }
 
   .theme-swatch-image-wrapper {
@@ -120,13 +123,20 @@
   }
 
   .theme-swatch-title {
-    font-family: var(--font-body-family);
-    font-size: var(--font-size-base);
-    font-weight: var(--font-body-weight);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 160%;
+    text-transform: uppercase;
     color: var(--color-foreground);
     text-align: center;
-    line-height: 1.3;
     margin-top: var(--padding-2xs);
+  }
+
+  @media screen and (min-width: 750px) {
+    .theme-swatch-title {
+      font-size: 16px;
+    }
   }
 {% endstylesheet %}
 
