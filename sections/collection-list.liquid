@@ -25,12 +25,26 @@
     section-resource-list
     spacing-style
     gap-style
+    collection-list-section
   "
   style="
     {% render 'spacing-style', settings: section.settings %}
     {% render 'gap-style', value: section.settings.gap %}
   "
 >
+  <div class="collection-list-header">
+    {% if section.settings.top_label != blank %}
+      <div class="collection-list-top-label">
+        <span class="collection-list-top-label-text">{{ section.settings.top_label }}</span>
+      </div>
+    {% endif %}
+    {% if section.settings.section_title != blank %}
+      <div class="collection-list-section-title">
+        <span class="collection-list-section-title-label">{{ section.settings.section_title }}</span>
+      </div>
+    {% endif %}
+  </div>
+
   <div class="section-resource-list__content">
     {%- content_for 'blocks' -%}
   </div>
@@ -69,6 +83,145 @@
     test_id: 'collections-list-grid'
   %}
 </div>
+
+<style>
+  .collection-list-header {
+    text-align: center;
+  }
+
+  .collection-list-top-label {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .collection-list-top-label-text {
+    font-family: 'Sacramento', cursive;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 38px;
+    line-height: 150%;
+    letter-spacing: 0%;
+    text-align: center;
+    color: #7295BB;
+    display: block;
+  }
+
+  .collection-list-section-title {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .collection-list-section-title-label {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-foreground, #1a1a1a);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: block;
+  }
+
+  /* Collection card image styling for slider */
+  [data-testid="collections-list-grid"] .collection-card__image {
+    width: 323px;
+    height: 417px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 53.36%, #000000 121.94%), url("image.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* Desktop spacing between collection cards */
+  [data-testid="collections-list-grid"] {
+    --resource-list-column-gap-desktop: 12px;
+    --resource-list-row-gap-desktop: 12px;
+    --column-count: 4;
+  }
+
+  [data-testid="collections-list-grid"] .collection-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Collection title overlay */
+  [data-testid="collections-list-grid"] .collection-card {
+    position: relative;
+  }
+
+  [data-testid="collections-list-grid"] .collection-card__content {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 23px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    pointer-events: none;
+    height: auto;
+  }
+
+  [data-testid="collections-list-grid"] .collection-card [data-block-type="collection-title"] .text-block,
+  [data-testid="collections-list-grid"] .collection-card .collection-title .text-block,
+  [data-testid="collections-list-grid"] .collection-card__content .text-block {
+    text-align: center;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 150%;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (max-width: 768px) {
+    .collection-list-section-title-label {
+      font-size: 1.25rem;
+    }
+
+    .collection-list-top-label-text {
+      font-family: 'Sacramento', cursive;
+      font-weight: 400;
+      font-style: normal;
+      font-size: 30px;
+      line-height: 150%;
+      letter-spacing: 0%;
+      text-align: center;
+      color: #7295BB;
+    }
+
+    .collection-list-section-title {
+      margin-bottom: 8px;
+    }
+
+    [data-testid="collections-list-grid"] .collection-card__image {
+      width: 173px;
+      height: 219px;
+      background: linear-gradient(180.06deg, rgba(0, 0, 0, 0) 45.21%, #000000 121.86%), url("image.png");
+    }
+
+    /* Mobile spacing between collection cards */
+    [data-testid="collections-list-grid"] {
+      --resource-list-column-gap-desktop: 4px;
+      --resource-list-row-gap-desktop: 4px;
+      --column-count: 1;
+    }
+
+    [data-testid="collections-list-grid"] .collection-card__content {
+      bottom: 13px;
+    }
+
+    [data-testid="collections-list-grid"] .collection-card [data-block-type="collection-title"] .text-block,
+    [data-testid="collections-list-grid"] .collection-card .collection-title .text-block,
+    [data-testid="collections-list-grid"] .collection-card__content .text-block {
+      font-size: 14px;
+      line-height: 150%;
+    }
+  }
+</style>
 
 {% schema %}
 {
@@ -114,6 +267,20 @@
       "type": "collection_list",
       "id": "collection_list",
       "label": "t:settings.collection_list"
+    },
+    {
+      "type": "text",
+      "id": "top_label",
+      "label": "Top Label",
+      "default": "Explore",
+      "info": "Text displayed above the section title"
+    },
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section Title",
+      "default": "Shop by collection",
+      "info": "Title displayed above the collection cards"
     },
     {
       "type": "header",
@@ -715,7 +882,7 @@
         "collection_list": [],
         "layout_type": "carousel",
         "carousel_on_mobile": false,
-        "columns": 3,
+        "columns": 4,
         "mobile_columns": "2",
         "columns_gap": 8,
         "rows_gap": 8,
