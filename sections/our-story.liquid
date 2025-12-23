@@ -1,0 +1,320 @@
+
+<div
+  class="section section--{{ section.settings.section_width }} disable-section-top-offset our-story spacing-style"
+  style="
+    {%- render 'spacing-style', settings: section.settings %}
+    {% render 'border-override', settings: section.settings %}
+  "
+>
+  <div class="our-story__container color-{{ section.settings.color_scheme }}">
+    {% if section.settings.image != blank %}
+      <div class="our-story__image">
+        {{
+          section.settings.image
+          | image_url: width: 2000
+          | image_tag: loading: 'lazy', class: 'our-story__image-element'
+        }}
+      </div>
+    {% endif %}
+
+    <div class="our-story__content">
+      {% if section.settings.logo != blank %}
+        <div class="our-story__logo">
+          {{
+            section.settings.logo
+            | image_url: width: 200
+            | image_tag: loading: 'lazy', class: 'our-story__logo-element'
+          }}
+        </div>
+      {% endif %}
+
+      {% if section.settings.title_prefix != blank or section.settings.title != blank %}
+        <h2 class="our-story__title">
+          {% if section.settings.title_prefix != blank %}
+            <span class="our-story__title-prefix">{{ section.settings.title_prefix }}</span>
+          {% endif %}
+          {% if section.settings.title != blank %}
+            <span class="our-story__title-main">{{ section.settings.title }}</span>
+          {% endif %}
+        </h2>
+      {% endif %}
+
+      {% if section.settings.body != blank %}
+        <div class="our-story__body rte">
+          {{ section.settings.body }}
+        </div>
+      {% endif %}
+
+      {% if section.settings.name != blank %}
+        <div class="our-story__name">{{ section.settings.name }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .our-story.section--page-width > * {
+    grid-column: 1 / -1;
+  }
+
+  @media screen and (min-width: 750px) {
+    .our-story.section--page-width > * {
+      grid-column: 2;
+    }
+  }
+
+  .our-story__container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .our-story__container {
+      flex-direction: row;
+    }
+  }
+
+  .our-story__image {
+    width: 100%;
+    overflow: hidden;
+    max-height: 546px;
+    max-width: 614px;
+  }
+
+  .our-story__image-element {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+  }
+
+  .our-story__content {
+    display: flex;
+    flex-direction: column;
+    padding: 16px var(--page-margin);
+    position: relative;
+  }
+
+  @media screen and (min-width: 750px) {
+    .our-story__content {
+      padding: 33px 82px 33px 71px;
+    }
+  }
+
+  .our-story__logo {
+    display: none;
+  }
+
+  @media screen and (min-width: 750px) {
+    .our-story__logo {
+      display: block;
+      position: absolute;
+      top: 0px;
+      right: 45px;
+    }
+  }
+
+  .our-story__logo-element {
+    max-width: 100px;
+    height: auto;
+    display: block;
+  }
+
+  .our-story__title {
+    margin: 0 0 11px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  @media screen and (min-width: 750px) {
+    .our-story__title {
+      margin-bottom: 24px;
+    }
+  }
+
+  .our-story__title-prefix {
+    font-family: 'Sacramento', cursive;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 0.9;
+    color: #7295BB;
+  }
+
+  @media screen and (min-width: 750px) {
+    .our-story__title-prefix {
+      font-size: 38px;
+    }
+  }
+
+  .our-story__title-main {
+    font-family: 'Futura PT', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
+    text-transform: uppercase;
+    margin-left: 0.5em;
+  }
+
+  .our-story__body {
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 150%;
+    margin-bottom: 19px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .our-story__body {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+  }
+
+  .our-story__body p {
+    margin: 0 0 1rem 0;
+  }
+
+  .our-story__body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .our-story__name {
+    font-family: 'Sacramento', cursive;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 140%;
+    margin-top: 0.5rem;
+    color: #7295BB;
+  }
+
+  @media screen and (min-width: 750px) {
+    .our-story__name {
+      font-size: 26px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Our Story",
+  "tag": "section",
+  "class": "our-story-wrapper section-wrapper",
+  "disabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo",
+      "info": "Logo appears in the top right of content (desktop only)"
+    },
+    {
+      "type": "text",
+      "id": "title_prefix",
+      "label": "Title prefix",
+      "info": "This text will use a different font family (e.g., 'from')",
+      "default": "from"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Our Family, To Yours"
+    },
+    {
+      "type": "richtext",
+      "id": "body",
+      "label": "Body",
+      "default": "<p>Tell your story here. This is a great place to share the history of your brand or business.</p>"
+    },
+    {
+      "type": "text",
+      "id": "name",
+      "label": "Name",
+      "default": "Author Name"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page width"
+        },
+        {
+          "value": "full-width",
+          "label": "Full width"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Our Story",
+      "category": "Text",
+      "settings": {
+        "title_prefix": "from",
+        "title": "Our Family, To Yours",
+        "body": "<p>Tell your story here. This is a great place to share the history of your brand or business.</p>",
+        "name": "Author Name"
+      }
+    }
+  ]
+}
+{% endschema %}
+

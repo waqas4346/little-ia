@@ -2283,7 +2283,7 @@
         "padding-block-end": 48
       }
     },
-    "featured_blog_posts_fTKGFm": {
+    "featured_blog_posts_my8KTm": {
       "type": "featured-blog-posts",
       "blocks": {
         "static-blog-title": {
@@ -2318,7 +2318,7 @@
           "name": "t:names.blog_card",
           "static": true,
           "settings": {
-            "alignment": "left",
+            "alignment": "center",
             "gap": 8,
             "inherit_color_scheme": true,
             "color_scheme": "",
@@ -2349,9 +2349,9 @@
               "name": "t:names.title",
               "static": true,
               "settings": {
-                "type_preset": "rte",
+                "type_preset": "custom",
                 "font": "var(--font-body--family)",
-                "font_size": "1rem",
+                "font_size": "1.25rem",
                 "line_height": "normal",
                 "letter_spacing": "normal",
                 "case": "none",
@@ -2371,6 +2371,7 @@
             "blog-post-info-text": {
               "type": "_blog-post-info-text",
               "name": "t:names.details",
+              "disabled": true,
               "static": true,
               "settings": {
                 "show_date": true,
@@ -2386,6 +2387,7 @@
             "blog-post-description": {
               "type": "_blog-post-description",
               "name": "t:names.excerpt",
+              "disabled": true,
               "static": true,
               "settings": {
                 "type_preset": "rte",
@@ -2405,24 +2407,41 @@
           "block_order": []
         }
       },
-      "name": "t:names.blog_posts_carousel",
+      "disabled": true,
+      "name": "t:names.blog_posts_grid",
       "settings": {
-        "blog": "",
-        "layout_type": "carousel",
-        "carousel_on_mobile": true,
-        "post_limit": 5,
-        "columns": 3,
+        "blog": "parenting",
+        "layout_type": "grid",
+        "carousel_on_mobile": false,
+        "post_limit": 4,
+        "columns": 4,
         "mobile_columns": "2",
         "mobile_card_size": "60cqw",
         "columns_gap": 8,
-        "rows_gap": 16,
+        "rows_gap": 8,
         "icons_style": "arrow",
-        "icons_shape": "circle",
+        "icons_shape": "none",
         "section_width": "page-width",
         "gap": 12,
-        "color_scheme": "",
+        "color_scheme": "scheme-e61ffaea-b125-47f9-97f4-7f39823bb857",
         "padding-block-start": 48,
         "padding-block-end": 48
+      }
+    },
+    "our_story_jzVD6A": {
+      "type": "our-story",
+      "name": "Our Story",
+      "settings": {
+        "image": "shopify:\/\/shop_images\/out-story.png",
+        "logo": "shopify:\/\/shop_images\/little-ia-logo.png",
+        "title_prefix": "from",
+        "title": "Our Family, To Yours",
+        "body": "<p>Many people ask how Little IA began. The truth is, it started with a blanket,or rather, four of them. All gifted with love, but all in tatters after just a few washes.<br\/><br\/>I realised parents deserved better: something softer, safer, and far more lasting. Fabrics that cared for delicate newborn skin and designs that <br\/>felt truly unique.<br\/><br\/>So I set out to create treasures families could keep. And fittingly, our very first collection arrived the same week as my third child, a story stitched with love from the start.<\/p>",
+        "name": "– roshni khemlani mehta",
+        "section_width": "page-width",
+        "color_scheme": "scheme-9fa4efbe-6bfc-4f4c-8255-10dd25c96a2e",
+        "padding-block-start": 0,
+        "padding-block-end": 0
       }
     },
     "section_iaYWpi": {
@@ -2535,7 +2554,8 @@
     "theme_swatches_KYBFfi",
     "section_EfcYck",
     "collection_list_7UkYMU",
-    "featured_blog_posts_fTKGFm",
+    "featured_blog_posts_my8KTm",
+    "our_story_jzVD6A",
     "section_iaYWpi"
   ]
 }
