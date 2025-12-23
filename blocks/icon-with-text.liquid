@@ -1,0 +1,204 @@
+
+{% liquid
+  assign block_settings = block.settings
+  assign alignment_class = 'icon-with-text--' | append: block_settings.alignment
+  assign justify_content = 'flex-start'
+  if block_settings.space_between
+    assign justify_content = 'space-between'
+  endif
+  assign gap_value = block_settings.gap | default: 16
+  assign icon_size_desktop = block_settings.icon_size | default: 48
+  if block_settings.icon_size_mobile != blank and block_settings.icon_size_mobile > 0
+    assign icon_size_mobile = block_settings.icon_size_mobile
+  else
+    assign icon_size_mobile = icon_size_desktop
+  endif
+%}
+
+<div
+  class="icon-with-text icon-with-text--{{ block.id }} {{ alignment_class }}"
+  style="--gap: {{ gap_value }}px; --justify-content: {{ justify_content }};"
+  {{ block.shopify_attributes }}
+>
+  {% if block_settings.image_upload != blank %}
+    <div class="icon-with-text__icon" style="--icon-size-desktop: {{ icon_size_desktop }}px; --icon-size-mobile: {{ icon_size_mobile }}px;">
+      {{
+        block_settings.image_upload
+        | image_url: width: 200
+        | image_tag:
+          loading: 'lazy',
+          width: block_settings.image_upload.width,
+          height: block_settings.image_upload.height,
+          alt: block_settings.image_upload.alt | default: block_settings.heading
+      }}
+    </div>
+  {% endif %}
+
+  <div class="icon-with-text__content">
+    {% if block_settings.heading != blank %}
+      <div class="icon-with-text__heading">{{ block_settings.heading }}</div>
+    {% endif %}
+    {% if block_settings.sub_heading != blank %}
+      <p class="icon-with-text__sub-heading">{{ block_settings.sub_heading }}</p>
+    {% endif %}
+  </div>
+</div>
+
+{% stylesheet %}
+  .icon-with-text {
+    display: flex;
+    align-items: center;
+    gap: var(--gap, 16px);
+    justify-content: var(--justify-content, flex-start);
+    width: fit-content;
+  }
+
+  .icon-with-text--vertical {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .icon-with-text--horizontal {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .icon-with-text__icon {
+    flex-shrink: 0;
+  }
+
+  .icon-with-text__icon img {
+    display: block;
+    width: var(--icon-size-desktop, 48px);
+    height: var(--icon-size-desktop, 48px);
+    object-fit: contain;
+  }
+
+  .icon-with-text__content {
+    flex: 1;
+  }
+
+  .icon-with-text--vertical .icon-with-text__content {
+    width: 100%;
+  }
+
+  .icon-with-text__heading {
+    margin: 0;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 176%;
+    color: #1D425A;
+  }
+
+  .icon-with-text__sub-heading {
+    margin: 0;
+    font-family: Sacramento, sans-serif;
+    font-weight: 400;
+    font-size: 32px;
+    line-height: 160%;
+    color: #7295BB;
+  }
+
+  .icon-with-text--vertical .icon-with-text__heading,
+  .icon-with-text--vertical .icon-with-text__sub-heading {
+    text-align: center;
+  }
+
+  @media (max-width: 749px) {
+    .icon-with-text__icon img {
+      width: var(--icon-size-mobile, var(--icon-size-desktop, 48px));
+      height: var(--icon-size-mobile, var(--icon-size-desktop, 48px));
+    }
+
+    .icon-with-text__heading {
+      font-size: 16px;
+      line-height: 160%;
+    }
+
+    .icon-with-text__sub-heading {
+      font-size: 22px;
+      line-height: 160%;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Icon with text",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image_upload",
+      "label": "Icon upload"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon size (Desktop)",
+      "min": 16,
+      "max": 200,
+      "step": 2,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "icon_size_mobile",
+      "label": "Icon size (Mobile)",
+      "min": 0,
+      "max": 200,
+      "step": 2,
+      "unit": "px",
+      "default": 0,
+      "info": "If set to 0, will use desktop size"
+    },
+    {
+      "type": "richtext",
+      "id": "heading",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "sub_heading",
+      "label": "Sub heading"
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Alignment",
+      "options": [
+        {
+          "value": "horizontal",
+          "label": "Horizontal"
+        },
+        {
+          "value": "vertical",
+          "label": "Vertical"
+        }
+      ],
+      "default": "horizontal"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    }
+  ],
+  "presets": [
+    {
+      "name": "Icon with text",
+      "category": "t:categories.basic"
+    }
+  ]
+}
+{% endschema %}
+
