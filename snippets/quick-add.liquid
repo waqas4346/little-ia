@@ -10,7 +10,8 @@
 {% liquid
   assign product_form_id = 'QuickAdd-ProductForm-' | append: product.id | append: '-' | append: block.id
   assign add_to_cart_text = 'actions.add' | t
-  assign choose_options_text = 'actions.choose' | t
+  # Override copy for the modal trigger button
+  assign choose_options_text = 'QUICK ADD'
   assign color_scheme = color_scheme | default: settings.quick_add_color_scheme
 
   # Logic to determine which variant to use (matching swatch selection logic from product-card)
@@ -97,7 +98,10 @@
             aria-hidden="true"
             class="svg-wrapper add-to-cart-icon quick-add__button-icon"
           >
-            {{- 'icon-add-to-cart.svg' | inline_asset_content -}}
+            <svg width="30" height="35" viewBox="0 0 30 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="14.6983" cy="17.3631" r="13.0225" stroke="#7295BB" />
+              <path d="M14.1746 22.6088V17.6275H8.91655V16.4199H14.1746V11.4386H15.4325V16.4199H20.6906V17.6275H15.4325V22.6088H14.1746Z" fill="#7295BB" />
+            </svg>
           </span>
           <span class="add-to-cart-text__content is-visually-hidden-mobile quick-add__button-text">
             <span>
@@ -145,11 +149,11 @@
   .quick-add__button {
     display: var(--quick-add-mobile-display, none);
     align-items: center;
-    background: linear-gradient(var(--color-background) 0 100%) padding-box;
-    padding: 0;
-    border-radius: 50px;
-    border: 2px solid hsl(0 0% 0% / 0.15);
-    height: var(--button-size-md);
+    background: #FFFFFF;
+    padding: 10px;
+    border-radius: 0;
+    border: none;
+    height: auto;
     cursor: pointer;
     opacity: var(--quick-add-mobile-opacity, 0);
     overflow: hidden;
@@ -169,18 +173,6 @@
       display: grid;
     }
 
-    &:is(:hover, :focus-visible) {
-      .add-to-cart-text__content {
-        grid-template-columns: 1fr;
-
-        span span {
-          opacity: 1;
-          translate: 0 0;
-          filter: blur(0);
-        }
-      }
-    }
-
     @media screen and (min-width: 750px) {
       display: var(--quick-add-display, flex);
       opacity: 0;
@@ -188,7 +180,7 @@
   }
 
   .quick-add__button .add-to-cart-text {
-    background: var(--color-background);
+    background: #FFFFFF;
     overflow: hidden;
     border-radius: 50px;
     height: 100%;
@@ -208,17 +200,25 @@
 
   .quick-add__button .add-to-cart-text__content {
     display: grid;
-    grid-template-columns: 0fr;
+    grid-template-columns: 1fr;
 
     & > span {
       min-width: 0;
 
       span {
         padding-right: var(--padding-sm);
-        opacity: 0;
+        opacity: 1;
         display: inline-block;
-        filter: blur(2px);
-        translate: 0.5ch 0;
+        filter: blur(0);
+        translate: 0 0;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 500;
+        font-style: normal;
+        font-size: 16px;
+        line-height: 140%;
+        letter-spacing: 0%;
+        text-transform: uppercase;
+        color: #7295BB;
       }
     }
   }
