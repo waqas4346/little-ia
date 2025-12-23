@@ -455,7 +455,7 @@
         {{section.settings.section_width}}
         {% if request.design_mode %}hero__content-wrapper--design-mode{% endif %}
       "
-      style="{% render 'layout-panel-style', settings: section.settings %}"
+      style="{% render 'layout-panel-style', settings: section.settings %}{% if section.settings.content_position == 'bottom-left' %} --horizontal-alignment: flex-start; --vertical-alignment: flex-end; --vertical-alignment-mobile: flex-end;{% endif %}"
     >
       {% content_for 'blocks' %}
     </div>
@@ -681,6 +681,25 @@
       }
     }
   }
+
+  /* Hero heading styles */
+  .hero .text-block:is(.h1, .h2) > * {
+    font-family: 'Sacramento', cursive;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 38px;
+    line-height: 150%;
+    text-align: center;
+    text-transform: lowercase;
+    color: #fffcf8;
+  }
+
+  @media screen and (max-width: 749px) {
+    .hero .text-block:is(.h1, .h2) > * {
+      font-size: 34px;
+      line-height: 150%;
+    }
+  }
 {% endstylesheet %}
 
 {% schema %}
@@ -874,6 +893,22 @@
     {
       "type": "header",
       "content": "t:content.layout"
+    },
+    {
+      "type": "select",
+      "id": "content_position",
+      "label": "Content position",
+      "options": [
+        {
+          "value": "default",
+          "label": "Default"
+        },
+        {
+          "value": "bottom-left",
+          "label": "Bottom left"
+        }
+      ],
+      "default": "default"
     },
     {
       "type": "select",
