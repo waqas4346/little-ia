@@ -16,7 +16,6 @@
     section
     section--{{ section.settings.section_width }}
     color-{{ section.settings.color_scheme }}
-    section-resource-list
     spacing-style
     gap-style
   "
@@ -27,6 +26,12 @@
 >
   {% if show_tabs %}
     <div class="product-list-header-wrapper">
+      {% if section.settings.top_label != blank %}
+        <div class="product-list-top-label">
+          <span class="product-list-top-label-text">{{ section.settings.top_label }}</span>
+        </div>
+      {% endif %}
+      
       {% if section.settings.section_title != blank %}
         <div class="product-list-section-title">
           <span class="product-list-section-title-label">{{ section.settings.section_title }}</span>
@@ -158,13 +163,27 @@
 </div>
 
 <style>
-  .product-list-header-wrapper {
-    margin-bottom: 2rem;
+
+  .product-list-top-label {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .product-list-top-label-text {
+    font-family: 'Sacramento', cursive;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 38px;
+    line-height: 150%;
+    letter-spacing: 0%;
+    text-align: center;
+    color: #7295BB;
+    display: block;
   }
 
   .product-list-section-title {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 16px;
   }
 
   .product-list-section-title-label {
@@ -179,14 +198,14 @@
   .product-list-tabs-container {
     display: flex;
     justify-content: center;
-    margin-bottom: 2rem;
+    margin-bottom: 24px;
     overflow-x: auto;
     padding-bottom: 10px;
   }
   
   .product-list-tabs {
     display: flex;
-    gap: 2rem;
+    gap: 10px;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
@@ -195,16 +214,19 @@
   .product-list-tab {
     background: transparent;
     border: none;
-    padding: 0.5rem 0;
+    padding: 8px 16px;
     cursor: pointer;
-    font-size: 1rem;
-    font-weight: normal;
-    color: var(--color-foreground, #1a1a1a);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20.3px;
+    letter-spacing: 0%;
+    text-align: center;
+    text-transform: uppercase;
+    color: #1D425A;
     text-decoration: none;
     position: relative;
     transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
   
   .product-list-tab:hover {
@@ -212,11 +234,14 @@
   }
   
   .product-list-tab.active {
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 4px;
-    opacity: 1;
-    font-weight: 600;
+
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    color: #1D425A;
+    padding: 8px 16px;
+    border-bottom: 2px solid #1D425A;
   }
 
   .product-list-tab.active::after {
@@ -233,41 +258,97 @@
   }
   
   .product-list-footer {
-    margin-top: 3rem;
+    margin-top: 32px;
     text-align: center;
   }
 
   .product-list-shop-all-btn {
     display: inline-block;
-    padding: 0.75rem 2rem;
-    border: 1px solid var(--color-foreground, #1a1a1a);
+    padding: 10px;
+    border: 1px solid #7295BB;
     background: transparent;
-    color: var(--color-foreground, #1a1a1a);
+    color: #7295BB;
     text-decoration: none;
-    font-size: 0.875rem;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
     font-weight: 500;
-    letter-spacing: 0.1em;
+    font-size: 16px;
+    line-height: 140%;
     text-transform: uppercase;
     transition: all 0.3s ease;
     border-radius: 0;
   }
 
   .product-list-shop-all-btn:hover {
-    background: var(--color-foreground, #1a1a1a);
-    color: var(--color-background, #ffffff);
+    opacity: 0.8;
   }
 
   @media (max-width: 768px) {
     .product-list-tabs {
-      gap: 1rem;
+      gap: 10px;
     }
     
     .product-list-tab {
-      font-size: 0.875rem;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20.3px;
+      letter-spacing: 0%;
+      text-align: center;
+      text-transform: uppercase;
+      padding: 8px;
+      color: #1D425A;
+    }
+
+    .product-list-tab.active {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 100%;
+      letter-spacing: 0%;
+      text-align: center;
+      text-transform: uppercase;
+      padding: 8px;
+      color: #1D425A;
+    }
+
+    .product-list-shop-all-btn {
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 140%;
+      text-transform: uppercase;
+      color: #7295BB;
+      padding: 10px;
+      border: 1px solid #7295BB;
     }
 
     .product-list-section-title-label {
       font-size: 1.25rem;
+    }
+
+    .product-list-top-label-text {
+      font-family: 'Sacramento', cursive;
+      font-weight: 400;
+      font-style: normal;
+      font-size: 30px;
+      line-height: 150%;
+      letter-spacing: 0%;
+      text-align: center;
+      color: #7295BB;
+    }
+
+    .product-list-section-title {
+      margin-bottom: 8px;
+    }
+
+    .product-list-tabs-container {
+      margin-bottom: 16px;
+    }
+
+    .product-list-footer {
+      margin-top: 30px;
     }
   }
 </style>
@@ -318,9 +399,7 @@
         if (shopAllBtn && collectionsData[targetHandle]) {
            const data = collectionsData[targetHandle];
            shopAllBtn.href = data.url;
-           if (shopAllBtn) {
-            shopAllBtn.textContent = data.title;
-          }
+           shopAllBtn.textContent = 'SHOP ALL ' + data.title.toUpperCase();
            shopAllBtn.setAttribute('data-collection-handle', targetHandle);
         }
       });
@@ -358,6 +437,13 @@
       "label": "Collections",
       "limit": 5,
       "info": "Select multiple collections to enable tabs."
+    },
+    {
+      "type": "text",
+      "id": "top_label",
+      "label": "Top Label",
+      "default": "shop",
+      "info": "Text displayed above the section title"
     },
     {
       "type": "text",
