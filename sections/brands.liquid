@@ -1,0 +1,462 @@
+<div
+  class="section section--{{ section.settings.section_width }} disable-section-top-offset brands spacing-style"
+  style="
+    {%- render 'spacing-style', settings: section.settings %}
+    {% render 'border-override', settings: section.settings %}
+  "
+>
+  <div class="brands__container color-{{ section.settings.color_scheme }}">
+    {% if section.settings.image != blank %}
+      <div class="brands__image">
+        {{
+          section.settings.image
+          | image_url: width: 2000
+          | image_tag: loading: 'lazy', class: 'brands__image-element'
+        }}
+      </div>
+    {% endif %}
+
+    <div class="brands__content">
+      <div class="brands__header">
+        {% if section.settings.logo != blank %}
+          <div class="brands__logo">
+            {{
+              section.settings.logo
+              | image_url: width: 200
+              | image_tag: loading: 'lazy', class: 'brands__logo-element'
+            }}
+          </div>
+        {% endif %}
+
+        {% if section.settings.title != blank %}
+          <h2 class="brands__title">{{ section.settings.title }}</h2>
+        {% endif %}
+      </div>
+
+      {% if section.settings.body != blank %}
+        <div class="brands__body rte">
+          {{ section.settings.body }}
+        </div>
+      {% endif %}
+
+      {% if section.settings.brand_logo_1 != blank or section.settings.brand_logo_2 != blank or section.settings.brand_logo_3 != blank or section.settings.brand_logo_4 != blank or section.settings.brand_logo_5 != blank or section.settings.brand_logo_6 != blank %}
+        <div class="brands__logos">
+          {% if section.settings.brand_logo_1 != blank %}
+            <div class="brands__logo-item">
+              {{
+                section.settings.brand_logo_1
+                | image_url: width: 300
+                | image_tag: loading: 'lazy', class: 'brands__logo-item-element'
+              }}
+            </div>
+          {% endif %}
+          {% if section.settings.brand_logo_2 != blank %}
+            <div class="brands__logo-item">
+              {{
+                section.settings.brand_logo_2
+                | image_url: width: 300
+                | image_tag: loading: 'lazy', class: 'brands__logo-item-element'
+              }}
+            </div>
+          {% endif %}
+          {% if section.settings.brand_logo_3 != blank %}
+            <div class="brands__logo-item">
+              {{
+                section.settings.brand_logo_3
+                | image_url: width: 300
+                | image_tag: loading: 'lazy', class: 'brands__logo-item-element'
+              }}
+            </div>
+          {% endif %}
+          {% if section.settings.brand_logo_4 != blank %}
+            <div class="brands__logo-item">
+              {{
+                section.settings.brand_logo_4
+                | image_url: width: 300
+                | image_tag: loading: 'lazy', class: 'brands__logo-item-element'
+              }}
+            </div>
+          {% endif %}
+          {% if section.settings.brand_logo_5 != blank %}
+            <div class="brands__logo-item">
+              {{
+                section.settings.brand_logo_5
+                | image_url: width: 300
+                | image_tag: loading: 'lazy', class: 'brands__logo-item-element'
+              }}
+            </div>
+          {% endif %}
+          {% if section.settings.brand_logo_6 != blank %}
+            <div class="brands__logo-item">
+              {{
+                section.settings.brand_logo_6
+                | image_url: width: 300
+                | image_tag: loading: 'lazy', class: 'brands__logo-item-element'
+              }}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if section.settings.button_text != blank and section.settings.button_url != blank %}
+        <div class="brands__button-wrapper">
+          <a href="{{ section.settings.button_url }}" class="button brands__button">
+            {{ section.settings.button_text }}
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .brands.section--page-width > * {
+    grid-column: 1 / -1;
+  }
+
+  @media screen and (min-width: 750px) {
+    .brands.section--page-width > * {
+      grid-column: 2;
+    }
+  }
+
+  .brands__container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .brands__container {
+      flex-direction: row;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+  }
+
+  .brands__image {
+    width: 100%;
+    overflow: hidden;
+    order: 1;
+  }
+
+  @media screen and (min-width: 750px) {
+    .brands__image {
+      order: 0;
+      width: auto;
+      max-width: 614px;
+      flex-shrink: 0;
+      align-self: center;
+    }
+  }
+
+  .brands__image-element {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+  }
+
+  @media screen and (min-width: 750px) {
+    .brands__image-element {
+      width: auto;
+      max-width: 100%;
+    }
+  }
+
+  .brands__content {
+    display: flex;
+    flex-direction: column;
+    padding: 27px var(--page-margin);
+    width: 100%;
+    order: 2;
+    align-self: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .brands__content {
+      padding: 33px 82px 33px 71px;
+      order: 1;
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  .brands__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  @media screen and (min-width: 750px) {
+    .brands__header {
+      align-items: flex-start;
+    }
+  }
+
+  .brands__logo {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .brands__logo-element {
+    max-width: 138px;
+    height: auto;
+    display: block;
+  }
+
+  @media screen and (max-width: 749px) {
+    .brands__logo-element {
+      max-width: 112px;
+    }
+  }
+
+  .brands__title {
+    margin: 0;
+    font-family: 'Futura PT', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 30px;
+    /* text-transform: uppercase; */
+    text-align: center;
+    display: flex;
+    align-items: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .brands__title {
+      font-size: 32px;
+      line-height: 150%;
+    }
+  }
+
+  .brands__body {
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 160%;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .brands__body {
+      font-size: 18px;
+      margin-bottom: 32px;
+    }
+  }
+
+  .brands__body p {
+    margin: 0 0 1rem 0;
+  }
+
+  .brands__body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .brands__logos {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .brands__logos {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 18px;
+    }
+  }
+
+  .brands__logo-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .brands__logo-item {
+      flex: 0 0 auto;
+    }
+  }
+
+  .brands__logo-item-element {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    max-height: 26px;
+  }
+
+  .brands__button-wrapper {
+    margin-top: auto;
+    text-align: center;
+  }
+
+  .brands__button {
+    display: inline-block;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Brands",
+  "tag": "section",
+  "class": "brands-wrapper section-wrapper",
+  "disabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Section Image",
+      "info": "Image appears on the left on desktop and below content on mobile"
+    },
+    {
+      "type": "header",
+      "content": "Header"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Featured Brands"
+    },
+    {
+      "type": "richtext",
+      "id": "body",
+      "label": "Body",
+      "default": "<p>Add your body text here.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Brand Logos"
+    },
+    {
+      "type": "image_picker",
+      "id": "brand_logo_1",
+      "label": "Brand Logo 1"
+    },
+    {
+      "type": "image_picker",
+      "id": "brand_logo_2",
+      "label": "Brand Logo 2"
+    },
+    {
+      "type": "image_picker",
+      "id": "brand_logo_3",
+      "label": "Brand Logo 3"
+    },
+    {
+      "type": "image_picker",
+      "id": "brand_logo_4",
+      "label": "Brand Logo 4"
+    },
+    {
+      "type": "image_picker",
+      "id": "brand_logo_5",
+      "label": "Brand Logo 5"
+    },
+    {
+      "type": "image_picker",
+      "id": "brand_logo_6",
+      "label": "Brand Logo 6"
+    },
+    {
+      "type": "header",
+      "content": "Button"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Text",
+      "default": "Shop All Brands"
+    },
+    {
+      "type": "url",
+      "id": "button_url",
+      "label": "Button URL"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page width"
+        },
+        {
+          "value": "full-width",
+          "label": "Full width"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Brands",
+      "category": "Custom",
+      "settings": {
+        "title": "Featured Brands",
+        "button_text": "Shop All Brands"
+      }
+    }
+  ]
+}
+{% endschema %}
+
