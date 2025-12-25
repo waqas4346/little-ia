@@ -2296,12 +2296,35 @@
         "padding-block-end": 48
       }
     },
+    "brands_dHtWbx": {
+      "type": "brands",
+      "name": "Brands",
+      "settings": {
+        "image": "shopify:\/\/shop_images\/brands-section-image.png",
+        "logo": "shopify:\/\/shop_images\/little-ia-logo.png",
+        "title": "x&nbsp;&nbsp;ICONIC BRANDS",
+        "body": "<p>Find internationally renowned family favourite brands, alongside homegrown brands and exclusively personalise them.<\/p>",
+        "brand_logo_1": "shopify:\/\/shop_images\/olliella-logo.png",
+        "brand_logo_2": "shopify:\/\/shop_images\/bob-blossom-logo.png",
+        "brand_logo_3": "shopify:\/\/shop_images\/hydro-flask-logo.png",
+        "brand_logo_4": "shopify:\/\/shop_images\/le-toy-van-logo.png",
+        "brand_logo_5": "shopify:\/\/shop_images\/omie-logo.png",
+        "brand_logo_6": "shopify:\/\/shop_images\/mimi-lula-logo.png",
+        "button_text": "Shop All",
+        "button_url": "shopify:\/\/collections\/little-ia-loves",
+        "section_width": "page-width",
+        "color_scheme": "scheme-6",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
     "featured_blog_posts_my8KTm": {
       "type": "featured-blog-posts",
       "blocks": {
         "static-blog-title": {
           "type": "_featured-blog-posts-title",
           "name": "t:names.title",
+          "disabled": true,
           "static": true,
           "settings": {
             "text": "<h3>{{ closest.blog.title }}<\/h3>",
@@ -2332,7 +2355,9 @@
           "static": true,
           "settings": {
             "alignment": "center",
-            "gap": 8,
+            "gap": 16,
+            "show_read_now_link": true,
+            "read_now_text": "Read Now",
             "inherit_color_scheme": true,
             "color_scheme": "",
             "border": "none",
@@ -2349,7 +2374,7 @@
               "type": "_featured-blog-posts-image",
               "static": true,
               "settings": {
-                "image_ratio": "square",
+                "image_ratio": "portrait",
                 "border": "none",
                 "border_width": 1,
                 "border_opacity": 100,
@@ -2420,9 +2445,10 @@
           "block_order": []
         }
       },
-      "disabled": true,
       "name": "t:names.blog_posts_grid",
       "settings": {
+        "heading": "stories",
+        "subheading": "From The Momversation",
         "blog": "parenting",
         "layout_type": "grid",
         "carousel_on_mobile": false,
@@ -2430,35 +2456,13 @@
         "columns": 4,
         "mobile_columns": "2",
         "mobile_card_size": "60cqw",
-        "columns_gap": 8,
-        "rows_gap": 8,
+        "columns_gap": 12,
+        "rows_gap": 22,
         "icons_style": "arrow",
         "icons_shape": "none",
         "section_width": "page-width",
         "gap": 12,
         "color_scheme": "scheme-e61ffaea-b125-47f9-97f4-7f39823bb857",
-        "padding-block-start": 48,
-        "padding-block-end": 48
-      }
-    },
-    "brands_dHtWbx": {
-      "type": "brands",
-      "name": "Brands",
-      "settings": {
-        "image": "shopify:\/\/shop_images\/brands-section-image.png",
-        "logo": "shopify:\/\/shop_images\/little-ia-logo.png",
-        "title": "x&nbsp;&nbsp;ICONIC BRANDS",
-        "body": "<p>Find internationally renowned family favourite brands, alongside homegrown brands and exclusively personalise them.<\/p>",
-        "brand_logo_1": "shopify:\/\/shop_images\/olliella-logo.png",
-        "brand_logo_2": "shopify:\/\/shop_images\/bob-blossom-logo.png",
-        "brand_logo_3": "shopify:\/\/shop_images\/hydro-flask-logo.png",
-        "brand_logo_4": "shopify:\/\/shop_images\/le-toy-van-logo.png",
-        "brand_logo_5": "shopify:\/\/shop_images\/omie-logo.png",
-        "brand_logo_6": "shopify:\/\/shop_images\/mimi-lula-logo.png",
-        "button_text": "Shop All",
-        "button_url": "shopify:\/\/collections\/little-ia-loves",
-        "section_width": "page-width",
-        "color_scheme": "scheme-6",
         "padding-block-start": 48,
         "padding-block-end": 48
       }
@@ -2589,8 +2593,8 @@
     "theme_swatches_KYBFfi",
     "section_EfcYck",
     "collection_list_7UkYMU",
-    "featured_blog_posts_my8KTm",
     "brands_dHtWbx",
+    "featured_blog_posts_my8KTm",
     "our_story_jzVD6A",
     "section_iaYWpi"
   ]

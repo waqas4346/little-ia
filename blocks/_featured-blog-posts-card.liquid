@@ -23,6 +23,14 @@
   if section.settings.layout_type == 'editorial'
     assign truncate_description = false
   endif
+
+  # Map alignment values for flexbox
+  assign flex_alignment = 'flex-start'
+  if block_settings.alignment == 'center'
+    assign flex_alignment = 'center'
+  elsif block_settings.alignment == 'right'
+    assign flex_alignment = 'flex-end'
+  endif
 %}
 
 {% capture image %}
@@ -74,7 +82,7 @@
     {%- render 'spacing-style', settings: block_settings -%}
     {%- render 'border-override', settings: block_settings -%}
     --text-align: {{ block_settings.alignment }};
-    --horizontal-alignment: {{ block_settings.alignment }};
+    --horizontal-alignment: {{ flex_alignment }};
     --gap: {{ block_settings.gap }}px;
   "
   {{ block.shopify_attributes }}
@@ -94,9 +102,14 @@
     {% endif %}
 
     <div class="featured-blog-posts-card__content layout-panel-flex--column">
-      <h4>{{ title }}</h4>
+      <h4 class="featured-blog-posts-card__title" style="--horizontal-alignment: {{ flex_alignment }}; --text-align: {{ block_settings.alignment }};">{{ title }}</h4>
       {{ details }}
       {{ description }}
+      {% if section.settings.layout_type == 'grid' and block_settings.show_read_now_link and block_settings.read_now_text != blank %}
+        {% unless onboarding %}
+          <a href="{{ article.url }}" class="featured-blog-posts-card__read-now-link">{{ block_settings.read_now_text }}</a>
+        {% endunless %}
+      {% endif %}
     </div>
   </div>
 </div>
@@ -175,8 +188,59 @@
     border-radius: var(--border-radius);
   }
 
-  .featured-blog-posts-card__content h4 {
+  .featured-blog-posts-card__title {
     margin: 0;
+    width: 100%;
+    text-align: var(--text-align);
+    font-weight: 500;
+  }
+
+  /* Ensure the text-block inside respects the title's alignment */
+  .featured-blog-posts-card__title .text-block {
+    width: 100%;
+    --width: 100%;
+  }
+
+  /* Ensure font weight applies to title content */
+  .featured-blog-posts-card__title .text-block,
+  .featured-blog-posts-card__title .text-block > * {
+    font-weight: 500;
+  }
+
+  @media screen and (max-width: 749px) {
+    .featured-blog-posts-card__title,
+    .featured-blog-posts-card__title .text-block,
+    .featured-blog-posts-card__title .text-block > * {
+      font-size: 16px;
+    }
+  }
+
+  /* Force text alignment on all child elements when center is selected */
+  [style*="--text-align: center"] .featured-blog-posts-card__title,
+  [style*="--text-align: center"] .featured-blog-posts-card__title .text-block,
+  [style*="--text-align: center"] .featured-blog-posts-card__title .text-block > * {
+    text-align: center !important;
+  }
+
+  [style*="--text-align: right"] .featured-blog-posts-card__title,
+  [style*="--text-align: right"] .featured-blog-posts-card__title .text-block,
+  [style*="--text-align: right"] .featured-blog-posts-card__title .text-block > * {
+    text-align: right !important;
+  }
+
+  .featured-blog-posts-card__read-now-link {
+    text-decoration: underline;
+    color: var(--color-primary, var(--color-foreground));
+    display: inline-block;
+    pointer-events: auto;
+    position: relative;
+    z-index: calc(var(--layer-flat) + 1);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .featured-blog-posts-card__read-now-link:hover {
+    color: var(--color-primary-hover, var(--color-primary, var(--color-foreground)));
   }
 {% endstylesheet %}
 
@@ -217,6 +281,18 @@
       "step": 1,
       "unit": "px",
       "default": 8
+    },
+    {
+      "type": "checkbox",
+      "id": "show_read_now_link",
+      "label": "Show Read Now link",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "read_now_text",
+      "label": "Read Now link text",
+      "default": "Read Now"
     },
     {
       "type": "header",

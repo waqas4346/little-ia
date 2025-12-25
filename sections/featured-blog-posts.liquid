@@ -20,6 +20,17 @@
     {%- render 'gap-style', value: section.settings.gap -%}
   "
 >
+  {% if section.settings.heading != blank or section.settings.subheading != blank %}
+    <div class="featured-blog-posts-header">
+      {% if section.settings.heading != blank %}
+        <h2 class="featured-blog-posts-heading">{{ section.settings.heading }}</h2>
+      {% endif %}
+      {% if section.settings.subheading != blank %}
+        <p class="featured-blog-posts-subheading">{{ section.settings.subheading }}</p>
+      {% endif %}
+    </div>
+  {% endif %}
+  
   {% content_for 'block', id: 'static-blog-title', type: '_featured-blog-posts-title' %}
 
   {% if section.settings.blog != blank and section.settings.blog.articles_count > 0 %}
@@ -64,6 +75,48 @@
   .featured-blog-posts h3 {
     text-transform: uppercase;
   }
+
+  /* Override min() function for row gap to use exact value */
+  .featured-blog-posts .resource-list--grid {
+    --resource-list-row-gap: var(--resource-list-row-gap-desktop);
+  }
+
+  .featured-blog-posts-header {
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .featured-blog-posts-heading {
+    margin: 0;
+    font-family: 'Sacramento', cursive, sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 150%;
+    color: #7295BB;
+    text-align: center;
+    text-transform: lowercase;
+  }
+
+  .featured-blog-posts-subheading {
+    margin: 0;
+    font-family: 'Futura PT', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
+    text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .featured-blog-posts-header {
+      margin-bottom: 24px;
+    }
+
+    .featured-blog-posts-heading {
+      font-size: 38px;
+    }
+  }
 {% endstylesheet %}
 
 {% schema %}
@@ -86,6 +139,24 @@
     }
   ],
   "settings": [
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading"
+    },
+    {
+      "type": "header",
+      "content": "Blog Settings"
+    },
     {
       "type": "blog",
       "id": "blog",
