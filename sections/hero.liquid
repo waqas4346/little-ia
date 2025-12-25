@@ -445,6 +445,27 @@
       %}
       {{ media }}
     </div>
+    {%- liquid
+      # Calculate mobile alignment values
+      assign mobile_horizontal_alignment = section.settings.horizontal_alignment_flex_direction_column
+      assign mobile_vertical_alignment = section.settings.vertical_alignment_flex_direction_column
+      
+      if section.settings.content_direction_mobile == 'row'
+        assign mobile_horizontal_alignment = section.settings.horizontal_alignment_mobile | default: section.settings.horizontal_alignment
+        assign mobile_vertical_alignment = section.settings.vertical_alignment_mobile | default: section.settings.vertical_alignment
+      else
+        assign mobile_horizontal_alignment = section.settings.horizontal_alignment_flex_direction_column_mobile | default: section.settings.horizontal_alignment_flex_direction_column
+        assign mobile_vertical_alignment = section.settings.vertical_alignment_flex_direction_column_mobile | default: section.settings.vertical_alignment_flex_direction_column
+      endif
+      
+      if section.settings.content_position_mobile == 'bottom-left'
+        assign mobile_horizontal_alignment = 'flex-start'
+        assign mobile_vertical_alignment = 'flex-end'
+      endif
+      
+      assign mobile_direction = section.settings.content_direction_mobile | default: section.settings.content_direction
+      assign mobile_gap = section.settings.gap_mobile | default: section.settings.gap
+    -%}
     <div
       class="
         hero__content-wrapper
@@ -455,7 +476,7 @@
         {{section.settings.section_width}}
         {% if request.design_mode %}hero__content-wrapper--design-mode{% endif %}
       "
-      style="{% render 'layout-panel-style', settings: section.settings %}{% if section.settings.content_position == 'bottom-left' %} --horizontal-alignment: flex-start; --vertical-alignment: flex-end; --vertical-alignment-mobile: flex-end;{% endif %}"
+      style="{% render 'layout-panel-style', settings: section.settings %}{% if section.settings.content_position == 'bottom-left' %} --horizontal-alignment: flex-start; --vertical-alignment: flex-end; --vertical-alignment-mobile: flex-end;{% endif %} --flex-direction-mobile: {{ mobile_direction }}; --horizontal-alignment-mobile: {{ mobile_horizontal_alignment }}; --vertical-alignment-mobile: {{ mobile_vertical_alignment }}; --gap-mobile: {{ mobile_gap }}px;"
     >
       {% content_for 'blocks' %}
     </div>
@@ -505,6 +526,24 @@
     position: relative;
     inset: 0;
     z-index: var(--layer-flat);
+  }
+
+  /* Mobile-specific layout settings */
+  @media screen and (max-width: 749px) {
+    .hero__content-wrapper {
+      flex-direction: var(--flex-direction-mobile, var(--flex-direction));
+      gap: var(--gap-mobile, var(--gap));
+    }
+
+    .hero__content-wrapper.layout-panel-flex--row {
+      justify-content: var(--horizontal-alignment-mobile, var(--horizontal-alignment));
+      align-items: var(--vertical-alignment-mobile, var(--vertical-alignment));
+    }
+
+    .hero__content-wrapper.layout-panel-flex--column {
+      align-items: var(--horizontal-alignment-mobile, var(--horizontal-alignment));
+      justify-content: var(--vertical-alignment-mobile, var(--vertical-alignment));
+    }
   }
 
   .hero__content-wrapper .group-block-content {
@@ -1035,6 +1074,144 @@
     {
       "type": "range",
       "id": "gap",
+      "label": "t:settings.gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "t:content.mobile_layout"
+    },
+    {
+      "type": "select",
+      "id": "content_position_mobile",
+      "label": "Content position",
+      "options": [
+        {
+          "value": "default",
+          "label": "Default"
+        },
+        {
+          "value": "bottom-left",
+          "label": "Bottom left"
+        }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "select",
+      "id": "content_direction_mobile",
+      "label": "t:settings.direction",
+      "options": [
+        {
+          "value": "column",
+          "label": "t:options.vertical"
+        },
+        {
+          "value": "row",
+          "label": "t:options.horizontal"
+        }
+      ],
+      "default": "column"
+    },
+    {
+      "type": "select",
+      "id": "horizontal_alignment_mobile",
+      "label": "t:settings.alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.left"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.right"
+        },
+        {
+          "value": "space-between",
+          "label": "t:options.space_between"
+        }
+      ],
+      "default": "flex-start",
+      "visible_if": "{{ section.settings.content_direction_mobile == 'row' }}"
+    },
+    {
+      "type": "select",
+      "id": "vertical_alignment_mobile",
+      "label": "t:settings.position",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.top"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.bottom"
+        }
+      ],
+      "default": "center",
+      "visible_if": "{{ section.settings.content_direction_mobile == 'row' }}"
+    },
+    {
+      "type": "select",
+      "id": "horizontal_alignment_flex_direction_column_mobile",
+      "label": "t:settings.alignment",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.left"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.right"
+        }
+      ],
+      "default": "flex-start",
+      "visible_if": "{{ section.settings.content_direction_mobile != 'row' }}"
+    },
+    {
+      "type": "select",
+      "id": "vertical_alignment_flex_direction_column_mobile",
+      "label": "t:settings.position",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.top"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.bottom"
+        },
+        {
+          "value": "space-between",
+          "label": "t:options.space_between"
+        }
+      ],
+      "default": "center",
+      "visible_if": "{{ section.settings.content_direction_mobile == 'column' }}"
+    },
+    {
+      "type": "range",
+      "id": "gap_mobile",
       "label": "t:settings.gap",
       "min": 0,
       "max": 100,

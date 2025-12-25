@@ -1,6 +1,15 @@
 
 {% render 'button', link: block.settings.link %}
 
+{% stylesheet %}
+  /* Add 1px solid border on hover for primary button using color scheme hover border color */
+  /* Update box-shadow to show hover border color (buttons use box-shadow for borders) */
+  a.button:not(.button-secondary):hover {
+    --button-border-color: var(--color-primary-button-hover-border);
+    box-shadow: inset 0 0 0 1px var(--color-primary-button-hover-border) !important;
+  }
+{% endstylesheet %}
+
 {% schema %}
 {
   "name": "t:names.button",
