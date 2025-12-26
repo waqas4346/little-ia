@@ -1,0 +1,492 @@
+
+
+{% assign block_settings = block.settings %}
+
+{% liquid
+  # Get cb_card metaobject from context
+  assign usp_card = closest.metaobject.cb_card | default: blank
+  assign onboarding = false
+
+  if usp_card == blank
+    assign onboarding = true
+    # Assign placeholder variables
+    assign display_title = blank
+    assign display_body_text = blank
+    assign display_image = blank
+    assign display_title_icon = blank
+  else
+    # cb_card metaobject fields: image, title_icon, title, body_text
+    assign display_title = usp_card.title.value | default: usp_card.title | default: ''
+    assign display_body_text = usp_card.body_text.value | default: usp_card.body_text | default: ''
+    assign display_image = usp_card.image.value | default: usp_card.image
+    assign display_title_icon = usp_card.title_icon.value | default: usp_card.title_icon
+  endif
+
+  # Map alignment values for flexbox
+  assign flex_alignment = 'flex-start'
+  if block_settings.alignment == 'center'
+    assign flex_alignment = 'center'
+  elsif block_settings.alignment == 'right'
+    assign flex_alignment = 'flex-end'
+  endif
+%}
+
+{% liquid
+  # Calculate aspect ratio from USP Card settings
+  assign image_ratio = block_settings.image_ratio | default: 'square'
+  assign ratio = '1 / 1'
+  
+  case image_ratio
+    when 'landscape'
+      assign ratio = '16 / 9'
+    when 'portrait'
+      assign ratio = '4 / 5'
+    when 'square'
+      assign ratio = '1 / 1'
+    when 'adapt'
+      if display_image != blank and display_image.aspect_ratio != blank
+        assign image_aspect = display_image.aspect_ratio
+        if image_aspect > 0
+          assign ratio = image_aspect
+        endif
+      endif
+  endcase
+%}
+
+{% capture image %}
+  {% if display_image != blank %}
+    <div class="usp-card__image-wrapper" style="--ratio: {{ ratio }};">
+      {{
+        display_image
+        | image_url: width: 1200
+        | image_tag:
+          class: 'usp-card__image',
+          loading: 'lazy',
+          sizes: '(min-width: 750px) 50vw, 100vw',
+          widths: '240, 352, 832, 1200'
+      }}
+    </div>
+  {% endif %}
+{% endcapture %}
+
+{% if display_title != blank %}
+  {% capture title %}
+    <h4 class="usp-card__title-text">{{ display_title }}</h4>
+  {% endcapture %}
+{% else %}
+  {% assign title = '' %}
+{% endif %}
+
+{% if display_body_text != blank %}
+  {% capture description %}
+    <div class="usp-card__body-text">{{ display_body_text }}</div>
+  {% endcapture %}
+{% else %}
+  {% assign description = '' %}
+{% endif %}
+
+<div
+  class="
+    usp-card spacing-style border-style
+    {% if section.settings.layout_type == 'editorial' %}usp-card--flexible-aspect-ratio{% endif %}
+    {% if block_settings.inherit_color_scheme == false %}color-{{ block_settings.color_scheme }}{% endif %}
+  "
+  data-block-id="{{ block.id }}"
+  data-testid="usp-card"
+  {% if onboarding %}
+    data-placeholder="true"
+  {% endif %}
+  style="
+    {%- render 'spacing-style', settings: block_settings -%}
+    {%- render 'border-override', settings: block_settings -%}
+    --text-align: {{ block_settings.alignment }};
+    --horizontal-alignment: {{ flex_alignment }};
+    --gap: {{ block_settings.gap }}px;
+  "
+  {{ block.shopify_attributes }}
+>
+  {% if block_settings.link_url != blank %}
+    <a
+      class="usp-card__link"
+      href="{{ block_settings.link_url }}"
+    >
+      <span class="visually-hidden">{{ display_title }}</span>
+    </a>
+  {% endif %}
+
+  <div class="usp-card__inner">
+    {% if onboarding or image != blank %}
+      {{ image }}
+    {% endif %}
+
+    <div class="usp-card__content layout-panel-flex--column">
+      {% if display_title_icon != blank or title != blank %}
+        <div class="usp-card__title-row" style="--horizontal-alignment: {{ flex_alignment }}; --text-align: {{ block_settings.alignment }};">
+          {% if display_title_icon != blank %}
+            <div class="usp-card__icon">
+              {% if display_title_icon.alt %}
+                <img src="{{ display_title_icon | image_url }}" alt="{{ display_title_icon.alt }}" />
+              {% else %}
+                <img src="{{ display_title_icon | image_url }}" alt="{{ display_title }}" />
+              {% endif %}
+            </div>
+          {% endif %}
+          {% if title != blank %}
+            <div class="usp-card__title-wrapper">{{ title }}</div>
+          {% endif %}
+        </div>
+      {% endif %}
+      {% if description != blank %}
+        <div class="usp-card__description-wrapper" style="--text-align: {{ block_settings.alignment }};">{{ description }}</div>
+      {% endif %}
+      {% if block_settings.show_link and block_settings.link_text != blank and block_settings.link_url != blank %}
+        <a href="{{ block_settings.link_url }}" class="usp-card__link-text">{{ block_settings.link_text }}</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .usp-card {
+    width: 100%;
+    position: relative;
+    text-align: var(--text-align);
+  }
+
+  .usp-card__inner {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    gap: var(--gap);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    z-index: var(--layer-flat);
+    pointer-events: none;
+  }
+
+  .resource-list--grid .resource-list__item {
+    min-width: 0;
+  }
+
+  /* Editorial layout */
+  .resource-list:not(.hidden--desktop) .usp-card--flexible-aspect-ratio {
+    height: 100%;
+
+    .usp-card__image-wrapper {
+      aspect-ratio: 99;
+      height: 100%;
+    }
+
+    .usp-card__content {
+      flex-shrink: 0;
+      height: auto;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .resource-list:not(.hidden--desktop) .usp-card--flexible-aspect-ratio {
+      .usp-card__image-wrapper {
+        aspect-ratio: unset;
+      }
+    }
+  }
+
+  .usp-card__inner a,
+  .usp-card__inner button {
+    pointer-events: auto;
+  }
+
+  /* allow all blocks to be selectable in editor preview */
+  .shopify-design-mode .usp-card__content * {
+    pointer-events: auto;
+  }
+
+  .usp-card__content {
+    position: relative;
+    display: flex;
+    height: 100%;
+    width: 100%;
+    gap: var(--gap);
+    flex-direction: column;
+    align-items: var(--horizontal-alignment);
+  }
+
+  .usp-card__link {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--border-radius);
+  }
+
+  .usp-card__title-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: var(--horizontal-alignment);
+  }
+
+  .usp-card__icon {
+    flex-shrink: 0;
+  }
+
+  .usp-card__icon img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .usp-card__title-wrapper {
+    flex: 1;
+    text-align: var(--text-align);
+    min-width: 0;
+  }
+
+  .usp-card__title-text {
+    margin: 0;
+    width: 100%;
+    font-weight: 500;
+  }
+
+  .usp-card__description-wrapper {
+    width: 100%;
+    text-align: var(--text-align);
+  }
+
+  .usp-card__body-text {
+    width: 100%;
+  }
+
+  .usp-card__image-wrapper {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: var(--ratio);
+  }
+
+  .usp-card__image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  @media screen and (max-width: 749px) {
+    .usp-card__title-text {
+      font-size: 16px;
+    }
+  }
+
+  .usp-card__link-text {
+    text-decoration: underline;
+    color: var(--color-primary, var(--color-foreground));
+    display: inline-block;
+    pointer-events: auto;
+    position: relative;
+    z-index: calc(var(--layer-flat) + 1);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .usp-card__link-text:hover {
+    color: var(--color-primary-hover, var(--color-primary, var(--color-foreground)));
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "USP Card",
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:content.text"
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "t:settings.alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:options.left"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "right",
+          "label": "t:options.right"
+        }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "t:settings.vertical_gap",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "t:content.size"
+    },
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "label": "t:settings.aspect_ratio",
+      "options": [
+        {
+          "value": "adapt",
+          "label": "t:options.auto"
+        },
+        {
+          "value": "portrait",
+          "label": "t:options.portrait"
+        },
+        {
+          "value": "square",
+          "label": "t:options.square"
+        },
+        {
+          "value": "landscape",
+          "label": "t:options.landscape"
+        }
+      ],
+      "default": "square"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_link",
+      "label": "Show Link",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "link_text",
+      "label": "Link Text",
+      "default": "Learn More"
+    },
+    {
+      "type": "url",
+      "id": "link_url",
+      "label": "Link URL"
+    },
+    {
+      "type": "header",
+      "content": "t:content.appearance"
+    },
+    {
+      "type": "checkbox",
+      "id": "inherit_color_scheme",
+      "label": "t:settings.inherit_color_scheme",
+      "default": true
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:settings.color_scheme",
+      "default": "scheme-1",
+      "visible_if": "{{ block.settings.inherit_color_scheme == false }}"
+    },
+    {
+      "type": "select",
+      "id": "border",
+      "label": "t:settings.borders",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:options.none"
+        },
+        {
+          "value": "solid",
+          "label": "t:options.solid"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "unit": "px",
+      "label": "t:settings.border_width",
+      "default": 1,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "t:settings.opacity",
+      "default": 100,
+      "visible_if": "{{ block.settings.border != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "t:settings.border_radius",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ]
+}
+{% endschema %}
+

@@ -70,6 +70,7 @@
         "horizontal_alignment_flex_direction_column": "flex-start",
         "vertical_alignment_flex_direction_column": "center",
         "gap": 12,
+        "icons_with_text_inline": false,
         "section_width": "page-width",
         "section_height": "",
         "section_height_custom": 50,
@@ -218,10 +219,159 @@
         "padding-block-start": 0,
         "padding-block-end": 32
       }
+    },
+    "usps_Fk8nmk": {
+      "type": "usps",
+      "blocks": {
+        "static-usp-card": {
+          "type": "_usp-card",
+          "name": "USP Card",
+          "static": true,
+          "settings": {
+            "alignment": "left",
+            "gap": 8,
+            "image_ratio": "portrait",
+            "show_link": false,
+            "link_text": "Learn More",
+            "link_url": "",
+            "inherit_color_scheme": true,
+            "color_scheme": "",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        }
+      },
+      "name": "USPs: Grid",
+      "settings": {
+        "heading": "",
+        "subheading": "",
+        "metafield_namespace": "custom",
+        "metafield_key": "cb_usps",
+        "usp_limit": 3,
+        "layout_type": "grid",
+        "carousel_on_mobile": false,
+        "columns": 4,
+        "mobile_columns": "2",
+        "mobile_card_size": "60cqw",
+        "columns_gap": 12,
+        "rows_gap": 22,
+        "icons_style": "arrow",
+        "icons_shape": "none",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-e61ffaea-b125-47f9-97f4-7f39823bb857",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
+    "section_WfycxL": {
+      "type": "section",
+      "blocks": {
+        "icon_with_text_MWtTEj": {
+          "type": "icon-with-text",
+          "name": "Icon with text",
+          "settings": {
+            "image_upload": "shopify:\/\/shop_images\/Union.svg",
+            "icon_size": 32,
+            "icon_size_mobile": 22,
+            "heading": "<p>COMPLIMENTARY<br\/>PERSONALISATION<\/p>",
+            "sub_heading": "on all items",
+            "alignment": "vertical",
+            "gap": 8
+          },
+          "blocks": {}
+        },
+        "icon_with_text_imezfV": {
+          "type": "icon-with-text",
+          "name": "Icon with text",
+          "settings": {
+            "image_upload": "shopify:\/\/shop_images\/Delivery-Truck-Clock--Streamline-Ultimate.svg",
+            "icon_size": 32,
+            "icon_size_mobile": 22,
+            "heading": "<p>SAME DAY DELIVERY<br\/>IN DUBAI<\/p>",
+            "sub_heading": "till 12pm",
+            "alignment": "vertical",
+            "gap": 8
+          },
+          "blocks": {}
+        },
+        "icon_with_text_eYqYhm": {
+          "type": "icon-with-text",
+          "name": "Icon with text",
+          "settings": {
+            "image_upload": "shopify:\/\/shop_images\/Gift-Card--Streamline-Tabler.svg",
+            "icon_size": 32,
+            "icon_size_mobile": 22,
+            "heading": "<p>COMPLIMENTARY<br\/>PACKAGING<\/p>",
+            "sub_heading": "with gift sets",
+            "alignment": "vertical",
+            "gap": 8
+          },
+          "blocks": {}
+        },
+        "icon_with_text_BgNCri": {
+          "type": "icon-with-text",
+          "name": "Icon with text",
+          "settings": {
+            "image_upload": "shopify:\/\/shop_images\/Vector_1.svg",
+            "icon_size": 32,
+            "icon_size_mobile": 22,
+            "heading": "<p>WORLDWIDE<br\/>EXPRESS SHIPPING<\/p>",
+            "sub_heading": "5 to 7 working days",
+            "alignment": "vertical",
+            "gap": 8
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "icon_with_text_MWtTEj",
+        "icon_with_text_imezfV",
+        "icon_with_text_eYqYhm",
+        "icon_with_text_BgNCri"
+      ],
+      "name": "t:names.multicolumn",
+      "settings": {
+        "content_direction": "row",
+        "vertical_on_mobile": false,
+        "horizontal_alignment": "space-between",
+        "vertical_alignment": "flex-start",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 16,
+        "icons_with_text_inline": false,
+        "section_width": "page-width",
+        "section_height": "",
+        "section_height_custom": 50,
+        "color_scheme": "",
+        "background_media": "none",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_radius": 0,
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
     }
   },
   "order": [
     "section",
-    "main"
+    "main",
+    "usps_Fk8nmk",
+    "section_WfycxL"
   ]
 }
