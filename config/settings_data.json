@@ -1,6 +1,15 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "current": {
-    "logo": "shopify:\/\/shop_images\/little-ia-logo.png",
+    "logo": "shopify://shop_images/little-ia-logo.png",
     "logo_height": 42,
     "logo_height_mobile": 34,
     "type_body_font": "outfit_n4",
@@ -72,7 +81,7 @@
     "color_schemes": {
       "scheme-1": {
         "settings": {
-          "background": "#fffaf4",
+          "background": "#ffffff",
           "foreground_heading": "#000000cf",
           "foreground": "#000000cf",
           "primary": "#000000cf",
@@ -397,45 +406,6 @@
           "primary_button_hover_background": "#333333",
           "primary_button_hover_text": "#ffffff",
           "primary_button_hover_border": "#000000",
-          "secondary_button_background": "rgba(0,0,0,0)",
-          "secondary_button_text": "#000000",
-          "secondary_button_border": "#000000",
-          "secondary_button_hover_background": "#fafafa",
-          "secondary_button_hover_text": "#333333",
-          "secondary_button_hover_border": "#333333",
-          "input_background": "#ffffffc7",
-          "input_text_color": "#333333",
-          "input_border_color": "#dfdfdf",
-          "input_hover_background": "#00000003",
-          "variant_background_color": "#ffffff",
-          "variant_text_color": "#000000",
-          "variant_border_color": "#00000021",
-          "variant_hover_background_color": "#f5f5f5",
-          "variant_hover_text_color": "#000000",
-          "variant_hover_border_color": "#e6e6e6",
-          "selected_variant_background_color": "#000000",
-          "selected_variant_text_color": "#ffffff",
-          "selected_variant_border_color": "#000000",
-          "selected_variant_hover_background_color": "#1a1a1a",
-          "selected_variant_hover_text_color": "#ffffff",
-          "selected_variant_hover_border_color": "#1a1a1a"
-        }
-      },
-      "scheme-3ba8ce29-7778-4f68-8847-cdffbd5e310f": {
-        "settings": {
-          "background": "rgba(0,0,0,0)",
-          "foreground_heading": "#ffffff",
-          "foreground": "#ffffff",
-          "primary": "#ffffff",
-          "primary_hover": "#ffffff",
-          "border": "#ffffff",
-          "shadow": "#ffffff",
-          "primary_button_background": "#7295bb",
-          "primary_button_text": "#ffffff",
-          "primary_button_border": "#7295bb",
-          "primary_button_hover_background": "rgba(0,0,0,0)",
-          "primary_button_hover_text": "#7295bb",
-          "primary_button_hover_border": "#7295bb",
           "secondary_button_background": "rgba(0,0,0,0)",
           "secondary_button_text": "#000000",
           "secondary_button_border": "#000000",
