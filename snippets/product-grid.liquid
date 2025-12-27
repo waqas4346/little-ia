@@ -7,6 +7,7 @@
   @param {string} [title] - Header of the collection or search results
   @param {string} children - List or grid of product cards
   @param {boolean} [enable_infinite_scroll] - Whether to enable infinite scroll (default: true)
+  @param {object} [collection] - The collection object (for displaying active filters)
 {%- enddoc -%}
 
 {% capture product_card_size %}
@@ -19,7 +20,12 @@
     {% case section.settings.layout_type %}
       {% when 'grid' %}
         .product-grid--{{ section.id }}:is(.product-grid--grid) {
-          --product-grid-columns-desktop: repeat(auto-fill, minmax({{ product_card_size }}, 1fr));
+          --product-grid-columns-desktop: repeat(4, 324px);
+        }
+        
+        /* When filters are visible, show 3 products per row */
+        .filters-visible .product-grid--{{ section.id }}:is(.product-grid--grid) {
+          --product-grid-columns-desktop: repeat(3, 324px);
         }
 
 
@@ -107,6 +113,18 @@
       container-name: product-grid;
     "
   >
+    {% comment %} Display active filters above product grid {% endcomment %}
+    {% if collection and collection.filters %}
+      <div class="collection-active-filters">
+        {% render 'filter-remove-buttons',
+          filters: collection.filters,
+          results_url: collection.url,
+          show_filter_label: false,
+          should_show_clear_all: true
+        %}
+      </div>
+    {% endif %}
+
     {% if products.size == 0 %}
       <div class="main-collection-grid__empty">
         <h2 class="main-collection-grid__empty-title h2">
@@ -234,5 +252,83 @@
     @media screen and (max-width: 749px) {
       margin-left: var(--page-margin);
     }
+  }
+
+  /* Products count display above filters */
+  .main-collection-grid .collection-results-count {
+    width: 100%;
+    margin-bottom: var(--padding-sm);
+    padding: 0;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20px;
+    color: #1D425A;
+  }
+
+  /* Active filters above product grid */
+  .main-collection-grid .collection-active-filters {
+    width: 100%;
+    margin-bottom: var(--padding-md);
+    padding: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .collection-active-filters .facets-remove {
+    display: flex !important;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0;
+    margin: 0;
+  }
+
+  .collection-active-filters .facets-remove:not(:has(facet-remove-component)) {
+    display: none !important;
+  }
+
+  .collection-active-filters .facets-remove--mobile-and-vertical {
+    display: flex !important;
+  }
+
+  /* Style for active filter pills */
+  .collection-active-filters .facets-remove__pill {
+    background: #F9FDFF !important;
+    border: 1px solid #7295BB !important;
+    border-radius: 1000px !important;
+    font-family: 'Outfit', sans-serif !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+    line-height: 20px !important;
+    color: #1D425A !important;
+    padding: var(--padding-xs) var(--padding-sm) !important;
+  }
+
+  /* Cross icon in black */
+  .collection-active-filters .facets-remove__pill .svg-wrapper {
+    color: #000000 !important;
+  }
+
+  .collection-active-filters .facets-remove__pill .svg-wrapper svg,
+  .collection-active-filters .facets-remove__pill .svg-wrapper svg path {
+    stroke: #000000 !important;
+    fill: none !important;
+    color: #000000 !important;
+  }
+
+  /* Remove all link styling */
+  .collection-active-filters .facets__clear-all-link {
+    font-family: 'Outfit', sans-serif !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+    line-height: 20px !important;
+    text-decoration-line: underline !important;
+    color: #1D425A !important;
+    background: transparent !important;
+    border: none !important;
   }
 {% endstylesheet %}

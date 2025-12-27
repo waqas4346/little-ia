@@ -216,81 +216,191 @@ if (!customElements.get('facet-inputs-component')) {
  * @extends {Component<PriceFacetRefs>}
  */
 class PriceFacetComponent extends Component {
+  requiredRefs = ['minInput', 'maxInput', 'minSlider', 'maxSlider'];
+  #debouncedUpdate = null;
+
   connectedCallback() {
     super.connectedCallback();
     this.addEventListener('keydown', this.#onKeyDown);
+    
+    // Listen for filter updates to restore fill after re-render
+    document.addEventListener(ThemeEvents.FilterUpdate, this.#onFilterUpdate);
+    
+    // Wait for refs to be ready
+    requestAnimationFrame(() => {
+      this.#initSliders();
+    });
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this.removeEventListener('keydown', this.#onKeyDown);
+    document.removeEventListener(ThemeEvents.FilterUpdate, this.#onFilterUpdate);
+    if (this.#debouncedUpdate) {
+      this.#debouncedUpdate.cancel?.();
+    }
   }
 
-  /**
-   * Handles keydown events to restrict input to valid characters
-   * @param {KeyboardEvent} event - The keydown event
-   */
+  #onFilterUpdate = () => {
+    // Restore fill after section re-render
+    setTimeout(() => {
+      this.#updateFill();
+    }, 100);
+  };
+
   #onKeyDown = (event) => {
     if (event.metaKey) return;
-
     const pattern = /[0-9]|\.|,|'| |Tab|Backspace|Enter|ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Delete|Escape/;
     if (!event.key.match(pattern)) event.preventDefault();
   };
 
-  /**
-   * Updates price filter and results
-   */
+  #initSliders() {
+    const { minSlider, maxSlider, minInput, maxInput } = this.refs;
+    if (!minSlider || !maxSlider || !minInput || !maxInput) {
+      // Retry if refs not ready yet
+      setTimeout(() => this.#initSliders(), 50);
+      return;
+    }
+
+    // Set initial constraints
+    const maxRange = Number(maxSlider.getAttribute('max')) || 0;
+    minSlider.setAttribute('max', maxRange);
+    maxSlider.setAttribute('min', Number(minSlider.value) || 0);
+
+    // Update fill on init
+    this.#updateFill();
+
+    // Debounce filter updates to prevent excessive re-renders
+    this.#debouncedUpdate = debounce(() => {
+      this.updatePriceFilterAndResults();
+    }, 300);
+
+    // Slider to input sync
+    minSlider.addEventListener('input', () => {
+      minInput.value = minSlider.value;
+      if (Number(minSlider.value) > Number(maxSlider.value)) {
+        maxSlider.value = minSlider.value;
+        maxInput.value = minSlider.value;
+      }
+      maxSlider.setAttribute('min', minSlider.value);
+      this.#updateFill();
+      // Debounce the filter update
+      if (this.#debouncedUpdate) {
+        this.#debouncedUpdate();
+      }
+    });
+
+    maxSlider.addEventListener('input', () => {
+      maxInput.value = maxSlider.value;
+      if (Number(maxSlider.value) < Number(minSlider.value)) {
+        minSlider.value = maxSlider.value;
+        minInput.value = maxSlider.value;
+      }
+      minSlider.setAttribute('max', maxSlider.value);
+      this.#updateFill();
+      // Debounce the filter update
+      if (this.#debouncedUpdate) {
+        this.#debouncedUpdate();
+      }
+    });
+
+    // Input to slider sync
+    minInput.addEventListener('input', () => {
+      const val = Number(minInput.value);
+      if (!isNaN(val)) {
+        minSlider.value = val;
+        if (val > Number(maxSlider.value)) {
+          maxSlider.value = val;
+          maxInput.value = val;
+        }
+        maxSlider.setAttribute('min', val);
+        this.#updateFill();
+      }
+    });
+
+    maxInput.addEventListener('input', () => {
+      const val = Number(maxInput.value);
+      if (!isNaN(val)) {
+        maxSlider.value = val;
+        if (val < Number(minSlider.value)) {
+          minSlider.value = val;
+          minInput.value = val;
+        }
+        minSlider.setAttribute('max', val);
+        this.#updateFill();
+      }
+    });
+  }
+
+  #updateFill() {
+    const { minSlider, maxSlider } = this.refs;
+    if (!minSlider || !maxSlider) return;
+
+    const fill = this.querySelector('.price-facet__slider-fill');
+    if (!fill) return;
+
+    const minVal = Number(minSlider.value) || 0;
+    const maxVal = Number(maxSlider.value) || 0;
+    const maxRange = Number(maxSlider.getAttribute('max')) || 1;
+    if (maxRange === 0) return;
+
+    const minPercent = (minVal / maxRange) * 100;
+    const maxPercent = (maxVal / maxRange) * 100;
+    const left = Math.min(minPercent, maxPercent);
+    const width = Math.abs(maxPercent - minPercent);
+
+    fill.style.left = `${left}%`;
+    fill.style.width = `${width}%`;
+  }
+
   updatePriceFilterAndResults() {
     const { minInput, maxInput } = this.refs;
-
     this.#adjustToValidValues(minInput);
     this.#adjustToValidValues(maxInput);
 
     const facetsForm = this.closest('facets-form-component');
     if (!(facetsForm instanceof FacetsFormComponent)) return;
 
+    // Store scroll position before update
+    const scrollY = window.scrollY;
+    const scrollX = window.scrollX;
+    
     facetsForm.updateFilters();
     this.#setMinAndMaxValues();
     this.#updateSummary();
+    
+    // Restore scroll position immediately and after render
+    window.scrollTo(scrollX, scrollY);
+    
+    // Restore fill after re-render
+    setTimeout(() => {
+      this.#updateFill();
+      window.scrollTo(scrollX, scrollY);
+    }, 50);
   }
 
-  /**
-   * Adjusts input values to be within valid range
-   * @param {HTMLInputElement} input - The input element to adjust
-   */
   #adjustToValidValues(input) {
     if (input.value.trim() === '') return;
-
     const value = Number(input.value);
     const min = Number(formatMoney(input.getAttribute('data-min') ?? ''));
     const max = Number(formatMoney(input.getAttribute('data-max') ?? ''));
-
     if (value < min) input.value = min.toString();
     if (value > max) input.value = max.toString();
   }
 
-  /**
-   * Sets min and max values for the inputs
-   */
   #setMinAndMaxValues() {
     const { minInput, maxInput } = this.refs;
-
     if (maxInput.value) minInput.setAttribute('data-max', maxInput.value);
     if (minInput.value) maxInput.setAttribute('data-min', minInput.value);
     if (minInput.value === '') maxInput.setAttribute('data-min', '0');
     if (maxInput.value === '') minInput.setAttribute('data-max', maxInput.getAttribute('data-max') ?? '');
   }
 
-  /**
-   * Updates the price summary
-   */
   #updateSummary() {
     const { minInput, maxInput } = this.refs;
     const details = this.closest('details');
     const statusComponent = details?.querySelector('facet-status-component');
-
     if (!(statusComponent instanceof FacetStatusComponent)) return;
-
     statusComponent?.updatePriceSummary(minInput, maxInput);
   }
 }
@@ -416,7 +526,12 @@ class FacetRemoveComponent extends Component {
     const url = this.dataset.url;
     if (!url) return;
 
-    const facetsForm = form ? document.getElementById(form) : this.closest('facets-form-component');
+    let facetsForm = form ? document.getElementById(form) : this.closest('facets-form-component');
+    
+    // If not found via closest, search in the document (for active filters outside the form)
+    if (!(facetsForm instanceof FacetsFormComponent)) {
+      facetsForm = document.querySelector('facets-form-component');
+    }
 
     if (!(facetsForm instanceof FacetsFormComponent)) return;
 

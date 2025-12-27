@@ -146,6 +146,12 @@
     opacity: 1;
   }
 
+  /* Hide quick add on hover in collection pages (but keep in product-list) */
+  product-card[data-collection-page="true"]:is(:hover, :focus-within) .quick-add__button {
+    opacity: 0;
+    pointer-events: none;
+  }
+
   .quick-add__button {
     display: var(--quick-add-mobile-display, none);
     align-items: center;
