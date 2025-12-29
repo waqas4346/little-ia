@@ -85,14 +85,9 @@
   {% liquid
     assign list_items_array = list_items | strip | split: '<!--@list/split-->'
     
-    # Prepare carousel settings
-    if section.settings.section_width == 'page-width'
-      assign slideshow_gutters = 'start end'
-      assign gutter_style = '--gutter-slide-width: var(--util-page-margin-offset);'
-    else
-      assign slideshow_gutters = null
-      assign gutter_style = '--gutter-slide-width: 0px;'
-    endif
+    # Prepare carousel settings - no gutters to maximize width
+    assign slideshow_gutters = null
+    assign gutter_style = '--gutter-slide-width: 0px;'
 
     assign show_arrows = false
     if section.settings.icons_style != 'none'
@@ -150,7 +145,7 @@
   <div class="collection-slider-wrapper">
     <div
       class="resource-list resource-list__carousel collection-slider-carousel collection-slider-desktop"
-      style="{{ gutter_style }} --column-count: {{ items_per_view }}; --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 12 }}px;"
+      style="{{ gutter_style }} --column-count: {{ items_per_view }}; --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 12 }}px; --peek-next-slide-size: 0px;"
       data-testid="collection-slider-grid"
       data-items-per-view="{{ items_per_view }}"
     >
@@ -251,7 +246,6 @@
   }
 
   .collection-slider-card__image-wrapper {
-    width: 323px;
     height: 417px;
     overflow: hidden;
   }
@@ -319,6 +313,26 @@
     position: relative;
   }
 
+  /* Remove horizontal padding from section */
+  .collection-slider-section {
+    padding-inline: 0 !important;
+  }
+
+  /* Allow overflow for arrows to show outside, but clip slides */
+  .collection-slider-desktop slideshow-component {
+    overflow: visible;
+  }
+
+  .collection-slider-desktop slideshow-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Ensure carousel container allows arrows to show */
+  .collection-slider-desktop.resource-list__carousel {
+    overflow: visible;
+  }
+
   /* Hide mobile carousel on desktop */
   .collection-slider-mobile {
     display: none;
@@ -348,11 +362,17 @@
   /* Position arrows outside the carousel on desktop */
   .collection-slider-wrapper {
     position: relative;
-    padding: 0 60px;
+    padding: 0;
+    overflow: visible;
   }
 
   .collection-slider-desktop slideshow-container {
     position: relative;
+    overflow: visible;
+  }
+
+  .collection-slider-desktop slideshow-component {
+    overflow: visible;
   }
 
   .collection-slider-desktop slideshow-arrows {
@@ -366,6 +386,7 @@
     z-index: var(--layer-heightened);
     margin-left: -60px;
     margin-right: -60px;
+    display: flex !important;
   }
 
   .collection-slider-desktop slideshow-arrows[position='center'] {
@@ -378,11 +399,21 @@
     position: absolute;
     margin: 0;
     pointer-events: auto;
-    opacity: 1;
     top: 50%;
     transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
   }
 
+  /* Show arrows on hover - multiple selectors to ensure it works */
+  .collection-slider-wrapper:hover .collection-slider-desktop slideshow-arrows .slideshow-control,
+  .collection-slider-wrapper:hover .collection-slider-desktop slideshow-component > slideshow-container > slideshow-arrows .slideshow-control,
+  .collection-slider-desktop slideshow-component:hover > slideshow-container > slideshow-arrows .slideshow-control,
+  .collection-slider-desktop slideshow-component:focus-within > slideshow-container > slideshow-arrows .slideshow-control {
+    opacity: 1;
+  }
+
+  /* Position arrows outside the slider container */
   .collection-slider-desktop slideshow-arrows .slideshow-control--previous {
     left: 0;
   }
@@ -393,7 +424,7 @@
 
   @media (max-width: 1200px) {
     .collection-slider-wrapper {
-      padding: 0 50px !important;
+      padding: 0;
     }
 
     .collection-slider-desktop slideshow-arrows {
@@ -440,7 +471,6 @@
 
     /* Mobile image dimensions and gradient */
     .collection-slider-card__image-wrapper {
-      width: 173px;
       height: 219px;
     }
 
