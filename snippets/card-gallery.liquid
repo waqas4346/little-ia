@@ -134,7 +134,9 @@
             continue
           endif
 
-          if forloop.first and section.index == null or section.index < 5
+          # Load first visible image eagerly for better UX, especially in product lists
+          # This ensures product images load by default instead of only on hover
+          if forloop.first and hidden == false
             assign loading = 'eager'
             assign sizes = image_sizes
           endif
