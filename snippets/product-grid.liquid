@@ -331,4 +331,38 @@
     background: transparent !important;
     border: none !important;
   }
+
+  /* Product card title styling in collection pages */
+  .product-card .product-title-text,
+  .product-card .product-title-text p,
+  .product-card .text-block.product-title-text,
+  .product-card .text-block.product-title-text p {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 140%;
+    color: #222222;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-card .product-title-text,
+    .product-card .product-title-text p,
+    .product-card .text-block.product-title-text,
+    .product-card .text-block.product-title-text p {
+      font-size: 20px;
+      line-height: 140%; /* 28px */
+      color: #222222;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .product-card .product-title-text,
+    .product-card .product-title-text p,
+    .product-card .text-block.product-title-text,
+    .product-card .text-block.product-title-text p {
+      font-size: 16px;
+      line-height: 140%; /* 22px */
+      color: #1D425A;
+    }
+  }
 {% endstylesheet %}
