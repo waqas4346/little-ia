@@ -76,32 +76,64 @@ export class QuickAddComponent extends Component {
    */
   handleClick = async (event) => {
     event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
 
     const currentUrl = this.productPageUrl;
 
-    // Check if we have cached content for this URL
-    let productGrid = this.#cachedContent.get(currentUrl);
-
-    if (!productGrid) {
-      // Fetch and cache the content
-      const html = await this.fetchProductPage(currentUrl);
-      if (html) {
-        const gridElement = html.querySelector('[data-product-grid-content]');
-        if (gridElement) {
-          // Cache the cloned element to avoid modifying the original
-          productGrid = /** @type {Element} */ (gridElement.cloneNode(true));
-          this.#cachedContent.set(currentUrl, productGrid);
-        }
-      }
+    if (!currentUrl) {
+      console.warn('Quick Add: Product page URL is empty');
+      // Still try to open the modal with empty content
+      this.#openQuickAddModal();
+      return;
     }
 
-    if (productGrid) {
-      // Use a fresh clone from the cache
-      const freshContent = /** @type {Element} */ (productGrid.cloneNode(true));
-      await this.updateQuickAddModal(freshContent);
-    }
-
+    // Open the modal immediately, then load content asynchronously
     this.#openQuickAddModal();
+
+    // Load content asynchronously
+    (async () => {
+      try {
+        // Check if we have cached content for this URL
+        let productGrid = this.#cachedContent.get(currentUrl);
+
+        if (!productGrid) {
+          try {
+            // Fetch and cache the content with timeout
+            const html = await Promise.race([
+              this.fetchProductPage(currentUrl),
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Fetch timeout')), 10000)
+              )
+            ]);
+            
+            if (html) {
+              const gridElement = html.querySelector('[data-product-grid-content]');
+              if (gridElement) {
+                // Cache the cloned element to avoid modifying the original
+                productGrid = /** @type {Element} */ (gridElement.cloneNode(true));
+                this.#cachedContent.set(currentUrl, productGrid);
+              }
+            }
+          } catch (error) {
+            console.error('Quick Add: Error fetching product page', error);
+            return;
+          }
+        }
+
+        if (productGrid) {
+          try {
+            // Use a fresh clone from the cache
+            const freshContent = /** @type {Element} */ (productGrid.cloneNode(true));
+            await this.updateQuickAddModal(freshContent);
+          } catch (error) {
+            console.error('Quick Add: Error updating modal content', error);
+          }
+        }
+      } catch (error) {
+        console.error('Quick Add: Unexpected error loading content', error);
+      }
+    })();
   };
 
   /** @param {QuickAddDialog} dialogComponent */
@@ -115,11 +147,49 @@ export class QuickAddComponent extends Component {
 
   #openQuickAddModal = () => {
     const dialogComponent = document.getElementById('quick-add-dialog');
-    if (!(dialogComponent instanceof QuickAddDialog)) return;
+    if (!dialogComponent) {
+      console.warn('Quick Add: Dialog element not found');
+      return;
+    }
 
-    this.#stayVisibleUntilDialogCloses(dialogComponent);
+    // Check if it's a QuickAddDialog instance or the right custom element
+    if (!(dialogComponent instanceof QuickAddDialog) && dialogComponent.tagName.toLowerCase() !== 'quick-add-dialog') {
+      console.warn('Quick Add: Dialog element is not a QuickAddDialog instance');
+      return;
+    }
 
-    dialogComponent.showDialog();
+    // Function to actually open the dialog
+    const openDialog = (/** @type {QuickAddDialog} */ dialog) => {
+      if (!dialog || !dialog.refs || !dialog.refs.dialog) {
+        console.warn('Quick Add: Dialog refs not ready');
+        // Try again after a short delay
+        setTimeout(() => {
+          if (dialog && dialog.refs && dialog.refs.dialog) {
+            this.#stayVisibleUntilDialogCloses(dialog);
+            dialog.showDialog();
+          }
+        }, 100);
+        return;
+      }
+
+      this.#stayVisibleUntilDialogCloses(dialog);
+      dialog.showDialog();
+    };
+
+    // If the custom element hasn't been upgraded yet, wait for it
+    if (!(dialogComponent instanceof QuickAddDialog)) {
+      // Wait for custom element to be defined
+      customElements.whenDefined('quick-add-dialog').then(() => {
+        if (dialogComponent instanceof QuickAddDialog) {
+          openDialog(dialogComponent);
+        }
+      }).catch((error) => {
+        console.error('Quick Add: Error waiting for custom element', error);
+      });
+      return;
+    }
+
+    openDialog(dialogComponent);
   };
 
   #closeQuickAddModal = () => {
@@ -251,17 +321,66 @@ class QuickAddDialog extends DialogComponent {
   connectedCallback() {
     super.connectedCallback();
 
+    // Ensure close button has the event handler
+    this.#ensureCloseButtonHandler();
+
     this.addEventListener(ThemeEvents.cartUpdate, this.handleCartUpdate, { signal: this.#abortController.signal });
     this.addEventListener(ThemeEvents.variantUpdate, this.#updateProductTitleLink);
 
     this.addEventListener(DialogCloseEvent.eventName, this.#handleDialogClose);
   }
 
+  updatedCallback() {
+    super.updatedCallback();
+    // Ensure close button handler is set up after updates
+    this.#ensureCloseButtonHandler();
+  }
+
   disconnectedCallback() {
     super.disconnectedCallback();
 
+    // Clean up close button event listener
+    const closeButton = this.refs.closeButton;
+    if (closeButton && !Array.isArray(closeButton)) {
+      const button = /** @type {HTMLElement & { _closeHandler?: (event: MouseEvent) => void }} */ (closeButton);
+      if (button._closeHandler) {
+        button.removeEventListener('click', button._closeHandler);
+        delete button._closeHandler;
+        delete button.dataset.closeHandlerAttached;
+      }
+    }
+
     this.#abortController.abort();
     this.removeEventListener(DialogCloseEvent.eventName, this.#handleDialogClose);
+  }
+
+  /**
+   * Ensures the close button has the proper event handler
+   */
+  #ensureCloseButtonHandler() {
+    const closeButton = this.refs.closeButton;
+    if (!closeButton || Array.isArray(closeButton)) return;
+    
+    const button = /** @type {HTMLElement} */ (closeButton);
+
+    // Set the declarative event handler attribute
+    if (!button.hasAttribute('on:click')) {
+      button.setAttribute('on:click', '/closeDialog');
+    }
+
+    // Add a direct event listener as a fallback to ensure it works
+    if (!button.dataset.closeHandlerAttached) {
+      const clickHandler = (/** @type {MouseEvent} */ event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this.closeDialog();
+      };
+      
+      button.addEventListener('click', clickHandler);
+      button.dataset.closeHandlerAttached = 'true';
+      // @ts-ignore - storing handler reference for cleanup
+      button._closeHandler = clickHandler;
+    }
   }
 
   /**

@@ -70,7 +70,9 @@
     top: var(--margin-2xs);
     right: var(--margin-2xs);
     transition: transform 0.15s var(--animation-timing-bounce);
-    z-index: var(--layer-raised);
+    z-index: calc(var(--layer-raised) + 1);
+    pointer-events: all;
+    cursor: pointer;
   }
 
   .quick-add-modal__close:active {
