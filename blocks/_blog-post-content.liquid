@@ -1,15 +1,26 @@
 
 
 <div class="blog-post-content rte">
-  <rte-formatter>
-    {{ article.content }}
-  </rte-formatter>
+  <div class="blog-post-content__inner">
+    <rte-formatter>
+      {{ article.content }}
+    </rte-formatter>
+  </div>
 </div>
 
 {% stylesheet %}
   .blog-post-content {
-    max-width: var(--normal-content-width);
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
+  }
+
+  @media screen and (max-width: 749px) {
+    .blog-post-content__inner {
+      max-width: var(--normal-content-width);
+      margin: 0 auto;
+      padding-left: var(--page-margin);
+      padding-right: var(--page-margin);
+    }
   }
 {% endstylesheet %}
 

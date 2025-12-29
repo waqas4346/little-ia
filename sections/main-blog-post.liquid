@@ -15,15 +15,48 @@
       {% render 'spacing-style', settings: section.settings %}
     "
   >
-    <header>
-      {%- content_for 'block', id: 'blog-post-title', type: 'text' %}
-      {%- content_for 'block', id: 'blog-post-details', type: '_blog-post-info-text' %}
-    </header>
+    <div class="blog-post-header-row">
+      <header class="blog-post-header-content">
+        <div class="blog-post-breadcrumbs-wrapper">
+          {% render 'blog-breadcrumbs', blog: blog, article: article %}
+        </div>
+        <div class="blog-post-title-details-wrapper">
+          {%- content_for 'block', id: 'blog-post-title', type: 'text' %}
+          <div class="blog-post-read-time-wrapper">
+            {% render 'blog-read-time', article: article %}
+          </div>
+          {%- content_for 'block', id: 'blog-post-details', type: '_blog-post-info-text' %}
+        </div>
+      </header>
 
-    {%- if article.image -%}
-      {%- content_for 'block', id: 'blog-post-image', type: '_blog-post-featured-image' %}
-    {%- endif -%}
-    {%- content_for 'block', id: 'blog-post-content', type: '_blog-post-content' %}
+      {%- if article.image -%}
+        <div class="blog-post-header-image">
+          {%- content_for 'block', id: 'blog-post-image', type: '_blog-post-featured-image' %}
+        </div>
+      {%- endif -%}
+    </div>
+    <div class="blog-post-content-wrapper">
+      <div class="blog-post-content-main">
+        {%- content_for 'block', id: 'blog-post-content', type: '_blog-post-content' %}
+      </div>
+      <aside class="blog-post-related-posts">
+        <h2 class="blog-post-related-posts__title">Other blogs you might want to read</h2>
+        <div class="blog-post-related-posts__list">
+          {% liquid
+            assign related_count = 0
+            assign max_related = 3
+          %}
+          {% for related_article in blog.articles %}
+            {% if related_article.id != article.id and related_count < max_related %}
+              <div class="blog-post-related-post">
+                {% content_for 'block', id: 'related-blog-post-card', type: '_blog-post-related-card', article: related_article %}
+              </div>
+              {% assign related_count = related_count | plus: 1 %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      </aside>
+    </div>
 
     {% comment %} Dynamic area for @app blocks only, at the bottom {% endcomment %}
     {% content_for 'blocks' %}
@@ -64,6 +97,168 @@
 </script>
 
 {% stylesheet %}
+  .blog-post-header-row {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--gap-xl);
+    width: 100%;
+  }
+
+  .blog-post-header-content {
+    flex: 0 0 auto;
+    max-width: 446px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .blog-post-breadcrumbs-wrapper {
+    flex-shrink: 0;
+  }
+
+  .blog-post-title-details-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+  }
+
+  .blog-post-read-time-wrapper {
+    margin-top: 20px;
+    margin-bottom: 16px;
+  }
+
+  .blog-post-header-image {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .blog-post-header-image .blog-post-featured-image__image {
+    max-height: 410px;
+  }
+
+  .blog-post-header-content h1,
+  .blog-post-header-content .h1,
+  .blog-post-header-content [id*="blog-post-title"] h1,
+  .blog-post-header-content .text-block h1,
+  .blog-post-header-content .h2 h1,
+  .blog-post-title-details-wrapper h1,
+  .blog-post-title-details-wrapper .text-block h1 {
+    font-weight: 500 !important;
+    font-size: 36px !important;
+    line-height: 125% !important;
+  }
+
+  @media screen and (max-width: 749px) {
+    .blog-post-header-content h1,
+    .blog-post-header-content .h1,
+    .blog-post-header-content [id*="blog-post-title"] h1,
+    .blog-post-header-content .text-block h1,
+    .blog-post-header-content .h2 h1,
+    .blog-post-title-details-wrapper h1,
+    .blog-post-title-details-wrapper .text-block h1 {
+      font-size: 30px !important;
+      line-height: 125% !important;
+    }
+  }
+
+  .blog-post-content-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: var(--gap-xl);
+    align-items: flex-start;
+  }
+
+  .blog-post-content-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  @media screen and (max-width: 989px) {
+    .blog-post-content-wrapper {
+      flex-direction: column;
+    }
+
+    .blog-post-content-main {
+      width: 100%;
+    }
+
+    .blog-post-related-posts {
+      flex: 1;
+      width: 100%;
+    }
+  }
+
+  .blog-post-content {
+    background-color: #ffffff;
+    padding-top: 27px;
+    padding-right: 60px;
+    padding-bottom: 60px;
+    padding-left: 60px;
+  }
+
+  @media screen and (max-width: 749px) {
+    .blog-post-content {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  .blog-post-related-posts {
+    flex: 0 0 417px;
+    min-width: 0;
+    background-color: #FFFBF4;
+    border-radius: 8px;
+    padding: 20px 12px 12px 20px;
+  }
+
+  .blog-post-related-posts__title {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 100%;
+    margin-bottom: var(--margin-lg);
+    border-bottom: 0.5px solid #1D425A;
+    padding-bottom: var(--padding-md);
+  }
+
+  .blog-post-related-posts__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .blog-post-related-post {
+    width: 100%;
+  }
+
+  @media screen and (max-width: 749px) {
+    .blog-post-content-main {
+      width: 100vw;
+      margin-left: calc(-1 * var(--page-margin));
+      margin-right: calc(-50vw + 50%);
+      position: relative;
+    }
+
+    .blog-post-related-posts {
+      margin-left: 0;
+      margin-right: 0;
+    }
+    .blog-post-header-row {
+      flex-direction: column;
+    }
+
+    .blog-post-header-content {
+      max-width: 100%;
+    }
+
+    .blog-post-header-image {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+
   .blog-post-comments-container {
     width: 100%;
     max-width: var(--normal-content-width);

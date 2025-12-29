@@ -1,0 +1,27 @@
+{%- comment -%}
+  Calculates and displays the read time for an article
+  Usage: {% render 'blog-read-time', article: article %}
+{%- endcomment -%}
+
+{%- if article and article.content != blank -%}
+  {%- assign content = article.content | strip_html -%}
+  {%- assign word_count = content | split: ' ' | size -%}
+  {%- assign reading_speed = 200 -%}
+  {%- assign read_time = word_count | divided_by: reading_speed -%}
+  {%- if read_time < 1 -%}
+    {%- assign read_time = 1 -%}
+  {%- endif -%}
+  {%- if read_time == 1 -%}
+    <span class="blog-read-time">{{ read_time }} min read</span>
+  {%- else -%}
+    <span class="blog-read-time">{{ read_time }} mins read</span>
+  {%- endif -%}
+{%- endif -%}
+
+{% stylesheet %}
+  .blog-read-time {
+    color: var(--color-foreground);
+    font-size: 14px;
+  }
+{% endstylesheet %}
+

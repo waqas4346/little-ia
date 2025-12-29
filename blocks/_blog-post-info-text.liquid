@@ -23,16 +23,28 @@
     "
     style="{% render 'spacing-style', settings: block_settings %}"
   >
-    {%- if block_settings.show_date -%}
-      <span>{{- display_date | time_tag: format: 'date' -}}</span>
+    {%- if block_settings.show_author -%}
+      {%- if article.user and article.user.image -%}
+        {% liquid
+          assign author_image_widths = '40, 80'
+        %}
+        <span class="blog-post-details__author-image">
+          {{
+            article.user.image
+            | image_url: width: 80
+            | image_tag: widths: author_image_widths, class: 'blog-post-details__author-avatar', alt: display_author, loading: 'lazy'
+          }}
+        </span>
+      {%- endif -%}
+      <span>By: <span class="blog-post-details__author-name">{{ display_author }}</span></span>
     {%- endif -%}
 
     {%- if block_settings.show_date and block_settings.show_author -%}
-      <span>{{ 'content.blog_details_separator' | t }}</span>
+      <span> | </span>
     {%- endif -%}
 
-    {%- if block_settings.show_author -%}
-      <span>{{ display_author }}</span>
+    {%- if block_settings.show_date -%}
+      <span>{{- display_date | time_tag: format: 'date' -}}</span>
     {%- endif -%}
   </div>
 {% endif %}
@@ -40,9 +52,10 @@
 {% stylesheet %}
   .blog-post-details {
     display: flex;
+    align-items: center;
     gap: var(--gap-sm);
-    font-size: var(--font-paragraph-size);
-    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+    font-size: 14px;
+    color: var(--color-foreground);
     white-space: nowrap;
     flex-wrap: wrap;
   }
@@ -50,6 +63,24 @@
   .blog-post-details > span {
     text-overflow: clip;
     overflow: hidden;
+  }
+
+  .blog-post-details__author-name {
+    text-decoration: underline;
+  }
+
+  .blog-post-details__author-image {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .blog-post-details__author-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: var(--gap-xs);
   }
 {% endstylesheet %}
 
