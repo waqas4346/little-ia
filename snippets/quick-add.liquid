@@ -155,7 +155,7 @@
   .quick-add__button {
     display: var(--quick-add-mobile-display, none);
     align-items: center;
-    background: #FFFFFF;
+    background: #FFFFFF !important; /* Override any add-to-cart-button styles */
     padding: 10px;
     border-radius: 0;
     border: none;
@@ -186,11 +186,22 @@
   }
 
   .quick-add__button .add-to-cart-text {
-    background: #FFFFFF;
+    background: #FFFFFF !important; /* Override any add-to-cart-button styles */
     overflow: hidden;
     border-radius: 50px;
     height: 100%;
     gap: 0;
+  }
+
+  /* Ensure quick-add buttons don't inherit add-to-cart-button styles */
+  .quick-add__button.add-to-cart-button {
+    background-color: #FFFFFF !important;
+    color: var(--color-foreground) !important;
+  }
+
+  .quick-add__button.add-to-cart-button:hover:not(:disabled) {
+    background-color: #FFFFFF !important;
+    color: var(--color-foreground) !important;
   }
 
   .quick-add__button .svg-wrapper .checkmark-burst {

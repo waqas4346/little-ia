@@ -1,0 +1,455 @@
+{%- comment -%}
+  Renders a product features section with image and text content.
+  Supports two layouts: image left/text right, or text left/image right.
+{%- endcomment -%}
+
+{% liquid
+  assign section_settings = section.settings
+  assign layout = section_settings.layout | default: 'image-left'
+%}
+
+<div
+  class="section section--page-width product-features-section color-{{ section_settings.color_scheme }}"
+  style="{% render 'spacing-style', settings: section_settings %}"
+  {{ section.shopify_attributes }}
+>
+  <div class="product-features-section__container">
+    <div class="product-features-section__content product-features-section__content--{{ layout }}">
+      {% if layout == 'image-left' %}
+        <!-- Left: Image -->
+        <div class="product-features-section__image-wrapper">
+          {% if section_settings.left_image %}
+            {{
+              section_settings.left_image
+              | image_url: width: 1200
+              | image_tag: loading: 'lazy', alt: section_settings.left_image.alt | default: section_settings.left_heading, class: 'product-features-section__image'
+            }}
+          {% else %}
+            <div class="product-features-section__image-placeholder">
+              {{ 'detailed-apparel-1' | placeholder_svg_tag: 'product-features-placeholder' }}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Right: Text Content -->
+        <div class="product-features-section__text-wrapper">
+          {% if section_settings.right_heading != blank %}
+            <h2 class="product-features-section__heading">{{ section_settings.right_heading }}</h2>
+          {% endif %}
+          
+          {% if section_settings.right_subheading != blank %}
+            <div class="product-features-section__subheading rte">{{ section_settings.right_subheading }}</div>
+          {% endif %}
+
+          {% if section.blocks.size > 0 %}
+            <div class="product-features-section__images-grid">
+              {% for block in section.blocks %}
+                {% if block.type == 'feature_image' and block.settings.image != blank %}
+                  <div class="product-features-section__small-image" {{ block.shopify_attributes }}>
+                    {{
+                      block.settings.image
+                      | image_url: width: 400
+                      | image_tag: loading: 'lazy', alt: block.settings.image.alt | default: block.settings.caption, class: 'product-features-section__small-image-img'
+                    }}
+                    {% if block.settings.caption != blank %}
+                      <p class="product-features-section__image-caption">{{ block.settings.caption }}</p>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% else %}
+        <!-- Left: Text Content -->
+        <div class="product-features-section__text-wrapper">
+          {% if section_settings.left_heading != blank %}
+            <h2 class="product-features-section__heading">{{ section_settings.left_heading }}</h2>
+          {% endif %}
+          
+          {% if section_settings.left_subheading != blank %}
+            <div class="product-features-section__subheading rte">{{ section_settings.left_subheading }}</div>
+          {% endif %}
+
+          {% if section.blocks.size > 0 %}
+            <div class="product-features-section__images-grid">
+              {% for block in section.blocks %}
+                {% if block.type == 'feature_image' and block.settings.image != blank %}
+                  <div class="product-features-section__small-image" {{ block.shopify_attributes }}>
+                    {{
+                      block.settings.image
+                      | image_url: width: 400
+                      | image_tag: loading: 'lazy', alt: block.settings.image.alt | default: block.settings.caption, class: 'product-features-section__small-image-img'
+                    }}
+                    {% if block.settings.caption != blank %}
+                      <p class="product-features-section__image-caption">{{ block.settings.caption }}</p>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Right: Image -->
+        <div class="product-features-section__image-wrapper">
+          {% if section_settings.right_image %}
+            {{
+              section_settings.right_image
+              | image_url: width: 1200
+              | image_tag: loading: 'lazy', alt: section_settings.right_image.alt | default: section_settings.right_heading, class: 'product-features-section__image'
+            }}
+          {% else %}
+            <div class="product-features-section__image-placeholder">
+              {{ 'detailed-apparel-1' | placeholder_svg_tag: 'product-features-placeholder' }}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .product-features-section {
+    padding: var(--padding-4xl) 0;
+  }
+
+  .product-features-section__container {
+    width: 100%;
+  }
+
+  .product-features-section__content {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--gap-4xl);
+    align-items: center;
+    max-width: 100%;
+  }
+
+  .product-features-section__content--image-left {
+    grid-template-columns: auto 1fr;
+  }
+
+  .product-features-section__content--text-left {
+    grid-template-columns: 1fr auto;
+  }
+
+  .product-features-section__image-wrapper {
+    width: 623px;
+    height: 474px;
+    max-width: 100%;
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--style-border-radius-popover);
+    flex-shrink: 0;
+  }
+
+  .product-features-section__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .product-features-section__image-placeholder {
+    width: 623px;
+    height: 474px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-background-secondary);
+  }
+
+  .product-features-section__text-wrapper {
+    text-align: left;
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .product-features-section__content--image-left .product-features-section__text-wrapper {
+    margin-left: var(--gap-2xl);
+  }
+
+  .product-features-section__heading {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 30px;
+    line-height: 146%;
+    color: #1D425A;
+    margin: 0;
+    text-align: left;
+  }
+
+  .product-features-section__subheading {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 150%;
+    color: #1D425A;
+    margin: 0;
+    text-align: left;
+    align-items: center;
+  }
+
+  .product-features-section__subheading.rte {
+    white-space: pre-wrap;
+  }
+
+  .product-features-section__subheading.rte p {
+    margin: 0;
+  }
+
+  .product-features-section__subheading.rte p + p {
+    margin-top: 1em;
+  }
+
+  .product-features-section__images-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: var(--margin-sm);
+    width: fit-content;
+  }
+
+  .product-features-section__small-image {
+    position: relative;
+    width: 104px;
+    height: 104px;
+    overflow: hidden;
+    border-radius: var(--style-border-radius-popover);
+  }
+
+  .product-features-section__small-image-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .product-features-section__image-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--padding-sm);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    color: #ffffff;
+    font-size: var(--font-size--sm);
+    margin: 0;
+    text-align: center;
+  }
+
+  @media screen and (max-width: 749px) {
+    .product-features-section {
+      padding: var(--padding-2xl) 0;
+    }
+
+    .product-features-section__content {
+      grid-template-columns: 1fr;
+      gap: var(--gap-xl);
+    }
+
+    .product-features-section__content--image-left,
+    .product-features-section__content--text-left {
+      grid-template-columns: 1fr;
+    }
+
+    .product-features-section__content--text-left .product-features-section__image-wrapper {
+      order: -1;
+    }
+
+    .product-features-section__content--image-left .product-features-section__text-wrapper {
+      margin-left: 0;
+    }
+
+    .product-features-section__image-wrapper {
+      width: 350px;
+      height: 267px;
+      margin: 0 auto;
+    }
+
+    .product-features-section__image-placeholder {
+      width: 350px;
+      height: 267px;
+    }
+
+    .product-features-section__images-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .product-features-section__heading {
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 500;
+      font-size: 22px;
+      line-height: 146%;
+      color: #1D425A;
+    }
+
+    .product-features-section__subheading {
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 150%;
+      color: #1D425A;
+      align-items: center;
+    }
+
+    .product-features-section__text-wrapper {
+      gap: 8px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Product Features",
+  "tag": "section",
+  "class": "product-features-section-wrapper",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "options": [
+        {
+          "value": "image-left",
+          "label": "Image Left, Text Right"
+        },
+        {
+          "value": "text-left",
+          "label": "Text Left, Image Right"
+        }
+      ],
+      "default": "image-left"
+    },
+    {
+      "type": "header",
+      "content": "Left Side Content"
+    },
+    {
+      "type": "image_picker",
+      "id": "left_image",
+      "label": "Left Image",
+      "info": "Used when layout is 'Image Left'"
+    },
+    {
+      "type": "richtext",
+      "id": "left_heading",
+      "label": "Left Heading",
+      "info": "Used when layout is 'Text Left'"
+    },
+    {
+      "type": "richtext",
+      "id": "left_subheading",
+      "label": "Left Subheading",
+      "info": "Used when layout is 'Text Left'"
+    },
+    {
+      "type": "header",
+      "content": "Right Side Content"
+    },
+    {
+      "type": "image_picker",
+      "id": "right_image",
+      "label": "Right Image",
+      "info": "Used when layout is 'Text Left'"
+    },
+    {
+      "type": "richtext",
+      "id": "right_heading",
+      "label": "Right Heading",
+      "info": "Used when layout is 'Image Left'"
+    },
+    {
+      "type": "richtext",
+      "id": "right_subheading",
+      "label": "Right Subheading",
+      "info": "Used when layout is 'Image Left'"
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    }
+  ],
+  "blocks": [
+    {
+      "type": "feature_image",
+      "name": "Feature Image",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "text",
+          "id": "caption",
+          "label": "Caption",
+          "info": "Optional caption for the image"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Features",
+      "settings": {
+        "layout": "image-left",
+        "right_heading": "<h2>Machine Washable & Long-Lasting</h2>",
+        "right_subheading": "<p>Retains softness and shape even after repeated washes, making it practical for daily use.</p>"
+      },
+      "blocks": [
+        {
+          "type": "feature_image"
+        },
+        {
+          "type": "feature_image"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
+
