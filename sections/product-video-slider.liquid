@@ -32,41 +32,14 @@
 
   {% if section.blocks.size > 0 %}
     {% liquid
-      assign video_width_desktop = 281
-      assign video_height_desktop = 442
-      assign video_width_mobile = 204
-      assign video_height_mobile = 321
-      assign slide_width_desktop = video_width_desktop | append: 'px'
-      assign slide_height_desktop = video_height_desktop | append: 'px'
-      assign slide_width_mobile = video_width_mobile | append: 'px'
-      assign slide_height_mobile = video_height_mobile | append: 'px'
-
-      assign columns_minus_one_desktop = columns_desktop | minus: 1
-      assign container_width_desktop = video_width_desktop | times: columns_desktop
-      assign gaps_width_desktop = gap | times: columns_minus_one_desktop
-      assign total_width_desktop = container_width_desktop | plus: gaps_width_desktop
-
-      assign columns_minus_one_mobile = columns_mobile | minus: 1
-      assign container_width_mobile = video_width_mobile | times: columns_mobile
-      assign gaps_width_mobile = gap | times: columns_minus_one_mobile
-      assign total_width_mobile = container_width_mobile | plus: gaps_width_mobile
-      
-      # For mobile, show one full item plus partial views on sides
-      assign mobile_viewport_width = video_width_mobile | plus: 40
-      
       if section.settings.show_arrows == false
         assign effective_icons_style = 'none'
       else
         assign effective_icons_style = section.settings.icons_style
       endif
 
-      if section.settings.section_width == 'page-width'
-        assign slideshow_gutters = 'start end'
-        assign gutter_style = '--gutter-slide-width: var(--util-page-margin-offset);'
-      else
-        assign slideshow_gutters = null
-        assign gutter_style = '--gutter-slide-width: 0px;'
-      endif
+      assign slideshow_gutters = null
+      assign gutter_style = '--gutter-slide-width: 0px;'
     %}
 
     {% capture slides %}
@@ -206,22 +179,32 @@
       assign slides_array = slide_content | split: '<!--@list/split-->'
     %}
 
-    <div class="product-video-slider__carousel-wrapper" style="width: 100%; max-width: 100%; margin: 0 auto; --container-width-mobile: 100%; --container-width-desktop: {{ total_width_desktop }}px;">
+    <div class="product-video-slider__carousel-wrapper">
       <div
         class="product-video-slider__carousel resource-list__carousel"
-        style="{{ gutter_style }} --slide-width-max: {{ slide_width_desktop }}; --slide-width-max-mobile: {{ slide_width_mobile }}; --resource-list-column-gap: {{ gap }}px; --slideshow-gap: {{ gap }}px; --column-count: {{ columns_desktop }}; --column-count-mobile: {{ columns_mobile }}; width: 100%; max-width: 100%;"
+        style="{{ gutter_style }} --resource-list-column-gap-desktop: {{ gap }}px; --resource-list-column-gap: {{ gap }}px; --column-count: {{ columns_desktop }}; --column-count-mobile: {{ columns_mobile }}; --slide-width-max: 450px;"
       >
+        {% capture slideshow_slides %}
+          {% for item in slides_array %}
+            {% render 'slideshow-slide',
+              index: forloop.index0,
+              children: item,
+              class: 'resource-list__slide product-video-slider__slide'
+            %}
+          {% endfor %}
+        {% endcapture %}
+        
         {% render 'slideshow',
           ref: 'productVideoSlider',
           class: 'product-video-slider__slideshow resource-list__carousel',
-          slides: slides,
+          slides: slideshow_slides,
           show_arrows: section.settings.show_arrows,
           icon_style: effective_icons_style,
           icon_shape: section.settings.icons_shape,
           auto_hide_controls: false,
           infinite: false,
           initial_slide: 0,
-          slide_count: section.blocks.size,
+          slide_count: slides_array.size,
           slideshow_gutters: slideshow_gutters
         %}
       </div>
@@ -286,46 +269,16 @@
     touch-action: manipulation;
   }
   
-  /* Touch-friendly hover for mobile */
-  @media (hover: none) and (pointer: coarse) {
-    .product-video-slider__item:active .product-video-slider__video-wrapper,
-    .product-video-slider__item:active .product-video-slider__image-wrapper {
-      width: 230px;
-      height: 360px;
-      z-index: 10;
-      position: relative;
-    }
-    
-    .product-video-slider__item:active .product-video-slider__product-info {
-      width: 230px;
-      max-width: 230px;
-    }
-  }
-  
   .product-video-slider__image-wrapper {
-    width: 204px;
-    height: 321px;
+    width: 100%;
+    aspect-ratio: 204 / 321;
     overflow: hidden;
     border-radius: 4px;
-    transition: width 0.3s ease, height 0.3s ease;
-  }
-  
-  .product-video-slider__item:hover .product-video-slider__image-wrapper {
-    width: 230px;
-    height: 360px;
-    z-index: 10;
-    position: relative;
   }
   
   @media screen and (min-width: 750px) {
     .product-video-slider__image-wrapper {
-      width: 281px;
-      height: 442px;
-    }
-    
-    .product-video-slider__item:hover .product-video-slider__image-wrapper {
-      width: 328px;
-      height: 517px;
+      aspect-ratio: 281 / 442;
     }
   }
   
@@ -344,25 +297,8 @@
     background-color: #FFFFFF;
     border-radius: 4px;
     box-sizing: border-box;
-    transition: width 0.3s ease, max-width 0.3s ease;
     position: relative;
-  }
-  
-  .product-video-slider__item:hover .product-video-slider__product-info {
-    width: 230px;
-    max-width: 230px;
-  }
-  
-  @media screen and (min-width: 750px) {
-    .product-video-slider__product-info {
-      width: 281px;
-      max-width: 281px;
-    }
-    
-    .product-video-slider__item:hover .product-video-slider__product-info {
-      width: 328px;
-      max-width: 328px;
-    }
+    width: 100%;
   }
   
   .product-video-slider__product-image-wrapper {
@@ -554,29 +490,15 @@
 
   .product-video-slider__video-wrapper {
     position: relative;
-    width: 204px;
-    height: 321px;
+    width: 100%;
+    aspect-ratio: 204 / 321;
     overflow: hidden;
     border-radius: 4px;
-    transition: width 0.3s ease, height 0.3s ease;
-  }
-  
-  .product-video-slider__item:hover .product-video-slider__video-wrapper {
-    width: 230px;
-    height: 360px;
-    z-index: 10;
-    position: relative;
   }
   
   @media screen and (min-width: 750px) {
     .product-video-slider__video-wrapper {
-      width: 281px;
-      height: 442px;
-    }
-    
-    .product-video-slider__item:hover .product-video-slider__video-wrapper {
-      width: 328px;
-      height: 517px;
+      aspect-ratio: 281 / 442;
     }
   }
 
@@ -680,227 +602,214 @@
 
   .product-video-slider__carousel-wrapper {
     width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
     position: relative;
-    overflow: visible;
-  }
-  
-  @media screen and (max-width: 749px) {
-    .product-video-slider__carousel-wrapper {
-      overflow: visible;
-      width: 100%;
-      max-width: 100%;
-    }
   }
 
-  @media screen and (min-width: 750px) {
-    .product-video-slider__carousel-wrapper {
-      width: var(--container-width-desktop) !important;
-      max-width: var(--container-width-desktop) !important;
-      overflow: hidden;
-    }
-  }
-
-  .product-video-slider__carousel {
-    --slide-width-max: var(--slide-width-max-mobile);
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0;
-    overflow: visible;
-    position: relative;
-    container-type: inline-size;
-    container-name: resource-list-carousel;
+  /* Use resource-list__carousel base styles, just override what's needed */
+  .product-video-slider__carousel.resource-list__carousel {
+    width: 100%;
   }
   
-  @media screen and (max-width: 749px) {
-    .product-video-slider__carousel {
-      overflow: visible;
-      padding: 0 20px;
-    }
+  /* Ensure arrows are visible and properly positioned */
+  .product-video-slider__carousel slideshow-arrows {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
   
-  @media screen and (min-width: 750px) {
-    .product-video-slider__carousel {
-      overflow: hidden;
-    }
+  /* Override base CSS that hides disabled controls - show them but make them semi-transparent */
+  .product-video-slider__carousel .slideshow-control {
+    display: flex !important;
   }
-
+  
+  .product-video-slider__carousel .slideshow-control[disabled] {
+    display: flex !important;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  
+  .product-video-slider__carousel .slideshow-control:not([disabled]) {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  /* Let resource-list__carousel base styles handle all slide sizing via container queries */
+  /* Just ensure content visibility for our custom slides */
   .product-video-slider__carousel .product-video-slider__slide {
-    --slide-width: var(--slide-width-max-mobile) !important;
-    width: var(--slide-width-max-mobile) !important;
-    min-width: var(--slide-width-max-mobile) !important;
-    flex-shrink: 0;
-    scroll-snap-align: start;
-  }
-
-  @container resource-list-carousel (max-width: 749px) {
-    .product-video-slider__carousel .product-video-slider__slide {
-      --slide-width: var(--slide-width-max-mobile) !important;
-      width: var(--slide-width-max-mobile) !important;
-      min-width: var(--slide-width-max-mobile) !important;
-    }
-  }
-
-  @container resource-list-carousel (min-width: 750px) {
-    .product-video-slider__carousel .product-video-slider__slide {
-      --slide-width: var(--slide-width-max) !important;
-      width: var(--slide-width-max) !important;
-      min-width: var(--slide-width-max) !important;
-    }
-  }
-
-  .product-video-slider__carousel slideshow-slides {
-    scroll-snap-type: x mandatory;
-    justify-content: flex-start;
-    width: 100% !important;
-    max-width: 100% !important;
-    overflow-x: auto;
-    overflow-y: visible;
-    display: flex;
-    flex-wrap: nowrap;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  @media screen and (max-width: 749px) {
-    .product-video-slider__carousel slideshow-slides {
-      padding: 0 20px;
-      scroll-padding: 0 20px;
-      justify-content: flex-start;
-      scroll-snap-type: x mandatory;
-      gap: 12;
-    }
-    
-    .product-video-slider__carousel slideshow-slide {
-      scroll-snap-align: center;
-    }
-  }
-
-  .product-video-slider__carousel slideshow-slide {
     content-visibility: visible !important;
-    flex-shrink: 0 !important;
-    flex-grow: 0 !important;
-    scroll-snap-align: center;
-    width: var(--slide-width-max-mobile) !important;
-    min-width: var(--slide-width-max-mobile) !important;
-    max-width: var(--slide-width-max-mobile) !important;
-    margin-right: var(--slideshow-gap, 16px) !important;
-  }
-
-  .product-video-slider__carousel slideshow-slide:first-child {
-    margin-left: 0;
-  }
-
-  .product-video-slider__carousel slideshow-slide:last-child {
-    margin-right: 0 !important;
   }
   
-  @media screen and (min-width: 750px) {
-    .product-video-slider__carousel slideshow-slide {
-      scroll-snap-align: start;
-    }
-  }
-
   .product-video-slider__carousel slideshow-slide[aria-hidden='true'],
   .product-video-slider__carousel slideshow-slide[aria-hidden='false'] {
     content-visibility: visible !important;
     opacity: 1 !important;
     display: block !important;
   }
-
-  @media screen and (min-width: 750px) {
-    .product-video-slider__carousel slideshow-slide {
-      width: var(--slide-width-max) !important;
-      min-width: var(--slide-width-max) !important;
-      max-width: var(--slide-width-max) !important;
-      margin-right: var(--slideshow-gap, 16px) !important;
+  
+  /* Make the center slide larger - dynamically applied via JavaScript */
+  @container resource-list-carousel (min-width: 750px) {
+    .product-video-slider__carousel slideshow-slide.product-video-slider__center-slide {
+      --section-slide-width: calc(
+        ((100% - (var(--resource-list-column-gap) * (var(--column-count) - 1)) - var(--peek-next-slide-size, 0px)) / var(--column-count)) * 1.15
+      );
+      --slide-width: var(--section-slide-width) !important;
     }
-    
-    .product-video-slider__carousel slideshow-slide:last-child {
-      margin-right: 0 !important;
+  }
+  
+  /* Apply the width explicitly for center slide on desktop */
+  @media screen and (min-width: 750px) {
+    .product-video-slider__carousel.resource-list__carousel slideshow-slide.product-video-slider__center-slide {
+      width: calc(
+        ((100% - (var(--resource-list-column-gap-desktop, var(--resource-list-column-gap)) * (var(--column-count) - 1))) / var(--column-count)) * 1.15
+      ) !important;
+      min-width: calc(
+        ((100% - (var(--resource-list-column-gap-desktop, var(--resource-list-column-gap)) * (var(--column-count) - 1))) / var(--column-count)) * 1.15
+      ) !important;
+      max-width: calc(
+        ((100% - (var(--resource-list-column-gap-desktop, var(--resource-list-column-gap)) * (var(--column-count) - 1))) / var(--column-count)) * 1.15
+      ) !important;
+      flex-shrink: 0 !important;
+      transition: width 0.3s ease, min-width 0.3s ease, max-width 0.3s ease;
+    }
+  }
+  
+  /* For mobile, make the center item larger */
+  @container resource-list-carousel (max-width: 749px) {
+    .product-video-slider__carousel slideshow-slide.product-video-slider__center-slide {
+      --slide-width: calc(clamp(150px, var(--mobile-card-size, 60cqw), var(--slide-width-max)) * 1.15) !important;
+    }
+  }
+  
+  @media screen and (max-width: 749px) {
+    .product-video-slider__carousel.resource-list__carousel slideshow-slide.product-video-slider__center-slide {
+      width: calc(clamp(150px, var(--mobile-card-size, 60cqw), var(--slide-width-max)) * 1.15) !important;
+      min-width: calc(clamp(150px, var(--mobile-card-size, 60cqw), var(--slide-width-max)) * 1.15) !important;
+      max-width: calc(clamp(150px, var(--mobile-card-size, 60cqw), var(--slide-width-max)) * 1.15) !important;
+      flex-shrink: 0 !important;
+      transition: width 0.3s ease, min-width 0.3s ease, max-width 0.3s ease;
     }
   }
 
-  @media screen and (min-width: 750px) {
-    .product-video-slider__carousel slideshow-slides {
-      width: var(--container-width-desktop) !important;
-      max-width: var(--container-width-desktop) !important;
-    }
-  }
 
   .product-video-slider__placeholder {
     text-align: center;
     padding: 40px 20px;
   }
   
-  /* Ensure gap is visible on mobile */
-  @media screen and (max-width: 749px) {
-    .product-video-slider__carousel-wrapper {
-      width: var(--container-width-mobile) !important;
-      max-width: var(--container-width-mobile) !important;
-    }
-  }
 {% endstylesheet %}
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const items = document.querySelectorAll('.product-video-slider__item');
+    const carousel = document.querySelector('.product-video-slider__carousel');
+    if (!carousel) return;
     
-    items.forEach(item => {
-      let touchTimeout;
+    const slidesContainer = carousel.querySelector('slideshow-slides');
+    if (!slidesContainer) return;
+    
+    const slides = Array.from(carousel.querySelectorAll('slideshow-slide'));
+    if (slides.length === 0) return;
+    
+    let currentCenterSlide = null;
+    let isUpdating = false;
+    let rafId = null;
+    
+    function updateCenterSlide() {
+      if (isUpdating) return;
+      isUpdating = true;
       
-      // Handle touch events for mobile
-      item.addEventListener('touchstart', function(e) {
-        clearTimeout(touchTimeout);
-        this.classList.add('product-video-slider__item--active');
-      }, { passive: true });
+      // Use requestAnimationFrame for smooth updates
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
       
-      item.addEventListener('touchend', function(e) {
-        const self = this;
-        touchTimeout = setTimeout(function() {
-          self.classList.remove('product-video-slider__item--active');
-        }, 300);
-      }, { passive: true });
-      
-      // Handle mouse events for desktop
-      item.addEventListener('mouseenter', function() {
-        this.classList.add('product-video-slider__item--active');
+      rafId = requestAnimationFrame(function() {
+        // Get container dimensions
+        const containerRect = slidesContainer.getBoundingClientRect();
+        const containerCenter = containerRect.left + containerRect.width / 2;
+        
+        // Find the slide closest to the center
+        let centerSlide = null;
+        let minDistance = Infinity;
+        
+        slides.forEach(slide => {
+          const slideRect = slide.getBoundingClientRect();
+          const slideCenter = slideRect.left + slideRect.width / 2;
+          const distance = Math.abs(containerCenter - slideCenter);
+          
+          // Only consider slides that are at least partially visible
+          if (slideRect.right > containerRect.left && slideRect.left < containerRect.right) {
+            if (distance < minDistance) {
+              minDistance = distance;
+              centerSlide = slide;
+            }
+          }
+        });
+        
+        // Only update if the center slide actually changed
+        if (centerSlide && centerSlide !== currentCenterSlide) {
+          // Remove center class from previous slide
+          if (currentCenterSlide) {
+            currentCenterSlide.classList.remove('product-video-slider__center-slide');
+          }
+          
+          // Add center class to new slide
+          centerSlide.classList.add('product-video-slider__center-slide');
+          currentCenterSlide = centerSlide;
+        }
+        
+        isUpdating = false;
+        rafId = null;
       });
+    }
+    
+    // Initial update with delay to ensure DOM is ready
+    setTimeout(function() {
+      updateCenterSlide();
+    }, 200);
+    
+    // Update on scroll with debouncing
+    let scrollTimeout;
+    let lastScrollTime = 0;
+    slidesContainer.addEventListener('scroll', function() {
+      const now = Date.now();
+      // Throttle to max once per 100ms
+      if (now - lastScrollTime < 100) {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(updateCenterSlide, 150);
+        return;
+      }
+      lastScrollTime = now;
       
-      item.addEventListener('mouseleave', function() {
-        this.classList.remove('product-video-slider__item--active');
-      });
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(updateCenterSlide, 100);
+    }, { passive: true });
+    
+    // Update on resize with debouncing
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(updateCenterSlide, 200);
     });
+    
+    // Update when slideshow component changes slide (for arrow navigation)
+    const slideshowComponent = carousel.closest('slideshow-component');
+    if (slideshowComponent) {
+      // Listen for slide changes via MutationObserver (less frequent than scroll)
+      const observer = new MutationObserver(function() {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(updateCenterSlide, 150);
+      });
+      
+      observer.observe(slidesContainer, {
+        attributes: true,
+        attributeFilter: ['aria-hidden'],
+        childList: false,
+        subtree: true
+      });
+    }
   });
 </script>
-
-<style>
-  .product-video-slider__item--active .product-video-slider__video-wrapper,
-  .product-video-slider__item--active .product-video-slider__image-wrapper {
-    width: 230px !important;
-    height: 360px !important;
-    z-index: 10;
-    position: relative;
-  }
-  
-  .product-video-slider__item--active .product-video-slider__product-info {
-    width: 230px !important;
-    max-width: 230px !important;
-  }
-  
-  @media screen and (min-width: 750px) {
-    .product-video-slider__item--active .product-video-slider__video-wrapper,
-    .product-video-slider__item--active .product-video-slider__image-wrapper {
-      width: 328px !important;
-      height: 517px !important;
-    }
-    
-    .product-video-slider__item--active .product-video-slider__product-info {
-      width: 328px !important;
-      max-width: 328px !important;
-    }
-  }
-</style>
 
 {% schema %}
 {
