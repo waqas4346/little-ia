@@ -54,6 +54,13 @@
             --product-grid-columns-desktop: repeat(2, 1fr);
           }
         }
+      {% when 'medium' %}
+        /* Limit medium cards to 4 columns maximum */
+        @container product-grid (min-width: calc({{ product_card_size }} * 5 + {{ section.settings.columns_gap_horizontal }}px * 4)) {
+          .product-grid--{{ section.id }}:is(.product-grid--grid) {
+            --product-grid-columns-desktop: repeat(4, 1fr);
+          }
+        }
     {% endcase %}
 
     /* When zoomed out, fit as many 100px-wide columns as possible */
