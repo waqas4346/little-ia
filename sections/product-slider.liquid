@@ -1,0 +1,698 @@
+{% liquid
+  assign max_items = section.settings.max_products | default: 4
+  assign items_per_view = section.settings.items_per_view | default: 4
+  
+  # Determine if we're using a collection or product list
+  assign use_collection = false
+  assign use_product_list = false
+  
+  if section.settings.collection != blank
+    assign use_collection = true
+    assign selected_collection = section.settings.collection
+  elsif section.settings.product_list != blank and section.settings.product_list.count > 0
+    assign use_product_list = true
+    assign product_list = section.settings.product_list
+  endif
+%}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div
+  data-testid="product-slider"
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+    product-slider-section
+  "
+  style="
+    {% render 'spacing-style', settings: section.settings %}
+    {% render 'gap-style', value: section.settings.gap %}
+  "
+>
+  <div class="product-slider-header">
+    {% if section.settings.top_label != blank %}
+      <div class="product-slider-top-label">
+        <span class="product-slider-top-label-text">{{ section.settings.top_label }}</span>
+      </div>
+    {% endif %}
+    
+    {% if section.settings.section_title != blank %}
+      <div class="product-slider-section-title">
+        <span class="product-slider-section-title-label">{{ section.settings.section_title }}</span>
+      </div>
+    {% endif %}
+  </div>
+
+  {% capture list_items %}
+    {% if use_collection %}
+      {% if selected_collection.products_count > 0 %}
+        {% for product in selected_collection.products limit: max_items %}
+          <div class="resource-list__item">
+            {% # theme-check-disable UniqueStaticBlockId %}
+              {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+            {% # theme-check-enable UniqueStaticBlockId %}
+          </div>
+          {% unless forloop.last %}
+            <!--@list/split-->
+          {% endunless %}
+        {% endfor %}
+      {% endif %}
+    {% elsif use_product_list %}
+      {% for product in product_list limit: max_items %}
+        <div class="resource-list__item">
+          {% # theme-check-disable UniqueStaticBlockId %}
+            {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+          {% # theme-check-enable UniqueStaticBlockId %}
+        </div>
+        {% unless forloop.last %}
+          <!--@list/split-->
+        {% endunless %}
+      {% endfor %}
+    {% else %}
+      {% comment %} Empty state - show placeholder products {% endcomment %}
+      {% for i in (1..max_items) %}
+        <div class="resource-list__item">
+          {% # theme-check-disable UniqueStaticBlockId %}
+            {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: null %}
+          {% # theme-check-enable UniqueStaticBlockId %}
+        </div>
+        {% unless forloop.last %}
+          <!--@list/split-->
+        {% endunless %}
+      {% endfor %}
+    {% endif %}
+  {% endcapture %}
+
+  {% liquid
+    assign list_items_array = list_items | strip | split: '<!--@list/split-->'
+    
+    # Prepare carousel settings
+    if section.settings.section_width == 'page-width'
+      assign slideshow_gutters = 'start end'
+      assign gutter_style = '--gutter-slide-width: var(--util-page-margin-offset);'
+    else
+      assign slideshow_gutters = null
+      assign gutter_style = '--gutter-slide-width: 0px;'
+    endif
+
+    assign show_arrows = false
+    if section.settings.icons_style != 'none'
+      assign show_arrows = true
+    endif
+  %}
+
+  {% capture slides %}
+    {% for item in list_items_array %}
+      {% render 'slideshow-slide'
+        index : forloop.index0,
+        children : item,
+        class : 'resource-list__slide product-slider-slide'
+      %}
+    {% endfor %}
+  {% endcapture %}
+
+  {% comment %} Desktop carousel {% endcomment %}
+  <div class="product-slider-wrapper">
+    <div
+      class="resource-list resource-list__carousel product-slider-carousel product-slider-desktop"
+      style="{{ gutter_style }} --column-count: {{ items_per_view }}; --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 8 }}px;"
+      data-testid="product-slider-grid"
+      data-items-per-view="{{ items_per_view }}"
+    >
+      {% render 'slideshow',
+        ref: 'productSliderDesktop',
+        class: 'resource-list__carousel',
+        slides: slides,
+        show_arrows: show_arrows,
+        icon_style: section.settings.icons_style,
+        icon_shape: section.settings.icons_shape,
+        auto_hide_controls: false,
+        infinite: false,
+        initial_slide: 0,
+        slide_count: list_items_array.size,
+        slideshow_gutters: slideshow_gutters,
+        arrows_position: 'center'
+      %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .product-slider-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .product-slider-top-label {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .product-slider-top-label-text {
+    font-family: 'Sacramento', cursive;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 38px;
+    line-height: 150%;
+    letter-spacing: 0%;
+    text-align: center;
+    color: #7295BB;
+    display: block;
+  }
+
+  .product-slider-section-title {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .product-slider-section-title-label {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-foreground, #1a1a1a);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: block;
+  }
+
+  /* Product card media sizing/background in slider */
+  [data-testid="product-slider-grid"] .card-gallery .product-media-container {
+    width: 323px;
+    height: 324px;
+    background: url("bg_removal [Background removed].png"), #F7F7F7;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+  }
+
+  [data-testid="product-slider-grid"] .card-gallery .product-media-container img,
+  [data-testid="product-slider-grid"] .card-gallery .product-media-container picture,
+  [data-testid="product-slider-grid"] .card-gallery .product-media-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Hide sale/sold-out badge on slider images */
+  [data-testid="product-slider-grid"] .product-badges {
+    display: none !important;
+  }
+
+  /* Product title styling */
+  [data-testid="product-slider-grid"] .text-block--product_title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 140%;
+    letter-spacing: 0;
+  }
+
+  /* Explicit class injected on product title block */
+  [data-testid="product-slider-grid"] .product-title-text {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 140%;
+    letter-spacing: 0;
+  }
+
+  /* Product slider carousel container */
+  .product-slider-carousel {
+    position: relative;
+  }
+
+  /* Desktop slider styling */
+  .product-slider-desktop .resource-list__carousel {
+    --column-count: {{ section.settings.items_per_view | default: 4 }};
+    --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 8 }}px;
+  }
+
+  /* Ensure gap is applied to slideshow slides on desktop */
+  .product-slider-desktop slideshow-slides {
+    gap: {{ section.settings.columns_gap | default: 8 }}px !important;
+  }
+
+  /* Position arrows outside the carousel on desktop */
+  .product-slider-wrapper {
+    position: relative;
+    padding: 0 60px;
+  }
+
+  .product-slider-desktop slideshow-container {
+    position: relative;
+  }
+
+  .product-slider-desktop slideshow-arrows {
+    position: absolute;
+    inset: 0;
+    left: auto;
+    right: auto;
+    width: calc(100% + 120px);
+    max-width: none;
+    pointer-events: none;
+    z-index: var(--layer-heightened);
+    margin-left: -60px;
+    margin-right: -60px;
+  }
+
+  .product-slider-desktop slideshow-arrows[position='center'] {
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+  }
+
+  .product-slider-desktop slideshow-arrows .slideshow-control {
+    position: absolute;
+    margin: 0;
+    pointer-events: auto;
+    opacity: 1;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .product-slider-desktop slideshow-arrows .slideshow-control--previous {
+    left: 0;
+  }
+
+  .product-slider-desktop slideshow-arrows .slideshow-control--next {
+    right: 0;
+  }
+
+  @media (max-width: 1200px) {
+    .product-slider-wrapper {
+      padding: 0 50px !important;
+    }
+
+    .product-slider-desktop slideshow-arrows {
+      width: calc(100% + 100px);
+      margin-left: -50px;
+      margin-right: -50px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .product-slider-section-title-label {
+      font-size: 1.25rem;
+    }
+
+    .product-slider-top-label-text {
+      font-family: 'Sacramento', cursive;
+      font-weight: 400;
+      font-style: normal;
+      font-size: 30px;
+      line-height: 150%;
+      letter-spacing: 0%;
+      text-align: center;
+      color: #7295BB;
+    }
+
+    .product-slider-section-title {
+      margin-bottom: 8px;
+    }
+
+    .product-slider-header {
+      margin-bottom: 16px;
+    }
+
+    [data-testid="product-slider-grid"] .card-gallery .product-media-container {
+      width: 173px;
+      height: 175px;
+      background: url("bg_removal [Background removed].png"), #F7F7F7;
+    }
+
+    [data-testid="product-slider-grid"] .text-block--product_title {
+      font-size: 16px;
+      line-height: 140%;
+    }
+
+    [data-testid="product-slider-grid"] .product-title-text {
+      font-size: 16px;
+      line-height: 140%;
+      letter-spacing: 0;
+    }
+
+    .product-slider-wrapper {
+      padding: 0 20px;
+    }
+
+    .product-slider-desktop slideshow-arrows {
+      width: calc(100% + 40px);
+      margin-left: -20px;
+      margin-right: -20px;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const desktopCarousel = document.querySelector('[data-testid="product-slider-grid"]');
+    if (!desktopCarousel) return;
+
+    const itemsPerView = parseInt(desktopCarousel.getAttribute('data-items-per-view')) || 4;
+    const slideshow = desktopCarousel.querySelector('slideshow-component[ref="productSliderDesktop"]');
+    if (!slideshow) return;
+
+    const previousBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--previous');
+    const nextBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--next');
+    const slides = slideshow.querySelectorAll('slideshow-slide');
+
+    if (!previousBtn || !nextBtn || slides.length === 0) return;
+
+    let currentIndex = 0;
+    const totalSlides = slides.length;
+    const maxIndex = Math.max(0, totalSlides - itemsPerView);
+
+    // Override previous button
+    previousBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      currentIndex = Math.max(0, currentIndex - itemsPerView);
+      if (slides[currentIndex]) {
+        slideshow.select(currentIndex, e, { animate: true });
+      }
+    });
+
+    // Override next button
+    nextBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      currentIndex = Math.min(maxIndex, currentIndex + itemsPerView);
+      if (slides[currentIndex]) {
+        slideshow.select(currentIndex, e, { animate: true });
+      }
+    });
+
+    // Update current index when slideshow changes
+    slideshow.addEventListener('slideshow:select', function(event) {
+      currentIndex = event.detail.index || 0;
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Product Slider",
+  "class": "ui-test-product-slider",
+  "blocks": [
+    {
+      "type": "@theme"
+    },
+    {
+      "type": "@app"
+    },
+    {
+      "type": "_divider"
+    }
+  ],
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "top_label",
+      "label": "Top Label",
+      "default": "shop",
+      "info": "Text displayed above the section title"
+    },
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section Title",
+      "default": "FEATURED PRODUCTS",
+      "info": "Title displayed above the product slider"
+    },
+    {
+      "type": "header",
+      "content": "Content Source"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection",
+      "info": "Select a collection to display its products. If not set, use product list below."
+    },
+    {
+      "type": "product_list",
+      "id": "product_list",
+      "label": "Products",
+      "limit": 20,
+      "info": "Select specific products to display. Only used if no collection is selected."
+    },
+    {
+      "type": "header",
+      "content": "Slider Settings"
+    },
+    {
+      "type": "range",
+      "id": "items_per_view",
+      "label": "Items per view",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "default": 4,
+      "info": "Number of products to show at once in the slider"
+    },
+    {
+      "type": "range",
+      "id": "max_products",
+      "label": "Maximum products",
+      "min": 1,
+      "max": 20,
+      "step": 1,
+      "default": 8,
+      "info": "Maximum number of products to display"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap",
+      "label": "Horizontal Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "select",
+      "id": "icons_style",
+      "label": "Arrow Style",
+      "options": [
+        {
+          "value": "arrow",
+          "label": "Arrows"
+        },
+        {
+          "value": "chevron",
+          "label": "Chevrons"
+        },
+        {
+          "value": "arrows_large",
+          "label": "Large Arrows"
+        },
+        {
+          "value": "chevron_large",
+          "label": "Large Chevrons"
+        },
+        {
+          "value": "none",
+          "label": "None"
+        }
+      ],
+      "default": "arrow"
+    },
+    {
+      "type": "select",
+      "id": "icons_shape",
+      "label": "Arrow Background",
+      "options": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "circle",
+          "label": "Circle"
+        },
+        {
+          "value": "square",
+          "label": "Square"
+        }
+      ],
+      "default": "none",
+      "visible_if": "{{ section.settings.icons_style != 'none' }}"
+    },
+    {
+      "type": "header",
+      "content": "Section Layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page"
+        },
+        {
+          "value": "full-width",
+          "label": "Full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color Scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Slider",
+      "category": "Products",
+      "settings": {
+        "top_label": "shop",
+        "section_title": "FEATURED PRODUCTS",
+        "items_per_view": 4,
+        "max_products": 8,
+        "columns_gap": 8,
+        "icons_style": "arrow",
+        "icons_shape": "none",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      },
+      "blocks": {
+        "static-product-card": {
+          "type": "_product-card",
+          "name": "Product Card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 4,
+            "inherit_color_scheme": true,
+            "color_scheme": "",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {
+            "product-card-gallery": {
+              "type": "_product-card-gallery",
+              "name": "Product Card Media",
+              "settings": {
+                "image_ratio": "adapt",
+                "border": "none",
+                "border_width": 1,
+                "border_opacity": 100,
+                "border_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              }
+            },
+            "product_title": {
+              "type": "product-title",
+              "name": "Product Title",
+              "settings": {
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 4,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              }
+            },
+            "price": {
+              "type": "price",
+              "name": "Product Price",
+              "settings": {
+                "show_sale_price_first": true,
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "h6",
+                "width": "100%",
+                "alignment": "left",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "color": "var(--color-foreground)",
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              }
+            }
+          },
+          "block_order": ["product-card-gallery", "product_title", "price"]
+        }
+      },
+      "block_order": []
+    }
+  ]
+}
+{% endschema %}
+
