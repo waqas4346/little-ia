@@ -1,12 +1,3 @@
-/*
- * ------------------------------------------------------------
- * IMPORTANT: The contents of this file are auto-generated.
- *
- * This file may be updated by the Shopify admin theme editor
- * or related systems. Please exercise caution as any changes
- * made to this file may be overwritten.
- * ------------------------------------------------------------
- */
 {
   "sections": {
     "main": {
@@ -112,7 +103,7 @@
                   "type": "text",
                   "name": "Product title",
                   "settings": {
-                    "text": "<h1>{{ closest.product.title }}</h1>",
+                    "text": "<h1>{{ closest.product.title }}<\/h1>",
                     "width": "100%",
                     "max_width": "normal",
                     "alignment": "left",
@@ -212,6 +203,12 @@
                     "style_class": "button"
                   },
                   "blocks": {}
+                },
+                "accelerated-checkout": {
+                  "type": "accelerated-checkout",
+                  "static": true,
+                  "settings": {},
+                  "blocks": {}
                 }
               },
               "block_order": []
@@ -273,7 +270,7 @@
                     "text_3gTLMq": {
                       "type": "text",
                       "settings": {
-                        "text": "<p>Our goal is for every customer to be totally satisfied with their purchase. If this isn't the case, let us know and we'll do our best to work with you to make it right.</p>",
+                        "text": "<p>Our goal is for every customer to be totally satisfied with their purchase. If this isn't the case, let us know and we'll do our best to work with you to make it right.<\/p>",
                         "width": "100%",
                         "max_width": "normal",
                         "alignment": "left",
@@ -312,7 +309,7 @@
                     "text_BGmTMw": {
                       "type": "text",
                       "settings": {
-                        "text": "<p>We will work quickly to ship your order as soon as possible. Once your order has shipped, you will receive an email with further information. Delivery times vary depending on your location.</p>",
+                        "text": "<p>We will work quickly to ship your order as soon as possible. Once your order has shipped, you will receive an email with further information. Delivery times vary depending on your location.<\/p>",
                         "width": "100%",
                         "max_width": "normal",
                         "alignment": "left",
@@ -351,7 +348,7 @@
                     "text_K7pMGb": {
                       "type": "text",
                       "settings": {
-                        "text": "<p>Our products are manufactured both locally and globally. We carefully select our manufacturing partners to ensure our products are high quality and a fair value.</p>",
+                        "text": "<p>Our products are manufactured both locally and globally. We carefully select our manufacturing partners to ensure our products are high quality and a fair value.<\/p>",
                         "width": "100%",
                         "max_width": "normal",
                         "alignment": "left",
@@ -415,7 +412,7 @@
           "type": "text",
           "name": "t:names.header",
           "settings": {
-            "text": "<h3>You may also like </h3>",
+            "text": "<h3>You may also like <\/h3>",
             "width": "fit-content",
             "max_width": "normal",
             "alignment": "left",
@@ -529,7 +526,6 @@
       "block_order": [
         "text_cbcgyb"
       ],
-      "disabled": true,
       "name": "t:names.product_recommendations",
       "settings": {
         "product": "{{ closest.product }}",
@@ -549,236 +545,10 @@
         "padding-block-start": 48,
         "padding-block-end": 48
       }
-    },
-    "product_features_jJbeKC": {
-      "type": "product-features",
-      "blocks": {
-        "feature_image_TFnbxP": {
-          "type": "feature_image",
-          "settings": {
-            "caption": ""
-          }
-        },
-        "feature_image_gDLUWY": {
-          "type": "feature_image",
-          "settings": {
-            "caption": ""
-          }
-        }
-      },
-      "block_order": [
-        "feature_image_TFnbxP",
-        "feature_image_gDLUWY"
-      ],
-      "name": "Product Features",
-      "settings": {
-        "layout": "image-left",
-        "left_image": "shopify://shop_images/Frame_1437254654.png",
-        "left_heading": "",
-        "left_subheading": "",
-        "right_heading": "<p>Machine Washable & Long-Lasting</p>",
-        "right_subheading": "<p>Retains softness and shape even after repeated washes, making it practical for daily use.</p>",
-        "color_scheme": "",
-        "padding-block-start": 40,
-        "padding-block-end": 40
-      }
-    },
-    "product_features_GGQBH4": {
-      "type": "product-features",
-      "blocks": {
-        "feature_image_xWa7Ka": {
-          "type": "feature_image",
-          "settings": {
-            "image": "shopify://shop_images/Frame_1437254659.png",
-            "caption": ""
-          }
-        },
-        "feature_image_BTUq38": {
-          "type": "feature_image",
-          "settings": {
-            "image": "shopify://shop_images/Frame_1437254658.png",
-            "caption": ""
-          }
-        },
-        "feature_image_ppRjnD": {
-          "type": "feature_image",
-          "settings": {
-            "caption": ""
-          }
-        },
-        "feature_image_ciXEtQ": {
-          "type": "feature_image",
-          "settings": {
-            "caption": ""
-          }
-        }
-      },
-      "block_order": [
-        "feature_image_xWa7Ka",
-        "feature_image_BTUq38",
-        "feature_image_ppRjnD",
-        "feature_image_ciXEtQ"
-      ],
-      "name": "Product Features",
-      "settings": {
-        "layout": "text-left",
-        "left_heading": "<p>Snug & Cozy Fit with Adorable Details</p>",
-        "left_subheading": "<p>Long sleeves and enclosed feet keep your baby warm without overheating.</p><p>Bunny embroidery and a peter-pan collar add a timeless, picture-perfect charm.</p>",
-        "right_image": "shopify://shop_images/Frame_1437253713.png",
-        "right_heading": "<h2>Machine Washable & Long-Lasting</h2>",
-        "right_subheading": "<p>Retains softness and shape even after repeated washes, making it practical for daily use.</p>",
-        "color_scheme": "",
-        "padding-block-start": 40,
-        "padding-block-end": 40
-      }
-    },
-    "product_slider_hdWEY4": {
-      "type": "product-slider",
-      "blocks": {
-        "static-product-card": {
-          "type": "_product-card",
-          "name": "Product Card",
-          "static": true,
-          "settings": {
-            "product_card_gap": 4,
-            "inherit_color_scheme": true,
-            "color_scheme": "",
-            "border": "none",
-            "border_width": 1,
-            "border_opacity": 100,
-            "border_radius": 0,
-            "padding-block-start": 0,
-            "padding-block-end": 0,
-            "padding-inline-start": 0,
-            "padding-inline-end": 0
-          },
-          "blocks": {
-            "product_card_gallery_h9mjtz": {
-              "type": "_product-card-gallery",
-              "name": "Product Card Media",
-              "settings": {
-                "image_ratio": "adapt",
-                "border": "none",
-                "border_width": 1,
-                "border_opacity": 100,
-                "border_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "product_title_XRQaiD": {
-              "type": "product-title",
-              "name": "Product Title",
-              "settings": {
-                "width": "fit-content",
-                "max_width": "normal",
-                "alignment": "left",
-                "type_preset": "rte",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "wrap": "pretty",
-                "color": "var(--color-foreground)",
-                "background": false,
-                "background_color": "#00000026",
-                "corner_radius": 0,
-                "padding-block-start": 4,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "price_fVbjza": {
-              "type": "price",
-              "name": "Product Price",
-              "settings": {
-                "show_sale_price_first": true,
-                "show_installments": false,
-                "show_tax_info": false,
-                "type_preset": "h6",
-                "width": "100%",
-                "alignment": "left",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "color": "var(--color-foreground)",
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            }
-          },
-          "block_order": [
-            "product_card_gallery_h9mjtz",
-            "product_title_XRQaiD",
-            "price_fVbjza"
-          ]
-        }
-      },
-      "name": "Product Slider",
-      "settings": {
-        "top_label": "the bunny",
-        "section_title": " Signature Starter Gift Set",
-        "collection": "baby-clothing",
-        "product_list": [],
-        "items_per_view": 4,
-        "max_products": 8,
-        "columns_gap": 8,
-        "quick_add": true,
-        "icons_style": "arrow",
-        "icons_shape": "none",
-        "section_width": "page-width",
-        "gap": 12,
-        "color_scheme": "scheme-1",
-        "padding-block-start": 48,
-        "padding-block-end": 48
-      }
-    },
-    "collection_slider_ACwjdf": {
-      "type": "collection-slider",
-      "name": "Collection Slider",
-      "settings": {
-        "top_label": "explore",
-        "section_title": " OTHER COLLECTIONS",
-        "collection_list": [
-          "personalised-baby-clothing",
-          "personalised-baby-collection-age-0-24m",
-          "knitwear-for-baby",
-          "baby-sleepsuits",
-          "baby-sleepsuits-1",
-          "back-to-school-essentials",
-          "back-to-school-gift-set",
-          "backpack"
-        ],
-        "items_per_view": 4,
-        "title_position": "center",
-        "icons_style": "arrow",
-        "icons_shape": "none",
-        "columns_gap": 12,
-        "section_width": "page-width",
-        "gap": 12,
-        "color_scheme": "scheme-1",
-        "padding-block-start": 48,
-        "padding-block-end": 48
-      }
     }
   },
   "order": [
     "main",
-    "product_recommendations_qggXJq",
-    "product_features_jJbeKC",
-    "product_features_GGQBH4",
-    "product_slider_hdWEY4",
-    "collection_slider_ACwjdf"
+    "product_recommendations_qggXJq"
   ]
 }

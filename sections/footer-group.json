@@ -2,6 +2,102 @@
   "type": "footer",
   "name": "Footer",
   "sections": {
+    "section_9NAmPG": {
+      "type": "section",
+      "blocks": {
+        "icon_with_text_dYMjq9": {
+          "type": "icon-with-text",
+          "name": "Icon with text",
+          "settings": {
+            "image_upload": "shopify:\/\/shop_images\/Union.svg",
+            "icon_size": 32,
+            "icon_size_mobile": 22,
+            "heading": "<p>COMPLIMENTARY<br\/>PERSONALISATION<\/p>",
+            "sub_heading": "on all items",
+            "alignment": "vertical",
+            "gap": 8
+          },
+          "blocks": {}
+        },
+        "icon_with_text_ddDeyD": {
+          "type": "icon-with-text",
+          "name": "Icon with text",
+          "settings": {
+            "image_upload": "shopify:\/\/shop_images\/Delivery-Truck-Clock--Streamline-Ultimate.svg",
+            "icon_size": 32,
+            "icon_size_mobile": 22,
+            "heading": "<p>SAME DAY DELIVERY<br\/>IN DUBAI<\/p>",
+            "sub_heading": "till 12pm",
+            "alignment": "vertical",
+            "gap": 8
+          },
+          "blocks": {}
+        },
+        "icon_with_text_e3AwW3": {
+          "type": "icon-with-text",
+          "name": "Icon with text",
+          "settings": {
+            "image_upload": "shopify:\/\/shop_images\/Gift-Card--Streamline-Tabler.svg",
+            "icon_size": 32,
+            "icon_size_mobile": 22,
+            "heading": "<p>COMPLIMENTARY<br\/>PACKAGING<\/p>",
+            "sub_heading": "with gift sets",
+            "alignment": "vertical",
+            "gap": 8
+          },
+          "blocks": {}
+        },
+        "icon_with_text_xkbFrD": {
+          "type": "icon-with-text",
+          "name": "Icon with text",
+          "settings": {
+            "image_upload": "shopify:\/\/shop_images\/Vector_1.svg",
+            "icon_size": 32,
+            "icon_size_mobile": 22,
+            "heading": "<p>WORLDWIDE<br\/>EXPRESS SHIPPING<\/p>",
+            "sub_heading": "5 to 7 working days",
+            "alignment": "vertical",
+            "gap": 8
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "icon_with_text_dYMjq9",
+        "icon_with_text_ddDeyD",
+        "icon_with_text_e3AwW3",
+        "icon_with_text_xkbFrD"
+      ],
+      "name": "t:names.multicolumn",
+      "settings": {
+        "content_direction": "row",
+        "vertical_on_mobile": false,
+        "horizontal_alignment": "space-between",
+        "vertical_alignment": "flex-start",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 16,
+        "icons_with_text_inline": false,
+        "section_width": "page-width",
+        "section_height": "",
+        "section_height_custom": 50,
+        "color_scheme": "",
+        "background_media": "none",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_radius": 0,
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "padding-block-start": 60,
+        "padding-block-end": 60
+      }
+    },
     "footer_m9NzUG": {
       "type": "footer",
       "blocks": {
@@ -198,6 +294,7 @@
     }
   },
   "order": [
+    "section_9NAmPG",
     "footer_m9NzUG",
     "footer_utilities_jLGE8U"
   ]
