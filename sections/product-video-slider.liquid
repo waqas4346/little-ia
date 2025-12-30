@@ -494,6 +494,20 @@
     aspect-ratio: 204 / 321;
     overflow: hidden;
     border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  /* Ensure the initial play button is clickable */
+  .product-video-slider__video-wrapper .deferred-media__poster-button {
+    cursor: pointer;
+    pointer-events: auto !important;
+    z-index: 5;
+    position: relative;
+  }
+  
+  /* Ensure the play button is always on top before video loads */
+  .product-video-slider__video-wrapper deferred-media:not([data-media-loaded]) .deferred-media__poster-button {
+    z-index: 10;
   }
   
   @media screen and (min-width: 750px) {
@@ -520,12 +534,39 @@
     object-fit: cover;
   }
   
+  /* Make the toggle button visible and clickable when video is loaded */
+  .product-video-slider__video-wrapper deferred-media[data-media-loaded] .video-interaction-hint {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    z-index: 10 !important;
+  }
+  
+  /* Ensure the toggle button covers the entire video area */
+  .product-video-slider__video-wrapper deferred-media[data-media-loaded] .video-interaction-hint.deferred-media__poster-button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+  }
+  
+  /* Make the entire video wrapper clickable to toggle play/pause when video is loaded */
+  .product-video-slider__video-wrapper deferred-media[data-media-loaded] {
+    cursor: pointer;
+  }
+  
   /* Custom play icon for product video slider */
   .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-play svg {
     display: none !important;
   }
   
-  .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-play {
+  /* Hide play icon when it has the hidden class */
+  .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-play.hidden {
+    display: none !important;
+  }
+  
+  .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden) {
     width: 49px !important;
     height: 49px !important;
     display: flex !important;
@@ -533,7 +574,7 @@
     justify-content: center;
   }
   
-  .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-play::after {
+  .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden)::after {
     content: '';
     display: block;
     width: 49px;
@@ -553,7 +594,12 @@
     display: none !important;
   }
   
-  .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-pause {
+  /* Hide pause icon when it has the hidden class */
+  .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-pause.hidden {
+    display: none !important;
+  }
+  
+  .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden) {
     width: 49px !important;
     height: 49px !important;
     display: flex !important;
@@ -561,7 +607,7 @@
     justify-content: center;
   }
   
-  .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-pause::after {
+  .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden)::after {
     content: '';
     display: block;
     width: 49px;
@@ -577,23 +623,23 @@
   }
   
   @media screen and (min-width: 750px) {
-    .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-play {
+    .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden) {
       width: 70px !important;
       height: 70px !important;
     }
     
-    .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-play::after {
+    .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden)::after {
       width: 70px;
       height: 70px;
       background-image: url("data:image/svg+xml,%3Csvg width='70' height='70' viewBox='0 0 70 70' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-3.2696' y='-3.2696' width='76.0182' height='76.0182'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.63px);clip-path:url(%23bgblur_0_860_7705_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='3.2696' cx='34.7395' cy='34.7395' r='34.7395' fill='%23222222' fill-opacity='0.36'/%3E%3Cpath d='M27 21L27 48L43 34.5L27 21Z' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_7705_clip_path' transform='translate(3.2696 3.2696)'%3E%3Ccircle cx='34.7395' cy='34.7395' r='34.7395'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
     }
     
-    .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-pause {
+    .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden) {
       width: 70px !important;
       height: 70px !important;
     }
     
-    .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-pause::after {
+    .product-video-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden)::after {
       width: 70px;
       height: 70px;
       background-image: url("data:image/svg+xml,%3Csvg width='70' height='70' viewBox='0 0 70 70' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-3.2696' y='-3.2696' width='76.0182' height='76.0182'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.63px);clip-path:url(%23bgblur_0_860_7705_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='3.2696' cx='34.7395' cy='34.7395' r='34.7395' fill='%23222222' fill-opacity='0.36'/%3E%3Crect x='25' y='20' width='6' height='30' fill='white'/%3E%3Crect x='39' y='20' width='6' height='30' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_7705_clip_path' transform='translate(3.2696 3.2696)'%3E%3Ccircle cx='34.7395' cy='34.7395' r='34.7395'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
@@ -808,6 +854,145 @@
         subtree: true
       });
     }
+    
+    // Make video wrappers clickable to toggle play/pause
+    const videoWrappers = carousel.querySelectorAll('.product-video-slider__video-wrapper');
+    videoWrappers.forEach(function(wrapper) {
+      const deferredMedia = wrapper.querySelector('deferred-media');
+      if (!deferredMedia) return;
+      
+      let clickHandlerAdded = false;
+      
+      function handleVideoClick(e) {
+        // Don't trigger if clicking on interactive elements (buttons, links, etc.)
+        if (e.target.closest('button, a, .quick-add')) {
+          return;
+        }
+        
+        // If video is not loaded yet, let the default play button handle it
+        if (!deferredMedia.hasAttribute('data-media-loaded')) {
+          return;
+        }
+        
+        // Try to call toggleMedia method directly if available
+        if (deferredMedia.toggleMedia && typeof deferredMedia.toggleMedia === 'function') {
+          deferredMedia.toggleMedia();
+        }
+      }
+      
+      function setupVideoClickHandler() {
+        if (clickHandlerAdded) return;
+        clickHandlerAdded = true;
+        
+        // Add click handler to toggle play/pause
+        wrapper.addEventListener('click', handleVideoClick, true);
+        wrapper.style.cursor = 'pointer';
+      }
+      
+      function playVideoAfterLoad() {
+        // Wait for the video element to be ready in the DOM
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        function tryPlay() {
+          attempts++;
+          
+          // First try using the component's playMedia method
+          if (deferredMedia.playMedia && typeof deferredMedia.playMedia === 'function') {
+            try {
+              deferredMedia.playMedia();
+              return;
+            } catch (err) {
+              console.log('playMedia method failed:', err);
+            }
+          }
+          
+          // Fallback: try to find and play the video element directly
+          const videoElement = deferredMedia.querySelector('video');
+          const iframe = deferredMedia.querySelector('iframe[data-video-type]');
+          
+          if (videoElement) {
+            videoElement.play().catch(function(err) {
+              // If still not ready, try again
+              if (attempts < maxAttempts) {
+                setTimeout(tryPlay, 50);
+              } else {
+                console.log('Video play failed after attempts:', err);
+              }
+            });
+          } else if (iframe) {
+            // For iframe videos (YouTube/Vimeo), use postMessage
+            const videoType = iframe.dataset.videoType;
+            if (videoType === 'youtube') {
+              iframe.contentWindow?.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+            } else if (videoType === 'vimeo') {
+              iframe.contentWindow?.postMessage('{"method":"play"}', '*');
+            }
+          } else if (attempts < maxAttempts) {
+            // Video element not ready yet, try again
+            setTimeout(tryPlay, 50);
+          }
+        }
+        
+        // Start trying after a short delay
+        setTimeout(tryPlay, 50);
+      }
+      
+      // Watch for when video is loaded
+      const mediaObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'data-media-loaded') {
+            setupVideoClickHandler();
+            playVideoAfterLoad();
+          }
+        });
+      });
+      
+      mediaObserver.observe(deferredMedia, {
+        attributes: true,
+        attributeFilter: ['data-media-loaded']
+      });
+      
+      // Also check if video is already loaded
+      if (deferredMedia.hasAttribute('data-media-loaded')) {
+        setupVideoClickHandler();
+      }
+      
+      // Intercept the initial play button click to ensure video plays after loading
+      const initialPlayButton = deferredMedia.querySelector('[ref="deferredMediaPlayButton"]');
+      if (initialPlayButton) {
+        // Use a small delay to let showDeferredMedia complete first
+        initialPlayButton.addEventListener('click', function(e) {
+          // Ensure the button is clickable
+          e.stopPropagation();
+          
+          // Wait for video to load, then play it
+          const checkAndPlay = setInterval(function() {
+            if (deferredMedia.hasAttribute('data-media-loaded')) {
+              clearInterval(checkAndPlay);
+              playVideoAfterLoad();
+            }
+          }, 50);
+          
+          // Stop checking after 2 seconds
+          setTimeout(function() {
+            clearInterval(checkAndPlay);
+          }, 2000);
+        });
+      }
+      
+      // Also add a direct click handler to the wrapper as a fallback for initial play
+      // This only triggers if clicking on the wrapper itself (not on buttons)
+      wrapper.addEventListener('click', function(e) {
+        // Only handle if clicking directly on the wrapper background
+        if (e.target === wrapper && !deferredMedia.hasAttribute('data-media-loaded')) {
+          const playButton = deferredMedia.querySelector('[ref="deferredMediaPlayButton"]');
+          if (playButton && !playButton.classList.contains('deferred-media__playing')) {
+            playButton.click();
+          }
+        }
+      });
+    });
   });
 </script>
 

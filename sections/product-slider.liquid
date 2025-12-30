@@ -228,14 +228,9 @@
   {% liquid
     assign list_items_array = list_items | strip | split: '<!--@list/split-->'
     
-    # Prepare carousel settings
-    if section.settings.section_width == 'page-width'
-      assign slideshow_gutters = 'start end'
-      assign gutter_style = '--gutter-slide-width: var(--util-page-margin-offset);'
-    else
-      assign slideshow_gutters = null
-      assign gutter_style = '--gutter-slide-width: 0px;'
-    endif
+    # Prepare carousel settings - remove gutters to allow full width
+    assign slideshow_gutters = null
+    assign gutter_style = '--gutter-slide-width: 0px;'
 
     assign show_arrows = false
     if section.settings.icons_style != 'none'
@@ -318,8 +313,6 @@
 
   /* Product card media sizing/background in slider */
   [data-testid="product-slider-grid"] .card-gallery .product-media-container {
-    width: 323px;
-    height: 324px;
     background: url("bg_removal [Background removed].png"), #F7F7F7;
     background-repeat: no-repeat;
     background-size: cover;
@@ -364,6 +357,22 @@
     position: relative;
   }
 
+  /* Remove horizontal padding for max width */
+  [data-testid="product-slider"] .section--page-width {
+    padding-inline: 0 !important;
+  }
+
+  [data-testid="product-slider"] .section--page-width > * {
+    padding-inline: 0 !important;
+  }
+
+  [data-testid="product-slider-grid"] {
+    padding-inline: 0 !important;
+    --peek-next-slide-size: 0px;
+    --gutter-slide-width: 0px !important;
+    overflow: visible;
+  }
+
   /* Desktop slider styling */
   .product-slider-desktop .resource-list__carousel {
     --column-count: {{ section.settings.items_per_view | default: 4 }};
@@ -378,7 +387,7 @@
   /* Position arrows outside the carousel on desktop */
   .product-slider-wrapper {
     position: relative;
-    padding: 0 60px;
+    padding: 0;
   }
 
   .product-slider-desktop slideshow-container {
@@ -423,7 +432,7 @@
 
   @media (max-width: 1200px) {
     .product-slider-wrapper {
-      padding: 0 50px !important;
+      padding: 0;
     }
 
     .product-slider-desktop slideshow-arrows {
@@ -705,8 +714,6 @@
     }
 
     [data-testid="product-slider-grid"] .card-gallery .product-media-container {
-      width: 173px;
-      height: 175px;
       background: url("bg_removal [Background removed].png"), #F7F7F7;
     }
 
@@ -722,7 +729,7 @@
     }
 
     .product-slider-wrapper {
-      padding: 0 20px;
+      padding: 0;
     }
 
     .product-slider-desktop slideshow-arrows {
