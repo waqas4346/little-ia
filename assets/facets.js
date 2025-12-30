@@ -216,37 +216,26 @@ if (!customElements.get('facet-inputs-component')) {
  * @extends {Component<PriceFacetRefs>}
  */
 class PriceFacetComponent extends Component {
-  requiredRefs = ['minInput', 'maxInput', 'minSlider', 'maxSlider'];
+  requiredRefs = ['minInput', 'maxInput'];
   #debouncedUpdate = null;
 
   connectedCallback() {
     super.connectedCallback();
     this.addEventListener('keydown', this.#onKeyDown);
     
-    // Listen for filter updates to restore fill after re-render
-    document.addEventListener(ThemeEvents.FilterUpdate, this.#onFilterUpdate);
-    
     // Wait for refs to be ready
     requestAnimationFrame(() => {
-      this.#initSliders();
+      this.#initInputs();
     });
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this.removeEventListener('keydown', this.#onKeyDown);
-    document.removeEventListener(ThemeEvents.FilterUpdate, this.#onFilterUpdate);
     if (this.#debouncedUpdate) {
       this.#debouncedUpdate.cancel?.();
     }
   }
-
-  #onFilterUpdate = () => {
-    // Restore fill after section re-render
-    setTimeout(() => {
-      this.#updateFill();
-    }, 100);
-  };
 
   #onKeyDown = (event) => {
     if (event.metaKey) return;
@@ -254,103 +243,41 @@ class PriceFacetComponent extends Component {
     if (!event.key.match(pattern)) event.preventDefault();
   };
 
-  #initSliders() {
-    const { minSlider, maxSlider, minInput, maxInput } = this.refs;
-    if (!minSlider || !maxSlider || !minInput || !maxInput) {
+  #initInputs() {
+    const { minInput, maxInput } = this.refs;
+    if (!minInput || !maxInput) {
       // Retry if refs not ready yet
-      setTimeout(() => this.#initSliders(), 50);
+      setTimeout(() => this.#initInputs(), 50);
       return;
     }
-
-    // Set initial constraints
-    const maxRange = Number(maxSlider.getAttribute('max')) || 0;
-    minSlider.setAttribute('max', maxRange);
-    maxSlider.setAttribute('min', Number(minSlider.value) || 0);
-
-    // Update fill on init
-    this.#updateFill();
 
     // Debounce filter updates to prevent excessive re-renders
     this.#debouncedUpdate = debounce(() => {
       this.updatePriceFilterAndResults();
     }, 300);
 
-    // Slider to input sync
-    minSlider.addEventListener('input', () => {
-      minInput.value = minSlider.value;
-      if (Number(minSlider.value) > Number(maxSlider.value)) {
-        maxSlider.value = minSlider.value;
-        maxInput.value = minSlider.value;
-      }
-      maxSlider.setAttribute('min', minSlider.value);
-      this.#updateFill();
-      // Debounce the filter update
-      if (this.#debouncedUpdate) {
-        this.#debouncedUpdate();
-      }
-    });
-
-    maxSlider.addEventListener('input', () => {
-      maxInput.value = maxSlider.value;
-      if (Number(maxSlider.value) < Number(minSlider.value)) {
-        minSlider.value = maxSlider.value;
-        minInput.value = maxSlider.value;
-      }
-      minSlider.setAttribute('max', maxSlider.value);
-      this.#updateFill();
-      // Debounce the filter update
-      if (this.#debouncedUpdate) {
-        this.#debouncedUpdate();
-      }
-    });
-
-    // Input to slider sync
+    // Input event handlers
     minInput.addEventListener('input', () => {
       const val = Number(minInput.value);
-      if (!isNaN(val)) {
-        minSlider.value = val;
-        if (val > Number(maxSlider.value)) {
-          maxSlider.value = val;
-          maxInput.value = val;
-        }
-        maxSlider.setAttribute('min', val);
-        this.#updateFill();
+      if (!isNaN(val) && val > Number(maxInput.value || maxInput.getAttribute('data-max') || 0)) {
+        maxInput.value = val;
+      }
+      // Debounce the filter update
+      if (this.#debouncedUpdate) {
+        this.#debouncedUpdate();
       }
     });
 
     maxInput.addEventListener('input', () => {
       const val = Number(maxInput.value);
-      if (!isNaN(val)) {
-        maxSlider.value = val;
-        if (val < Number(minSlider.value)) {
-          minSlider.value = val;
-          minInput.value = val;
-        }
-        minSlider.setAttribute('max', val);
-        this.#updateFill();
+      if (!isNaN(val) && val < Number(minInput.value || 0)) {
+        minInput.value = val;
+      }
+      // Debounce the filter update
+      if (this.#debouncedUpdate) {
+        this.#debouncedUpdate();
       }
     });
-  }
-
-  #updateFill() {
-    const { minSlider, maxSlider } = this.refs;
-    if (!minSlider || !maxSlider) return;
-
-    const fill = this.querySelector('.price-facet__slider-fill');
-    if (!fill) return;
-
-    const minVal = Number(minSlider.value) || 0;
-    const maxVal = Number(maxSlider.value) || 0;
-    const maxRange = Number(maxSlider.getAttribute('max')) || 1;
-    if (maxRange === 0) return;
-
-    const minPercent = (minVal / maxRange) * 100;
-    const maxPercent = (maxVal / maxRange) * 100;
-    const left = Math.min(minPercent, maxPercent);
-    const width = Math.abs(maxPercent - minPercent);
-
-    fill.style.left = `${left}%`;
-    fill.style.width = `${width}%`;
   }
 
   updatePriceFilterAndResults() {
@@ -372,9 +299,8 @@ class PriceFacetComponent extends Component {
     // Restore scroll position immediately and after render
     window.scrollTo(scrollX, scrollY);
     
-    // Restore fill after re-render
+    // Restore scroll position after re-render
     setTimeout(() => {
-      this.#updateFill();
       window.scrollTo(scrollX, scrollY);
     }, 50);
   }
