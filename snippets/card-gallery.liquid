@@ -134,7 +134,9 @@
             continue
           endif
 
-          if forloop.first and section.index == null or section.index < 5
+          # Load first visible image eagerly for better UX, especially in product lists
+          # This ensures product images load by default instead of only on hover
+          if forloop.first and hidden == false
             assign loading = 'eager'
             assign sizes = image_sizes
           endif
@@ -171,6 +173,12 @@
         show_arrows: show_arrows,
         attributes: slideshow_attributes
       %}
+      {%- comment -%} Mobile scrollbar indicator {%- endcomment -%}
+      <div class="product-card-scrollbar-indicator">
+        <div class="product-card-scrollbar-track">
+          <div class="product-card-scrollbar-thumb"></div>
+        </div>
+      </div>
     </a>
   {% elsif product != blank and product.media.size == 0 %}
     <product-title class="product-card-gallery__title-placeholder">
@@ -376,4 +384,108 @@
   [product-grid-view='zoom-out'] .card-gallery .slideshow-control {
     min-width: auto;
   }
+
+  /* Mobile scrollbar for product card image slider */
+  @media screen and (max-width: 749px) {
+    /* Enable scrollbar on mobile - override slideshow default */
+    .card-gallery slideshow-component {
+      --cursor: grab;
+    }
+
+    .card-gallery slideshow-component[disabled='true'] slideshow-slides {
+      overflow-x: auto !important;
+    }
+
+    .card-gallery slideshow-slides {
+      overflow-x: auto !important;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+    }
+
+    /* Hide native scrollbar */
+    .card-gallery slideshow-slides::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    /* Custom scrollbar indicator */
+    .product-card-scrollbar-indicator {
+      width: 100%;
+      height: 4px;
+      margin-top: 8px;
+      position: relative;
+    }
+
+    .product-card-scrollbar-track {
+      width: 100%;
+      height: 4px;
+      background-color: #EEEEEE;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .product-card-scrollbar-thumb {
+      height: 4px;
+      background-color: #7295BB;
+      border-radius: 10px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      transition: width 0.1s ease-out, left 0.1s ease-out;
+      min-width: 20px;
+    }
+  }
 {% endstylesheet %}
+
+<script>
+  // Custom scrollbar indicator for product card image slider on mobile
+  document.addEventListener('DOMContentLoaded', function() {
+    const cardGalleries = document.querySelectorAll('.card-gallery');
+    
+    cardGalleries.forEach(function(cardGallery) {
+      const slides = cardGallery.querySelector('slideshow-slides');
+      const scrollbarThumb = cardGallery.querySelector('.product-card-scrollbar-thumb');
+      const scrollbarIndicator = cardGallery.querySelector('.product-card-scrollbar-indicator');
+      
+      if (!slides || !scrollbarThumb || !scrollbarIndicator) return;
+
+      function updateScrollbar() {
+        const scrollLeft = slides.scrollLeft;
+        const scrollWidth = slides.scrollWidth;
+        const clientWidth = slides.clientWidth;
+        const maxScroll = scrollWidth - clientWidth;
+        
+        if (maxScroll <= 0) {
+          scrollbarIndicator.style.display = 'none';
+          return;
+        }
+        
+        scrollbarIndicator.style.display = 'block';
+        
+        // Calculate thumb width and position
+        const thumbWidth = (clientWidth / scrollWidth) * 100;
+        const thumbPosition = (scrollLeft / maxScroll) * (100 - thumbWidth);
+        
+        scrollbarThumb.style.width = thumbWidth + '%';
+        scrollbarThumb.style.left = thumbPosition + '%';
+      }
+
+      // Update on scroll
+      slides.addEventListener('scroll', updateScrollbar);
+      
+      // Update on resize
+      const resizeObserver = new ResizeObserver(updateScrollbar);
+      resizeObserver.observe(slides);
+      
+      // Initial update
+      updateScrollbar();
+      
+      // Update periodically to catch any changes
+      setInterval(updateScrollbar, 100);
+    });
+  });
+</script>

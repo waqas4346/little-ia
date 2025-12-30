@@ -24,6 +24,7 @@
   endif
 %}
 
+{% comment %}
 {% if accelerated_checkout_button != blank %}
   <div
     class="accelerated-checkout-block"
@@ -39,18 +40,30 @@
     {{ accelerated_checkout_button }}
   </div>
 {% endif %}
+{% endcomment %}
 
 {% stylesheet %}
+  /* Hide all accelerated checkout and payment buttons */
+  .accelerated-checkout-block,
+  shopify-payment-button,
+  .shopify-payment-button,
+  more-payment-options-link {
+    display: none !important;
+  }
+
   .accelerated-checkout-block[data-shopify-visual-preview] {
     width: 300px;
+    display: none !important;
   }
 
   more-payment-options-link {
     font-size: smaller;
+    display: none !important;
   }
 
   more-payment-options-link a {
     --button-color: var(--color-primary);
+    display: none !important;
   }
 
   more-payment-options-link a:hover {
@@ -58,7 +71,7 @@
   }
 
   .shopify-payment-button__more-options[aria-hidden='true'] {
-    display: none;
+    display: none !important;
   }
 {% endstylesheet %}
 

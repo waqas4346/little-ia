@@ -285,8 +285,6 @@
 
   /* Product card media sizing/background in slider */
   [data-testid="product-list"] .card-gallery .product-media-container {
-    width: 323px;
-    height: 324px;
     background: url("bg_removal [Background removed].png"), #F7F7F7;
     background-repeat: no-repeat;
     background-size: cover;
@@ -306,24 +304,133 @@
     display: none !important;
   }
 
+  /* Ensure images in visible slides load and display properly */
+  [data-testid="product-list"] .card-gallery slideshow-slide[aria-hidden="false"] img {
+    content-visibility: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Ensure first slide is always visible and images load */
+  [data-testid="product-list"] .card-gallery slideshow-slide:first-child {
+    content-visibility: visible !important;
+  }
+
+  [data-testid="product-list"] .card-gallery slideshow-slide:first-child img {
+    content-visibility: visible !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Remove horizontal padding for max width */
+  [data-testid="product-list"] .section--page-width {
+    padding-inline: 0 !important;
+  }
+
+  [data-testid="product-list"] .section--page-width > * {
+    padding-inline: 0 !important;
+  }
+
+  [data-testid="product-list"] .resource-list__carousel {
+    padding-inline: 0 !important;
+    --peek-next-slide-size: 0px;
+    --gutter-slide-width: 0px !important;
+    overflow: visible;
+  }
+
+  [data-testid="product-list"] .resource-list__carousel slideshow-arrows {
+    position: absolute;
+    inset: 0;
+    left: auto;
+    right: auto;
+    width: calc(100% + 120px);
+    max-width: none;
+    pointer-events: none;
+    z-index: var(--layer-heightened);
+    margin-left: -60px;
+    margin-right: -60px;
+    display: flex !important;
+    padding: 0 !important;
+  }
+
+  [data-testid="product-list"] .resource-list__carousel slideshow-arrows[position='center'] {
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  [data-testid="product-list"] .resource-list__carousel slideshow-arrows .slideshow-control {
+    position: absolute;
+    margin: 0;
+    pointer-events: auto;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* Position arrows outside the slider container */
+  [data-testid="product-list"] .resource-list__carousel slideshow-arrows .slideshow-control--previous {
+    left: 0;
+  }
+
+  [data-testid="product-list"] .resource-list__carousel slideshow-arrows .slideshow-control--next {
+    right: 0;
+  }
+
+  @media (max-width: 1200px) {
+    [data-testid="product-list"] .resource-list__carousel slideshow-arrows {
+      width: calc(100% + 100px);
+      margin-left: -50px;
+      margin-right: -50px;
+    }
+  }
+
+  /* Ensure carousel shows exactly the number of columns without peeking */
+  [data-testid="product-list"] .resource-list__carousel slideshow-slides {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  /* Allow arrows to extend beyond container */
+  [data-testid="product-list"] .resource-list__carousel slideshow-container {
+    overflow: visible;
+  }
+
+  [data-testid="product-list"] .resource-list__carousel .resource-list__slide {
+    scroll-snap-align: start;
+  }
+
+  /* Override slide width calculation to show exact number of columns */
+  @container resource-list-carousel (min-width: 750px) {
+    [data-testid="product-list"] .resource-list__carousel .resource-list__slide {
+      --section-slide-width: calc(
+        (100% - (var(--resource-list-column-gap, 8px) * (var(--column-count, 4) - 1))) /
+          var(--column-count, 4)
+      );
+      --slide-width: var(--section-slide-width);
+    }
+  }
+
   /* Product title styling */
-  .text-block--product_title {
+  [data-testid="product-list"] .text-block--product_title,
+  [data-testid="product-list"] .text-block--product_title *,
+  [data-testid="product-list"] .text-block--product_title p {
     font-family: 'Outfit', sans-serif;
-    font-weight: 500;
     font-style: normal;
+    font-weight: 500;
     font-size: 20px;
     line-height: 140%;
-    letter-spacing: 0;
+    color: #1D425A !important;
   }
 
   /* Explicit class injected on product title block */
-  .product-title-text {
+  [data-testid="product-list"] .product-title-text,
+  [data-testid="product-list"] .product-title-text *,
+  [data-testid="product-list"] .product-title-text p {
     font-family: 'Outfit', sans-serif;
-    font-weight: 500;
     font-style: normal;
+    font-weight: 500;
     font-size: 20px;
     line-height: 140%;
-    letter-spacing: 0;
+    color: #1D425A !important;
   }
 
   @media (max-width: 768px) {
@@ -395,20 +502,29 @@
     }
 
     [data-testid="product-list"] .card-gallery .product-media-container {
-      width: 173px;
-      height: 175px;
       background: url("bg_removal [Background removed].png"), #F7F7F7;
     }
 
-    .text-block--product_title {
+    [data-testid="product-list"] .text-block--product_title,
+    [data-testid="product-list"] .text-block--product_title *,
+    [data-testid="product-list"] .text-block--product_title p {
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 500;
       font-size: 16px;
       line-height: 140%;
+      color: #1D425A !important;
     }
 
-    .product-title-text {
+    [data-testid="product-list"] .product-title-text,
+    [data-testid="product-list"] .product-title-text *,
+    [data-testid="product-list"] .product-title-text p {
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 500;
       font-size: 16px;
       line-height: 140%;
-      letter-spacing: 0;
+      color: #1D425A !important;
     }
   }
 </style>
@@ -430,6 +546,66 @@
       {% endfor %}
     {% endif %}
 
+    // Function to force images to load in visible content
+    function forceImageLoad(content) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // First, ensure slideshow is properly initialized and first slide is visible
+          const slideshows = content.querySelectorAll('slideshow-component');
+          slideshows.forEach(slideshow => {
+            // Ensure first slide is visible
+            const firstSlide = slideshow.querySelector('slideshow-slide:first-child');
+            if (firstSlide) {
+              firstSlide.setAttribute('aria-hidden', 'false');
+              firstSlide.removeAttribute('hidden');
+              // Force content-visibility to visible to ensure images load
+              firstSlide.style.contentVisibility = 'visible';
+              
+              // Find images in the first slide and force them to load
+              const images = firstSlide.querySelectorAll('img');
+              images.forEach(img => {
+                // Make image visible
+                img.style.contentVisibility = 'visible';
+                img.style.opacity = '1';
+                img.style.visibility = 'visible';
+                
+                // Change loading to eager
+                img.loading = 'eager';
+                
+                // Force image to load by manipulating src/srcset
+                if (!img.complete) {
+                  if (img.srcset && img.srcset.trim()) {
+                    // Force reload by removing and re-adding srcset
+                    const srcset = img.srcset;
+                    img.removeAttribute('srcset');
+                    // Use a small delay to ensure browser processes
+                    setTimeout(() => {
+                      img.srcset = srcset;
+                    }, 10);
+                  } else if (img.src && img.src.trim() && !img.src.startsWith('data:')) {
+                    // Force reload by removing and re-adding src
+                    const src = img.src;
+                    img.removeAttribute('src');
+                    setTimeout(() => {
+                      img.src = src;
+                    }, 10);
+                  }
+                }
+              });
+            }
+          });
+        });
+      });
+    }
+
+    // Force images to load for initially visible tab
+    contents.forEach(content => {
+      if (content.style.display !== 'none' && window.getComputedStyle(content).display !== 'none') {
+        forceImageLoad(content);
+      }
+    });
+
     tabs.forEach(tab => {
       tab.addEventListener('click', function() {
         const targetHandle = this.dataset.target;
@@ -450,6 +626,9 @@
              content.style.animation = 'none';
              content.offsetHeight; /* trigger reflow */
              content.style.animation = 'fadeIn 0.5s ease-out forwards';
+             
+             // Force images to load when tab becomes visible
+             forceImageLoad(content);
           } else {
              content.style.display = 'none';
           }

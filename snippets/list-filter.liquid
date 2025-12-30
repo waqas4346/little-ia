@@ -22,6 +22,43 @@
   if filter.presentation == 'image'
     assign is_image = true
   endif
+
+  # Check if this is a theme or color filter
+  assign is_theme_or_color = false
+  assign filter_label_lower = filter.label | downcase
+  assign filter_param_lower = filter.param_name | downcase
+  if filter_label_lower contains 'theme' or filter_label_lower contains 'color' or filter_param_lower contains 'theme' or filter_param_lower contains 'color'
+    assign is_theme_or_color = true
+  endif
+
+  # Check if this is a size or brands filter
+  assign is_size = false
+  assign is_brands = false
+  assign is_size_or_brands = false
+  assign filter_label_lower = filter.label | downcase
+  assign filter_param_lower = filter.param_name | downcase
+  
+  if filter_label_lower contains 'size' or filter_param_lower contains 'size'
+    assign is_size = true
+    assign is_size_or_brands = true
+  endif
+  
+  if filter_label_lower contains 'brand' or filter_label_lower contains 'vendor' or filter_param_lower contains 'brand' or filter_param_lower contains 'vendor' or filter_param_lower contains 'filter.p.m.vendor'
+    assign is_brands = true
+    assign is_size_or_brands = true
+  endif
+
+  # Check if this is a gender filter
+  assign is_gender = false
+  if filter_label_lower contains 'gender' or filter_param_lower contains 'gender'
+    assign is_gender = true
+  endif
+
+  # Check if this is a category filter
+  assign is_category = false
+  if filter_label_lower contains 'category' or filter_label_lower contains 'type' or filter_param_lower contains 'category' or filter_param_lower contains 'type' or filter_param_lower contains 'product_type'
+    assign is_category = true
+  endif
 %}
 
 <accordion-custom
@@ -144,17 +181,23 @@
               echo '<show-more-component class="show-more" data-expanded="false" data-skip-node-update="true">'
             endif
           endif
-          assign should_use_pills = true
+          
+          # Force pills for size and brands filters
+          if is_size_or_brands
+            assign should_use_pills = true
+          else
+            assign should_use_pills = true
 
-          for value in filter.values
-            if value.label.size > 3
+            for value in filter.values
+              if value.label.size > 3
+                assign should_use_pills = false
+                break
+              endif
+            endfor
+
+            if filter.type == 'boolean'
               assign should_use_pills = false
-              break
             endif
-          endfor
-
-          if filter.type == 'boolean'
-            assign should_use_pills = false
           endif
         %}
 
@@ -164,18 +207,23 @@
         >
           {% liquid
             if is_swatch
-              assign swatch_columns = filter.values.size
+              # Force 3 columns for theme/color filters
+              if is_theme_or_color
+                assign swatch_columns = 3
+              else
+                assign swatch_columns = filter.values.size
 
-              if swatch_columns > 4
-                assign swatch_columns = 4
+                if swatch_columns > 4
+                  assign swatch_columns = 4
 
-                # Balance the number of columns based on the number of values, i.e. try to avoid one or two items in
-                # the last row if the number of values is (almost) divisible by 3.
-                assign mod4 = filter.values.size | modulo: 4
-                assign mod3 = filter.values.size | modulo: 3
-                if mod4 != 0 and mod4 != 3
-                  if mod3 == 0 or mod3 == 2
-                    assign swatch_columns = 3
+                  # Balance the number of columns based on the number of values, i.e. try to avoid one or two items in
+                  # the last row if the number of values is (almost) divisible by 3.
+                  assign mod4 = filter.values.size | modulo: 4
+                  assign mod3 = filter.values.size | modulo: 3
+                  if mod4 != 0 and mod4 != 3
+                    if mod3 == 0 or mod3 == 2
+                      assign swatch_columns = 3
+                    endif
                   endif
                 endif
               endif
@@ -190,7 +238,7 @@
           %}
           <ul
             id="filters-list-{{ sectionId }}-{{ filter.param_name | escape | replace: '.', '-' }}"
-            class="facets__inputs-list{% if should_use_pills %} facets__inputs-list--grid{% endif %} list-unstyled{% if is_swatch %} facets__inputs-list--swatches{% if show_swatch_label %} facets__inputs-list--swatches-grid{% endif %}{% endif %}{% if is_image %} facets__inputs-list--images{% endif %}"
+            class="facets__inputs-list{% if should_use_pills %} facets__inputs-list--grid{% endif %} list-unstyled{% if is_swatch %} facets__inputs-list--swatches{% if show_swatch_label %} facets__inputs-list--swatches-grid{% endif %}{% if is_theme_or_color %} facets__inputs-list--theme-color{% endif %}{% endif %}{% if is_image %} facets__inputs-list--images{% endif %}{% if is_size and should_use_pills %} facets__inputs-list--size{% endif %}{% if is_brands and should_use_pills %} facets__inputs-list--brands{% endif %}{% if is_gender %} facets__inputs-list--gender{% endif %}{% if is_category %} facets__inputs-list--category{% endif %}"
             {% if is_swatch %}
               style="--swatch-columns: {{ swatch_columns }};"
             {% endif %}
@@ -316,7 +364,7 @@
                         {% endif %}
                       </div>
                       <label
-                        class="{% if show_swatch_label %}facets__swatch-label{% else %}hidden{% endif %}"
+                        class="{% if show_swatch_label or is_theme_or_color %}facets__swatch-label{% else %}hidden{% endif %}"
                         for="{{ input_id }}"
                         tabindex="-1"
                       >
@@ -452,6 +500,112 @@
     transition: color 0.2s ease, font-weight 0.2s ease;
   }
 
+  /* Gender Filter Checkbox Styling */
+  .facets__inputs-list--gender {
+    gap: 18px !important;
+  }
+
+  .facets__inputs-list--gender .facets__inputs-list-item {
+    margin-bottom: 0;
+  }
+
+  .facets__inputs-list--gender .checkbox {
+    --checkbox-size: 18px;
+    --checkbox-border-radius: 0;
+    --checkbox-label-padding: 12px;
+  }
+
+  .facets__inputs-list--gender .checkbox .icon-checkmark {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    min-height: 18px !important;
+    border: 1px solid #919191 !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  .facets__inputs-list--gender .checkbox__input:checked + .checkbox__label .icon-checkmark {
+    background-color: #7295BB !important;
+    border-color: #7295BB !important;
+  }
+
+  .facets__inputs-list--gender .checkbox__input:not(:checked) + .checkbox__label .icon-checkmark {
+    background-color: transparent !important;
+    border: 1px solid #919191 !important;
+  }
+
+  .facets__inputs-list--gender .checkbox .icon-checkmark path {
+    stroke: #FFFFFF !important;
+  }
+
+  /* Gender Filter Label Styling */
+  .facets__inputs-list--gender .checkbox__label-text {
+    font-family: 'Outfit', sans-serif !important;
+    font-style: normal !important;
+    font-weight: 500 !important;
+    font-size: 16px !important;
+    line-height: 20px !important;
+    color: #8A8A8A !important;
+  }
+
+  .facets__inputs-list--gender .checkbox__input:checked + .checkbox__label .checkbox__label-text {
+    color: #1D425A !important;
+  }
+
+  /* Category Filter Checkbox Styling - Same as Gender */
+  .facets__inputs-list--category {
+    gap: 18px !important;
+  }
+
+  .facets__inputs-list--category .facets__inputs-list-item {
+    margin-bottom: 0;
+  }
+
+  .facets__inputs-list--category .checkbox {
+    --checkbox-size: 18px;
+    --checkbox-border-radius: 0;
+    --checkbox-label-padding: 12px;
+  }
+
+  .facets__inputs-list--category .checkbox .icon-checkmark {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    min-height: 18px !important;
+    border: 1px solid #919191 !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+  }
+
+  .facets__inputs-list--category .checkbox__input:checked + .checkbox__label .icon-checkmark {
+    background-color: #7295BB !important;
+    border-color: #7295BB !important;
+  }
+
+  .facets__inputs-list--category .checkbox__input:not(:checked) + .checkbox__label .icon-checkmark {
+    background-color: transparent !important;
+    border: 1px solid #919191 !important;
+  }
+
+  .facets__inputs-list--category .checkbox .icon-checkmark path {
+    stroke: #FFFFFF !important;
+  }
+
+  /* Category Filter Label Styling */
+  .facets__inputs-list--category .checkbox__label-text {
+    font-family: 'Outfit', sans-serif !important;
+    font-style: normal !important;
+    font-weight: 500 !important;
+    font-size: 16px !important;
+    line-height: 20px !important;
+    color: #8A8A8A !important;
+  }
+
+  .facets__inputs-list--category .checkbox__input:checked + .checkbox__label .checkbox__label-text {
+    color: #1D425A !important;
+  }
+
   /* Pill style */
   .facets__pill-label {
     --pill-label-padding-inline: var(--padding-xs);
@@ -503,6 +657,84 @@
         --pill-label-border-opacity: var(--facets-low-opacity);
       }
     }
+  }
+
+  /* Size and Brands Filters Styling */
+  /* Size Filter Styling - 3 columns */
+  .facets__inputs-wrapper .facets__inputs-list--size {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: var(--gap-sm) !important;
+    flex-direction: row !important;
+  }
+
+  /* Brands Filter Styling - 2 columns */
+  .facets__inputs-wrapper .facets__inputs-list--brands {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: var(--gap-sm) !important;
+    flex-direction: row !important;
+  }
+
+  .facets__inputs-list--size .facets__pill-wrapper,
+  .facets__inputs-list--brands .facets__pill-wrapper {
+    width: 100%;
+  }
+
+  .facets__inputs-list--size .facets__pill-label,
+  .facets__inputs-list--brands .facets__pill-label {
+    background: #EDEDED !important;
+    background-color: #EDEDED !important;
+    border-radius: 65px !important;
+    font-family: 'Outfit', sans-serif !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+    line-height: 125% !important;
+    color: #1D425A !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding-inline: var(--padding-sm) !important;
+    height: auto !important;
+    min-height: auto !important;
+    padding-block: var(--padding-xs) !important;
+    width: 100% !important;
+    --pill-label-background-color: #EDEDED !important;
+    --pill-label-color: #1D425A !important;
+    --pill-label-color-rgb: 29, 66, 90 !important;
+    --pill-label-background-color-rgb: 237, 237, 237 !important;
+    --pill-label-border-opacity: 0 !important;
+  }
+
+  .facets__inputs-list--size .facets__pill-input:checked + .facets__pill-label,
+  .facets__inputs-list--brands .facets__pill-input:checked + .facets__pill-label {
+    background: #7295BB !important;
+    background-color: #7295BB !important;
+    color: #FFFFFF !important;
+    font-weight: 400 !important;
+    border: none !important;
+    box-shadow: none !important;
+    --pill-label-background-color: #7295BB !important;
+    --pill-label-color: #FFFFFF !important;
+    --pill-label-color-rgb: 255, 255, 255 !important;
+    --pill-label-background-color-rgb: 114, 149, 187 !important;
+    --pill-label-border-opacity: 0 !important;
+  }
+
+  .facets__inputs-list--size .facets__pill-label:hover,
+  .facets__inputs-list--brands .facets__pill-label:hover {
+    border: none !important;
+    box-shadow: none !important;
+    opacity: 0.9;
+    background: #EDEDED !important;
+    background-color: #EDEDED !important;
+  }
+
+  .facets__inputs-list--size .facets__pill-input:checked + .facets__pill-label:hover,
+  .facets__inputs-list--brands .facets__pill-input:checked + .facets__pill-label:hover {
+    background: #7295BB !important;
+    background-color: #7295BB !important;
+    opacity: 0.9;
   }
 
   .facets__status-wrapper {
@@ -584,6 +816,142 @@
 
     display: grid;
     grid-template-columns: repeat(var(--columns), 1fr);
+  }
+
+  /* Theme and Color Filters - 3 columns, 60px x 60px */
+  .facets__inputs-wrapper .facets__inputs-list--theme-color {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 18px 24px !important;
+    flex-direction: row !important;
+  }
+
+  .facets__inputs-list--theme-color .facets__inputs-list-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    border: none !important;
+  }
+
+  .facets__inputs-list--theme-color .facets__inputs-list-item fieldset {
+    border: none !important;
+    padding: 0;
+    margin: 0;
+  }
+
+  .facets__inputs-list--theme-color .variant-option--swatches {
+    width: 60px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: none !important;
+  }
+
+  .facets__inputs-list--theme-color .variant-option__button-label {
+    width: 60px;
+    height: auto;
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 140%;
+    text-align: center;
+    color: #8A8A8A;
+    box-sizing: border-box;
+    position: relative;
+    padding: 0;
+    border: none !important;
+    background: transparent;
+    border-radius: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .facets__inputs-list--theme-color .variant-option__button-label:has(input:checked),
+  .facets__inputs-list--theme-color .variant-option__button-label:has(:checked) {
+    color: #1D425A;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  .facets__inputs-list--theme-color .variant-option__button-label:hover,
+  .facets__inputs-list--theme-color .variant-option__button-label:focus {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .facets__inputs-list--theme-color .facets__inputs-list-item:not(.facets__inputs-list-item--disabled) .variant-option__button-label:hover {
+    background: transparent !important;
+    background-color: transparent !important;
+    font-weight: 400 !important;
+  }
+
+  .facets__inputs-list--theme-color .variant-option__swatch-wrapper {
+    width: 60px;
+    height: 60px;
+    position: relative;
+    border-radius: 100000px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: none;
+    box-sizing: border-box;
+  }
+
+  .facets__inputs-list--theme-color .variant-option__button-label:has(input:checked) .variant-option__swatch-wrapper,
+  .facets__inputs-list--theme-color .variant-option__button-label:has(:checked) .variant-option__swatch-wrapper {
+    border: 1px solid #1D425A !important;
+    box-sizing: border-box;
+    padding: 1px;
+    background: transparent;
+  }
+
+  .facets__inputs-list--theme-color .swatch {
+    width: 100%;
+    height: 100%;
+    border-radius: 100000px;
+    box-sizing: border-box;
+  }
+
+  .facets__inputs-list--theme-color .variant-option__button-label:has(input:checked) .swatch,
+  .facets__inputs-list--theme-color .variant-option__button-label:has(:checked) .swatch {
+    width: calc(100% - 2px);
+    height: calc(100% - 2px);
+    margin: 1px;
+  }
+
+  .facets__inputs-list--theme-color .facets__swatch-label {
+    position: relative;
+    width: 100%;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 140%;
+    text-align: center;
+    color: inherit;
+    margin-top: 5px;
+    pointer-events: none;
+    display: block !important;
+  }
+
+  .facets__inputs-list--theme-color .variant-option__button-label:has(input:checked) .facets__swatch-label {
+    color: #1D425A;
+  }
+
+  .facets__inputs-list--theme-color .variant-option__button-label .hidden {
+    display: block !important;
   }
 
   .facets__inputs-wrapper .facets__inputs-list--swatches-grid .variant-option--swatches {

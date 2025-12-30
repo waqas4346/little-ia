@@ -1381,6 +1381,16 @@ button.shopify-payment-button__button--unbranded:hover:not([disabled]) {
   background-color: var(--button-background-color);
 }
 
+/* Hide all Shopify payment buttons and accelerated checkout */
+.accelerated-checkout-block,
+shopify-payment-button,
+.shopify-payment-button,
+more-payment-options-link,
+.shopify-payment-button__button,
+.shopify-payment-button__button--unbranded {
+  display: none !important;
+}
+
 .button-unstyled {
   display: block;
   padding: 0;
@@ -2607,15 +2617,15 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) > *:not(.tax-note) {
   justify-content: space-between;
   align-items: center;
   color: var(--color-input-text);
-  background-color: var(--color-input-background);
-  border: var(--style-border-width-inputs) solid var(--color-input-border);
-  border-radius: var(--style-border-radius-inputs);
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
   flex: 1 1 var(--quantity-selector-width);
   align-self: stretch;
   transition: background-color var(--animation-speed) var(--animation-easing);
 
   &:hover {
-    background-color: var(--color-input-hover-background);
+    background-color: #ffffff;
   }
 }
 
@@ -2635,7 +2645,11 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) > *:not(.tax-note) {
   width: var(--minimum-touch-target);
   height: var(--minimum-touch-target);
   flex-shrink: 0;
-  color: var(--color-input-text);
+  color: #333333;
+}
+
+.quantity-selector :is(.quantity-minus, .quantity-plus):hover {
+  color: #000000;
 }
 
 .quantity-selector .quantity-minus {
@@ -2682,7 +2696,7 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) > *:not(.tax-note) {
   appearance: none;
   max-width: calc(var(--quantity-selector-width) - var(--minimum-touch-target) * 2);
   border-radius: var(--style-border-radius-buttons);
-  color: var(--color-input-text);
+  color: #333333;
   background-color: transparent;
 }
 

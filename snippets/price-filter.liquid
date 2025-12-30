@@ -172,6 +172,7 @@
   .price-facet__field {
     width: 50%;
     flex-grow: 0;
+    position: relative;
   }
 
   @container (max-width: 199px) {
@@ -201,9 +202,14 @@
   }
 
   .price-facet__input {
-    width: 100%;
+    width: 109px;
+    height: 43px;
+    border: 1px solid #B8B8B8;
     text-align: right;
-    padding-left: calc(2.5 * var(--input-padding-x));
+    padding-left: 50px; /* Space for AED label (37px + 8px left + some padding) */
+    padding-right: 8px;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
   }
 
   .price-facet__input::placeholder {
@@ -214,7 +220,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-paragraph--size);
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20px;
+    text-transform: capitalize;
+    color: #919191;
   }
 
   .price-facet__highest-price {
@@ -226,10 +238,22 @@
   }
 
   .field__label.price-facet__label {
-    top: 0;
-    left: 0;
-    color: var(--facets-input-label-color);
-    padding: var(--input-padding-y) var(--input-padding-x);
+    position: absolute;
+    width: 37px;
+    height: 23px;
+    left: 8px;
+    top: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 23px;
+    display: flex;
+    align-items: center;
+    text-transform: capitalize;
+    color: #919191;
+    padding: 0;
     transform: none;
+    pointer-events: none;
   }
 {% endstylesheet %}

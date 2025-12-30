@@ -62,18 +62,78 @@
     }
   }
 
+  // Update products count with pagination info
+  function updateProductsCount() {
+    const productsCountWrapper = document.querySelector('.collection-results-count-wrapper[data-total-products]');
+    if (!productsCountWrapper) return;
+
+    const productGrid = document.querySelector('.product-grid');
+    if (!productGrid) return;
+
+    const totalProducts = parseInt(productsCountWrapper.dataset.totalProducts) || 0;
+    const productItems = productGrid.querySelectorAll('.product-grid__item');
+    const currentCount = productItems.length;
+
+    if (currentCount === 0) return;
+
+    // Get page number from URL or from first product item
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentPage = parseInt(urlParams.get('page')) || 1;
+    
+    // Try to get page from product items
+    const firstProduct = productItems[0];
+    if (firstProduct && firstProduct.dataset.page) {
+      currentPage = parseInt(firstProduct.dataset.page) || 1;
+    }
+    
+    // Default page size is 24
+    const pageSize = 24;
+    
+    // Calculate range
+    const startNumber = (currentPage - 1) * pageSize + 1;
+    let endNumber = currentPage * pageSize;
+    
+    // Cap at total products
+    if (endNumber > totalProducts) {
+      endNumber = totalProducts;
+    }
+    
+    // If we have fewer items than expected, adjust
+    if (currentCount < endNumber - startNumber + 1) {
+      endNumber = startNumber + currentCount - 1;
+    }
+
+    const countText = productsCountWrapper.querySelector('.collection-results-count-text');
+    if (countText) {
+      countText.textContent = `Showing ${startNumber}-${endNumber} of ${totalProducts} products`;
+    }
+  }
+
   // Toggle filters visibility
   document.addEventListener('DOMContentLoaded', () => {
+    // Update products count on load
+    updateProductsCount();
+    
+    // Update on filter changes
+    document.addEventListener('filter:update', () => {
+      setTimeout(updateProductsCount, 100);
+    });
     const resultsList = document.querySelector('results-list');
     
     if (resultsList) {
       // Check if there are active filters on page load
       checkAndShowFilters();
       
-      // Use event delegation so the handler persists after section re-renders
-      resultsList.addEventListener('click', (event) => {
+      // Use event delegation on document - only handle clicks on our specific buttons
+      // This ensures filter clicks work normally since we're not attached to resultsList
+      document.addEventListener('click', (event) => {
+        // Only handle clicks on our specific buttons
         const filtersButton = event.target.closest('#collection-filters-toggle');
+        const closeButton = event.target.closest('#collection-filters-close');
+        
         if (filtersButton) {
+          event.preventDefault();
+          event.stopPropagation();
           const isVisible = resultsList.classList.contains('filters-visible');
           resultsList.classList.toggle('filters-visible');
           
@@ -85,7 +145,19 @@
             // User is showing the filters
             setFiltersManuallyHidden(false);
           }
+          return;
         }
+        
+        if (closeButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          // Close the filters sidebar
+          resultsList.classList.remove('filters-visible');
+          setFiltersManuallyHidden(true);
+          return;
+        }
+        
+        // For all other clicks (including filter inputs), do nothing - let them work normally
       });
 
       // Use MutationObserver to preserve filters-visible class during morph
@@ -177,8 +249,11 @@
   {% render 'skip-to-content-link', href: '#ResultsList', text: 'accessibility.skip_to_results_list' %}
 
   <div class="collection-filters-button-wrapper">
-    <button type="button" class="collection-filters-button" id="collection-filters-toggle" aria-label="Filters">
-      Filters
+    <button type="button" class="collection-filters-button" id="collection-filters-toggle" aria-label="Filter & Sort">
+      <svg class="collection-filters-button__icon" width="16" height="16" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M16.823 6h-12m10 4h-8m2 4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Filter & Sort
     </button>
   </div>
 
@@ -220,7 +295,8 @@
         children: children,
         products: collection.products,
         paginate: paginate,
-        enable_infinite_scroll: section.settings.enable_infinite_scroll
+        enable_infinite_scroll: section.settings.enable_infinite_scroll,
+        collection: collection
       %}
     {% endpaginate %}
   </div>
@@ -232,9 +308,14 @@
     justify-content: flex-start;
     align-items: center;
     padding-block-start: 16px;
-    padding-block-end: 16px;
-    padding-inline-start: var(--page-margin);
-    padding-inline-end: var(--page-margin);
+    padding-block-end: 16px;    
+  }
+
+  /* Hide button when filters sidebar is open */
+  .filters-visible .collection-filters-button-wrapper {
+    @media screen and (min-width: 750px) {
+      display: none;
+    }
   }
 
   @media screen and (max-width: 749px) {
@@ -244,20 +325,30 @@
   }
 
   .collection-filters-button {
-    padding: 12px 24px;
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
     font-weight: 500;
+    font-size: 16px;
+    line-height: 140%;
+    color: #222222;
     cursor: pointer;
     transition: all 0.2s ease;
   }
 
+  .collection-filters-button__icon {
+    margin-right: 7px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
   .collection-filters-button:hover {
-    background-color: var(--color-foreground);
-    color: var(--color-background);
+    opacity: 0.8;
   }
 
   .main-collection-grid {
@@ -377,6 +468,9 @@
     @media screen and (min-width: 750px) {
       display: block !important;
       grid-column: 2 / var(--facets-vertical-col-width);
+      width: 282px;
+      max-width: 282px;
+      min-width: 282px;
     }
   }
 
@@ -384,6 +478,28 @@
   .filters-visible .collection-wrapper .main-collection-grid {
     @media screen and (min-width: 750px) {
       grid-column: var(--facets-vertical-col-width) / -1 !important;
+    }
+  }
+
+  /* Set product card and image to 324px on desktop */
+  @media screen and (min-width: 750px) {
+    /* Ensure product grid items are exactly 324px */
+    .product-grid__item {
+      width: 324px;
+    }
+
+    /* Set product image container to 324px x 324px */
+    .product-grid .card-gallery .product-media-container {
+      width: 324px;
+      height: 324px;
+    }
+
+    .product-grid .card-gallery .product-media-container img,
+    .product-grid .card-gallery .product-media-container picture,
+    .product-grid .card-gallery .product-media-container video {
+      width: 324px;
+      height: 324px;
+      object-fit: cover;
     }
   }
 {% endstylesheet %}

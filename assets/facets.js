@@ -216,81 +216,117 @@ if (!customElements.get('facet-inputs-component')) {
  * @extends {Component<PriceFacetRefs>}
  */
 class PriceFacetComponent extends Component {
+  requiredRefs = ['minInput', 'maxInput'];
+  #debouncedUpdate = null;
+
   connectedCallback() {
     super.connectedCallback();
     this.addEventListener('keydown', this.#onKeyDown);
+    
+    // Wait for refs to be ready
+    requestAnimationFrame(() => {
+      this.#initInputs();
+    });
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this.removeEventListener('keydown', this.#onKeyDown);
+    if (this.#debouncedUpdate) {
+      this.#debouncedUpdate.cancel?.();
+    }
   }
 
-  /**
-   * Handles keydown events to restrict input to valid characters
-   * @param {KeyboardEvent} event - The keydown event
-   */
   #onKeyDown = (event) => {
     if (event.metaKey) return;
-
     const pattern = /[0-9]|\.|,|'| |Tab|Backspace|Enter|ArrowUp|ArrowDown|ArrowLeft|ArrowRight|Delete|Escape/;
     if (!event.key.match(pattern)) event.preventDefault();
   };
 
-  /**
-   * Updates price filter and results
-   */
+  #initInputs() {
+    const { minInput, maxInput } = this.refs;
+    if (!minInput || !maxInput) {
+      // Retry if refs not ready yet
+      setTimeout(() => this.#initInputs(), 50);
+      return;
+    }
+
+    // Debounce filter updates to prevent excessive re-renders
+    this.#debouncedUpdate = debounce(() => {
+      this.updatePriceFilterAndResults();
+    }, 300);
+
+    // Input event handlers
+    minInput.addEventListener('input', () => {
+      const val = Number(minInput.value);
+      if (!isNaN(val) && val > Number(maxInput.value || maxInput.getAttribute('data-max') || 0)) {
+        maxInput.value = val;
+      }
+      // Debounce the filter update
+      if (this.#debouncedUpdate) {
+        this.#debouncedUpdate();
+      }
+    });
+
+    maxInput.addEventListener('input', () => {
+      const val = Number(maxInput.value);
+      if (!isNaN(val) && val < Number(minInput.value || 0)) {
+        minInput.value = val;
+      }
+      // Debounce the filter update
+      if (this.#debouncedUpdate) {
+        this.#debouncedUpdate();
+      }
+    });
+  }
+
   updatePriceFilterAndResults() {
     const { minInput, maxInput } = this.refs;
-
     this.#adjustToValidValues(minInput);
     this.#adjustToValidValues(maxInput);
 
     const facetsForm = this.closest('facets-form-component');
     if (!(facetsForm instanceof FacetsFormComponent)) return;
 
+    // Store scroll position before update
+    const scrollY = window.scrollY;
+    const scrollX = window.scrollX;
+    
     facetsForm.updateFilters();
     this.#setMinAndMaxValues();
     this.#updateSummary();
+    
+    // Restore scroll position immediately and after render
+    window.scrollTo(scrollX, scrollY);
+    
+    // Restore scroll position after re-render
+    setTimeout(() => {
+      window.scrollTo(scrollX, scrollY);
+    }, 50);
   }
 
-  /**
-   * Adjusts input values to be within valid range
-   * @param {HTMLInputElement} input - The input element to adjust
-   */
   #adjustToValidValues(input) {
     if (input.value.trim() === '') return;
-
     const value = Number(input.value);
     const min = Number(formatMoney(input.getAttribute('data-min') ?? ''));
     const max = Number(formatMoney(input.getAttribute('data-max') ?? ''));
-
     if (value < min) input.value = min.toString();
     if (value > max) input.value = max.toString();
   }
 
-  /**
-   * Sets min and max values for the inputs
-   */
   #setMinAndMaxValues() {
     const { minInput, maxInput } = this.refs;
-
     if (maxInput.value) minInput.setAttribute('data-max', maxInput.value);
     if (minInput.value) maxInput.setAttribute('data-min', minInput.value);
     if (minInput.value === '') maxInput.setAttribute('data-min', '0');
     if (maxInput.value === '') minInput.setAttribute('data-max', maxInput.getAttribute('data-max') ?? '');
   }
 
-  /**
-   * Updates the price summary
-   */
   #updateSummary() {
     const { minInput, maxInput } = this.refs;
     const details = this.closest('details');
     const statusComponent = details?.querySelector('facet-status-component');
-
     if (!(statusComponent instanceof FacetStatusComponent)) return;
-
     statusComponent?.updatePriceSummary(minInput, maxInput);
   }
 }
@@ -416,7 +452,12 @@ class FacetRemoveComponent extends Component {
     const url = this.dataset.url;
     if (!url) return;
 
-    const facetsForm = form ? document.getElementById(form) : this.closest('facets-form-component');
+    let facetsForm = form ? document.getElementById(form) : this.closest('facets-form-component');
+    
+    // If not found via closest, search in the document (for active filters outside the form)
+    if (!(facetsForm instanceof FacetsFormComponent)) {
+      facetsForm = document.querySelector('facets-form-component');
+    }
 
     if (!(facetsForm instanceof FacetsFormComponent)) return;
 

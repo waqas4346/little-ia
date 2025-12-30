@@ -82,21 +82,35 @@
     {% # These elements are always rendered in the horizontal bar that's why we apply the .facets--horizontal class %}
     <div
       class="facets facets--horizontal facets-controls-wrapper spacing-style"
-      style="{% render 'spacing-style', settings: block_settings %}{% if block_settings.text_label_case == 'uppercase' %} --facet-label-transform: uppercase;{% endif %}"
+      style="{% render 'spacing-style', settings: block_settings %}{% if block_settings.text_label_case == 'uppercase' %} --facet-label-transform: uppercase;{% endif %}{% if block_settings.filter_style == 'vertical' %} --facets-margin-right: {{ block_settings.facets_margin_right }}px;{% endif %}"
     >
       {% if block_settings.enable_filtering %}
-        <h4 class="facets--filters-title">{{ 'content.filters' | t }}</h4>
+        <div class="facets--filters-title-wrapper">
+          <h4 class="facets--filters-title">{{ 'content.filters' | t }}</h4>
+          <button 
+            type="button" 
+            class="facets--close-button" 
+            id="collection-filters-close"
+            aria-label="Close filters"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11.3086 3.78906L5.34893 10.6256L11.3086 17.4621" stroke="#1D425A" stroke-width="1.53542"/>
+              <path d="M17.2695 3.53979L11.3099 10.3763L17.2695 17.2128" stroke="#1D425A" stroke-width="1.53542"/>
+            </svg>
+          </button>
+        </div>
       {% endif %}
 
       <div
-        class="products-count-wrapper"
+        class="products-count-wrapper collection-results-count-wrapper"
         data-testid="products-count"
+        data-total-products="{{ products_count }}"
       >
-        <span title="{{ 'content.product_count' | t }}">
+        <span class="collection-results-count-text" title="{{ 'content.product_count' | t }}">
           {% if products_count > 25000 %}
-            {{- 'content.item_count_cutoff' | t: count: 25000 -}}
+            Showing 1-{{ products_count }} of 25000+ products
           {% else %}
-            {{- 'content.item_count' | t: count: products_count -}}
+            Showing 1-{{ products_count }} of {{ products_count }} products
           {% endif %}
         </span>
       </div>
@@ -500,6 +514,9 @@
   .facets-block-wrapper--vertical {
     @media screen and (min-width: 750px) {
       grid-column: var(--grid-column--desktop);
+      width: 282px;
+      max-width: 282px;
+      min-width: 282px;
     }
   }
 
@@ -529,6 +546,33 @@
     @media screen and (min-width: 750px) {
       display: none;
     }
+  }
+
+  .facets--filters-title-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .facets--filters-title {
+    margin: 0;
+  }
+
+  .facets--close-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .facets--close-button:hover {
+    opacity: 0.7;
   }
 
   .filter-count-bubble {
@@ -748,6 +792,62 @@
       color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
       gap: 0 var(--facets-form-horizontal-gap);
       padding-bottom: var(--padding-xs);
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+    }
+  }
+
+  /* Filters title wrapper on left - same width as sidebar with matching margin */
+  .facets-controls-wrapper .facets--filters-title-wrapper {
+    @media screen and (min-width: 750px) {
+      order: 1;
+      flex-shrink: 0;
+      width: 282px;
+      min-width: 282px;
+      max-width: 282px;
+      margin-right: var(--facets-margin-right, 0px);
+      padding-inline: var(--padding-lg);
+      padding-block: var(--padding-xs);
+    }
+  }
+
+  /* Products count in center */
+  .facets-controls-wrapper .collection-results-count-wrapper {
+    @media screen and (min-width: 750px) {
+      order: 2;
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 20px;
+      color: #1D425A;
+      margin: 0;
+      margin-left: 30px;
+    }
+  }
+
+  .facets-controls-wrapper .collection-results-count-text {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20px;
+    color: #1D425A;
+  }
+
+  /* Sort dropdown on right */
+  .facets-controls-wrapper .sorting-filter-component,
+  .facets-controls-wrapper .sorting-filter {
+    @media screen and (min-width: 750px) {
+      order: 3;
+      flex-shrink: 0;
+      margin-left: auto;
     }
   }
 
@@ -923,7 +1023,7 @@
   }
 
   .facets__inputs-wrapper:not(:has(.facets__inputs-list)),
-  .facets__inputs-wrapper .facets__inputs-list {
+  .facets__inputs-wrapper .facets__inputs-list:not(.facets__inputs-list--theme-color) {
     display: flex;
     gap: var(--facets-mobile-gap);
     flex-direction: column;
@@ -950,7 +1050,7 @@
     --facets-mobile-gap: var(--gap-sm);
   }
 
-  .facets__inputs-wrapper .facets__inputs-list--grid {
+  .facets__inputs-wrapper .facets__inputs-list--grid:not(.facets__inputs-list--size):not(.facets__inputs-list--brands) {
     --min-column-width: 20%;
 
     display: grid;
@@ -1092,7 +1192,12 @@
 
   /* Facets - Label */
   .facets__label {
-    color: var(--color-foreground);
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 20px;
+    color: #1D425A;
     cursor: pointer;
     white-space: nowrap;
 
@@ -1114,6 +1219,34 @@
       align-items: center;
       height: var(--minimum-touch-target);
     }
+  }
+
+  /* Products count in controls row - full width to appear above filters */
+  .facets-controls-wrapper .collection-results-count-wrapper {
+    @media screen and (min-width: 750px) {
+      order: 2;
+      width: 100%;
+      margin-left: 0;
+      margin-bottom: var(--padding-sm);
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 20px;
+      color: #1D425A;
+    }
+  }
+
+  .facets-controls-wrapper .collection-results-count-text {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20px;
+    color: #1D425A;
   }
 
   /* Mobile specific components */

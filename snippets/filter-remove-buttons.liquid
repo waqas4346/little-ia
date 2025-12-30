@@ -27,8 +27,8 @@
         data-url="{{ filter.url_to_remove }}"
         tabindex="0"
         role="button"
-        on:click="/removeFilter?form="
-        on:keydown="/removeFilter?form="
+        on:click="/removeFilter"
+        on:keydown="/removeFilter"
         {% if is_first_filter and forloop.first %}
           autofocus
         {% endif %}
@@ -64,8 +64,8 @@
           data-url="{{ value.url_to_remove }}"
           tabindex="0"
           role="button"
-          on:click="/removeFilter?form="
-          on:keydown="/removeFilter?form="
+          on:click="/removeFilter"
+          on:keydown="/removeFilter"
           {% if is_first_filter and forloop.first %}
             autofocus
           {% endif %}
@@ -96,10 +96,10 @@
         type="button"
         class="button-unstyled facets__clear-all-link facets__clear-all{% if is_active %} active{% endif %}"
         ref="clearButton"
-        on:click="/removeFilter?form="
-        on:keydown="/removeFilter?form="
+        on:click="/removeFilter"
+        on:keydown="/removeFilter"
       >
-        {{- 'actions.clear_all' | t -}}
+        Remove All
       </button>
     </facet-remove-component>
   {% endif %}
@@ -173,6 +173,13 @@
   .facets--horizontal .facets-remove {
     @media screen and (min-width: 750px) {
       display: none;
+    }
+  }
+
+  /* Hide active filters in vertical sidebar (desktop) */
+  .facets--vertical .facets-remove {
+    @media screen and (min-width: 750px) {
+      display: none !important;
     }
   }
 {% endstylesheet %}

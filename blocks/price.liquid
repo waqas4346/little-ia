@@ -53,6 +53,77 @@
     show_sale_price_first: block_settings.show_sale_price_first
   %}
 
+  {% comment %} Add View Product and + buttons for collection pages {% endcomment %}
+  {% if template.name == 'collection' %}
+    {% liquid
+      assign has_quick_add = false
+      if settings.quick_add and product_resource.available
+        assign has_quick_add = true
+      endif
+      assign variant = product_resource.selected_or_first_available_variant
+      assign product_form_id = 'CollectionQuickAdd-ProductForm-' | append: product_resource.id | append: '-' | append: block.id
+      assign quick_add_button = 'choose'
+      if product_resource.variants_count == 1 or product_resource.options.size == 1 and product_resource.selected_variant
+        assign quick_add_button = 'add'
+      endif
+    %}
+    <div class="collection-product-actions" onclick="event.stopPropagation();">
+      <a 
+        href="{{ variant.url | default: product_resource.url }}" 
+        class="collection-view-product-button"
+        onclick="event.stopPropagation();"
+      >
+        VIEW PRODUCT
+      </a>
+      {% if has_quick_add %}
+        <div onclick="event.stopPropagation();" style="display: flex; align-items: center;">
+          <quick-add-component
+            class="quick-add collection-quick-add"
+            ref="quickAdd"
+            data-product-title="{{ product_resource.title }}"
+            data-quick-add-button="{{ quick_add_button }}"
+            data-product-options-count="{{ product_resource.options.size }}"
+          >
+          <product-form-component
+            data-section-id="{{ section.id | default: 'collection' }}"
+            data-product-id="{{ product_resource.id }}"
+            on:submit="/handleSubmit"
+            class="quick-add__product-form-component"
+          >
+            {%- form 'product', product_resource, id: product_form_id, novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+              <input
+                type="hidden"
+                name="id"
+                ref="variantId"
+                value="{{ variant.id }}"
+                {% if variant.available == false %}
+                  disabled
+                {% endif %}
+              >
+              <input
+                type="hidden"
+                name="quantity"
+                value="{% if variant.quantity_rule.min %}{{ variant.quantity_rule.min }}{% else %}1{% endif %}"
+              >
+              <button
+                class="button collection-quick-add-button"
+                type="button"
+                name="add"
+                on:click="quick-add-component/handleClick"
+                onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();"
+                data-quick-add-trigger="true"
+                data-no-navigation="true"
+              >
+                <span class="collection-quick-add-plus">+</span>
+              </button>
+            {%- endform -%}
+          </product-form-component>
+        </quick-add-component>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
   {% if block_settings.show_tax_info %}
     <div class="tax-note">
       {%- if cart.duties_included and cart.taxes_included -%}
@@ -112,6 +183,263 @@
     letter-spacing: normal;
     text-transform: none;
     color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+  }
+
+  /* Collection product actions (View Product + Quick Add) */
+  .collection-product-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    margin-top: 12px;
+    position: relative;
+    z-index: 10;
+    width: 100%;
+  }
+
+  .collection-view-product-button {
+    background: #7295BB;
+    flex: 1;
+    padding: 10px 16px;
+    margin: 0;
+    margin-right: 0;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .collection-product-actions {
+      gap: 5px !important;
+      align-items: center;
+    }
+
+    .collection-view-product-button {
+      background: #7295BB;
+      flex: 1;
+      padding: 14px 20px;
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 140%;
+      text-transform: uppercase;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .collection-quick-add-button {
+      position: relative !important;
+      left: auto !important;
+      right: auto !important;
+      top: auto !important;
+      bottom: auto !important;
+    }
+  }
+
+  .collection-quick-add {
+    position: relative !important;
+    inset: unset !important;
+    top: unset !important;
+    right: unset !important;
+    bottom: unset !important;
+    left: unset !important;
+    width: auto !important;
+    height: auto !important;
+    pointer-events: all;
+    z-index: auto !important;
+  }
+
+  /* Wrapper for quick-add to prevent navigation */
+  .collection-product-actions > div {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    position: relative !important;
+    width: 32px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .collection-product-actions > div {
+      width: 32px;
+    }
+  }
+
+  /* Hide "Add" button in collection quick add, only show "Choose" button (+) */
+  .collection-quick-add .quick-add__button--add {
+    display: none !important;
+  }
+
+  .collection-quick-add .quick-add__button--choose {
+    display: flex !important;
+    position: relative !important;
+    right: unset !important;
+    bottom: unset !important;
+    left: unset !important;
+    top: unset !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    margin: 0 !important;
+    transform: none !important;
+    translate: none !important;
+  }
+
+  /* Ensure the button is visible - override base quick-add styles */
+  .collection-quick-add-button,
+  .collection-quick-add .quick-add__button--choose.collection-quick-add-button,
+  .collection-quick-add .collection-quick-add-button,
+  .collection-quick-add .quick-add__button.collection-quick-add-button,
+  button.collection-quick-add-button {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 32px !important;
+    height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    --quick-add-mobile-display: flex !important;
+    --quick-add-display: flex !important;
+    --quick-add-mobile-opacity: 1 !important;
+  }
+
+  .collection-quick-add .quick-add__product-form-component {
+    position: relative !important;
+    height: auto !important;
+  }
+
+  .collection-quick-add .quick-add__product-form-component .shopify-product-form {
+    position: relative !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    height: auto !important;
+    width: auto !important;
+  }
+
+  /* Override all quick-add base styles for collection */
+  .collection-product-actions .collection-quick-add.quick-add {
+    position: relative !important;
+    inset: unset !important;
+    top: unset !important;
+    right: unset !important;
+    bottom: unset !important;
+    left: unset !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: auto !important;
+    min-height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+
+  .collection-product-actions .collection-quick-add .quick-add__button {
+    position: relative !important;
+    right: unset !important;
+    bottom: unset !important;
+    left: unset !important;
+    top: unset !important;
+    margin: 0 !important;
+    transform: none !important;
+    translate: none !important;
+  }
+
+  .collection-quick-add-button {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    border-radius: 50% !important;
+    border: 1px solid #1D425A !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    transition: opacity 0.2s ease;
+    position: relative !important;
+    z-index: 1 !important;
+    pointer-events: auto !important;
+    flex-shrink: 0 !important;
+    left: unset !important;
+    right: unset !important;
+    top: unset !important;
+    bottom: unset !important;
+    transform: none !important;
+    translate: none !important;
+    backdrop-filter: none !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  .collection-quick-add-button:hover {
+    opacity: 0.8;
+  }
+
+  .collection-quick-add-plus {
+    font-family: 'Geologica', sans-serif;
+    font-style: normal;
+    font-weight: 100;
+    font-size: 19.5279px;
+    line-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #1D425A;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    top: -1px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .collection-product-actions {
+      align-items: center;
+    }
+
+    .collection-quick-add-button {
+      width: 32px !important;
+      height: 32px !important;
+      min-width: 32px !important;
+      min-height: 32px !important;
+      max-width: 32px !important;
+      max-height: 32px !important;
+      border: 1px solid #7295BB !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      box-sizing: border-box !important;
+    }
+    
+    .collection-quick-add-plus {
+      font-size: 29.4042px;
+      line-height: 37px;
+      color: #7295BB;
+      top: -2px;
+    }
   }
 {% endstylesheet %}
 

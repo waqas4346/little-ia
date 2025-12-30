@@ -1,0 +1,249 @@
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div class="section page-width-content color-{{ section.settings.color_scheme }}">
+  <div
+    class="collection-services spacing-style"
+    style="{% render 'spacing-padding', settings: section.settings %}"
+  >
+    <div class="collection-services__grid">
+      {% for block in section.blocks %}
+        <div class="collection-services__item" {{ block.shopify_attributes }}>
+          {% if block.settings.icon != blank %}
+            <div class="collection-services__icon">
+              {{
+                block.settings.icon
+                | image_url: width: 100
+                | image_tag:
+                  loading: 'lazy',
+                  width: block.settings.icon.width,
+                  height: block.settings.icon.height,
+                  alt: block.settings.icon.alt | default: block.settings.heading
+              }}
+            </div>
+          {% endif %}
+
+          <div class="collection-services__content">
+            {% if block.settings.heading != blank %}
+              <h3 class="collection-services__heading">{{ block.settings.heading }}</h3>
+            {% endif %}
+            {% if block.settings.subheading != blank %}
+              <p class="collection-services__subheading">{{ block.settings.subheading }}</p>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .collection-services {
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .collection-services__grid {
+    display: flex;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .collection-services__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    width: 200px;
+  }
+
+  .collection-services__icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+  }
+
+  .collection-services__icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .collection-services__content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .collection-services__heading {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 140%;
+    text-transform: uppercase;
+    color: #1D425A;
+    letter-spacing: 0.02em;
+  }
+
+  .collection-services__subheading {
+    margin: 0;
+    font-family: 'Sacramento', cursive, serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 140%;
+    color: #7295BB;
+  }
+
+  @media screen and (min-width: 750px) {
+    .collection-services {
+      padding: 60px 40px;
+    }
+
+    .collection-services__grid {
+      gap: 60px;
+    }
+
+    .collection-services__heading {
+      font-size: 16px;
+    }
+
+    .collection-services__subheading {
+      font-size: 20px;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-services__grid {
+      gap: 30px;
+    }
+
+    .collection-services__icon {
+      width: 50px;
+      height: 50px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Collection Services",
+  "tag": "section",
+  "class": "section-collection-services",
+  "blocks": [
+    {
+      "type": "service_item",
+      "name": "Service Item",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "icon",
+          "label": "Icon"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "COMPLIMENTARY PERSONALISATION"
+        },
+        {
+          "type": "text",
+          "id": "subheading",
+          "label": "Subheading",
+          "default": "on all items"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "options": [
+        {
+          "value": "scheme-1",
+          "label": "Scheme 1"
+        },
+        {
+          "value": "scheme-2",
+          "label": "Scheme 2"
+        }
+      ],
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Padding top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collection Services",
+      "blocks": [
+        {
+          "type": "service_item",
+          "settings": {
+            "heading": "COMPLIMENTARY PERSONALISATION",
+            "subheading": "on all items"
+          }
+        },
+        {
+          "type": "service_item",
+          "settings": {
+            "heading": "SAME DAY DELIVERY IN DUBAI",
+            "subheading": "till 12pm"
+          }
+        },
+        {
+          "type": "service_item",
+          "settings": {
+            "heading": "COMPLIMENTARY PACKAGING",
+            "subheading": "with gift sets"
+          }
+        },
+        {
+          "type": "service_item",
+          "settings": {
+            "heading": "WORLDWIDE EXPRESS SHIPPING",
+            "subheading": "5 to 7 working days"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
+

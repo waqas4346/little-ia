@@ -113,7 +113,6 @@
       </span>
     {% else %}
       <span class="price">{{ price | default: '&nbsp;' }}</span>
-      <span class="price">{{ price | default: '&nbsp;' }}</span>
     {% endif %}
 
     {% if show_sale_price_first == true and show_compare_price %}
@@ -146,27 +145,28 @@
 {%- stylesheet -%}
   .price-snippet .price {
     font-family: 'Outfit', sans-serif;
-    font-weight: 500;
     font-style: normal;
+    font-weight: 500;
     font-size: 18px;
     line-height: 160%;
-    letter-spacing: 0;
-    color: #1D425A;
+    color: #222222;
   }
 
   .price-snippet .compare-at-price {
     font-family: 'Outfit', sans-serif;
-    font-weight: 400;
     font-style: normal;
+    font-weight: 400;
     font-size: 16px;
     line-height: 160%;
-    letter-spacing: 0;
-    text-decoration: line-through;
+    text-decoration-line: line-through;
     color: #909090;
   }
 
   .price-snippet .price-discount-badge {
     margin-left: 8px;
+    padding: 0.564935px 5.64935px;
+    background: #FDF8E7;
+    border-radius: 70px;
     font-family: 'Outfit', sans-serif;
     font-weight: 400;
     font-style: normal;
@@ -178,16 +178,28 @@
 
   @media (max-width: 768px) {
     .price-snippet .price {
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 500;
       font-size: 14px;
       line-height: 160%;
+      color: #1D425A;
     }
 
     .price-snippet .compare-at-price {
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 400;
       font-size: 12px;
       line-height: 160%;
+      text-decoration-line: line-through;
+      color: #787878;
     }
 
     .price-snippet .price-discount-badge {
+      padding: 0.564935px 5.64935px;
+      background: #FDF8E7;
+      border-radius: 70px;
       font-size: 10px;
       line-height: 160%;
     }

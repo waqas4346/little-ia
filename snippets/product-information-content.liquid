@@ -142,12 +142,54 @@
 
   /* Mobile styles */
   @media screen and (max-width: 749px) {
-    .product-information__media {
-      grid-column: 1 / -1;
+    .product-information__grid {
+      display: flex;
+      flex-direction: column;
     }
 
     .product-details {
-      grid-column: 2 / 3;
+      grid-column: 1 / -1;
+      display: contents;
+    }
+
+    .product-details > .group-block {
+      display: contents;
+    }
+
+    .product-details > .group-block > .group-block-content {
+      display: contents;
+    }
+
+    /* Title and price group appears before media - must be first */
+    .product-details > .group-block > .group-block-content > .group-block:first-child {
+      order: -2 !important;
+      width: 100%;
+      padding-inline: var(--padding-lg);
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    /* Media appears after title/price */
+    .product-information__media {
+      order: -1 !important;
+      grid-column: 1 / -1;
+    }
+
+    /* Variant picker appears after media */
+    .product-details > .group-block > .group-block-content > *:has(variant-picker) {
+      order: 0 !important;
+      width: 100%;
+      padding-inline: var(--padding-lg);
+      margin-top: 16px;
+      display: block;
+    }
+
+    /* Other product details appear after variant picker */
+    .product-details > .group-block > .group-block-content > *:not(:first-child):not(:has(variant-picker)) {
+      order: 1 !important;
+      width: 100%;
+      padding-inline: var(--padding-lg);
+      display: block;
     }
   }
 
@@ -306,5 +348,33 @@
   /* If the header is sticky, make product details content stick underneath the header */
   body:has(#header-group #header-component[data-sticky-state='active']) .product-details.sticky-content--desktop {
     --sticky-header-offset: var(--header-height);
+  }
+
+  /* Product title styling on product pages */
+  .product-information .product-details h1,
+  .product-information .product-details .text-block h1 {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    text-transform: capitalize;
+    color: #1D425A;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-information .product-details h1,
+    .product-information .product-details .text-block h1 {
+      font-size: 32px;
+      line-height: 40px;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .product-information .product-details h1,
+    .product-information .product-details .text-block h1 {
+      font-size: 24px;
+      line-height: 30px;
+      display: flex;
+      align-items: center;
+    }
   }
 {% endstylesheet %}

@@ -1,0 +1,1208 @@
+{% liquid
+  assign max_items = section.settings.max_products | default: 4
+  assign items_per_view = section.settings.items_per_view | default: 4
+  
+  # Determine if we're using a collection or product list
+  assign use_collection = false
+  assign use_product_list = false
+  
+  if section.settings.collection != blank
+    assign use_collection = true
+    assign selected_collection = section.settings.collection
+  elsif section.settings.product_list != blank and section.settings.product_list.count > 0
+    assign use_product_list = true
+    assign product_list = section.settings.product_list
+  endif
+%}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div
+  data-testid="product-slider"
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+    product-slider-section
+  "
+  style="
+    {% render 'spacing-style', settings: section.settings %}
+    {% render 'gap-style', value: section.settings.gap %}
+  "
+>
+  <div class="product-slider-header">
+    {% if section.settings.top_label != blank %}
+      <div class="product-slider-top-label">
+        <span class="product-slider-top-label-text">{{ section.settings.top_label }}</span>
+      </div>
+    {% endif %}
+    
+    {% if section.settings.section_title != blank %}
+      <div class="product-slider-section-title">
+        <span class="product-slider-section-title-label">{{ section.settings.section_title }}</span>
+      </div>
+    {% endif %}
+  </div>
+
+  {% capture list_items %}
+    {% if use_collection %}
+      {% if selected_collection.products_count > 0 %}
+        {% for product in selected_collection.products limit: max_items %}
+          <div class="resource-list__item" data-product-slider-item="true" data-product-id="{{ product.id }}">
+            {% # theme-check-disable UniqueStaticBlockId %}
+              {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+            {% # theme-check-enable UniqueStaticBlockId %}
+            {% comment %} Add View Product and + buttons for product slider {% endcomment %}
+            {% liquid
+              assign has_quick_add = false
+              if section.settings.quick_add and product.available
+                assign has_quick_add = true
+              endif
+              assign variant = product.selected_or_first_available_variant
+              assign product_form_id = 'ProductSliderQuickAdd-ProductForm-' | append: product.id | append: '-' | append: section.id
+              assign quick_add_button = 'choose'
+              if product.variants_count == 1 or product.options.size == 1 and product.selected_variant
+                assign quick_add_button = 'add'
+              endif
+            %}
+            <div class="product-slider-product-actions" onclick="event.stopPropagation();" data-product-id="{{ product.id }}" style="display: flex !important; align-items: center; gap: 5px; margin-top: 12px; width: 100%;">
+              <a 
+                href="{{ variant.url | default: product.url }}" 
+                class="product-slider-view-product-button"
+                onclick="event.stopPropagation();"
+                style="display: flex !important; align-items: center; justify-content: center; background: #7295BB; color: #FFFFFF; text-decoration: none; flex: 1; padding: 10px 16px; font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 14px; line-height: 20px; text-transform: uppercase;"
+              >
+                VIEW PRODUCT
+              </a>
+              {% if has_quick_add %}
+                <div onclick="event.stopPropagation();" style="display: flex; align-items: center;">
+                  <quick-add-component
+                    class="quick-add product-slider-quick-add"
+                    ref="quickAdd"
+                    data-product-title="{{ product.title }}"
+                    data-quick-add-button="{{ quick_add_button }}"
+                    data-product-options-count="{{ product.options.size }}"
+                  >
+                  <product-form-component
+                    data-section-id="{{ section.id }}"
+                    data-product-id="{{ product.id }}"
+                    on:submit="/handleSubmit"
+                    class="quick-add__product-form-component"
+                  >
+                    {%- form 'product', product, id: product_form_id, novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+                      <input
+                        type="hidden"
+                        name="id"
+                        ref="variantId"
+                        value="{{ variant.id }}"
+                        {% if variant.available == false %}
+                          disabled
+                        {% endif %}
+                      >
+                      <input
+                        type="hidden"
+                        name="quantity"
+                        value="{% if variant.quantity_rule.min %}{{ variant.quantity_rule.min }}{% else %}1{% endif %}"
+                      >
+                      <button
+                        class="button product-slider-quick-add-button"
+                        type="button"
+                        name="add"
+                        on:click="quick-add-component/handleClick"
+                        onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();"
+                        data-quick-add-trigger="true"
+                        data-no-navigation="true"
+                        style="display: flex !important; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; margin: 0; border-radius: 50%; border: 1px solid #1D425A; background: transparent; cursor: pointer;"
+                      >
+                        <span class="product-slider-quick-add-plus" style="font-family: 'Geologica', sans-serif; font-weight: 100; font-size: 19.5279px; line-height: 24px; color: #1D425A; display: flex; align-items: center; justify-content: center; position: relative; top: -1px;">+</span>
+                      </button>
+                    {%- endform -%}
+                  </product-form-component>
+                </quick-add-component>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          {% unless forloop.last %}
+            <!--@list/split-->
+          {% endunless %}
+        {% endfor %}
+      {% endif %}
+    {% elsif use_product_list %}
+      {% for product in product_list limit: max_items %}
+        <div class="resource-list__item" data-product-slider-item="true" data-product-id="{{ product.id }}">
+          {% # theme-check-disable UniqueStaticBlockId %}
+            {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+          {% # theme-check-enable UniqueStaticBlockId %}
+          {% comment %} Add View Product and + buttons for product slider {% endcomment %}
+          {% liquid
+            assign has_quick_add = false
+            if section.settings.quick_add and product.available
+              assign has_quick_add = true
+            endif
+            assign variant = product.selected_or_first_available_variant
+            assign product_form_id = 'ProductSliderQuickAdd-ProductForm-' | append: product.id | append: '-' | append: section.id
+            assign quick_add_button = 'choose'
+            if product.variants_count == 1 or product.options.size == 1 and product.selected_variant
+              assign quick_add_button = 'add'
+            endif
+          %}
+          <div class="product-slider-product-actions" onclick="event.stopPropagation();" data-product-id="{{ product.id }}" style="display: flex !important; align-items: center; gap: 5px; margin-top: 12px; width: 100%;">
+            <a 
+              href="{{ variant.url | default: product.url }}" 
+              class="product-slider-view-product-button"
+              onclick="event.stopPropagation();"
+              style="display: flex !important; align-items: center; justify-content: center; background: #7295BB; color: #FFFFFF; text-decoration: none; flex: 1; padding: 10px 16px; font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 14px; line-height: 20px; text-transform: uppercase;"
+            >
+              VIEW PRODUCT
+            </a>
+            {% if has_quick_add %}
+              <div onclick="event.stopPropagation();" style="display: flex; align-items: center;">
+                <quick-add-component
+                  class="quick-add product-slider-quick-add"
+                  ref="quickAdd"
+                  data-product-title="{{ product.title }}"
+                  data-quick-add-button="{{ quick_add_button }}"
+                  data-product-options-count="{{ product.options.size }}"
+                >
+                <product-form-component
+                  data-section-id="{{ section.id }}"
+                  data-product-id="{{ product.id }}"
+                  on:submit="/handleSubmit"
+                  class="quick-add__product-form-component"
+                >
+                  {%- form 'product', product, id: product_form_id, novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+                    <input
+                      type="hidden"
+                      name="id"
+                      ref="variantId"
+                      value="{{ variant.id }}"
+                      {% if variant.available == false %}
+                        disabled
+                      {% endif %}
+                    >
+                    <input
+                      type="hidden"
+                      name="quantity"
+                      value="{% if variant.quantity_rule.min %}{{ variant.quantity_rule.min }}{% else %}1{% endif %}"
+                    >
+                    <button
+                      class="button product-slider-quick-add-button"
+                      type="button"
+                      name="add"
+                      on:click="quick-add-component/handleClick"
+                      onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();"
+                      data-quick-add-trigger="true"
+                      data-no-navigation="true"
+                      style="display: flex !important; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; margin: 0; border-radius: 50%; border: 1px solid #1D425A; background: transparent; cursor: pointer;"
+                    >
+                      <span class="product-slider-quick-add-plus" style="font-family: 'Geologica', sans-serif; font-weight: 100; font-size: 19.5279px; line-height: 24px; color: #1D425A; display: flex; align-items: center; justify-content: center; position: relative; top: -1px;">+</span>
+                    </button>
+                  {%- endform -%}
+                </product-form-component>
+              </quick-add-component>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        {% unless forloop.last %}
+          <!--@list/split-->
+        {% endunless %}
+      {% endfor %}
+    {% else %}
+      {% comment %} Empty state - show placeholder products {% endcomment %}
+      {% for i in (1..max_items) %}
+        <div class="resource-list__item" data-product-slider-item="true">
+          {% # theme-check-disable UniqueStaticBlockId %}
+            {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: null %}
+          {% # theme-check-enable UniqueStaticBlockId %}
+        </div>
+        {% unless forloop.last %}
+          <!--@list/split-->
+        {% endunless %}
+      {% endfor %}
+    {% endif %}
+  {% endcapture %}
+
+  {% liquid
+    assign list_items_array = list_items | strip | split: '<!--@list/split-->'
+    
+    # Prepare carousel settings - remove gutters to allow full width
+    assign slideshow_gutters = null
+    assign gutter_style = '--gutter-slide-width: 0px;'
+
+    assign show_arrows = false
+    if section.settings.icons_style != 'none'
+      assign show_arrows = true
+    endif
+  %}
+
+  {% capture slides %}
+    {% for item in list_items_array %}
+      {% render 'slideshow-slide'
+        index : forloop.index0,
+        children : item,
+        class : 'resource-list__slide product-slider-slide'
+      %}
+    {% endfor %}
+  {% endcapture %}
+
+  {% comment %} Desktop carousel {% endcomment %}
+  <div class="product-slider-wrapper">
+    <div
+      class="resource-list resource-list__carousel product-slider-carousel product-slider-desktop"
+      style="{{ gutter_style }} --column-count: {{ items_per_view }}; --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 8 }}px;"
+      data-testid="product-slider-grid"
+      data-items-per-view="{{ items_per_view }}"
+    >
+      {% render 'slideshow',
+        ref: 'productSliderDesktop',
+        class: 'resource-list__carousel',
+        slides: slides,
+        show_arrows: show_arrows,
+        icon_style: section.settings.icons_style,
+        icon_shape: section.settings.icons_shape,
+        auto_hide_controls: false,
+        infinite: false,
+        initial_slide: 0,
+        slide_count: list_items_array.size,
+        slideshow_gutters: slideshow_gutters,
+        arrows_position: 'center'
+      %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .product-slider-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .product-slider-top-label {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .product-slider-top-label-text {
+    font-family: 'Sacramento', cursive;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 38px;
+    line-height: 150%;
+    letter-spacing: 0%;
+    text-align: center;
+    color: #7295BB;
+    display: block;
+  }
+
+  .product-slider-section-title {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .product-slider-section-title-label {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-foreground, #1a1a1a);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: block;
+  }
+
+  /* Product card media sizing/background in slider */
+  [data-testid="product-slider-grid"] .card-gallery .product-media-container {
+    background: url("bg_removal [Background removed].png"), #F7F7F7;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+  }
+
+  [data-testid="product-slider-grid"] .card-gallery .product-media-container img,
+  [data-testid="product-slider-grid"] .card-gallery .product-media-container picture,
+  [data-testid="product-slider-grid"] .card-gallery .product-media-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Hide sale/sold-out badge on slider images */
+  [data-testid="product-slider-grid"] .product-badges {
+    display: none !important;
+  }
+
+  /* Product title styling */
+  [data-testid="product-slider-grid"] .text-block--product_title,
+  [data-testid="product-slider-grid"] .text-block--product_title *,
+  [data-testid="product-slider-grid"] .text-block--product_title p {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 140%;
+    letter-spacing: 0;
+    color: #1D425A;
+  }
+
+  /* Explicit class injected on product title block */
+  [data-testid="product-slider-grid"] .product-title-text,
+  [data-testid="product-slider-grid"] .product-title-text *,
+  [data-testid="product-slider-grid"] .product-title-text p {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 140%;
+    letter-spacing: 0;
+    color: #1D425A;
+  }
+
+  /* Product slider carousel container */
+  .product-slider-carousel {
+    position: relative;
+  }
+
+  /* Remove horizontal padding for max width */
+  [data-testid="product-slider"] .section--page-width {
+    padding-inline: 0 !important;
+  }
+
+  [data-testid="product-slider"] .section--page-width > * {
+    padding-inline: 0 !important;
+  }
+
+  [data-testid="product-slider-grid"] {
+    padding-inline: 0 !important;
+    --peek-next-slide-size: 0px;
+    --gutter-slide-width: 0px !important;
+    overflow: visible;
+  }
+
+  /* Desktop slider styling */
+  .product-slider-desktop .resource-list__carousel {
+    --column-count: {{ section.settings.items_per_view | default: 4 }};
+    --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 8 }}px;
+  }
+
+  /* Ensure gap is applied to slideshow slides on desktop */
+  .product-slider-desktop slideshow-slides {
+    gap: {{ section.settings.columns_gap | default: 8 }}px !important;
+  }
+
+  /* Position arrows outside the carousel on desktop */
+  .product-slider-wrapper {
+    position: relative;
+    padding: 0;
+  }
+
+  .product-slider-desktop slideshow-container {
+    position: relative;
+  }
+
+  .product-slider-desktop slideshow-arrows {
+    position: absolute;
+    inset: 0;
+    left: auto;
+    right: auto;
+    width: calc(100% + 120px);
+    max-width: none;
+    pointer-events: none;
+    z-index: var(--layer-heightened);
+    margin-left: -60px;
+    margin-right: -60px;
+  }
+
+  .product-slider-desktop slideshow-arrows[position='center'] {
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+  }
+
+  .product-slider-desktop slideshow-arrows .slideshow-control {
+    position: absolute;
+    margin: 0;
+    pointer-events: auto;
+    opacity: 1;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .product-slider-desktop slideshow-arrows .slideshow-control--previous {
+    left: 0;
+  }
+
+  .product-slider-desktop slideshow-arrows .slideshow-control--next {
+    right: 0;
+  }
+
+  @media (max-width: 1200px) {
+    .product-slider-wrapper {
+      padding: 0;
+    }
+
+    .product-slider-desktop slideshow-arrows {
+      width: calc(100% + 100px);
+      margin-left: -50px;
+      margin-right: -50px;
+    }
+  }
+
+  /* Hide default quick-add on hover for product slider (same as collection page) */
+  [data-testid="product-slider"] product-card[data-collection-page="true"]:is(:hover, :focus-within) .quick-add__button:not(.product-slider-quick-add-button) {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* Product slider product actions (View Product + Quick Add) - Always visible */
+  [data-testid="product-slider"] .product-slider-product-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    margin-top: 12px;
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  [data-testid="product-slider"] .product-slider-view-product-button {
+    background: #7295BB !important;
+    flex: 1;
+    padding: 10px 16px;
+    margin: 0;
+    margin-right: 0;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    text-transform: uppercase;
+    color: #FFFFFF !important;
+    text-decoration: none;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .product-slider-quick-add {
+    position: relative !important;
+    inset: unset !important;
+    top: unset !important;
+    right: unset !important;
+    bottom: unset !important;
+    left: unset !important;
+    width: auto !important;
+    height: auto !important;
+    pointer-events: all;
+    z-index: auto !important;
+  }
+
+  /* Wrapper for quick-add to prevent navigation */
+  .product-slider-product-actions > div {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    position: relative !important;
+    width: 32px;
+  }
+
+  /* Hide "Add" button in product slider quick add, only show "Choose" button (+) */
+  .product-slider-quick-add .quick-add__button--add {
+    display: none !important;
+  }
+
+  .product-slider-quick-add .quick-add__button--choose {
+    display: flex !important;
+    position: relative !important;
+    right: unset !important;
+    bottom: unset !important;
+    left: unset !important;
+    top: unset !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    margin: 0 !important;
+    transform: none !important;
+    translate: none !important;
+  }
+
+  /* Ensure the button is visible - override base quick-add styles */
+  [data-testid="product-slider"] .product-slider-quick-add-button,
+  [data-testid="product-slider"] .product-slider-quick-add .quick-add__button--choose.product-slider-quick-add-button,
+  [data-testid="product-slider"] .product-slider-quick-add .product-slider-quick-add-button,
+  [data-testid="product-slider"] .product-slider-quick-add .quick-add__button.product-slider-quick-add-button,
+  [data-testid="product-slider"] button.product-slider-quick-add-button {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 32px !important;
+    height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    --quick-add-mobile-display: flex !important;
+    --quick-add-display: flex !important;
+    --quick-add-mobile-opacity: 1 !important;
+  }
+
+  .product-slider-quick-add .quick-add__product-form-component {
+    position: relative !important;
+    height: auto !important;
+  }
+
+  .product-slider-quick-add .quick-add__product-form-component .shopify-product-form {
+    position: relative !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    height: auto !important;
+    width: auto !important;
+  }
+
+  /* Override all quick-add base styles for product slider */
+  .product-slider-product-actions .product-slider-quick-add.quick-add {
+    position: relative !important;
+    inset: unset !important;
+    top: unset !important;
+    right: unset !important;
+    bottom: unset !important;
+    left: unset !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: auto !important;
+    min-height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+
+  .product-slider-product-actions .product-slider-quick-add .quick-add__button {
+    position: relative !important;
+    right: unset !important;
+    bottom: unset !important;
+    left: unset !important;
+    top: unset !important;
+    margin: 0 !important;
+    transform: none !important;
+    translate: none !important;
+  }
+
+  .product-slider-quick-add-button {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    border-radius: 50% !important;
+    border: 1px solid #1D425A !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    transition: opacity 0.2s ease;
+    position: relative !important;
+    z-index: 1 !important;
+    pointer-events: auto !important;
+    flex-shrink: 0 !important;
+    left: unset !important;
+    right: unset !important;
+    top: unset !important;
+    bottom: unset !important;
+    transform: none !important;
+    translate: none !important;
+    backdrop-filter: none !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  .product-slider-quick-add-button:hover {
+    opacity: 0.8;
+  }
+
+  .product-slider-quick-add-plus {
+    font-family: 'Geologica', sans-serif;
+    font-style: normal;
+    font-weight: 100;
+    font-size: 19.5279px;
+    line-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #1D425A;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    top: -1px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-slider-product-actions {
+      gap: 5px !important;
+      align-items: center;
+    }
+
+    .product-slider-view-product-button {
+      background: #7295BB;
+      flex: 1;
+      padding: 14px 20px;
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 140%;
+      text-transform: uppercase;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .product-slider-quick-add-button {
+      width: 32px !important;
+      height: 32px !important;
+      min-width: 32px !important;
+      min-height: 32px !important;
+      max-width: 32px !important;
+      max-height: 32px !important;
+      border: 1px solid #7295BB !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      box-sizing: border-box !important;
+    }
+    
+    .product-slider-quick-add-plus {
+      font-size: 29.4042px;
+      line-height: 37px;
+      color: #7295BB;
+      top: -2px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .product-slider-section-title-label {
+      font-size: 1.25rem;
+    }
+
+    .product-slider-top-label-text {
+      font-family: 'Sacramento', cursive;
+      font-weight: 400;
+      font-style: normal;
+      font-size: 30px;
+      line-height: 150%;
+      letter-spacing: 0%;
+      text-align: center;
+      color: #7295BB;
+    }
+
+    .product-slider-section-title {
+      margin-bottom: 8px;
+    }
+
+    .product-slider-header {
+      margin-bottom: 16px;
+    }
+
+    [data-testid="product-slider-grid"] .card-gallery .product-media-container {
+      background: url("bg_removal [Background removed].png"), #F7F7F7;
+    }
+
+    [data-testid="product-slider-grid"] .text-block--product_title,
+    [data-testid="product-slider-grid"] .text-block--product_title *,
+    [data-testid="product-slider-grid"] .text-block--product_title p {
+      font-size: 16px;
+      line-height: 140%;
+      color: #1D425A;
+    }
+
+    [data-testid="product-slider-grid"] .product-title-text,
+    [data-testid="product-slider-grid"] .product-title-text *,
+    [data-testid="product-slider-grid"] .product-title-text p {
+      font-size: 16px;
+      line-height: 140%;
+      letter-spacing: 0;
+      color: #1D425A;
+    }
+
+    .product-slider-wrapper {
+      padding: 0;
+    }
+
+    .product-slider-desktop slideshow-arrows {
+      width: calc(100% + 40px);
+      margin-left: -20px;
+      margin-right: -20px;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const desktopCarousel = document.querySelector('[data-testid="product-slider-grid"]');
+    if (!desktopCarousel) return;
+
+    const itemsPerView = parseInt(desktopCarousel.getAttribute('data-items-per-view')) || 4;
+    const slideshow = desktopCarousel.querySelector('slideshow-component[ref="productSliderDesktop"]');
+    if (!slideshow) return;
+
+    const previousBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--previous');
+    const nextBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--next');
+    const slides = slideshow.querySelectorAll('slideshow-slide');
+
+    if (!previousBtn || !nextBtn || slides.length === 0) return;
+
+    let currentIndex = 0;
+    const totalSlides = slides.length;
+    const maxIndex = Math.max(0, totalSlides - itemsPerView);
+
+    // Override previous button
+    previousBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      currentIndex = Math.max(0, currentIndex - itemsPerView);
+      if (slides[currentIndex]) {
+        slideshow.select(currentIndex, e, { animate: true });
+      }
+    });
+
+    // Override next button
+    nextBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      currentIndex = Math.min(maxIndex, currentIndex + itemsPerView);
+      if (slides[currentIndex]) {
+        slideshow.select(currentIndex, e, { animate: true });
+      }
+    });
+
+    // Update current index when slideshow changes
+    slideshow.addEventListener('slideshow:select', function(event) {
+      currentIndex = event.detail.index || 0;
+    });
+
+    // Add data-collection-page attribute to product cards to hide default quick-add on hover
+    function setupProductCards() {
+      const productCards = desktopCarousel.querySelectorAll('product-card');
+      productCards.forEach(function(card) {
+        card.setAttribute('data-collection-page', 'true');
+      });
+    }
+
+    // Move product action buttons to be after the price block inside product-card
+    function positionProductActions() {
+      const productItems = desktopCarousel.querySelectorAll('[data-product-slider-item="true"]');
+      productItems.forEach(function(item) {
+        const actions = item.querySelector('.product-slider-product-actions');
+        if (!actions) return;
+
+        // Find the product-card element
+        const productCard = item.querySelector('product-card');
+        if (!productCard) {
+          // If no product-card found yet, try again later
+          return;
+        }
+
+        // Find the product-card__content (where all blocks are)
+        const cardContent = productCard.querySelector('.product-card__content');
+        if (!cardContent) {
+          // If no cardContent found yet, try again later
+          return;
+        }
+
+        // Check if already inside cardContent
+        if (actions.parentNode === cardContent) {
+          // Already inside, check if position is correct
+          const priceBlock = cardContent.querySelector('product-price');
+          if (priceBlock && priceBlock.nextElementSibling === actions) {
+            return; // Already in correct position
+          }
+        }
+
+        // Find the price block (product-price element) inside cardContent
+        const priceBlock = cardContent.querySelector('product-price');
+        
+        if (priceBlock) {
+          // Remove from current position if needed
+          if (actions.parentNode && actions.parentNode !== cardContent) {
+            actions.remove();
+          }
+          // Insert after price block inside cardContent
+          if (priceBlock.nextSibling) {
+            cardContent.insertBefore(actions, priceBlock.nextSibling);
+          } else {
+            cardContent.appendChild(actions);
+          }
+        } else {
+          // If no price block found, append to end of cardContent
+          if (actions.parentNode !== cardContent) {
+            actions.remove();
+            cardContent.appendChild(actions);
+          }
+        }
+      });
+    }
+
+    // Setup product cards and position buttons
+    function initializeProductSlider() {
+      setupProductCards();
+      // Run multiple times to ensure it works
+      positionProductActions();
+      setTimeout(positionProductActions, 50);
+      setTimeout(positionProductActions, 200);
+    }
+
+    // Initialize after initial load - use multiple attempts
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeProductSlider);
+    } else {
+      initializeProductSlider();
+    }
+
+    // Also initialize after any dynamic updates
+    const observer = new MutationObserver(function(mutations) {
+      let shouldReposition = false;
+      mutations.forEach(function(mutation) {
+        if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
+          shouldReposition = true;
+        }
+      });
+      if (shouldReposition) {
+        setTimeout(initializeProductSlider, 50);
+      }
+    });
+
+    observer.observe(desktopCarousel, {
+      childList: true,
+      subtree: true
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Product Slider",
+  "class": "ui-test-product-slider",
+  "blocks": [
+    {
+      "type": "@theme"
+    },
+    {
+      "type": "@app"
+    },
+    {
+      "type": "_divider"
+    }
+  ],
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "top_label",
+      "label": "Top Label",
+      "default": "shop",
+      "info": "Text displayed above the section title"
+    },
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section Title",
+      "default": "FEATURED PRODUCTS",
+      "info": "Title displayed above the product slider"
+    },
+    {
+      "type": "header",
+      "content": "Content Source"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection",
+      "info": "Select a collection to display its products. If not set, use product list below."
+    },
+    {
+      "type": "product_list",
+      "id": "product_list",
+      "label": "Products",
+      "limit": 20,
+      "info": "Select specific products to display. Only used if no collection is selected."
+    },
+    {
+      "type": "header",
+      "content": "Slider Settings"
+    },
+    {
+      "type": "range",
+      "id": "items_per_view",
+      "label": "Items per view",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "default": 4,
+      "info": "Number of products to show at once in the slider"
+    },
+    {
+      "type": "range",
+      "id": "max_products",
+      "label": "Maximum products",
+      "min": 1,
+      "max": 20,
+      "step": 1,
+      "default": 8,
+      "info": "Maximum number of products to display"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap",
+      "label": "Horizontal Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "checkbox",
+      "id": "quick_add",
+      "label": "Enable quick add",
+      "default": true,
+      "info": "Show the quick add button (+) on product cards"
+    },
+    {
+      "type": "select",
+      "id": "icons_style",
+      "label": "Arrow Style",
+      "options": [
+        {
+          "value": "arrow",
+          "label": "Arrows"
+        },
+        {
+          "value": "chevron",
+          "label": "Chevrons"
+        },
+        {
+          "value": "arrows_large",
+          "label": "Large Arrows"
+        },
+        {
+          "value": "chevron_large",
+          "label": "Large Chevrons"
+        },
+        {
+          "value": "none",
+          "label": "None"
+        }
+      ],
+      "default": "arrow"
+    },
+    {
+      "type": "select",
+      "id": "icons_shape",
+      "label": "Arrow Background",
+      "options": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "circle",
+          "label": "Circle"
+        },
+        {
+          "value": "square",
+          "label": "Square"
+        }
+      ],
+      "default": "none",
+      "visible_if": "{{ section.settings.icons_style != 'none' }}"
+    },
+    {
+      "type": "header",
+      "content": "Section Layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page"
+        },
+        {
+          "value": "full-width",
+          "label": "Full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color Scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Slider",
+      "category": "Products",
+      "settings": {
+        "top_label": "shop",
+        "section_title": "FEATURED PRODUCTS",
+        "items_per_view": 4,
+        "max_products": 8,
+        "columns_gap": 8,
+        "quick_add": true,
+        "icons_style": "arrow",
+        "icons_shape": "none",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      },
+      "blocks": {
+        "static-product-card": {
+          "type": "_product-card",
+          "name": "Product Card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 4,
+            "inherit_color_scheme": true,
+            "color_scheme": "",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {
+            "product-card-gallery": {
+              "type": "_product-card-gallery",
+              "name": "Product Card Media",
+              "settings": {
+                "image_ratio": "adapt",
+                "border": "none",
+                "border_width": 1,
+                "border_opacity": 100,
+                "border_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              }
+            },
+            "product_title": {
+              "type": "product-title",
+              "name": "Product Title",
+              "settings": {
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 4,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              }
+            },
+            "price": {
+              "type": "price",
+              "name": "Product Price",
+              "settings": {
+                "show_sale_price_first": true,
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "h6",
+                "width": "100%",
+                "alignment": "left",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "color": "var(--color-foreground)",
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              }
+            }
+          },
+          "block_order": ["product-card-gallery", "product_title", "price"]
+        }
+      },
+      "block_order": []
+    }
+  ]
+}
+{% endschema %}
+

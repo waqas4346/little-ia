@@ -146,10 +146,16 @@
     opacity: 1;
   }
 
+  /* Hide quick add on hover in collection pages (but keep in product-list) */
+  product-card[data-collection-page="true"]:is(:hover, :focus-within) .quick-add__button {
+    opacity: 0;
+    pointer-events: none;
+  }
+
   .quick-add__button {
     display: var(--quick-add-mobile-display, none);
     align-items: center;
-    background: #FFFFFF;
+    background: #FFFFFF !important; /* Override any add-to-cart-button styles */
     padding: 10px;
     border-radius: 0;
     border: none;
@@ -160,6 +166,7 @@
     color: var(--color-foreground);
     pointer-events: all;
     position: absolute;
+    z-index: calc(var(--layer-raised) + 1);
     right: max(var(--quick-add-right), calc((var(--border-radius) + var(--quick-add-right)) * (1 - cos(45deg))));
     bottom: max(var(--quick-add-bottom), calc((var(--border-radius) + var(--quick-add-bottom)) * (1 - cos(45deg))));
     backdrop-filter: blur(20px) saturate(180%);
@@ -180,11 +187,22 @@
   }
 
   .quick-add__button .add-to-cart-text {
-    background: #FFFFFF;
+    background: #FFFFFF !important; /* Override any add-to-cart-button styles */
     overflow: hidden;
     border-radius: 50px;
     height: 100%;
     gap: 0;
+  }
+
+  /* Ensure quick-add buttons don't inherit add-to-cart-button styles */
+  .quick-add__button.add-to-cart-button {
+    background-color: #FFFFFF !important;
+    color: var(--color-foreground) !important;
+  }
+
+  .quick-add__button.add-to-cart-button:hover:not(:disabled) {
+    background-color: #FFFFFF !important;
+    color: var(--color-foreground) !important;
   }
 
   .quick-add__button .svg-wrapper .checkmark-burst {
