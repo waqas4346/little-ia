@@ -1,0 +1,417 @@
+
+{% liquid
+  assign product = closest.product
+-%}
+
+{% liquid
+  assign variant_to_link = product.selected_or_first_available_variant
+  assign featured_image = product.featured_media.preview_image
+  
+  if settings.transition_to_main_product
+    assign featured_image = variant_to_link.featured_image
+    if featured_image == blank
+      assign featured_image = product.featured_media.preview_image
+    endif
+
+    if featured_image != blank
+      assign featured_media_url = featured_image | image_url: width: 500
+    endif
+  endif
+
+  assign onboarding = false
+  if product.id == empty or product == blank
+    assign onboarding = true
+  endif
+%}
+
+{%- if settings.transition_to_main_product -%}
+  <product-card-link
+    data-product-id="{{ product.id }}"
+    data-featured-media-url="{{ featured_media_url }}"
+    data-product-transition="{{ settings.transition_to_main_product }}"
+    {% if onboarding %}
+      data-placeholder="true"
+    {% endif %}
+  >
+{%- endif -%}
+<product-card
+  class="product-card blog-product-card"
+  data-product-id="{{ product.id }}"
+  {% if onboarding %}
+    data-placeholder="true"
+  {% endif %}
+>
+  <a
+    {% unless onboarding %}
+      href="{{ variant_to_link.url }}"
+    {% endunless %}
+    class="product-card__link"
+    ref="productCardLink"
+  >
+    <span class="visually-hidden">
+      {{ product.title }}
+    </span>
+  </a>
+  <div class="blog-product-card__content">
+    <div class="blog-product-card__image-container">
+      {%- if featured_image != blank -%}
+        <a href="{{ variant_to_link.url }}">
+          <img
+            src="{{ featured_image | image_url: width: 240 }}"
+            alt="{{ product.title | escape }}"
+            width="{{ featured_image.width }}"
+            height="{{ featured_image.height }}"
+            loading="lazy"
+          >
+        </a>
+      {%- endif -%}
+    </div>
+    
+    <div class="blog-product-card__content-wrapper">
+      <product-title>
+        <a href="{{ variant_to_link.url }}">{{ product.title }}</a>
+      </product-title>
+      <div class="blog-product-card__price-button-wrapper">
+        <product-price>
+          {%- liquid
+            assign selected_variant = product.selected_or_first_available_variant
+            assign price = selected_variant.price
+            assign compare_at_price = selected_variant.compare_at_price
+            
+            # Calculate discount percentage
+            assign discount_percentage = null
+            if compare_at_price > price and compare_at_price > 0
+              assign discount_raw = compare_at_price | minus: price
+              assign discount_percentage = discount_raw | times: 100 | divided_by: compare_at_price | round
+            endif
+            
+            assign show_compare_price = false
+            if compare_at_price > price
+              assign show_compare_price = true
+            endif
+            
+            # Format prices
+            assign price_formatted = price | money
+            assign compare_at_price_formatted = compare_at_price | money
+            
+            # Determine button type and text
+            assign has_multiple_variants = false
+            if product.variants_count > 1
+              assign has_multiple_variants = true
+            endif
+            
+            # Determine quick add button type
+            assign quick_add_button = 'choose'
+            if product.variants_count == 1 or product.options.size == 1 and product.selected_variant
+              assign quick_add_button = 'add'
+            endif
+          -%}
+          <div class="blog-product-card__price">
+            <span class="blog-product-card__price-current">{{ price_formatted }}</span>
+            {%- if show_compare_price -%}
+              <span class="blog-product-card__price-compare">{{ compare_at_price_formatted }}</span>
+              {%- if discount_percentage -%}
+                <span class="blog-product-card__price-discount">{{ discount_percentage }}% off</span>
+              {%- endif -%}
+            {%- endif -%}
+          </div>
+        </product-price>
+        
+        {%- comment -%} Button - View for multi-variant, Add for single variant {%- endcomment -%}
+        {%- liquid
+          assign product_form_id = 'BlogQuickAdd-' | append: product.id | append: '-' | append: block.id
+          assign variant = product.selected_or_first_available_variant
+          assign can_add_to_cart = variant.available
+          if has_multiple_variants
+            assign button_text = 'View'
+          else
+            assign button_text = 'Add'
+          endif
+          # Try to get section ID from parent section, fallback to block ID
+          assign section_id = section.id | default: block.id
+        -%}
+        <quick-add-component
+          class="blog-product-card__quick-add"
+          ref="quickAdd"
+          data-product-title="{{ product.title }}"
+          data-quick-add-button="{{ quick_add_button }}"
+          data-product-options-count="{{ product.options.size }}"
+        >
+          <product-form-component
+            data-section-id="{{ section.id }}"
+            data-product-id="{{ product.id }}"
+            on:submit="/handleSubmit"
+            class="blog-product-card__product-form"
+          >
+            <div
+              class="visually-hidden"
+              aria-live="assertive"
+              role="status"
+              aria-atomic="true"
+              ref="liveRegion"
+            ></div>
+            {%- form 'product', product, id: product_form_id, novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+              <input
+                type="hidden"
+                name="id"
+                ref="variantId"
+                value="{{ variant.id }}"
+                {% if variant.available == false %}
+                  disabled
+                {% endif %}
+              >
+              <input
+                type="hidden"
+                name="quantity"
+                value="{% if variant.quantity_rule.min %}{{ variant.quantity_rule.min }}{% else %}1{% endif %}"
+              >
+              {%- if has_multiple_variants -%}
+                {%- comment -%} View button - opens quick view modal {%- endcomment -%}
+                <button
+                  type="button"
+                  name="add"
+                  class="blog-product-card__button blog-product-card__button--view"
+                  on:click="quick-add-component/handleClick"
+                >
+                  {{ button_text }}
+                </button>
+              {%- else -%}
+                {%- comment -%} Add button - adds directly to cart {%- endcomment -%}
+                {% render 'add-to-cart-button',
+                  add_to_cart_text: button_text,
+                  class: 'blog-product-card__button blog-product-card__button--add',
+                  can_add_to_cart: can_add_to_cart,
+                  product: product
+                %}
+              {%- endif -%}
+            {%- endform -%}
+          </product-form-component>
+        </quick-add-component>
+      </div>
+    </div>
+  </div>
+</product-card>
+{%- if settings.transition_to_main_product -%}
+  </product-card-link>
+{%- endif -%}
+
+{% stylesheet %}
+  .blog-product-card {
+    width: 100%;
+    background-color: white;
+    padding: 10px;
+    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
+    height: fit-content;
+  }
+
+  .blog-product-card .product-card__link {
+    display: none;
+  }
+
+  .blog-product-card__content {
+    flex: 1;
+    min-height: 0;
+    height: fit-content;
+  }
+
+  /* Match the exact structure of blog-post-related-card */
+  .blog-product-card__content {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  /* Image container on the left - exactly like related card */
+  .blog-product-card__image-container {
+    flex: 0 0 93px;
+    width: 93px;
+    height: 93px;
+    overflow: hidden;
+    background-color: #F7F7F7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .blog-product-card__image-container a {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .blog-product-card__image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Content wrapper on the right - exactly like related card */
+  .blog-product-card__content-wrapper {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    min-height: 93px;
+    height: 100%;
+  }
+
+  .blog-product-card__content-wrapper product-title {
+    display: block;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 150%;
+  }
+
+  .blog-product-card__content-wrapper product-title a {
+    text-decoration: none;
+    color: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 150%;
+  }
+
+  .blog-product-card__content-wrapper product-price {
+    display: block;
+  }
+
+  .blog-product-card__price-button-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .blog-product-card__price {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .blog-product-card__quick-add {
+    position: static;
+    pointer-events: all;
+  }
+
+  .blog-product-card__button {
+    padding: 8px 14px;
+    background-color: #7295BB;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 100%;
+    text-transform: capitalize;
+    cursor: pointer;
+    border-radius: 28px;
+    white-space: nowrap;
+    border: none;
+    display: inline-block;
+    visibility: visible;
+    opacity: 1;
+    text-indent: 0;
+    overflow: visible;
+  }
+
+  .blog-product-card__button:hover {
+    background-color: #5a7a9a;
+    color: white;
+  }
+
+  .blog-product-card__button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .blog-product-card__button * {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .blog-product-card__button span,
+  .blog-product-card__button .add-to-cart-text {
+    display: inline;
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .blog-product-card__price-current {
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 130%;
+    text-transform: capitalize;
+  }
+
+  .blog-product-card__price-compare {
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 130%;
+    text-transform: capitalize;
+    text-decoration: line-through;
+    color: #1D425A80;
+  }
+
+  .blog-product-card__price-discount {
+    padding: 2px 4px;
+    border-radius: 4px;
+    background-color: #FFFBF4;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 130%;
+    text-transform: capitalize;
+    color: #1D425A;
+  }
+
+  @media screen and (max-width: 749px) {
+    .blog-product-card__image-container {
+      flex: 0 0 93px;
+      width: 93px;
+      height: 93px;
+    }
+
+    .blog-product-card__content {
+      gap: 10px;
+    }
+
+    .blog-product-card__price-button-wrapper {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .blog-product-card__button {
+      min-width: fit-content;
+      width: auto;
+      flex-shrink: 0;
+      font-size: 14px;
+      padding: 8px 14px;
+    }
+
+    .blog-product-card__quick-add {
+      flex-shrink: 0;
+      min-width: fit-content;
+    }
+
+    .blog-product-card__price {
+      flex: 0 1 auto;
+      min-width: 0;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Blog Product Card",
+  "blocks": [],
+  "settings": []
+}
+{% endschema %}

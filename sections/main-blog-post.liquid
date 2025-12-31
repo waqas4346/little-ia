@@ -39,23 +39,88 @@
       <div class="blog-post-content-main">
         {%- content_for 'block', id: 'blog-post-content', type: '_blog-post-content' %}
       </div>
-      <aside class="blog-post-related-posts">
-        <h2 class="blog-post-related-posts__title">Other blogs you might want to read</h2>
-        <div class="blog-post-related-posts__list">
-          {% liquid
-            assign related_count = 0
-            assign max_related = 3
-          %}
-          {% for related_article in blog.articles %}
-            {% if related_article.id != article.id and related_count < max_related %}
-              <div class="blog-post-related-post">
-                {% content_for 'block', id: 'related-blog-post-card', type: '_blog-post-related-card', article: related_article %}
+      <div class="blog-post-sidebar">
+        {%- comment -%} Recommended Products Section {%- endcomment -%}
+        {%- assign recommended_collection = blog.metafields.custom.cb_recommended_products.value -%}
+        {%- if recommended_collection != blank -%}
+          {%- assign all_products = recommended_collection.products -%}
+          {%- if all_products.size > 0 -%}
+            {%- liquid
+              assign product_count = all_products.size
+              assign max_products = 4
+              
+              # Use timestamp for true randomness on each page load
+              # This ensures different products are shown on each refresh
+              assign time_seed = 'now' | date: '%s' | plus: 0
+            -%}
+            
+            <div class="blog-post-recommended-products">
+              <h2 class="blog-post-recommended-products__title">Explore Our Little IA Products</h2>
+              <div class="blog-post-recommended-products__grid">
+              {%- if product_count > max_products -%}
+                {%- comment -%} Select 4 random products using timestamp-based indices {%- endcomment -%}
+                {%- assign selected_count = 0 -%}
+                {%- assign used_indices = '' -%}
+                
+                {%- comment -%} Generate and render 4 unique random products {%- endcomment -%}
+                {%- for i in (1..max_products) -%}
+                  {%- liquid
+                    # Create a unique random index for each product using timestamp
+                    assign index_seed = time_seed | plus: i | times: 7 | plus: selected_count | times: 13
+                    assign random_index = index_seed | modulo: product_count
+                    assign index_str = random_index | append: ','
+                    
+                    # Simple check: if we've used this index before, try next one
+                    if used_indices contains index_str
+                      assign random_index = random_index | plus: 1 | modulo: product_count
+                      assign index_str = random_index | append: ','
+                    endif
+                    
+                    # Add to used indices string
+                    assign used_indices = used_indices | append: index_str
+                  -%}
+                  
+                  {%- comment -%} Find and render the product at this random index {%- endcomment -%}
+                  {%- for product in all_products -%}
+                    {%- if forloop.index0 == random_index -%}
+                      <div class="blog-post-recommended-product">
+                        {% content_for 'block', type: '_blog-product-card', id: 'blog-product-card', closest.product: product %}
+                      </div>
+                      {%- assign selected_count = selected_count | plus: 1 -%}
+                      {%- break -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                {%- endfor -%}
+              {%- else -%}
+                {%- for product in all_products limit: max_products -%}
+                  <div class="blog-post-recommended-product">
+                    {% content_for 'block', type: '_blog-product-card', id: 'blog-product-card', closest.product: product %}
+                  </div>
+                {%- endfor -%}
+              {%- endif -%}
               </div>
-              {% assign related_count = related_count | plus: 1 %}
-            {% endif %}
-          {% endfor %}
-        </div>
-      </aside>
+            </div>
+          {%- endif -%}
+        {%- endif -%}
+        
+        <aside class="blog-post-related-posts">
+          <h2 class="blog-post-related-posts__title">Other blogs you might want to read</h2>
+          <div class="blog-post-related-posts__list">
+            {% liquid
+              assign related_count = 0
+              assign max_related = 3
+            %}
+            {% for related_article in blog.articles %}
+              {% if related_article.id != article.id and related_count < max_related %}
+                <div class="blog-post-related-post">
+                  {% content_for 'block', id: 'related-blog-post-card', type: '_blog-post-related-card', article: related_article %}
+                </div>
+                {% assign related_count = related_count | plus: 1 %}
+              {% endif %}
+            {% endfor %}
+          </div>
+        </aside>
+      </div>
     </div>
 
     {% comment %} Dynamic area for @app blocks only, at the bottom {% endcomment %}
@@ -95,6 +160,7 @@
 <script type="application/ld+json">
   {{ article | structured_data }}
 </script>
+
 
 {% stylesheet %}
   .blog-post-header-row {
@@ -176,6 +242,14 @@
     min-width: 0;
   }
 
+  .blog-post-sidebar {
+    flex: 0 0 417px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
   @media screen and (max-width: 989px) {
     .blog-post-content-wrapper {
       flex-direction: column;
@@ -185,7 +259,7 @@
       width: 100%;
     }
 
-    .blog-post-related-posts {
+    .blog-post-sidebar {
       flex: 1;
       width: 100%;
     }
@@ -207,11 +281,10 @@
   }
 
   .blog-post-related-posts {
-    flex: 0 0 417px;
-    min-width: 0;
+    width: 100%;
     background-color: #FFFBF4;
     border-radius: 8px;
-    padding: 20px 12px 12px 20px;
+    padding: 20px 10px;
   }
 
   .blog-post-related-posts__title {
@@ -233,6 +306,107 @@
     width: 100%;
   }
 
+  .blog-post-recommended-products {
+    width: 100%;
+    background-color: #FFFBF4;
+    border-radius: 8px;
+    padding: 20px 10px;
+  }
+
+  .blog-post-recommended-products__title {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 100%;
+    margin-bottom: var(--margin-lg);
+    border-bottom: 0.5px solid #1D425A;
+    padding-bottom: var(--padding-md);
+  }
+
+  .blog-post-recommended-products__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .blog-post-recommended-product {
+    width: 100%;
+  }
+
+  /* Custom horizontal layout for blog post product cards */
+  .blog-post-recommended-product product-card {
+    width: 100%;
+  }
+
+  .blog-post-recommended-product .product-card__content {
+    flex-direction: row !important;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  /* Image/gallery on the left - first child */
+  .blog-post-recommended-product .product-card__content > *:first-child {
+    flex: 0 0 auto;
+    width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+  }
+
+  /* Content wrapper on the right - contains title, price, etc. */
+  .blog-post-recommended-product .product-card__content > *:not(:first-child) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Ensure the content wrapper stacks vertically */
+  .blog-post-recommended-product .product-card__content > *:not(:first-child) {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Ensure product title and price are on separate rows with gap */
+  .blog-post-recommended-product product-title {
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .blog-post-recommended-product product-price {
+    display: block;
+    margin-top: 0;
+  }
+
+  /* Add gap between title and price */
+  .blog-post-recommended-product product-title + product-price {
+    margin-top: 8px;
+  }
+
+  /* Make sure images fit properly */
+  .blog-post-recommended-product .product-card__content > *:first-child img,
+  .blog-post-recommended-product .product-card__content > *:first-child picture {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
+  @media screen and (max-width: 989px) {
+    .blog-post-recommended-products__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .blog-post-recommended-product .product-card__content {
+      flex-direction: row !important;
+      gap: 10px;
+    }
+
+    .blog-post-recommended-product .product-card__content > *:first-child {
+      width: 100px;
+      min-width: 100px;
+      max-width: 100px;
+    }
+  }
+
   @media screen and (max-width: 749px) {
     .blog-post-content-main {
       width: 100vw;
@@ -241,7 +415,7 @@
       position: relative;
     }
 
-    .blog-post-related-posts {
+    .blog-post-sidebar {
       margin-left: 0;
       margin-right: 0;
     }
@@ -316,6 +490,9 @@
     },
     {
       "type": "@app"
+    },
+    {
+      "type": "_blog-product-card"
     }
   ],
   "class": "section-wrapper",
