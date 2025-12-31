@@ -3575,7 +3575,7 @@ slideshow-component[disabled='true'] slideshow-arrows {
 
 slideshow-arrows .slideshow-control {
   pointer-events: auto;
-  opacity: 0;
+  opacity: 1;
   min-height: var(--minimum-touch-target);
   min-width: var(--minimum-touch-target);
   padding: 0 var(--padding-xs);
@@ -3600,13 +3600,14 @@ slideshow-arrows .slideshow-control.slideshow-control--style-none {
   }
 }
 
-:not(.media-gallery--carousel)
+/* Arrows are now always visible, so hover animation is no longer needed */
+/* :not(.media-gallery--carousel)
   > :is(slideshow-component:hover, slideshow-component:focus-within):not(:has(slideshow-controls:hover))
   > slideshow-container
   > slideshow-arrows
   .slideshow-control {
   animation: arrowsSlideIn var(--animation-speed) var(--animation-easing) forwards;
-}
+} */
 
 @keyframes arrowsSlideIn {
   from {

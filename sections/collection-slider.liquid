@@ -415,17 +415,17 @@
     pointer-events: auto;
     top: 50%;
     transform: translateY(-50%);
-    opacity: 0;
+    opacity: 1;
     transition: opacity 0.3s ease-out;
   }
 
-  /* Show arrows on hover - multiple selectors to ensure it works */
-  .collection-slider-wrapper:hover .collection-slider-desktop slideshow-arrows .slideshow-control,
+  /* Arrows are now always visible - hover rules no longer needed */
+  /* .collection-slider-wrapper:hover .collection-slider-desktop slideshow-arrows .slideshow-control,
   .collection-slider-wrapper:hover .collection-slider-desktop slideshow-component > slideshow-container > slideshow-arrows .slideshow-control,
   .collection-slider-desktop slideshow-component:hover > slideshow-container > slideshow-arrows .slideshow-control,
   .collection-slider-desktop slideshow-component:focus-within > slideshow-container > slideshow-arrows .slideshow-control {
     opacity: 1;
-  }
+  } */
 
   /* Position arrows outside the slider container */
   .collection-slider-desktop slideshow-arrows .slideshow-control--previous {
