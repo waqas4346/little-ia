@@ -196,37 +196,46 @@
 <style>
   .collection-slider-header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .collection-slider-header {
+      margin-bottom: 24px;
+    }
   }
 
   .collection-slider-top-label {
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 0;
   }
 
   .collection-slider-top-label-text {
-    font-family: 'Sacramento', cursive;
+    margin: 0;
+    font-family: 'Sacramento', cursive, sans-serif;
     font-weight: 400;
-    font-style: normal;
-    font-size: 38px;
+    font-size: 30px;
     line-height: 150%;
-    letter-spacing: 0%;
-    text-align: center;
     color: #7295BB;
+    text-align: center;
+    text-transform: lowercase;
     display: block;
   }
 
   .collection-slider-section-title {
     text-align: center;
-    margin-bottom: 16px;
+    margin-bottom: 0;
   }
 
   .collection-slider-section-title-label {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--color-foreground, #1a1a1a);
-    letter-spacing: 0.05em;
+    margin: 0;
+    font-family: 'Futura PT', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
     text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
     display: block;
   }
 
@@ -306,6 +315,11 @@
     color: #FFFFFF;
     text-align: center;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: text-decoration 0.3s ease;
+  }
+
+  .collection-slider-card__link:hover .collection-slider-card__title {
+    text-decoration: underline;
   }
 
   /* Collection slider carousel container */
@@ -435,26 +449,13 @@
   }
 
   /* Mobile slider styling - 2x2 grid */
-  @media (max-width: 768px) {
-    .collection-slider-section-title-label {
-      font-size: 1.25rem;
-    }
-
+  @media screen and (min-width: 750px) {
     .collection-slider-top-label-text {
-      font-family: 'Sacramento', cursive;
-      font-weight: 400;
-      font-style: normal;
-      font-size: 30px;
-      line-height: 150%;
-      letter-spacing: 0%;
-      text-align: center;
-      color: #7295BB;
+      font-size: 38px;
     }
+  }
 
-    .collection-slider-section-title {
-      margin-bottom: 8px;
-    }
-
+  @media (max-width: 768px) {
     .collection-slider-header {
       margin-bottom: 16px;
     }
