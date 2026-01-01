@@ -808,7 +808,8 @@
       min-width: 282px;
       max-width: 282px;
       margin-right: var(--facets-margin-right, 0px);
-      padding-inline: var(--padding-lg);
+      padding-inline-start: 0;
+      padding-inline-end: var(--padding-lg);
       padding-block: var(--padding-xs);
     }
   }
@@ -956,7 +957,17 @@
     width: var(--icon-size-xs);
     color: rgb(var(--color-foreground-rgb) / var(--icon-opacity));
     margin-block: var(--margin-2xs);
-    transition: color var(--animation-speed) var(--animation-easing);
+    transition: color var(--animation-speed) var(--animation-easing), transform var(--animation-speed) var(--animation-easing);
+  }
+
+  .facets__summary .icon-caret svg {
+    transition: transform var(--animation-speed) var(--animation-easing);
+  }
+
+  /* Rotate icon to show up chevron when filter panel is open */
+  .facets__panel[open] > .facets__summary .icon-caret svg,
+  accordion-custom[open] > .facets__panel[open] > .facets__summary .icon-caret svg {
+    transform: rotate(180deg);
   }
 
   .facets--drawer .facets__summary .icon-caret {
@@ -1226,7 +1237,7 @@
     @media screen and (min-width: 750px) {
       order: 2;
       width: 100%;
-      margin-left: 0;
+      margin-left: 10px;
       margin-bottom: var(--padding-sm);
       margin-top: 0;
       display: flex;
