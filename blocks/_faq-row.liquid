@@ -1,0 +1,157 @@
+
+{% assign block_settings = block.settings %}
+
+{% liquid
+  # Get cb_faq metaobject from context
+  assign faq_item = closest.metaobject.cb_faq | default: blank
+  assign onboarding = false
+
+  if faq_item == blank
+    assign onboarding = true
+    assign has_question = false
+    assign has_answer = false
+  else
+    # Check if fields exist (cb_faq metaobject fields: question, answer are rich text)
+    assign has_question = true
+    assign has_answer = true
+  endif
+%}
+
+<accordion-custom
+  {% if block_settings.open_by_default %}
+    open-by-default-on-desktop
+    open-by-default-on-mobile
+  {% endif %}
+>
+  <details
+    class="details"
+    data-testid="faq-details"
+    {% if block_settings.open_by_default %}
+      open
+    {% endif %}
+    {{ block.shopify_attributes }}
+  >
+    <summary class="details__header">
+      {% if has_question and faq_item.question != blank %}
+        <span class="faq-row__question">{{ faq_item.question | metafield_tag }}</span>
+      {% else %}
+        {{ block_settings.heading | default: 'FAQ Question' }}
+      {% endif %}
+      <span class="svg-wrapper icon-plus">
+        {{- 'icon-plus.svg' | inline_asset_content -}}
+      </span>
+    </summary>
+
+    <div class="details-content">
+      {% if has_answer and faq_item.answer != blank %}
+        <div class="faq-row__answer">
+          {{ faq_item.answer | metafield_tag }}
+        </div>
+      {% else %}
+        <div class="faq-row__answer">
+          {% content_for 'blocks' %}
+        </div>
+      {% endif %}
+    </div>
+  </details>
+</accordion-custom>
+
+{% stylesheet %}
+  .faqs-section .details__header {
+    padding: 16px 10px !important;
+  }
+
+  @media screen and (min-width: 750px) {
+    .faqs-section .details__header {
+      padding: 13px 14px 13px 10px !important;
+      padding-block: 13px !important;
+      padding-inline: 10px 14px !important;
+    }
+  }
+
+  .faqs-section .details__header .icon-plus {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .faqs-section .details__header .icon-plus svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .faqs-section .details__header .icon-plus {
+      width: 19px;
+      height: 19px;
+    }
+
+    .faqs-section .details__header .icon-plus svg {
+      width: 19px;
+      height: 19px;
+    }
+  }
+
+  .faq-row__question {
+    display: inline;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 100%;
+  }
+
+  .faq-row__answer {
+    width: 100%;
+    max-width: 571px;
+    padding-left: 10px;
+    padding-bottom: 20px;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 154%;
+  }
+
+  .faq-row__answer p:first-child {
+    margin-top: 0;
+  }
+
+  .faq-row__answer p:last-child {
+    margin-bottom: 0;
+  }
+
+  @media screen and (min-width: 750px) {
+    .faq-row__answer {
+      font-size: 16px;
+      padding-bottom: 23px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "FAQ Row",
+  "tag": null,
+  "blocks": [
+    {
+      "type": "@theme"
+    },
+    {
+      "type": "@app"
+    }
+  ],
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:settings.heading",
+      "default": "FAQ Question",
+      "info": "Used as fallback when FAQ metaobject doesn't have a question"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_by_default",
+      "label": "t:settings.open_row_by_default",
+      "default": false
+    }
+  ]
+}
+{% endschema %}
+

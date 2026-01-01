@@ -1,0 +1,350 @@
+
+{% liquid
+  # Get cb_faqs metaobject from product metafield
+  assign faqs_metaobject = blank
+  assign section_faqs = blank
+  assign section_image = blank
+  
+  assign metafield_namespace = section.settings.metafield_namespace | default: 'custom'
+  assign metafield_key = section.settings.metafield_key | default: 'cb_faqs'
+  
+  # Try product metafield first
+  if product != blank
+    assign faqs_metafield = product.metafields[metafield_namespace][metafield_key]
+    
+    if faqs_metafield != blank
+      assign faqs_metaobject = faqs_metafield.value
+    endif
+  endif
+  
+  # Try collection metafield if product didn't have it
+  if faqs_metaobject == blank and collection != blank
+    assign faqs_metafield = collection.metafields[metafield_namespace][metafield_key]
+    
+    if faqs_metafield != blank
+      assign faqs_metaobject = faqs_metafield.value
+    endif
+  endif
+
+  # Extract image and faqs list from cb_faqs metaobject
+  if faqs_metaobject != blank
+    assign section_image = faqs_metaobject.image.value | default: faqs_metaobject.image
+    assign section_faqs = faqs_metaobject.faqs.value | default: faqs_metaobject.faqs
+  endif
+
+  # Determine max items
+  if section_faqs != blank
+    # Check if it's a list (has .count) or single metaobject
+    if section_faqs.count and section_faqs.count > 0
+      assign max_items = section_faqs.count
+    elsif section_faqs.count == 0
+      # Empty list
+      assign section_faqs = blank
+      assign max_items = section.settings.faq_limit
+    else
+      # Single metaobject
+      assign max_items = 1
+    endif
+  else
+    assign max_items = section.settings.faq_limit
+  endif
+%}
+
+{% if section_faqs != blank %}
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+
+<div
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+    faqs-section
+  "
+  style="
+    {%- render 'spacing-style', settings: section.settings -%}
+    {%- render 'gap-style', value: section.settings.gap -%}
+  "
+>
+    {% if section.settings.heading != blank or section.settings.subheading != blank %}
+      <div class="faqs-header">
+        {% if section.settings.heading != blank %}
+          <h2 class="faqs-heading">{{ section.settings.heading }}</h2>
+        {% endif %}
+        {% if section.settings.subheading != blank %}
+          <p class="faqs-subheading">{{ section.settings.subheading }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+    <div class="faqs-content">
+      <div class="faqs-list">
+        {% comment %} Handle both single metaobject and list of metaobjects {% endcomment %}
+        {% if section_faqs.count > 0 %}
+          {% comment %} List of cb_faq metaobjects {% endcomment %}
+          {% for faq_item in section_faqs limit: max_items %}
+            <div class="faqs-list__item">
+              {% content_for 'block', id: 'static-faq-row', type: '_faq-row', closest.metaobject.cb_faq: faq_item %}
+            </div>
+          {% endfor %}
+        {% else %}
+          {% comment %} Single cb_faq metaobject {% endcomment %}
+          <div class="faqs-list__item">
+            {% content_for 'block', id: 'static-faq-row', type: '_faq-row', closest.metaobject.cb_faq: section_faqs %}
+          </div>
+        {% endif %}
+      </div>
+
+      {% if section_image != blank %}
+        <div class="faqs-image">
+          {{
+            section_image
+            | image_url: width: 1200
+            | image_tag:
+              class: 'faqs-image__img',
+              loading: 'lazy',
+              sizes: '(min-width: 750px) 50vw, 100vw',
+              widths: '240, 352, 832, 1200'
+          }}
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% stylesheet %}
+  .faqs-section {
+    width: 100%;
+  }
+
+  .faqs-header {
+    margin-bottom: 32px;
+    text-align: center;
+  }
+
+  .faqs-heading {
+    margin: 0;
+    font-family: 'Sacramento', cursive, sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 150%;
+    color: #7295BB;
+    text-align: center;
+    text-transform: lowercase;
+  }
+
+  .faqs-subheading {
+    margin: 0;
+    font-family: 'Futura PT', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
+    text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
+  }
+
+  .faqs-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .faqs-image {
+    display: none;
+  }
+
+  .faqs-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .faqs-list__item {
+    width: 100%;
+    border-bottom: 0.5px solid #00000030;
+  }
+
+  @media screen and (min-width: 750px) {
+    .faqs-header {
+      margin-bottom: 48px;
+    }
+
+    .faqs-heading {
+      font-size: 38px;
+    }
+
+    .faqs-content {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 89px;
+    }
+
+    .faqs-list {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .faqs-image {
+      display: block;
+      flex: 0 0 auto;
+      width: 40%;
+      max-width: 443px;
+    }
+
+    .faqs-image__img {
+      width: 100%;
+      height: auto;
+      max-width: 443px;
+      max-height: 503px;
+      display: block;
+      border-radius: var(--border-radius, 0);
+      object-fit: contain;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "FAQs",
+  "tag": "section",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "class": "faqs",
+  "blocks": [
+    {
+      "type": "_faq-row"
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading"
+    },
+    {
+      "type": "header",
+      "content": "Metafield Settings"
+    },
+    {
+      "type": "text",
+      "id": "metafield_namespace",
+      "label": "Metafield Namespace",
+      "default": "custom",
+      "info": "The namespace of the product or collection metafield (e.g., 'custom', 'cb')"
+    },
+    {
+      "type": "text",
+      "id": "metafield_key",
+      "label": "Metafield Key",
+      "default": "cb_faqs",
+      "info": "The key of the product or collection metafield containing the FAQ metaobjects"
+    },
+    {
+      "type": "range",
+      "id": "faq_limit",
+      "label": "FAQ Count (for placeholder)",
+      "min": 1,
+      "max": 20,
+      "step": 1,
+      "default": 3,
+      "info": "Used when no FAQs are found in metafield"
+    },
+    {
+      "type": "header",
+      "content": "t:content.section_layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:settings.width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:options.page"
+        },
+        {
+          "value": "full-width",
+          "label": "t:options.full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "t:settings.gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:settings.color_scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 32
+    }
+  ],
+  "presets": [
+    {
+      "name": "FAQs",
+      "category": "t:categories.text",
+      "blocks": {
+        "static-faq-row": {
+          "type": "_faq-row",
+          "name": "FAQ Row",
+          "static": true,
+          "settings": {}
+        }
+      },
+      "settings": {
+        "heading": "Frequently Asked Questions",
+        "gap": 12,
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    }
+  ]
+}
+{% endschema %}
+
+

@@ -203,12 +203,6 @@
                     "style_class": "button"
                   },
                   "blocks": {}
-                },
-                "accelerated-checkout": {
-                  "type": "accelerated-checkout",
-                  "static": true,
-                  "settings": {},
-                  "blocks": {}
                 }
               },
               "block_order": []
@@ -405,6 +399,85 @@
         "padding-block-end": 0
       }
     },
+    "usps_7xRcrR": {
+      "type": "usps",
+      "blocks": {
+        "static-usp-card": {
+          "type": "_usp-card",
+          "name": "USP Card",
+          "static": true,
+          "settings": {
+            "alignment": "left",
+            "gap": 8,
+            "image_ratio": "portrait",
+            "show_link": false,
+            "link_text": "Learn More",
+            "link_url": "",
+            "inherit_color_scheme": true,
+            "color_scheme": "",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        }
+      },
+      "name": "USPs: Grid",
+      "settings": {
+        "heading": "",
+        "subheading": "",
+        "metafield_namespace": "custom",
+        "metafield_key": "cb_usps",
+        "usp_limit": 3,
+        "layout_type": "grid",
+        "carousel_on_mobile": false,
+        "columns": 4,
+        "mobile_columns": "2",
+        "mobile_card_size": "60cqw",
+        "columns_gap": 12,
+        "rows_gap": 22,
+        "icons_style": "arrow",
+        "icons_shape": "none",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-e61ffaea-b125-47f9-97f4-7f39823bb857",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
+    "faqs_BbMifF": {
+      "type": "faqs",
+      "blocks": {
+        "static-faq-row": {
+          "type": "_faq-row",
+          "name": "FAQ Row",
+          "static": true,
+          "settings": {
+            "heading": "FAQ Question",
+            "open_by_default": false
+          },
+          "blocks": {}
+        }
+      },
+      "name": "FAQs",
+      "settings": {
+        "heading": "your",
+        "subheading": "questions answered",
+        "metafield_namespace": "custom",
+        "metafield_key": "cb_faqs",
+        "faq_limit": 3,
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-9fa4efbe-6bfc-4f4c-8255-10dd25c96a2e",
+        "padding-block-start": 48,
+        "padding-block-end": 54
+      }
+    },
     "product_recommendations_qggXJq": {
       "type": "product-recommendations",
       "blocks": {
@@ -549,6 +622,8 @@
   },
   "order": [
     "main",
+    "usps_7xRcrR",
+    "faqs_BbMifF",
     "product_recommendations_qggXJq"
   ]
 }

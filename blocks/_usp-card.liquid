@@ -221,7 +221,7 @@
   .usp-card__title-row {
     width: 100%;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
     justify-content: var(--horizontal-alignment);
   }
@@ -231,10 +231,19 @@
   }
 
   .usp-card__icon img {
-    width: 26px;
-    height: 26px;
+    width: 16px;
+    height: 16px;
+    margin-top: 5px;
     object-fit: contain;
     display: block;
+  }
+
+  @media screen and (min-width: 750px) {
+    .usp-card__icon img {
+      width: 26px;
+      height: 26px;
+      margin-top: 0;
+    }
   }
 
   .usp-card__title-wrapper {
@@ -247,6 +256,8 @@
     margin: 0;
     width: 100%;
     font-weight: 500;
+    font-size: 14px;
+    line-height: 160%;
   }
 
   .usp-card__description-wrapper {
@@ -256,6 +267,9 @@
 
   .usp-card__body-text {
     width: 100%;
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 160%;
   }
 
   .usp-card__image-wrapper {
@@ -272,9 +286,17 @@
     display: block;
   }
 
-  @media screen and (max-width: 749px) {
+  @media screen and (min-width: 750px) {
     .usp-card__title-text {
+      font-weight: 500;
+      font-size: 20px;
+      line-height: 160%;
+    }
+
+    .usp-card__body-text {
+      font-weight: 400;
       font-size: 16px;
+      line-height: 160%;
     }
   }
 

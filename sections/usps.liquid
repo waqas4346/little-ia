@@ -1,6 +1,6 @@
 
 {% liquid
-  # Get USPs section metaobject from collection metafield
+  # Get USPs section metaobject from collection or product metafield
   assign usp_section = blank
   assign section_usps = blank
   assign section_heading = blank
@@ -9,20 +9,31 @@
   assign metafield_namespace = section.settings.metafield_namespace | default: 'custom'
   assign metafield_key = section.settings.metafield_key | default: 'cb_usps'
   
+  # Try collection metafield first
   if collection != blank
-    # Access cb_usp_section metaobject from collection metafield
     assign usp_metafield = collection.metafields[metafield_namespace][metafield_key]
     
     if usp_metafield != blank
-      # Get the cb_usp_section metaobject
       assign usp_section = usp_metafield.value
       
       if usp_section != blank
-        # Get heading and sub_heading from cb_usp_section
         assign section_heading = usp_section.heading.value | default: usp_section.heading
         assign section_subheading = usp_section.sub_heading.value | default: usp_section.sub_heading
-        
-        # Get the list of cb_card metaobjects from the "usps" field
+        assign section_usps = usp_section.usps.value | default: usp_section.usps
+      endif
+    endif
+  endif
+  
+  # Try product metafield if collection didn't have it
+  if usp_section == blank and product != blank
+    assign usp_metafield = product.metafields[metafield_namespace][metafield_key]
+    
+    if usp_metafield != blank
+      assign usp_section = usp_metafield.value
+      
+      if usp_section != blank
+        assign section_heading = usp_section.heading.value | default: usp_section.heading
+        assign section_subheading = usp_section.sub_heading.value | default: usp_section.sub_heading
         assign section_usps = usp_section.usps.value | default: usp_section.usps
       endif
     endif
@@ -46,6 +57,7 @@
   endif
 %}
 
+{% if section_usps != blank %}
 <div class="section-background color-{{ section.settings.color_scheme }}"></div>
 
 <div
@@ -79,34 +91,22 @@
   
 
   {% capture list_items %}
-    {% if section_usps != blank %}
-      {% comment %} Handle both single metaobject and list of metaobjects {% endcomment %}
-      {% if section_usps.count > 0 %}
-        {% comment %} List of cb_card metaobjects {% endcomment %}
-        {% for usp_card in section_usps limit: max_items %}
-          <div class="resource-list__item">
-            {% content_for 'block', id: 'static-usp-card', type: '_usp-card', closest.metaobject.cb_card: usp_card %}
-          </div>
-          {% unless forloop.last %}
-            <!--@list/split-->
-          {% endunless %}
-        {% endfor %}
-      {% else %}
-        {% comment %} Single cb_card metaobject {% endcomment %}
+    {% comment %} Handle both single metaobject and list of metaobjects {% endcomment %}
+    {% if section_usps.count > 0 %}
+      {% comment %} List of cb_card metaobjects {% endcomment %}
+      {% for usp_card in section_usps limit: max_items %}
         <div class="resource-list__item">
-          {% content_for 'block', id: 'static-usp-card', type: '_usp-card', closest.metaobject.cb_card: section_usps %}
-        </div>
-      {% endif %}
-    {% else %}
-      {% comment %} Placeholder/onboarding mode {% endcomment %}
-      {% for i in (1..max_items) %}
-        <div class="resource-list__item">
-          {% content_for 'block', id: 'static-usp-card', type: '_usp-card', closest.metaobject.cb_card: blank %}
+          {% content_for 'block', id: 'static-usp-card', type: '_usp-card', closest.metaobject.cb_card: usp_card %}
         </div>
         {% unless forloop.last %}
           <!--@list/split-->
         {% endunless %}
       {% endfor %}
+    {% else %}
+      {% comment %} Single cb_card metaobject {% endcomment %}
+      <div class="resource-list__item">
+        {% content_for 'block', id: 'static-usp-card', type: '_usp-card', closest.metaobject.cb_card: section_usps %}
+      </div>
     {% endif %}
   {% endcapture %}
 
@@ -124,6 +124,7 @@
     test_id: 'usps-grid'
   %}
 </div>
+{% endif %}
 
 {% stylesheet %}
   /* Override min() function for row gap to use exact value */
@@ -134,6 +135,9 @@
   .usps-header {
     margin-bottom: 16px;
     text-align: center;
+    max-width: 924px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .usps-heading {
@@ -145,6 +149,7 @@
     color: #7295BB;
     text-align: center;
     text-transform: lowercase;
+    max-width: 924px;
   }
 
   .usps-subheading {
@@ -153,9 +158,10 @@
     font-weight: 500;
     font-size: 28px;
     line-height: 150%;
-    text-transform: uppercase;
+    text-transform: lowercase;
     color: #1D425A;
     text-align: center;
+    max-width: 924px;
   }
 
   @media screen and (min-width: 750px) {
@@ -174,7 +180,7 @@
   "name": "USPs",
   "tag": "section",
   "enabled_on": {
-    "templates": ["collection"]
+    "templates": ["collection", "product"]
   },
   "class": "usps",
   "blocks": [
@@ -199,21 +205,21 @@
     },
     {
       "type": "header",
-      "content": "Collection Metafield Settings"
+      "content": "Metafield Settings"
     },
     {
       "type": "text",
       "id": "metafield_namespace",
       "label": "Metafield Namespace",
       "default": "custom",
-      "info": "The namespace of the collection metafield (e.g., 'custom', 'cb')"
+      "info": "The namespace of the collection or product metafield (e.g., 'custom', 'cb')"
     },
     {
       "type": "text",
       "id": "metafield_key",
       "label": "Metafield Key",
       "default": "cb_usps",
-      "info": "The key of the collection metafield containing the USP metaobjects"
+      "info": "The key of the collection or product metafield containing the USP metaobjects"
     },
     {
       "type": "range",
