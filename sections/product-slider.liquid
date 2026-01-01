@@ -61,10 +61,8 @@
               endif
               assign variant = product.selected_or_first_available_variant
               assign product_form_id = 'ProductSliderQuickAdd-ProductForm-' | append: product.id | append: '-' | append: section.id
+              # Always show "Quick Add" button that opens the popup, even for single-variant products
               assign quick_add_button = 'choose'
-              if product.variants_count == 1 or product.options.size == 1 and product.selected_variant
-                assign quick_add_button = 'add'
-              endif
             %}
             <div class="product-slider-product-actions" onclick="event.stopPropagation();" data-product-id="{{ product.id }}" style="display: flex !important; align-items: center; gap: 5px; margin-top: 12px; width: 100%;">
               <a 
@@ -143,10 +141,8 @@
             endif
             assign variant = product.selected_or_first_available_variant
             assign product_form_id = 'ProductSliderQuickAdd-ProductForm-' | append: product.id | append: '-' | append: section.id
+            # Always show "Quick Add" button that opens the popup, even for single-variant products
             assign quick_add_button = 'choose'
-            if product.variants_count == 1 or product.options.size == 1 and product.selected_variant
-              assign quick_add_button = 'add'
-            endif
           %}
           <div class="product-slider-product-actions" onclick="event.stopPropagation();" data-product-id="{{ product.id }}" style="display: flex !important; align-items: center; gap: 5px; margin-top: 12px; width: 100%;">
             <a 

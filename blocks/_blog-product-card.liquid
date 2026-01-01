@@ -100,18 +100,15 @@
               assign has_multiple_variants = true
             endif
             
-            # Determine quick add button type
+            # Always show "Quick Add" button that opens the popup, even for single-variant products
             assign quick_add_button = 'choose'
-            if product.variants_count == 1 or product.options.size == 1 and product.selected_variant
-              assign quick_add_button = 'add'
-            endif
           -%}
           <div class="blog-product-card__price">
             <span class="blog-product-card__price-current">{{ price_formatted }}</span>
             {%- if show_compare_price -%}
               <span class="blog-product-card__price-compare">{{ compare_at_price_formatted }}</span>
               {%- if discount_percentage -%}
-                <span class="blog-product-card__price-discount">{{ discount_percentage }}% off</span>
+                <span class="blog-product-card__price-discount">{{ discount_percentage }}% OFF</span>
               {%- endif -%}
             {%- endif -%}
           </div>

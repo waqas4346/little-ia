@@ -209,8 +209,6 @@
   }
 
   .product-list-tabs-container {
-    display: flex;
-    justify-content: center;
     margin-bottom: 0;
     overflow-x: auto;
     padding-bottom: 10px;
@@ -229,6 +227,21 @@
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-list-tabs-container {
+      display: flex;
+      justify-content: center;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .product-list-tabs {
+      gap: 0;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+    }
   }
   
   .product-list-tab {
@@ -300,7 +313,85 @@
   }
 
   .product-list-shop-all-btn:hover {
-    opacity: 0.8;
+    background-color: #7295BB;
+    color: #ffffff;
+  }
+
+  /* Enable product card image slider on mobile */
+  @media screen and (max-width: 749px) {
+    [data-testid="product-list"] .card-gallery slideshow-component {
+      --cursor: grab;
+    }
+
+    [data-testid="product-list"] .card-gallery slideshow-component[disabled='true'] slideshow-slides {
+      overflow-x: auto !important;
+    }
+
+    [data-testid="product-list"] .card-gallery slideshow-slides {
+      overflow-x: auto !important;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+    }
+
+    [data-testid="product-list"] .card-gallery slideshow-slides::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+  }
+
+  /* Enable product card image slider on desktop */
+  @media screen and (min-width: 750px) {
+    [data-testid="product-list"] .card-gallery slideshow-component {
+      --cursor: grab;
+      pointer-events: auto !important;
+    }
+
+    [data-testid="product-list"] .card-gallery slideshow-component[disabled='true'] {
+      pointer-events: auto !important;
+    }
+
+    [data-testid="product-list"] .card-gallery slideshow-component[disabled='true'] slideshow-slides {
+      overflow: visible !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      pointer-events: auto !important;
+      scroll-behavior: smooth;
+    }
+
+    [data-testid="product-list"] .card-gallery slideshow-slides {
+      overflow: visible !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      pointer-events: auto !important;
+    }
+
+    /* Hide native scrollbar */
+    [data-testid="product-list"] .card-gallery slideshow-slides::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    /* Ensure slides are visible and can be scrolled */
+    [data-testid="product-list"] .card-gallery slideshow-slide {
+      flex-shrink: 0;
+      flex-basis: 100%;
+      width: 100%;
+      min-width: 100%;
+      scroll-snap-align: start;
+    }
+
+    /* Ensure slideshow container allows scrolling */
+    [data-testid="product-list"] .card-gallery slideshow-container {
+      overflow: visible;
+    }
   }
 
   /* Product card media sizing/background in slider */
@@ -376,6 +467,16 @@
       overflow-x: hidden;
       width: 100%;
       max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Ensure resource-list container doesn't overflow */
+    [data-testid="product-list"] .resource-list {
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      padding: 0 !important;
+      margin: 0 !important;
     }
 
     [data-testid="product-list"] .resource-list__carousel {
@@ -517,9 +618,13 @@
     }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 749px) {
+    .product-list-tabs-container {
+      width: 100%;
+    }
+    
     .product-list-tabs {
-      gap: 10px;
+      width: max-content;
     }
     
     .product-list-tab {
@@ -530,8 +635,10 @@
       letter-spacing: 0%;
       text-align: center;
       text-transform: uppercase;
-      padding: 8px;
+      padding: 8px 16px;
       color: #1D425A;
+      flex: 0 0 auto;
+      white-space: nowrap;
     }
 
     .product-list-tab.active {
@@ -542,7 +649,7 @@
       letter-spacing: 0%;
       text-align: center;
       text-transform: uppercase;
-      padding: 8px;
+      padding: 8px 16px;
       color: #1D425A;
     }
 
@@ -588,6 +695,65 @@
       line-height: 140%;
       color: #1D425A !important;
     }
+
+    /* Fix image cutting on mobile grid - match collection slider approach */
+    [data-testid="product-list"] .resource-list--grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 5px !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    [data-testid="product-list"] .resource-list--grid .resource-list__item {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    [data-testid="product-list"] .resource-list--grid product-card,
+    [data-testid="product-list"] .resource-list--grid product-card-link {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box !important;
+      display: block !important;
+    }
+
+    [data-testid="product-list"] .resource-list--grid .product-card__content {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box !important;
+      padding: 0 !important;
+    }
+
+    [data-testid="product-list"] .resource-list--grid .card-gallery,
+    [data-testid="product-list"] .resource-list--grid .product-media-container {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+
+    [data-testid="product-list"] .resource-list--grid .card-gallery img,
+    [data-testid="product-list"] .resource-list--grid .card-gallery picture,
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slide {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      object-fit: cover !important;
+      box-sizing: border-box !important;
+      display: block !important;
+    }
   }
 </style>
 
@@ -607,6 +773,7 @@
         };
       {% endfor %}
     {% endif %}
+
 
     // Function to force images to load in visible content
     function forceImageLoad(content) {

@@ -267,7 +267,7 @@
                         {% endif %}
                       </s>
                       {% if compare_price > current_price %}
-                        <span class="cart-items__percentage-off">{{ percentage_off }}% Off</span>
+                        <span class="cart-items__percentage-off">{{ percentage_off }}% OFF</span>
                       {% endif %}
                     {% else %}
                       {% if item.variant.compare_at_price > item.original_price %}
@@ -282,7 +282,7 @@
                         <span class="visually-hidden">{{ 'content.price_regular' | t }}</span>
                         <s class="compare-at-price">{{ item.variant.compare_at_price | money }}</s>
                         {% if compare_price > current_price %}
-                          <span class="cart-items__percentage-off">{{ percentage_off }}% Off</span>
+                          <span class="cart-items__percentage-off">{{ percentage_off }}% OFF</span>
                         {% endif %}
                       {% endif %}
                     {% endif %}
