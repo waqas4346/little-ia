@@ -370,6 +370,10 @@
     transition: transform var(--animation-speed) var(--animation-easing);
   }
 
+  .dropdown-localization__button .icon-caret svg {
+    transform: rotate(180deg);
+  }
+
   .drawer-localization__button .icon-flag,
   .dropdown-localization__button .icon-flag {
     width: var(--menu-localization-font-size, var(--icon-size-sm));
@@ -390,7 +394,7 @@
   }
 
   .dropdown-localization__button[aria-expanded='true'] .icon-caret svg {
-    transform: rotate(180deg);
+    transform: rotate(0deg);
   }
 
   .dropdown-localization__button,

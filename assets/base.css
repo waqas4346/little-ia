@@ -934,8 +934,12 @@ details:not([open]) .summary-open {
   display: none;
 }
 
-details[open] > summary .icon-animated > svg {
+summary .icon-animated > svg {
   transform: rotate(180deg);
+}
+
+details[open] > summary .icon-animated > svg {
+  transform: rotate(0deg);
 }
 
 /* iOS fix: hide the default arrow on the summary */
@@ -3578,7 +3582,7 @@ slideshow-component[disabled='true'] slideshow-arrows {
 
 slideshow-arrows .slideshow-control {
   pointer-events: auto;
-  opacity: 0;
+  opacity: 1;
   min-height: var(--minimum-touch-target);
   min-width: var(--minimum-touch-target);
   padding: 0 var(--padding-xs);
@@ -3603,13 +3607,14 @@ slideshow-arrows .slideshow-control.slideshow-control--style-none {
   }
 }
 
-:not(.media-gallery--carousel)
+/* Arrows are now always visible, so hover animation is no longer needed */
+/* :not(.media-gallery--carousel)
   > :is(slideshow-component:hover, slideshow-component:focus-within):not(:has(slideshow-controls:hover))
   > slideshow-container
   > slideshow-arrows
   .slideshow-control {
   animation: arrowsSlideIn var(--animation-speed) var(--animation-easing) forwards;
-}
+} */
 
 @keyframes arrowsSlideIn {
   from {
@@ -4050,6 +4055,25 @@ text-component {
     text-overflow: ellipsis;
     -webkit-line-clamp: 3;
   }
+}
+
+/* Product card title and price color */
+.product-card .product-title-text,
+.product-card .product-title-text *,
+.product-card a.contents .text-block,
+.product-card a.contents .text-block *,
+.product-card a.contents .text-block :is(h1, h2, h3, h4, h5, h6, p, span, a),
+.product-card .text-block.product-title-text,
+.product-card .text-block.product-title-text *,
+.product-card .text-block.product-title-text :is(h1, h2, h3, h4, h5, h6, p, span, a),
+:is(.product-card, .product-grid__card) :is(h4, .h4) {
+  color: #1D425A !important;
+}
+
+.product-card product-price .price-snippet .price,
+.product-card product-price .price-snippet .price-range,
+.product-card product-price .price-snippet .price * {
+  color: #1D425A !important;
 }
 
 .product-card:hover,

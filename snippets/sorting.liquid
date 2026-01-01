@@ -90,13 +90,13 @@
         ref="summary"
       >
         <span
-          class="facets__label"
+          class="facets__label sorting-label-text"
           id="sort-label-{{ section_id }}"
         >
-          {{- 'actions.sort' | t -}}
+          Sort by:
         </span>
         <span
-          class="facets__status h6 desktop:hidden"
+          class="facets__status sorting-status-value"
         >
           {{- status -}}
         </span>
@@ -347,5 +347,41 @@
     @media screen and (min-width: 750px) {
       display: none;
     }
+  }
+
+  /* Custom styling for Sort by label and selected value */
+  .sorting-filter .facets__summary .sorting-label-text {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 20px;
+    color: #1D425A;
+  }
+
+  .sorting-filter .facets__summary .sorting-status-value {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20px;
+    color: #1D425A;
+    margin-inline-start: 4px;
+  }
+
+  /* Ensure proper layout for label and value together */
+  .sorting-filter .facets__summary {
+    align-items: center;
+  }
+
+  /* Group label and value together */
+  .sorting-filter .facets__summary .sorting-label-text,
+  .sorting-filter .facets__summary .sorting-status-value {
+    display: inline;
+  }
+
+  /* Add 6px gap between selected value and arrow icon */
+  .sorting-filter .facets__summary .svg-wrapper.icon-caret {
+    margin-inline-start: 6px;
   }
 {% endstylesheet %}

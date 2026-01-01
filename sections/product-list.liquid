@@ -163,42 +163,55 @@
 </div>
 
 <style>
+  .product-list-header-wrapper {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-list-header-wrapper {
+      margin-bottom: 24px;
+    }
+  }
 
   .product-list-top-label {
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 0;
   }
 
   .product-list-top-label-text {
-    font-family: 'Sacramento', cursive;
+    margin: 0;
+    font-family: 'Sacramento', cursive, sans-serif;
     font-weight: 400;
-    font-style: normal;
-    font-size: 38px;
+    font-size: 30px;
     line-height: 150%;
-    letter-spacing: 0%;
-    text-align: center;
     color: #7295BB;
+    text-align: center;
+    text-transform: lowercase;
     display: block;
   }
 
   .product-list-section-title {
     text-align: center;
-    margin-bottom: 16px;
+    margin-bottom: 0;
   }
 
   .product-list-section-title-label {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--color-foreground, #1a1a1a);
-    letter-spacing: 0.05em;
+    margin: 0;
+    font-family: 'Futura PT', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
     text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
     display: block;
   }
 
   .product-list-tabs-container {
     display: flex;
     justify-content: center;
-    margin-bottom: 24px;
+    margin-bottom: 0;
     overflow-x: auto;
     padding-bottom: 10px;
   }
@@ -364,6 +377,7 @@
     pointer-events: auto;
     top: 50%;
     transform: translateY(-50%);
+    opacity: 1;
   }
 
   /* Position arrows outside the slider container */
@@ -433,6 +447,12 @@
     color: #1D425A !important;
   }
 
+  @media screen and (min-width: 750px) {
+    .product-list-top-label-text {
+      font-size: 38px;
+    }
+  }
+
   @media (max-width: 768px) {
     .product-list-tabs {
       gap: 10px;
@@ -474,28 +494,6 @@
       border: 1px solid #7295BB;
     }
 
-    .product-list-section-title-label {
-      font-size: 1.25rem;
-    }
-
-    .product-list-top-label-text {
-      font-family: 'Sacramento', cursive;
-      font-weight: 400;
-      font-style: normal;
-      font-size: 30px;
-      line-height: 150%;
-      letter-spacing: 0%;
-      text-align: center;
-      color: #7295BB;
-    }
-
-    .product-list-section-title {
-      margin-bottom: 8px;
-    }
-
-    .product-list-tabs-container {
-      margin-bottom: 16px;
-    }
 
     .product-list-footer {
       margin-top: 30px;

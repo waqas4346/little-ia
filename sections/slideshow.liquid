@@ -6,6 +6,12 @@
   {% else %}
     {% assign autoplay = false %}
   {% endif %}
+  {% liquid
+    assign controls_on_media = true
+    if section.settings.display_mode == 'full_frame' and section.settings.slideshow_controls_style == 'dots'
+      assign controls_on_media = false
+    endif
+  %}
   {% capture controls %}
     {%- render 'slideshow-controls',
       style: section.settings.slideshow_controls_style,
@@ -13,7 +19,7 @@
       item_count: section.blocks.size,
       show_arrows: false,
       arrows_on_media: true,
-      controls_on_media: true,
+      controls_on_media: controls_on_media,
       pagination_position: 'center',
       icon_style: section.settings.icons_style
     -%}
@@ -165,6 +171,12 @@
         opacity: 0;
         pointer-events: none;
       }
+    }
+
+    /* Full frame mode: position dots below with configurable gap */
+    .slideshow-section slideshow-component:not(.slideshow--with-hints) > slideshow-controls:not([controls-on-media]):has(.slideshow-controls__dots) {
+      margin-block-start: var(--slideshow-dots-bottom-gap, 12px);
+      justify-content: center;
     }
   }
 {% endstylesheet %}
