@@ -214,6 +214,13 @@
     margin-bottom: 0;
     overflow-x: auto;
     padding-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  .product-list-tabs-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
   
   .product-list-tabs {
@@ -351,6 +358,37 @@
     overflow: visible;
   }
 
+  /* Prevent horizontal scroll on mobile */
+  @media screen and (max-width: 749px) {
+    [data-testid="product-list"] {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    [data-testid="product-list"] .product-list-contents {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    [data-testid="product-list"] .product-list-content-wrapper {
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    [data-testid="product-list"] .resource-list__carousel {
+      overflow: hidden;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    [data-testid="product-list"] .resource-list__carousel slideshow-container {
+      overflow: hidden;
+    }
+  }
+
   [data-testid="product-list"] .resource-list__carousel slideshow-arrows {
     position: absolute;
     inset: 0;
@@ -397,15 +435,41 @@
     }
   }
 
+  /* Fix arrow positioning on mobile to prevent horizontal scroll */
+  @media screen and (max-width: 749px) {
+    [data-testid="product-list"] .resource-list__carousel slideshow-arrows {
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+      left: 0;
+      right: 0;
+    }
+
+    [data-testid="product-list"] .resource-list__carousel slideshow-arrows .slideshow-control--previous {
+      left: 8px;
+    }
+
+    [data-testid="product-list"] .resource-list__carousel slideshow-arrows .slideshow-control--next {
+      right: 8px;
+    }
+  }
+
   /* Ensure carousel shows exactly the number of columns without peeking */
   [data-testid="product-list"] .resource-list__carousel slideshow-slides {
     overflow-x: auto;
     scroll-snap-type: x mandatory;
   }
 
-  /* Allow arrows to extend beyond container */
+  /* Allow arrows to extend beyond container (desktop only) */
   [data-testid="product-list"] .resource-list__carousel slideshow-container {
     overflow: visible;
+  }
+
+  /* Prevent overflow on mobile */
+  @media screen and (max-width: 749px) {
+    [data-testid="product-list"] .resource-list__carousel slideshow-container {
+      overflow: hidden;
+    }
   }
 
   [data-testid="product-list"] .resource-list__carousel .resource-list__slide {
