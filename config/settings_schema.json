@@ -1756,6 +1756,25 @@
         "default": true
       },
       {
+        "type": "header",
+        "content": "Free shipping"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_free_shipping_progress",
+        "label": "Show free shipping progress bar",
+        "default": true,
+        "visible_if": "{{ settings.cart_type == 'drawer' }}"
+      },
+      {
+        "type": "number",
+        "id": "free_shipping_threshold",
+        "label": "Free shipping threshold",
+        "info": "Minimum order amount for free shipping (in cents)",
+        "default": 45000,
+        "visible_if": "{{ settings.show_free_shipping_progress == true }}"
+      },
+      {
         "type": "checkbox",
         "id": "show_accelerated_checkout_buttons",
         "label": "t:settings.checkout_buttons",

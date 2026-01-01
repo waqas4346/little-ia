@@ -2618,8 +2618,8 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) > *:not(.tax-note) {
   align-items: center;
   color: var(--color-input-text);
   background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  border: 1px solid #7295BB !important;
+  border-radius: 0 !important;
   flex: 1 1 var(--quantity-selector-width);
   align-self: stretch;
   transition: background-color var(--animation-speed) var(--animation-easing);
@@ -2645,11 +2645,13 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) > *:not(.tax-note) {
   width: var(--minimum-touch-target);
   height: var(--minimum-touch-target);
   flex-shrink: 0;
-  color: #333333;
+  color: #000000;
+  opacity: 30%;
 }
 
 .quantity-selector :is(.quantity-minus, .quantity-plus):hover {
   color: #000000;
+  opacity: 100%;
 }
 
 .quantity-selector .quantity-minus {
@@ -2696,7 +2698,7 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) > *:not(.tax-note) {
   appearance: none;
   max-width: calc(var(--quantity-selector-width) - var(--minimum-touch-target) * 2);
   border-radius: var(--style-border-radius-buttons);
-  color: #333333;
+  color: #1D425A;
   background-color: transparent;
 }
 
@@ -3565,7 +3567,8 @@ slideshow-arrows {
 }
 
 slideshow-arrows:has(.slideshow-control--shape-square),
-slideshow-arrows:has(.slideshow-control--shape-circle) {
+slideshow-arrows:has(.slideshow-control--shape-circle),
+slideshow-arrows:has(.slideshow-control--style-blue_arrows) {
   mix-blend-mode: normal;
 }
 

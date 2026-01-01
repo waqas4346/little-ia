@@ -233,6 +233,28 @@
                   {% endif %}
 
                   <div>
+                    {%- liquid
+                      assign compare_price = item.variant.compare_at_price
+                      assign current_price = item.final_price
+                      if item.original_price != item.final_price
+                        assign current_price = item.final_price
+                        if item.variant.compare_at_price > item.original_price
+                          assign compare_price = item.variant.compare_at_price
+                        else
+                          assign compare_price = item.original_price
+                        endif
+                      else
+                        assign current_price = item.original_price
+                        if item.variant.compare_at_price > item.original_price
+                          assign compare_price = item.variant.compare_at_price
+                        endif
+                      endif
+                      
+                      if compare_price > current_price
+                        assign price_difference = compare_price | minus: current_price
+                        assign percentage_off = price_difference | times: 100.0 | divided_by: compare_price | round
+                      endif
+                    -%}
                     {% if item.original_price != item.final_price %}
                       <span class="visually-hidden">{{ 'content.price_sale' | t }}</span>
                       <span>{{ item.final_price | money }}</span>
@@ -244,6 +266,9 @@
                           {{ item.original_price | money }}
                         {% endif %}
                       </s>
+                      {% if compare_price > current_price %}
+                        <span class="cart-items__percentage-off">{{ percentage_off }}% Off</span>
+                      {% endif %}
                     {% else %}
                       {% if item.variant.compare_at_price > item.original_price %}
                         <span class="visually-hidden">{{ 'content.price_sale' | t }}</span>
@@ -256,6 +281,9 @@
                       {% if item.variant.compare_at_price > item.original_price %}
                         <span class="visually-hidden">{{ 'content.price_regular' | t }}</span>
                         <s class="compare-at-price">{{ item.variant.compare_at_price | money }}</s>
+                        {% if compare_price > current_price %}
+                          <span class="cart-items__percentage-off">{{ percentage_off }}% Off</span>
+                        {% endif %}
                       {% endif %}
                     {% endif %}
                   </div>
@@ -291,7 +319,8 @@
                         hidden
                       {% endif %}
                     >
-                      {{- 'icon-delete.svg' | inline_asset_content -}}
+                      Remove
+                      {% comment %} {{- 'icon-delete.svg' | inline_asset_content -}} {% endcomment %}
                       <span class="visually-hidden">{{ 'accessibility.remove' | t }}</span>
                     </button>
                   </div>
@@ -378,8 +407,9 @@
       'media error error';
     column-gap: var(--gap-md);
     align-items: start;
-    padding-bottom: var(--cart-items-gap);
-    margin-bottom: var(--margin-lg);
+    padding-top: 14px;
+    padding-bottom: 14px;
+    margin-bottom: 0;
   }
 
   .cart-items__table-row.cart-items__nested-line td:first-child {
@@ -434,7 +464,7 @@
 
   .cart-items__details {
     grid-area: details;
-    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    color: rgb(var(--color-foreground-rgb));
   }
 
   .cart-items__details > * + *,

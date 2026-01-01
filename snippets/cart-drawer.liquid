@@ -82,7 +82,9 @@
               id="cart-drawer-heading"
             >
               {{ 'content.cart_title' | t }}
-              {% render 'cart-bubble' %}
+              <span class="cart-drawer__item-count">
+                ({{ cart.item_count }} Items)
+              </span>
             </h2>
 
             <button
@@ -96,6 +98,10 @@
               </span>
             </button>
           </div>
+
+          {% if settings.show_free_shipping_progress %}
+            {% render 'free-shipping-progress' %}
+          {% endif %}
 
           <div
             class="cart-drawer__content motion-reduce"
@@ -126,6 +132,52 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+
+    .cart-items__variant dd {
+      font-weight: 300;
+    }
+
+    .cart-items__table-row {
+      column-gap: 6px;
+      margin-bottom: 0px !important;
+    }
+
+    .cart-items__quantity {
+      width: 100%;
+    }
+
+    .cart-items__quantity-controls {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .quantity-selector {
+      --quantity-selector-width: 72px;
+
+      flex: 1 1 var(--quantity-selector-width);
+    }
+
+    .quantity-selector :is(.quantity-minus, .quantity-plus) {
+      --minimum-touch-target: 26px;
+
+      width: var(--minimum-touch-target);
+      height: var(--minimum-touch-target);
+    }
+
+    .quantity-selector input[type=number] {
+      --minimum-touch-target: 26px;
+      max-width: calc(var(--quantity-selector-width) - var(--minimum-touch-target) * 2);
+    }
+
+    .cart-items__remove {
+      width: unset;
+      height: unset;
+      color: #959595;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 100%;
+      text-decoration: underline;
+    }
   }
 
   .cart-drawer__heading .cart-bubble {
@@ -151,6 +203,15 @@
     position: sticky;
     top: 0;
     z-index: 1;
+    border-bottom: 0.5px solid #DDDDDD;
+    padding-top: 14px !important;
+    padding-bottom: 14px !important;
+
+    .close-button {
+      right: 23px;
+      width: unset;
+      height: unset;
+    }
 
     @media screen and (min-width: 750px) {
       padding: var(--cart-drawer-padding-desktop);

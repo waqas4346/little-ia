@@ -14,9 +14,16 @@
   assign icon_name = 'arrow'
   assign style = icon_style | default: 'arrow'
   assign shape = icon_shape | default: 'none'
+  assign arrow_file = 'arrow.svg'
+  assign use_blue_arrow = false
 
   if icon_style contains 'chevron'
     assign icon_name = 'caret'
+  endif
+
+  if icon_style == 'blue_arrows'
+    assign arrow_file = 'arrow-blue.svg'
+    assign use_blue_arrow = true
   endif
 
   if icon_style contains 'large'
@@ -31,7 +38,11 @@
     {% if shape != 'none' %} slideshow-control--shape-{{ shape }}{% endif %}
     slideshow-control--style-{{ style }}
     button button-unstyled button-unstyled--transparent
-    {% if action == 'previous' %} flip-x{% endif %}
+    {% if use_blue_arrow %}
+      {% if action == 'next' %} flip-x{% endif %}
+    {% else %}
+      {% if action == 'previous' %} flip-x{% endif %}
+    {% endif %}
   "
   {% # theme-check-disable %}
   aria-label="{{ 'accessibility.slideshow_' | append: action | t }}"
@@ -43,7 +54,7 @@
     {%- if icon_name == 'caret' -%}
       {{- 'icon-caret.svg' | inline_asset_content -}}
     {%- else -%}
-      {{- 'arrow.svg' | inline_asset_content -}}
+      {{- arrow_file | inline_asset_content -}}
     {%- endif -%}
   </span>
 </button>
