@@ -23,10 +23,8 @@
     assign can_add_to_cart = false
   endif
 
+  # Always show "Quick Add" button that opens the popup, even for single-variant products
   assign quick_add_button = 'choose'
-  if product.variants_count == 1 or product.options.size == 1 and product.selected_variant
-    assign quick_add_button = 'add'
-  endif
 %}
 
 <quick-add-component

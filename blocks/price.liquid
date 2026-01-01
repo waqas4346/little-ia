@@ -62,10 +62,8 @@
       endif
       assign variant = product_resource.selected_or_first_available_variant
       assign product_form_id = 'CollectionQuickAdd-ProductForm-' | append: product_resource.id | append: '-' | append: block.id
+      # Always show "Quick Add" button that opens the popup, even for single-variant products
       assign quick_add_button = 'choose'
-      if product_resource.variants_count == 1 or product_resource.options.size == 1 and product_resource.selected_variant
-        assign quick_add_button = 'add'
-      endif
     %}
     <div class="collection-product-actions" onclick="event.stopPropagation();">
       <a 

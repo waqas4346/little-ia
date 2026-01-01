@@ -482,6 +482,13 @@
     /* Enable scrollbar on mobile - override slideshow default */
     .collection-slider-mobile slideshow-component {
       --cursor: grab;
+      padding-bottom: 0 !important;
+      margin-bottom: 0 !important;
+    }
+
+    .collection-slider-mobile slideshow-container {
+      padding-bottom: 0 !important;
+      margin-bottom: 0 !important;
     }
 
     .collection-slider-mobile slideshow-component[disabled='true'] slideshow-slides {
@@ -494,6 +501,8 @@
       -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch;
       scroll-snap-type: x mandatory;
+      padding-bottom: 0 !important;
+      margin-bottom: 0 !important;
     }
 
     /* Hide native scrollbar */

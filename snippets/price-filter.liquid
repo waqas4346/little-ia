@@ -128,11 +128,6 @@
           </div>
         </div>
 
-        <div class="price-facet__highest-price">
-          {%- assign formatted_highest_price = filter.range_max | money -%}
-          {{ 'content.price_filter_html' | t: price: formatted_highest_price }}
-        </div>
-
         {% if filter.min_value.value != null or filter.max_value.value != null %}
           {% assign has_active_values = true %}
         {% endif %}
@@ -227,14 +222,6 @@
     line-height: 20px;
     text-transform: capitalize;
     color: #919191;
-  }
-
-  .price-facet__highest-price {
-    padding: var(--padding-xs) 0 var(--padding-sm);
-  }
-
-  .facets--horizontal .price-facet__highest-price {
-    padding: 0 var(--padding-md) var(--padding-xs);
   }
 
   .field__label.price-facet__label {

@@ -483,6 +483,13 @@
   </div>
 </div>
 
+<style>
+  #shopify-section-{{ section.id }}.hero-wrapper {
+    margin-top: {{ section.settings.margin-block-start | default: 0 }}px;
+    margin-bottom: {{ section.settings.margin-block-end | default: 0 }}px;
+  }
+</style>
+
 {% stylesheet %}
   .hero-wrapper {
     --hero-height-offset: 0px;
@@ -1371,6 +1378,30 @@
     {
       "type": "range",
       "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Margin"
+    },
+    {
+      "type": "range",
+      "id": "margin-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "margin-block-end",
       "label": "t:settings.bottom",
       "min": 0,
       "max": 100,
