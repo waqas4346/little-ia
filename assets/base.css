@@ -2332,8 +2332,12 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) > *:not(.tax-note) {
 @media screen and (max-width: 749px) {
   .mobile-column {
     flex-flow: column nowrap;
-    align-items: var(--horizontal-alignment);
+    align-items: var(--horizontal-alignment-mobile, var(--horizontal-alignment));
     justify-content: var(--vertical-alignment-mobile);
+  }
+
+  .layout-panel-flex--column {
+    align-items: var(--horizontal-alignment-mobile, var(--horizontal-alignment));
   }
 
   .layout-panel-flex--row:not(.mobile-column) {
@@ -3298,6 +3302,35 @@ slideshow-component.slideshow--content-below-media slideshow-slide {
   display: flex;
   align-items: center;
 }
+
+/* Full frame mode: custom image/text ratio (813px/627px at 1440px) */
+/* At 1440px viewport: image = 813px (56.4583%), text = 627px (43.5417%) */
+/* Remove gap to get exact pixel widths */
+@media screen and (min-width: 750px) {
+  slideshow-component:not(.slideshow--with-hints).slideshow--content-left slideshow-slide,
+  slideshow-component:not(.slideshow--with-hints).slideshow--content-right slideshow-slide {
+    gap: 0 !important;
+  }
+
+  slideshow-component:not(.slideshow--with-hints).slideshow--content-left slideshow-slide .slide__image-container,
+  slideshow-component:not(.slideshow--with-hints).slideshow--content-right slideshow-slide .slide__image-container {
+    flex: 0 0 56.4583% !important;
+    width: 56.4583% !important;
+    max-width: 56.4583% !important;
+    min-width: 0 !important;
+  }
+
+  slideshow-component:not(.slideshow--with-hints).slideshow--content-left slideshow-slide .slide__content,
+  slideshow-component:not(.slideshow--with-hints).slideshow--content-right slideshow-slide .slide__content {
+    flex: 0 0 43.5417% !important;
+    width: 43.5417% !important;
+    max-width: 43.5417% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center;
+  }
+}
+
 
 @media screen and (max-width: 749px) {
   .slideshow--content-left slideshow-slide,

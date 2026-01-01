@@ -16,6 +16,14 @@
   unless settings.content_direction == 'row'
     assign horizontal_alignment = settings.horizontal_alignment_flex_direction_column
     assign vertical_alignment = settings.vertical_alignment_flex_direction_column
+    
+    if settings.horizontal_alignment_flex_direction_column_mobile != blank
+      assign horizontal_alignment_mobile = settings.horizontal_alignment_flex_direction_column_mobile
+    else
+      assign horizontal_alignment_mobile = horizontal_alignment
+    endif
+  else
+    assign horizontal_alignment_mobile = horizontal_alignment
   endunless
 
   assign vertical_alignment_mobile = vertical_alignment
@@ -30,4 +38,5 @@
 {% render 'gap-style', value: settings.gap %}
 
 --horizontal-alignment: {{ horizontal_alignment }}; --vertical-alignment: {{ vertical_alignment }};
+--horizontal-alignment-mobile: {{ horizontal_alignment_mobile }};
 --vertical-alignment-mobile: {{ vertical_alignment_mobile }};

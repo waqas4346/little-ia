@@ -306,6 +306,27 @@
     },
     {
       "type": "select",
+      "id": "horizontal_alignment_flex_direction_column_mobile",
+      "label": "Alignment (Mobile)",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.left"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.right"
+        }
+      ],
+      "default": "center",
+      "visible_if": "{{ block.settings.content_direction != 'row' }}"
+    },
+    {
+      "type": "select",
       "id": "vertical_alignment_flex_direction_column",
       "label": "t:settings.position",
       "options": [

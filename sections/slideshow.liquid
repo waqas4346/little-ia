@@ -178,6 +178,123 @@
       margin-block-start: var(--slideshow-dots-bottom-gap, 12px);
       justify-content: center;
     }
+
+    /* Full frame mode: custom image/text ratio (813px/627px at 1440px) */
+    /* At 1440px viewport: image = 813px (56.4583%), text = 627px (43.5417%) */
+    /* Remove gap to get exact pixel widths */
+    @media screen and (min-width: 750px) {
+      .slideshow-section slideshow-component:not(.slideshow--with-hints).slideshow--content-left slideshow-slide,
+      .slideshow-section slideshow-component:not(.slideshow--with-hints).slideshow--content-right slideshow-slide {
+        gap: 0 !important;
+      }
+
+      .slideshow-section slideshow-component:not(.slideshow--with-hints).slideshow--content-left slideshow-slide .slide__image-container,
+      .slideshow-section slideshow-component:not(.slideshow--with-hints).slideshow--content-right slideshow-slide .slide__image-container {
+        flex: 0 0 56.4583% !important;
+        width: 56.4583% !important;
+        max-width: 56.4583% !important;
+        min-width: 0 !important;
+      }
+
+      .slideshow-section slideshow-component:not(.slideshow--with-hints).slideshow--content-left slideshow-slide .slide__content,
+      .slideshow-section slideshow-component:not(.slideshow--with-hints).slideshow--content-right slideshow-slide .slide__content {
+        flex: 0 0 43.5417% !important;
+        width: 43.5417% !important;
+        max-width: 43.5417% !important;
+        min-width: 0 !important;
+        display: flex !important;
+        align-items: center;
+      }
+    }
+
+    /* Typography styles for slideshow */
+    /* Target text blocks and rte-formatter elements within slide content */
+    @media screen and (min-width: 750px) {
+      .slide__content .text-block h1,
+      .slide__content .text-block h2,
+      .slide__content .text-block h3,
+      .slide__content .text-block h4,
+      .slide__content .text-block h5,
+      .slide__content .text-block h6,
+      .slide__content rte-formatter h1,
+      .slide__content rte-formatter h2,
+      .slide__content rte-formatter h3,
+      .slide__content rte-formatter h4,
+      .slide__content rte-formatter h5,
+      .slide__content rte-formatter h6 {
+        font-family: 'Outfit', sans-serif !important;
+        font-style: normal !important;
+        font-weight: 500 !important;
+        font-size: 54px !important;
+        line-height: 125% !important;
+        color: #1D425A !important;
+      }
+
+      .slide__content .text-block p,
+      .slide__content rte-formatter p {
+        font-family: 'Outfit', sans-serif !important;
+        font-style: normal !important;
+        font-weight: 400 !important;
+        font-size: 18px !important;
+        line-height: 160% !important;
+        color: #1D425A !important;
+      }
+
+      .slide__content .text-block p strong,
+      .slide__content rte-formatter p strong {
+        font-family: 'Sacramento', sans-serif !important;
+        font-weight: 400 !important;
+        font-style: normal !important;
+        font-size: 30px !important;
+        line-height: 160% !important;
+        letter-spacing: 0% !important;
+        color: #7295BB !important;
+      }
+    }
+
+    @media screen and (max-width: 749px) {
+      .slide__content .text-block h1,
+      .slide__content .text-block h2,
+      .slide__content .text-block h3,
+      .slide__content .text-block h4,
+      .slide__content .text-block h5,
+      .slide__content .text-block h6,
+      .slide__content rte-formatter h1,
+      .slide__content rte-formatter h2,
+      .slide__content rte-formatter h3,
+      .slide__content rte-formatter h4,
+      .slide__content rte-formatter h5,
+      .slide__content rte-formatter h6 {
+        font-family: 'Outfit', sans-serif !important;
+        font-style: normal !important;
+        font-weight: 500 !important;
+        font-size: 24px !important;
+        line-height: 125% !important;
+        color: #1D425A !important;
+      }
+
+      .slide__content .text-block p,
+      .slide__content rte-formatter p {
+        font-family: 'Outfit', sans-serif !important;
+        font-style: normal !important;
+        font-weight: 400 !important;
+        font-size: 14px !important;
+        line-height: 160% !important;
+        color: #1D425A !important;
+        text-align: center !important;
+      }
+
+      .slide__content .text-block p strong,
+      .slide__content rte-formatter p strong {
+        font-family: 'Sacramento', sans-serif !important;
+        font-weight: 400 !important;
+        font-style: normal !important;
+        font-size: 24px !important;
+        line-height: 160% !important;
+        letter-spacing: 0% !important;
+        color: #7295BB !important;
+      }
+    }
   }
 {% endstylesheet %}
 
