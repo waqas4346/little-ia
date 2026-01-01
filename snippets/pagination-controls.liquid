@@ -40,7 +40,10 @@
               on:click="{{ on_click_handler }}?{{ prev_params }}"
             {% endif %}
           >
-            {{ 'icon-chevron-left.svg' | inline_asset_content }}
+            <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M15.1201 18.8999L8.82012 12.5999L15.1201 6.2999" stroke="#7295BB" stroke-width="1.638" stroke-linecap="square" stroke-linejoin="round"/>
+<rect x="-0.63" y="0.63" width="23.94" height="23.94" rx="11.97" transform="matrix(-1 0 0 1 23.9402 0)" stroke="#7295BB" stroke-width="1.26"/>
+</svg>
           </a>
         {%- else -%}
           <span
@@ -48,7 +51,10 @@
             class="pagination__link pagination__link--arrow pagination__link--disabled"
             aria-disabled="true"
           >
-            {{ 'icon-chevron-left.svg' | inline_asset_content }}
+            <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M15.1201 18.8999L8.82012 12.5999L15.1201 6.2999" stroke="#7295BB" stroke-width="1.638" stroke-linecap="square" stroke-linejoin="round"/>
+<rect x="-0.63" y="0.63" width="23.94" height="23.94" rx="11.97" transform="matrix(-1 0 0 1 23.9402 0)" stroke="#7295BB" stroke-width="1.26"/>
+</svg>
           </span>
         {%- endif -%}
       </li>
@@ -145,7 +151,10 @@
               on:click="{{ on_click_handler }}?{{ next_params }}"
             {% endif %}
           >
-            {{ 'icon-chevron-right.svg' | inline_asset_content }}
+            <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M10.0801 18.8999L16.3801 12.5999L10.0801 6.2999" stroke="#7295BB" stroke-width="1.638" stroke-linecap="square" stroke-linejoin="round"/>
+<rect x="0.63" y="0.63" width="23.94" height="23.94" rx="11.97" stroke="#7295BB" stroke-width="1.26"/>
+</svg>
           </a>
         {%- else -%}
           <span
@@ -153,7 +162,10 @@
             class="pagination__link pagination__link--arrow pagination__link--disabled"
             aria-disabled="true"
           >
-            {{ 'icon-chevron-right.svg' | inline_asset_content }}
+            <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M10.0801 18.8999L16.3801 12.5999L10.0801 6.2999" stroke="#7295BB" stroke-width="1.638" stroke-linecap="square" stroke-linejoin="round"/>
+<rect x="0.63" y="0.63" width="23.94" height="23.94" rx="11.97" stroke="#7295BB" stroke-width="1.26"/>
+</svg>
           </span>
         {%- endif -%}
       </li>
@@ -238,8 +250,8 @@
   }
 
   .pagination__link svg {
-    width: 0.5rem;
-    height: 0.75rem;
+    width: 26px;
+    height: 26px;
     flex-shrink: 0;
   }
 

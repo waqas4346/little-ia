@@ -934,8 +934,12 @@ details:not([open]) .summary-open {
   display: none;
 }
 
-details[open] > summary .icon-animated > svg {
+summary .icon-animated > svg {
   transform: rotate(180deg);
+}
+
+details[open] > summary .icon-animated > svg {
+  transform: rotate(0deg);
 }
 
 /* iOS fix: hide the default arrow on the summary */
@@ -4048,6 +4052,25 @@ text-component {
     text-overflow: ellipsis;
     -webkit-line-clamp: 3;
   }
+}
+
+/* Product card title and price color */
+.product-card .product-title-text,
+.product-card .product-title-text *,
+.product-card a.contents .text-block,
+.product-card a.contents .text-block *,
+.product-card a.contents .text-block :is(h1, h2, h3, h4, h5, h6, p, span, a),
+.product-card .text-block.product-title-text,
+.product-card .text-block.product-title-text *,
+.product-card .text-block.product-title-text :is(h1, h2, h3, h4, h5, h6, p, span, a),
+:is(.product-card, .product-grid__card) :is(h4, .h4) {
+  color: #1D425A !important;
+}
+
+.product-card product-price .price-snippet .price,
+.product-card product-price .price-snippet .price-range,
+.product-card product-price .price-snippet .price * {
+  color: #1D425A !important;
 }
 
 .product-card:hover,

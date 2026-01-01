@@ -962,12 +962,13 @@
 
   .facets__summary .icon-caret svg {
     transition: transform var(--animation-speed) var(--animation-easing);
+    transform: rotate(180deg);
   }
 
   /* Rotate icon to show up chevron when filter panel is open */
   .facets__panel[open] > .facets__summary .icon-caret svg,
   accordion-custom[open] > .facets__panel[open] > .facets__summary .icon-caret svg {
-    transform: rotate(180deg);
+    transform: rotate(0deg);
   }
 
   .facets--drawer .facets__summary .icon-caret {
