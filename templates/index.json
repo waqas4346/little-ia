@@ -219,8 +219,8 @@
         "slide_height": "medium",
         "content_position": "right",
         "color_scheme": "",
-        "icons_style": "arrows_large",
-        "icons_shape": "none",
+        "icons_style": "arrow",
+        "icons_shape": "circle",
         "slideshow_controls_style": "dots",
         "autoplay": false,
         "autoplay_speed": 4,
@@ -1010,6 +1010,18 @@
           },
           "blocks": {}
         },
+        "icon_PTcDWf": {
+          "type": "icon",
+          "name": "t:names.icon",
+          "settings": {
+            "icon": "price_tag",
+            "image_upload": "shopify://shop_images/Ellipse_3042.png",
+            "width": 6,
+            "link": "",
+            "open_in_new_tab": false
+          },
+          "blocks": {}
+        },
         "marquee_icon_text_6Q7zTb": {
           "type": "marquee-icon-text",
           "name": "Icon with text",
@@ -1018,6 +1030,18 @@
             "image_upload": "shopify://shop_images/Frame_1437254550_1.png",
             "icon_width": 24,
             "text": "<p>Personalised to perfection</p>"
+          },
+          "blocks": {}
+        },
+        "icon_rQ4BGW": {
+          "type": "icon",
+          "name": "t:names.icon",
+          "settings": {
+            "icon": "price_tag",
+            "image_upload": "shopify://shop_images/Ellipse_3042.png",
+            "width": 6,
+            "link": "",
+            "open_in_new_tab": false
           },
           "blocks": {}
         },
@@ -1032,13 +1056,13 @@
           },
           "blocks": {}
         },
-        "icon_PTcDWf": {
+        "icon_acMeDi": {
           "type": "icon",
           "name": "t:names.icon",
-          "disabled": true,
           "settings": {
             "icon": "price_tag",
-            "width": 24,
+            "image_upload": "shopify://shop_images/Ellipse_3042.png",
+            "width": 6,
             "link": "",
             "open_in_new_tab": false
           },
@@ -1073,9 +1097,11 @@
       },
       "block_order": [
         "marquee_icon_text_z3eAJd",
-        "marquee_icon_text_6Q7zTb",
-        "marquee_icon_text_FFamAY",
         "icon_PTcDWf",
+        "marquee_icon_text_6Q7zTb",
+        "icon_rQ4BGW",
+        "marquee_icon_text_FFamAY",
+        "icon_acMeDi",
         "text_qmbz7c"
       ],
       "name": "t:names.marquee_section",
@@ -2294,13 +2320,14 @@
         "video_item_Rib79t",
         "video_item_8ewMTT"
       ],
+      "disabled": true,
       "name": "Product Video Slider",
       "settings": {
         "heading": "kids and babies",
         "subheading": " In Little IA",
-        "columns_desktop": 4,
+        "columns_desktop": 5,
         "columns_mobile": "1",
-        "gap": 16,
+        "gap": 12,
         "show_arrows": true,
         "icons_style": "arrow",
         "icons_shape": "none",
