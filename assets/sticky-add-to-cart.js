@@ -128,32 +128,32 @@ class StickyAddToCartComponent extends Component {
       }
     });
 
-    // Observer for footer visibility - hides sticky bar at page bottom
-    this.#mainBottomObserver = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (!entry) return;
+    // Observer for footer visibility - disabled to keep sticky bar visible even when footer appears
+    // this.#mainBottomObserver = new IntersectionObserver(
+    //   (entries) => {
+    //     const [entry] = entries;
+    //     if (!entry) return;
 
-        if (entry.isIntersecting && this.#isStuck) {
-          this.#hiddenByBottom = true;
-          this.#hideStickyBar();
-        } else if (!entry.isIntersecting && this.#hiddenByBottom) {
-          // Footer out of view - check if we should show sticky bar again
-          const rect = buyButtonsBlock.getBoundingClientRect();
-          // Only show if buy buttons are above the viewport (scrolled past)
-          if (rect.bottom < 0 || rect.top < 0) {
-            this.#hiddenByBottom = false;
-            this.#showStickyBar();
-          }
-        }
-      },
-      {
-        rootMargin: '200px 0px 0px 0px',
-      }
-    );
+    //     if (entry.isIntersecting && this.#isStuck) {
+    //       this.#hiddenByBottom = true;
+    //       this.#hideStickyBar();
+    //     } else if (!entry.isIntersecting && this.#hiddenByBottom) {
+    //       // Footer out of view - check if we should show sticky bar again
+    //       const rect = buyButtonsBlock.getBoundingClientRect();
+    //       // Only show if buy buttons are above the viewport (scrolled past)
+    //       if (rect.bottom < 0 || rect.top < 0) {
+    //         this.#hiddenByBottom = false;
+    //         this.#showStickyBar();
+    //       }
+    //     }
+    //   },
+    //   {
+    //     rootMargin: '200px 0px 0px 0px',
+    //   }
+    // );
 
     this.#buyButtonsIntersectionObserver.observe(buyButtonsBlock);
-    this.#mainBottomObserver.observe(footer);
+    // this.#mainBottomObserver.observe(footer);
     this.#targetAddToCartButton = productForm.querySelector('[ref="addToCartButton"]');
   }
 

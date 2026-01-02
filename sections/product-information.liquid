@@ -51,38 +51,40 @@
       %}
       
       <div class="sticky-add-to-cart__content">
-        {% if image_to_show %}
-          <div
-            class="sticky-add-to-cart__image"
-          >
-            {% assign image_alt = image_to_show.alt | default: product.title | escape %}
-            {{
-              image_to_show
-              | image_url: width: 120
-              | image_tag:
-                loading: 'lazy',
-                alt: image_alt,
-                class: 'sticky-add-to-cart__image-img',
-                data-testid: 'sticky-product-image',
-                srcset: null,
-                sizes: null,
-                ref: 'productImage'
-            }}
-          </div>
-        {% endif %}
+        <div class="sticky-add-to-cart__product-info">
+          {% if image_to_show %}
+            <div
+              class="sticky-add-to-cart__image"
+            >
+              {% assign image_alt = image_to_show.alt | default: product.title | escape %}
+              {{
+                image_to_show
+                | image_url: width: 120
+                | image_tag:
+                  loading: 'lazy',
+                  alt: image_alt,
+                  class: 'sticky-add-to-cart__image-img',
+                  data-testid: 'sticky-product-image',
+                  srcset: null,
+                  sizes: null,
+                  ref: 'productImage'
+              }}
+            </div>
+          {% endif %}
 
-        <div class="sticky-add-to-cart__info">
-          <h3
-            class="sticky-add-to-cart__title"
-            data-testid="sticky-product-title"
-          >
-            {{ product.title | escape }}
-          </h3>
-          <div
-            class="sticky-add-to-cart__price"
-            data-testid="sticky-price-display"
-          >
-            {% render 'price', product_resource: product, show_sale_price_first: true %}
+          <div class="sticky-add-to-cart__info">
+            <h3
+              class="sticky-add-to-cart__title"
+              data-testid="sticky-product-title"
+            >
+              {{ product.title | escape }}
+            </h3>
+            <div
+              class="sticky-add-to-cart__price"
+              data-testid="sticky-price-display"
+            >
+              {% render 'price', product_resource: product, show_sale_price_first: true %}
+            </div>
           </div>
         </div>
 
@@ -253,8 +255,8 @@
       position: absolute;
       inset: calc(var(--border) * -1);
       background: linear-gradient(#F8F3ED 0 100%), linear-gradient(hsl(0 0% 0% / 0.15) 0 100%);
-      background-clip: content-box, border-box;
-      border: var(--border) solid #0000;
+      
+      
       border-radius: inherit;
       z-index: -1;
       backdrop-filter: blur(20px) saturate(180%) brightness(1.5);
@@ -289,6 +291,14 @@
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    min-width: 0;
+  }
+
+  .sticky-add-to-cart__product-info {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-md);
+    min-width: 0;
   }
 
   .sticky-add-to-cart__info {
@@ -313,11 +323,6 @@
     object-fit: cover;
   }
 
-  .sticky-add-to-cart__info {
-    flex: 1;
-    min-width: 0; /* Allow text truncation */
-  }
-
   .sticky-add-to-cart__title {
     font-size: var(--font-paragraph-medium--size);
     font-weight: var(--font-weight-semibold);
@@ -338,13 +343,12 @@
     display: flex;
     flex-direction: row;
     gap: var(--gap-sm);
-    min-width: 400px;
     flex-shrink: 0;
     align-items: stretch;
+    width: 50%;
   }
 
   .sticky-add-to-cart__button {
-    flex: 1 1 auto;
     height: var(--height-buy-buttons);
     position: relative;
     text-transform: uppercase !important;
@@ -352,8 +356,7 @@
     color: #ffffff !important;
     border: none !important;
     font-weight: 500;
-    min-width: 200px;
-    width: auto;
+    width: 100%;
   }
 
   .sticky-add-to-cart__button:hover:not(:disabled) {
@@ -368,7 +371,6 @@
   }
 
   .sticky-add-to-cart__personalise-button {
-    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
