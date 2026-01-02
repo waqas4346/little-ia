@@ -341,6 +341,263 @@
     }
   }
 
+  /* Fixed layout for 1440px screen size */
+  @media screen and (min-width: 1440px) {
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) {
+      max-width: 1328px;
+      margin: 0 auto;
+      gap: 69px;
+    }
+
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ).product-information--media-left {
+      grid-template-columns: 701px 558px;
+    }
+
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ).product-information--media-right {
+      grid-template-columns: 558px 701px;
+    }
+
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ).product-information--media-left .product-information__media {
+      padding-right: 0;
+      padding-top: 24px;
+      width: 701px;
+      max-width: 701px;
+      min-width: 701px;
+    }
+
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ).product-information--media-left .product-details {
+      padding-left: 0;
+    }
+
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ).product-information--media-right .product-information__media {
+      padding-left: 0;
+      padding-top: 24px;
+      width: 701px;
+      max-width: 701px;
+      min-width: 701px;
+    }
+
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ).product-information--media-right .product-details {
+      padding-right: 0;
+    }
+
+    /* Ensure images fill the container width */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media {
+      width: 701px;
+      max-width: 701px;
+      min-width: 701px;
+    }
+
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media media-gallery {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media .product-media-container {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    /* Override constrain-height margins and ensure full width */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media .product-media-container.constrain-height {
+      margin-right: 0 !important;
+      margin-left: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      --constrained-height: none !important;
+      --constrained-min-height: none !important;
+      --viewport-offset: 0 !important;
+      max-height: none !important;
+    }
+
+    /* Override the :where(.constrain-height) rule from base.css */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media :not(.dialog-zoomed-gallery) > .product-media-container:where(.constrain-height) {
+      margin-right: 0 !important;
+      margin-left: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      --constrained-height: unset !important;
+      --constrained-min-height: unset !important;
+      --viewport-offset: unset !important;
+      max-height: unset !important;
+      height: auto !important;
+    }
+
+    /* Override all product-media-container elements regardless of constrain-height */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media :not(.dialog-zoomed-gallery) > .product-media-container {
+      --constrained-height: unset !important;
+      max-height: unset !important;
+    }
+
+    /* Ensure product-media wrapper takes full width */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media .product-media {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    /* Ensure image itself takes full width */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media .product-media__image {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto;
+      display: block;
+    }
+
+    /* Override any image width constraints */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media .product-media-container img {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto;
+    }
+
+    /* Specifically target image inside constrain-height container */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media .product-media-container.constrain-height img,
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media .product-media-container.constrain-height .product-media__image {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto;
+      margin: 0;
+    }
+
+    /* Override the constrain-height container's width calculation */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media :not(.dialog-zoomed-gallery) > .product-media-container.constrain-height {
+      margin-right: 0 !important;
+      margin-left: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      --constrained-height: none !important;
+      max-height: none !important;
+    }
+
+    /* Target all slideshow wrapper elements */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media slideshow-component,
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media slideshow-container,
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media slideshow-slides,
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media slideshow-slide {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    /* Target product-media-constraint-wrapper if it exists */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media .product-media-constraint-wrapper {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+    }
+
+    /* Final override for constrain-height with all possible selectors */
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media slideshow-slide.product-media-container.constrain-height {
+      margin-right: 0 !important;
+      margin-left: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      --constrained-height: none !important;
+      max-height: none !important;
+    }
+
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media slideshow-slide.product-media-container.constrain-height .product-media,
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media slideshow-slide.product-media-container.constrain-height .product-media-constraint-wrapper .product-media {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media slideshow-slide.product-media-container.constrain-height img,
+    .product-information__grid:not(
+        .product-information__grid--half,
+        .product-information--media-none
+      ) .product-information__media slideshow-slide.product-media-container.constrain-height .product-media__image {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto;
+      display: block;
+      margin: 0;
+    }
+  }
+
   .product-information__grid--limit-details .product-details > .group-block {
     max-width: var(--sidebar-width);
   }
