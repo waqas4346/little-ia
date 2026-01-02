@@ -692,6 +692,10 @@
     outline-offset: var(--focus-outline-offset);
   }
 
+  .variant-option__button-label--image-thumbnail:hover {
+    outline: none;
+  }
+
   .facets__inputs-list--swatches-grid .variant-option__button-label--has-swatch:has(:checked) {
     --focus-outline: none;
   }
@@ -858,8 +862,8 @@
   .variant-option--image-thumbnails .variant-option__button-label--tile {
     /* Prevent tile styles from applying to image thumbnails */
     padding: 0 !important;
-    border: 1px solid #7295BB !important;
-    border-radius: 4px !important;
+    border: none !important;
+    border-radius: 0 !important;
     background-color: transparent !important;
     width: 64px !important;
     height: 64px !important;
@@ -869,8 +873,8 @@
 
   .variant-option__button-label--image-thumbnail {
     padding: 2px;
-    border: 1px solid #7295BB;
-    border-radius: 4px;
+    border: none;
+    border-radius: 0;
     overflow: hidden;
     position: relative;
     width: 64px;
@@ -884,7 +888,8 @@
   /* Ensure image thumbnails never get tile styles */
   .variant-option__button-label--image-thumbnail.variant-option__button-label--tile {
     padding: 2px !important;
-    border: 1px solid #7295BB !important;
+    border: none !important;
+    border-radius: 0 !important;
     background-color: transparent !important;
     width: 64px !important;
     height: 64px !important;
@@ -896,7 +901,7 @@
     width: 100%;
     height: 100%;
     position: relative;
-    border-radius: 2px;
+    border-radius: 0;
     overflow: hidden;
   }
 
@@ -913,10 +918,20 @@
     background-color: rgb(var(--color-background-secondary-rgb, 245 245 245));
   }
 
-  .variant-option__button-label--image-thumbnail:has(:checked) {
-    border-color: #7295BB;
-    border-width: 2px;
+  .variant-option__button-label--image-thumbnail:hover {
     outline: none;
+    border-color: transparent !important;
+    background-color: transparent !important;
+  }
+
+  .variant-option__button-label--image-thumbnail:has(:checked) {
+    border: 1px solid #7295BB;
+    outline: none;
+  }
+
+  .variant-option__button-label--image-thumbnail:has(:checked):hover {
+    border-color: #7295BB !important;
+    background-color: transparent !important;
   }
 
   .variant-option__button-label--image-thumbnail:has([data-option-available='false']) {
