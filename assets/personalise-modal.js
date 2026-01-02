@@ -7,14 +7,27 @@ import { Component } from '@theme/component';
  * @extends DialogComponent
  */
 export class PersonaliseDialogComponent extends DialogComponent {
-  requiredRefs = ['dialog', 'nameInput', 'charCount', 'fontGrid', 'saveButton', 'closeButton'];
+  requiredRefs = ['dialog', 'saveButton', 'closeButton'];
 
   connectedCallback() {
     super.connectedCallback();
     this.selectedFont = null;
+    this.selectedColor = null;
     this.personalisationData = {
       name: '',
-      font: null
+      font: null,
+      color: null,
+      dob: null,
+      schoolYear: null,
+      name1: null,
+      name2: null,
+      name3: null,
+      name4: null,
+      textbox: null,
+      message: null,
+      optionalDob: null,
+      time: null,
+      weight: null
     };
     
     // Load saved personalisation if exists
@@ -54,13 +67,22 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Update form fields with saved data
     if (this.refs.nameInput) {
       this.refs.nameInput.value = this.personalisationData.name || '';
-      this.updateCharCounter(this.personalisationData.name?.length || 0);
+      const charCounter = this.refs.charCounter?.querySelector('[ref="charCount"]') || this.refs.charCount;
+      if (charCounter) {
+        charCounter.textContent = this.personalisationData.name?.length || 0;
+      }
     }
     
     // Set font selection only if saved personalisation exists
     if (this.personalisationData.font) {
       this.selectFontByName(this.personalisationData.font);
     }
+    
+    // Set color selection if saved
+    if (this.personalisationData.color) {
+      this.selectColorByName(this.personalisationData.color);
+    }
+    
     this.updateSaveButton();
   }
 
@@ -91,9 +113,46 @@ export class PersonaliseDialogComponent extends DialogComponent {
    * @param {number} count - The current character count
    */
   updateCharCounter(count) {
-    const charCount = this.refs.charCount;
-    if (charCount) {
-      charCount.textContent = count;
+    const charCounter = this.refs.charCounter?.querySelector('[ref="charCount"]') || this.refs.charCount;
+    if (charCounter) {
+      charCounter.textContent = count;
+    }
+  }
+
+  /**
+   * Handles color selection
+   * @param {Event} event - The click event
+   */
+  selectColor = (event) => {
+    const button = event.target.closest('.personalise-modal__color-button');
+    if (!button) return;
+
+    const colorName = button.dataset.color;
+    this.selectColorByName(colorName);
+  };
+
+  /**
+   * Selects a color by name
+   * @param {string} colorName - The color name to select
+   */
+  selectColorByName(colorName) {
+    const colorGrid = this.refs.colorGrid || this.querySelector('.personalise-modal__color-grid');
+    if (!colorGrid) return;
+
+    // Remove selected class from all buttons
+    const buttons = colorGrid.querySelectorAll('.personalise-modal__color-button');
+    buttons.forEach(btn => {
+      btn.classList.remove('personalise-modal__color-button--selected');
+    });
+
+    // Add selected class to the clicked button
+    const selectedButton = Array.from(buttons).find(
+      btn => btn.dataset.color === colorName
+    );
+    if (selectedButton) {
+      selectedButton.classList.add('personalise-modal__color-button--selected');
+      this.selectedColor = colorName;
+      this.personalisationData.color = colorName;
     }
   }
 
@@ -138,8 +197,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
    */
   updateSaveButton() {
     if (this.refs.saveButton) {
-      const hasName = this.personalisationData.name.trim().length > 0;
-      this.refs.saveButton.disabled = !hasName;
+      // Check if name field exists and has value (for personalized_name products)
+      const nameInput = this.refs.nameInput || this.querySelector('#personalise-name');
+      const hasName = nameInput ? nameInput.value.trim().length > 0 : true;
+      
+      // For products with personalized_name, name is required
+      if (nameInput) {
+        this.refs.saveButton.disabled = !hasName;
+      } else {
+        // For other personalization types, allow saving without name
+        this.refs.saveButton.disabled = false;
+      }
     }
   }
 
@@ -150,16 +218,73 @@ export class PersonaliseDialogComponent extends DialogComponent {
   savePersonalisation = (event) => {
     event.preventDefault();
     
-    const name = this.personalisationData.name.trim();
-    if (!name) {
+    // Collect all field values
+    const nameInput = this.refs.nameInput || this.querySelector('#personalise-name');
+    const name = nameInput ? nameInput.value.trim() : '';
+    
+    // Validate required fields (name is required for personalized_name products)
+    if (nameInput && !name) {
       return;
     }
 
-    // Store personalisation data in localStorage and as data attributes
+    // Collect all personalisation data
     const personalisation = {
       name: name,
-      font: this.personalisationData.font
+      font: this.personalisationData.font || this.selectedFont,
+      color: this.personalisationData.color || this.selectedColor,
+      dob: null,
+      schoolYear: null,
+      name1: null,
+      name2: null,
+      name3: null,
+      name4: null,
+      textbox: null,
+      message: null,
+      optionalDob: null,
+      time: null,
+      weight: null
     };
+
+    // Collect optional fields
+    const dobInput = this.refs.dobInput || this.querySelector('input[name="properties[Date of Birth]"]');
+    if (dobInput) personalisation.dob = dobInput.value.trim();
+
+    const schoolYearInput = this.refs.schoolYearInput || this.querySelector('input[name="properties[School Year]"]');
+    if (schoolYearInput) personalisation.schoolYear = schoolYearInput.value.trim();
+
+    const name1Input = this.refs.name1Input || this.querySelector('input[name="properties[Name 1]"]');
+    if (name1Input) personalisation.name1 = name1Input.value.trim();
+
+    const name2Input = this.refs.name2Input || this.querySelector('input[name="properties[Name 2]"]');
+    if (name2Input) personalisation.name2 = name2Input.value.trim();
+
+    const name3Input = this.refs.name3Input || this.querySelector('input[name="properties[Name 3]"]');
+    if (name3Input) personalisation.name3 = name3Input.value.trim();
+
+    const name4Input = this.refs.name4Input || this.querySelector('input[name="properties[Name 4]"]');
+    if (name4Input) personalisation.name4 = name4Input.value.trim();
+
+    const textboxInput = this.refs.textboxInput || this.querySelector('textarea[name="properties[Personalisation:]"]');
+    if (textboxInput) personalisation.textbox = textboxInput.value.trim();
+
+    const messageInput = this.refs.messageInput || this.querySelector('textarea[name="properties[Message]"]');
+    if (messageInput) personalisation.message = messageInput.value.trim();
+
+    const optionalDobInput = this.refs.optionalDobInput || this.querySelector('#dob_field_val');
+    if (optionalDobInput && optionalDobInput.value) {
+      // Convert date input (YYYY-MM-DD) to dd-mm-yyyy format
+      const date = new Date(optionalDobInput.value);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      personalisation.optionalDob = `${day}-${month}-${year}`;
+    }
+
+    const timeInput = this.refs.timeInput || this.querySelector('input[name="properties[Time]"]');
+    if (timeInput) personalisation.time = timeInput.value.trim();
+
+    const weightInput = this.refs.weightInput || this.querySelector('input[name="properties[Weight]"]');
+    if (weightInput) personalisation.weight = weightInput.value.trim();
 
     // Store in localStorage with product ID as key
     const productId = this.closest('product-form-component')?.dataset?.productId;
@@ -194,24 +319,75 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (!productForm) return;
 
     // Remove existing properties fields
-    const existingProps = productForm.querySelectorAll('input[name^="properties["]');
+    const existingProps = productForm.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
     existingProps.forEach(input => input.remove());
 
-    // Add personalisation as properties
+    // Helper function to add hidden input
+    const addProperty = (name, value) => {
+      if (value) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        productForm.appendChild(input);
+      }
+    };
+
+    // Add all personalisation properties
     if (personalisation.name) {
-      const nameInput = document.createElement('input');
-      nameInput.type = 'hidden';
-      nameInput.name = 'properties[Personalised Name]';
-      nameInput.value = personalisation.name;
-      productForm.appendChild(nameInput);
+      addProperty('properties[Name]', personalisation.name);
     }
 
     if (personalisation.font) {
-      const fontInput = document.createElement('input');
-      fontInput.type = 'hidden';
-      fontInput.name = 'properties[Font Style]';
-      fontInput.value = personalisation.font;
-      productForm.appendChild(fontInput);
+      addProperty('properties[Text Font]', personalisation.font);
+    }
+
+    if (personalisation.color) {
+      addProperty('properties[Text Color]', personalisation.color);
+    }
+
+    if (personalisation.dob) {
+      addProperty('properties[Date of Birth]', personalisation.dob);
+    }
+
+    if (personalisation.schoolYear) {
+      addProperty('properties[School Year]', personalisation.schoolYear);
+    }
+
+    if (personalisation.name1) {
+      addProperty('properties[Name 1]', personalisation.name1);
+    }
+
+    if (personalisation.name2) {
+      addProperty('properties[Name 2]', personalisation.name2);
+    }
+
+    if (personalisation.name3) {
+      addProperty('properties[Name 3]', personalisation.name3);
+    }
+
+    if (personalisation.name4) {
+      addProperty('properties[Name 4]', personalisation.name4);
+    }
+
+    if (personalisation.textbox) {
+      addProperty('properties[Personalisation:]', personalisation.textbox);
+    }
+
+    if (personalisation.message) {
+      addProperty('properties[Message]', personalisation.message);
+    }
+
+    if (personalisation.optionalDob) {
+      addProperty('properties[Personalise Date of Birth]', personalisation.optionalDob);
+    }
+
+    if (personalisation.time) {
+      addProperty('properties[Time]', personalisation.time);
+    }
+
+    if (personalisation.weight) {
+      addProperty('properties[Weight]', personalisation.weight);
     }
   }
 }
