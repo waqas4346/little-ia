@@ -120,7 +120,7 @@
             </button>
             <button
               type="button"
-              class="personalise-modal__font-button personalise-modal__font-button--selected"
+              class="personalise-modal__font-button"
               data-font="Playball"
               ref="fontButton"
               on:click="/selectFont"
@@ -284,19 +284,30 @@
   }
 
   .personalise-modal__input-wrapper {
-    position: relative;
+    display: flex;
+    flex-direction: column;
   }
 
   .personalise-modal__input {
     width: 100%;
     padding: var(--padding-md);
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: var(--font-size--base);
-    font-family: inherit;
-    background-color: var(--color-background);
+    border: 1px solid #D0D0D0;
+    border-radius: 0;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    background-color: #FFFFFF;
     color: var(--color-foreground);
     transition: border-color 0.2s ease;
+    line-height: 156%;
+  }
+
+  .personalise-modal__input::placeholder {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 156%;
+    color: #797979;
   }
 
   .personalise-modal__input:focus {
@@ -305,11 +316,14 @@
   }
 
   .personalise-modal__counter {
-    position: absolute;
-    bottom: var(--padding-xs);
-    right: var(--padding-sm);
-    font-size: var(--font-size--xs);
-    color: rgb(var(--color-foreground-rgb) / var(--opacity-60));
+    margin-top: var(--padding-xs);
+    text-align: right;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 156%;
+    color: #7295BB;
   }
 
   .personalise-modal__font-grid {
@@ -322,11 +336,14 @@
   .personalise-modal__font-button {
     padding: var(--padding-md);
     border: 1px solid #e0e0e0;
-    border-radius: 4px;
+    border-radius: 0;
     background-color: var(--color-background);
-    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
-    font-size: var(--font-size--sm);
-    font-family: inherit;
+    color: #A2A2A2;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 156%;
+    font-family: 'Arial Rounded MT Bold', sans-serif;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
@@ -342,14 +359,16 @@
   }
 
   .personalise-modal__font-button--selected {
-    background-color: #E3F2FD;
-    border-color: #7295BB;
-    border-width: 2px;
+    background-color: #F4F9FF;
+    border: 1px solid #7295BB;
     color: #7295BB;
-    font-weight: 500;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 17px;
+    line-height: 156%;
   }
 
-  /* Font-specific styles */
+  /* Font-specific styles - override base font for unselected buttons */
   .personalise-modal__font-button[data-font="Playball"] {
     font-family: 'Playball', cursive;
   }
@@ -387,7 +406,7 @@
     color: #ffffff;
     border: none;
     padding: var(--padding-md) var(--padding-lg);
-    border-radius: 4px;
+    border-radius: 0;
     font-weight: 500;
     text-transform: uppercase;
     cursor: pointer;
@@ -410,7 +429,7 @@
     border: 1px solid #7295BB;
     color: #7295BB;
     padding: var(--padding-md) var(--padding-lg);
-    border-radius: 4px;
+    border-radius: 0;
     font-weight: 500;
     text-transform: uppercase;
     cursor: pointer;

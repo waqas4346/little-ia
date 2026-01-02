@@ -63,6 +63,34 @@
       align-self: var(--details-position, 'flex-start');
     }
   }
+
+  /* Product title styling */
+  .product-details .text-block h1,
+  .product-details .text-block.h1 > *,
+  .product-details .text-block.h2 > *,
+  .product-details .text-block.h3 > * {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 40px;
+    display: flex;
+    align-items: center;
+    text-transform: capitalize;
+    color: #1D425A;
+  }
+
+  /* Product price styling */
+  .product-details product-price .price-snippet .price,
+  .product-details product-price .price-snippet .price-range,
+  .product-details product-price .price-snippet .price * {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 25px;
+    color: #1D425A;
+  }
 {% endstylesheet %}
 
 {% schema %}

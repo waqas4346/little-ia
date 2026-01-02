@@ -11,10 +11,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
   connectedCallback() {
     super.connectedCallback();
-    this.selectedFont = 'Playball'; // Default font
+    this.selectedFont = null;
     this.personalisationData = {
       name: '',
-      font: 'Playball'
+      font: null
     };
     
     // Load saved personalisation if exists
@@ -57,8 +57,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
       this.updateCharCounter(this.personalisationData.name?.length || 0);
     }
     
-    // Set font selection
-    this.selectFontByName(this.personalisationData.font || 'Playball');
+    // Set font selection only if saved personalisation exists
+    if (this.personalisationData.font) {
+      this.selectFontByName(this.personalisationData.font);
+    }
     this.updateSaveButton();
   }
 
