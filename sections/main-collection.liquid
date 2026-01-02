@@ -118,6 +118,93 @@
     document.addEventListener('filter:update', () => {
       setTimeout(updateProductsCount, 100);
     });
+    
+    // Handle mobile sticky bar sort button click
+    const mobileSortButton = document.getElementById('mobile-sort-button');
+    if (mobileSortButton) {
+      mobileSortButton.addEventListener('click', () => {
+        // Find the sorting component details element - try multiple selectors
+        let sortingDetails = document.querySelector('sorting-filter-component details');
+        
+        // If not found, try finding by ID pattern
+        if (!sortingDetails) {
+          const sectionId = document.querySelector('results-list')?.getAttribute('section-id');
+          if (sectionId) {
+            sortingDetails = document.querySelector(`#Sorting-${sectionId}`);
+          }
+        }
+        
+        if (sortingDetails && sortingDetails instanceof HTMLDetailsElement) {
+          sortingDetails.open = true;
+          // Focus on the summary to ensure keyboard navigation works
+          const summary = sortingDetails.querySelector('summary');
+          if (summary) {
+            // Use requestAnimationFrame to ensure the dropdown is open before focusing
+            requestAnimationFrame(() => {
+              summary.focus();
+            });
+          }
+        }
+      });
+    }
+    
+    // Update sort value display when sort changes
+    const updateSortDisplay = () => {
+      const sortValueDisplay = document.querySelector('[data-sort-value]');
+      if (!sortValueDisplay) return;
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentSort = urlParams.get('sort_by') || '';
+      
+      // Find the current sort name from the sorting component
+      const sortingComponent = document.querySelector('sorting-filter-component');
+      if (sortingComponent) {
+        const statusValue = sortingComponent.querySelector('.sorting-status-value');
+        if (statusValue) {
+          sortValueDisplay.textContent = statusValue.textContent.trim();
+        }
+      }
+    };
+    
+    // Update sort display on load and when filters update
+    updateSortDisplay();
+    document.addEventListener('filter:update', () => {
+      setTimeout(updateSortDisplay, 100);
+    });
+    
+    // Update filter count display
+    const updateFilterDisplay = () => {
+      const filterButton = document.getElementById('mobile-filter-button');
+      if (!filterButton) return;
+      
+      const filterValueDisplay = filterButton.querySelector('.collection-mobile-sticky-bar__value');
+      if (!filterValueDisplay) return;
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const activeFilterCount = Array.from(urlParams.keys()).filter(key => key.startsWith('filter.')).length;
+      
+      if (activeFilterCount > 0) {
+        // Count actual active filter values
+        let totalActiveValues = 0;
+        urlParams.forEach((value, key) => {
+          if (key.startsWith('filter.')) {
+            // Count comma-separated values
+            const values = value.split(',').filter(v => v.trim() !== '');
+            totalActiveValues += values.length;
+          }
+        });
+        filterValueDisplay.textContent = totalActiveValues > 0 ? `${totalActiveValues} Applied` : 'No Filter Applied';
+      } else {
+        filterValueDisplay.textContent = 'No Filter Applied';
+      }
+    };
+    
+    // Update filter display on load and when filters update
+    updateFilterDisplay();
+    document.addEventListener('filter:update', () => {
+      setTimeout(updateFilterDisplay, 100);
+    });
+    
     const resultsList = document.querySelector('results-list');
     
     if (resultsList) {
@@ -306,6 +393,77 @@
         collection: collection
       %}
     {% endpaginate %}
+  </div>
+
+  {%- comment -%} Mobile sticky bottom bar for Sort By and Filter {%- endcomment -%}
+  {%- liquid
+    assign sort_by = collection.sort_by | default: collection.default_sort_by
+    assign current_sort_name = 'Featured'
+    for option in collection.sort_options
+      if option.value == sort_by
+        assign current_sort_name = option.name
+      endif
+    endfor
+    
+    assign total_active_filters = 0
+    for filter in collection.filters
+      case filter.type
+        when 'price_range'
+          if filter.min_value.value != null or filter.max_value.value != null
+            assign total_active_filters = total_active_filters | plus: 1
+          endif
+        when 'boolean'
+          if filter.active_values[0].value
+            assign total_active_filters = total_active_filters | plus: 1
+          endif
+        else
+          assign active_value_count = filter.active_values | size
+          assign total_active_filters = total_active_filters | plus: active_value_count
+      endcase
+    endfor
+  -%}
+  
+  <div class="collection-mobile-sticky-bar" data-mobile-sticky-bar>
+    <div class="collection-mobile-sticky-bar__divider"></div>
+    <button 
+      type="button" 
+      class="collection-mobile-sticky-bar__button collection-mobile-sticky-bar__button--sort"
+      id="mobile-sort-button"
+      aria-label="Sort By"
+    >
+      <svg class="collection-mobile-sticky-bar__icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 3V17M10 3L6 7M10 3L14 7M10 17L6 13M10 17L14 13" stroke="#1D425A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="collection-mobile-sticky-bar__content">
+        <span class="collection-mobile-sticky-bar__label">Sort By</span>
+        <span class="collection-mobile-sticky-bar__value" data-sort-value>{{ current_sort_name }}</span>
+      </div>
+    </button>
+    
+    <button 
+      type="button" 
+      class="collection-mobile-sticky-bar__button collection-mobile-sticky-bar__button--filter"
+      id="mobile-filter-button"
+      aria-label="Filter"
+      on:click="#filters-drawer/showDialog"
+    >
+      <svg class="collection-mobile-sticky-bar__icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 5H17M5 10H15M7 15H13" stroke="#1D425A" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="3" cy="5" r="1.5" fill="#1D425A"/>
+        <circle cx="5" cy="10" r="1.5" fill="#1D425A"/>
+        <circle cx="7" cy="15" r="1.5" fill="#1D425A"/>
+      </svg>
+      <div class="collection-mobile-sticky-bar__content">
+        <span class="collection-mobile-sticky-bar__label">Filter</span>
+        <span class="collection-mobile-sticky-bar__value">
+          {% if total_active_filters > 0 %}
+            {{ total_active_filters }} Applied
+          {% else %}
+            No Filter Applied
+          {% endif %}
+        </span>
+      </div>
+    </button>
   </div>
 </results-list>
 
@@ -506,6 +664,90 @@
       height: 324px;
       object-fit: cover;
     }
+  }
+
+  /* Mobile sticky bottom bar */
+  .collection-mobile-sticky-bar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background-color: #F5F5F0;
+    border-top: 1px solid #E5E5E0;
+    padding: 12px 16px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-mobile-sticky-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    
+    /* Add padding to bottom of collection to account for sticky bar */
+    results-list {
+      padding-bottom: 80px;
+    }
+  }
+
+  .collection-mobile-sticky-bar__divider {
+    width: 1px;
+    height: 40px;
+    background-color: #E5E5E0;
+    margin: 0 8px;
+  }
+
+  .collection-mobile-sticky-bar__button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: background-color 0.2s ease;
+  }
+
+  .collection-mobile-sticky-bar__button:active {
+    background-color: rgba(29, 66, 90, 0.05);
+  }
+
+  .collection-mobile-sticky-bar__icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .collection-mobile-sticky-bar__content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .collection-mobile-sticky-bar__label {
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 140%;
+    color: #1D425A;
+    margin-bottom: 2px;
+  }
+
+  .collection-mobile-sticky-bar__value {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 140%;
+    color: #666666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
 {% endstylesheet %}
 
