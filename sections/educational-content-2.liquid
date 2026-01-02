@@ -1,0 +1,442 @@
+
+{% liquid
+  # Get educational content metaobject from product metafield
+  assign educational_content = blank
+  assign content_image = blank
+  assign content_heading = blank
+  assign content_body_field = blank
+  assign content_bulletpoints = blank
+  assign thumbnail_1 = blank
+  assign thumbnail_2 = blank
+  
+  assign metafield_namespace = section.settings.metafield_namespace | default: 'custom'
+  assign metafield_key = section.settings.metafield_key | default: 'cb_educational_content_2'
+  
+  # Get metaobject from product metafield
+  if product != blank
+    assign content_metafield = product.metafields[metafield_namespace][metafield_key]
+    
+    if content_metafield != blank
+      assign educational_content = content_metafield.value
+      
+      if educational_content != blank
+        assign content_image = educational_content.image.value | default: educational_content.image
+        assign content_heading = educational_content.heading.value | default: educational_content.heading | default: ''
+        assign content_body_field = educational_content.body
+        assign content_bulletpoints = educational_content.bullet_points.value
+        assign thumbnail_1 = educational_content.thumbnail_1.value | default: educational_content.thumbnail_1
+        assign thumbnail_2 = educational_content.thumbnail_2.value | default: educational_content.thumbnail_2
+      endif
+    endif
+  endif
+
+  # Determine image position
+  assign image_position = section.settings.image_position | default: 'right'
+  assign image_first = false
+  if image_position == 'left'
+    assign image_first = true
+  endif
+%}
+
+{% if educational_content != blank %}
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+
+<div
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+    educational-content-section
+  "
+  style="
+    {%- render 'spacing-style', settings: section.settings -%}
+    {%- render 'gap-style', value: section.settings.gap -%}
+  "
+>
+  <div class="educational-content educational-content--image-{{ image_position }}">
+    {% if image_first %}
+      {% if content_image != blank %}
+        <div class="educational-content__image">
+          {{
+            content_image
+            | image_url: width: 1200
+            | image_tag:
+              class: 'educational-content__image-img',
+              loading: 'lazy',
+              sizes: '(min-width: 750px) 50vw, 100vw',
+              widths: '240, 352, 832, 1200'
+          }}
+        </div>
+      {% endif %}
+    {% endif %}
+
+    <div class="educational-content__text">
+      {% if content_heading != blank %}
+        <h2 class="educational-content__heading">{{ content_heading }}</h2>
+      {% endif %}
+      {% if content_bulletpoints != blank and content_bulletpoints.size > 0 %}
+        <div class="educational-content__bulletpoints">
+          <ul class="educational-content__bulletpoints-list">
+            {% for bulletpoint in content_bulletpoints %}
+              <li class="educational-content__bulletpoint-item">
+                <span class="educational-content__bulletpoint-icon">
+                  <img src="{{ 'star-bullet-icon-pink.png' | asset_url }}" alt="" class="educational-content__bulletpoint-icon-img">
+                </span>
+                <span class="educational-content__bulletpoint-text">{{ bulletpoint }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+      {% if content_body_field != blank %}
+        <div class="educational-content__body">
+          {{ content_body_field | metafield_tag }}
+        </div>
+      {% endif %}
+      {% if thumbnail_1 != blank or thumbnail_2 != blank %}
+        <div class="educational-content__thumbnails">
+          {% if thumbnail_1 != blank %}
+            <div class="educational-content__thumbnail">
+              {{
+                thumbnail_1
+                | image_url: width: 600
+                | image_tag:
+                  class: 'educational-content__thumbnail-img',
+                  loading: 'lazy',
+                  sizes: '(min-width: 750px) 25vw, 50vw',
+                  widths: '240, 352, 600'
+              }}
+            </div>
+          {% endif %}
+          {% if thumbnail_2 != blank %}
+            <div class="educational-content__thumbnail">
+              {{
+                thumbnail_2
+                | image_url: width: 600
+                | image_tag:
+                  class: 'educational-content__thumbnail-img',
+                  loading: 'lazy',
+                  sizes: '(min-width: 750px) 25vw, 50vw',
+                  widths: '240, 352, 600'
+              }}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    {% unless image_first %}
+      {% if content_image != blank %}
+        <div class="educational-content__image">
+          {{
+            content_image
+            | image_url: width: 1200
+            | image_tag:
+              class: 'educational-content__image-img',
+              loading: 'lazy',
+              sizes: '(min-width: 750px) 50vw, 100vw',
+              widths: '240, 352, 832, 1200'
+          }}
+        </div>
+      {% endif %}
+    {% endunless %}
+  </div>
+</div>
+{% endif %}
+
+{% stylesheet %}
+  .educational-content-section {
+    width: 100%;
+  }
+
+  .educational-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .educational-content__image {
+    width: 100%;
+    order: 1;
+  }
+
+  .educational-content__image-img {
+    width: 100%;
+    max-height: 474px;
+    object-fit: cover;
+    display: block;
+    border-radius: var(--border-radius, 0);
+  }
+
+  .educational-content__text {
+    width: 100%;
+    order: 2;
+  }
+
+  .educational-content__heading {
+    margin: 0;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 146%;
+  }
+
+  .educational-content__bulletpoints {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+
+  .educational-content__bulletpoints-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .educational-content__bulletpoint-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 150%;
+  }
+
+  .educational-content__bulletpoint-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  .educational-content__bulletpoint-icon-img {
+    width: 17px;
+    height: 17px;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .educational-content__bulletpoint-text {
+    flex: 1;
+  }
+
+  @media screen and (min-width: 750px) {
+    .educational-content__bulletpoint-item {
+      gap: 8px;
+    }
+    .educational-content__bulletpoints {
+      margin-bottom: 26px;
+    }
+  }
+
+  .educational-content__body {
+    width: 100%;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 150%;
+  }
+
+  .educational-content__body p:first-child {
+    margin-top: 0;
+  }
+
+  .educational-content__body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .educational-content__thumbnails {
+    display: flex;
+    gap: 12px;
+  }
+
+  .educational-content__thumbnail {
+    flex-shrink: 0;
+    width: 85px;
+    height: 85px;
+  }
+
+  .educational-content__thumbnail-img {
+    width: 85px;
+    height: 85px;
+    object-fit: cover;
+    display: block;
+    border-radius: var(--border-radius, 0);
+  }
+
+  @media screen and (min-width: 750px) {
+    .educational-content__thumbnails {
+      gap: 20px;
+    }
+
+    .educational-content__thumbnail {
+      width: 104px;
+      height: 104px;
+    }
+
+    .educational-content__thumbnail-img {
+      width: 104px;
+      height: 104px;
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .educational-content {
+      flex-direction: row;
+      align-items: center;
+      gap: 125px;
+    }
+
+    .educational-content__image {
+      flex: 0 0 auto;
+      width: 50%;
+      max-width: 623px;
+      order: 1;
+      margin-right: auto;
+    }
+
+    .educational-content__text {
+      flex: 1;
+      min-width: 0;
+      order: 2;
+    }
+
+    .educational-content__heading {
+      font-size: 30px;
+      margin-bottom: 24px;
+    }
+
+    .educational-content--image-right .educational-content__image {
+      order: 2;
+      margin-right: 0;
+      margin-left: auto;
+    }
+
+    .educational-content--image-right .educational-content__text {
+      order: 1;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Educational Content 2",
+  "tag": "section",
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "class": "educational-content",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "Image Position",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "right"
+    },
+    {
+      "type": "header",
+      "content": "Metafield Settings"
+    },
+    {
+      "type": "text",
+      "id": "metafield_namespace",
+      "label": "Metafield Namespace",
+      "default": "custom",
+      "info": "The namespace of the product metafield (e.g., 'custom', 'cb')"
+    },
+    {
+      "type": "text",
+      "id": "metafield_key",
+      "label": "Metafield Key",
+      "default": "cb_educational_content_2",
+      "info": "The key of the product metafield containing the educational content metaobject"
+    },
+    {
+      "type": "header",
+      "content": "t:content.section_layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:settings.width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:options.page"
+        },
+        {
+          "value": "full-width",
+          "label": "t:options.full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "t:settings.gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:settings.color_scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 32
+    }
+  ],
+  "presets": [
+    {
+      "name": "Educational Content 2",
+      "category": "t:categories.text"
+    }
+  ]
+}
+{% endschema %}
+
