@@ -1,0 +1,168 @@
+{% comment %}
+    Renders a list of menu items
+    Accepts:
+    - linklist: {Object} Linklist Liquid object (required)
+    - wrapper_class: {String} CSS wrapper class for the navigation (optional)
+
+    Usage:
+    {% include 'site-nav', linklist: section.settings.main_linklist, wrapper_class: 'site-nav--centered' %}
+{% endcomment %}
+<ul class="site-nav list--inline{% if wrapper_class != blank %} {{ wrapper_class }}{% endif %}" id="SiteNav">
+  {% for link in linklists[linklist].links %}
+    {%- assign child_list_handle = link.title | handleize -%}
+ 
+    {% comment %}
+      Check if third-level nav exists on each parent link.
+    {% endcomment %}
+    {%- assign three_level_nav = false -%}
+    {% if link.links != blank %}
+      {% if link.levels == 2 %}
+        {%- assign three_level_nav = true -%}
+      {% endif %}
+    {% endif %}
+
+  
+  {% assign link_titles = link.title | split: '[' %}
+  {% assign links_title_1 = link_titles[0] %}
+  {% assign links_titles1 = link_titles[0] | handleize | remove: '-' %}
+
+  {%- comment -%}CD{%- endcomment -%}
+  {%- assign has_image = false -%}
+  {%- if section.settings.menus_title != blank -%}
+    {%- if section.settings.menus_title contains link.title -%}
+    {%- assign has_image = true -%}
+    {%- endif -%}
+  {%- endif -%}
+  
+    {% if link.links != blank %}
+      <li class="site-nav--has-dropdown{% if link.title == 'Little IA Loves' %} menu_color_change{% endif %}{% if link.title == 'Final Sale' %} color_title_red{% endif %} {%if has_image == false %} sub_menu_link_list{%- endif -%} {% if three_level_nav %} site-nav--has-centered-dropdown{% endif %}{% if link.active %} site-nav--active{% endif %}" data-has-dropdowns>
+        <a href="{{link.url}}" class="site-nav-main_links{% if link.title == 'Paw Patrol' %} ranbow_color{% endif %}">
+          <button class="{% if link.title contains 'small_text' %}button_has_small_text {% endif %}site-nav__link site-nav__link--main site-nav__link--button{% if link.child_active %} site-nav__link--active{% endif %}" type="button" aria-expanded="false" aria-controls="SiteNavLabel-{{ child_list_handle }}">
+            {% if link.title == 'Paw Patrol'  %}
+              <p class="new_label">New</p>
+            <span>
+              P
+            </span>
+            <span>
+              a
+            </span>
+            <span>
+              w
+            </span>
+            <span>
+               P
+            </span>
+            <span>
+              a
+            </span>
+            <span>
+              t
+            </span>
+            <span>
+              r
+            </span>
+            <span>
+              o
+            </span>
+            <span>
+              l
+            </span>
+            {% else %}
+              <span class="site-nav__label main_menu_label{% if link.title contains 'Christmas' %} label_with_hat{% endif %}">
+                {{ link.title }}
+              </span>
+             {% endif %}
+            {% include 'icon-chevron-down' %}
+          </button>
+        </a>
+        <div class="site-nav__dropdown{% if three_level_nav %} site-nav__dropdown--centered{% endif %}" id="SiteNavLabel-{{ child_list_handle }}">
+		
+          {% for megaimage in linklists.megamenu-images.links %}
+           {% assign imagefor = link.title | downcase | strip %}
+           {% assign imagematch = megaimage.title | downcase | strip %}
+           {% if imagefor contains imagematch %}
+             <div class="side_img_menu hide" style="background-image:url('{{- megaimage.url -}}');width:400px;height:200px;background-size:cover;"></div>
+           {% endif%}
+          {% endfor %}
+          <div class="right_content">
+          <h4><a href="{{link.url}}">{{link.title}}</a></h4>  
+          {% if three_level_nav %}
+            <div class="site-nav__childlist">
+              <ul class="site-nav__childlist-grid">
+                {% if link.links != blank %}
+                  {% for childlink in link.links %}
+
+                    <li class="site-nav__childlist-item">
+                      <a href="{{ childlink.url }}"
+                        class="site-nav__link site-nav__child-link site-nav__child-link--parent"
+                        {% if childlink.current %} aria-current="page"{% endif %}
+                      >
+                        <span class="site-nav__label first_child_label">{{ childlink.title | escape }}</span>
+                      </a>
+
+                      {% if childlink.links != blank %}
+                        <ul>
+                        {% for grandchildlink in childlink.links %}
+                          <li>
+                            <a href="{{ grandchildlink.url }}"
+                            class="site-nav__link site-nav__child-link"
+                            {% if grandchildlink.current %} aria-current="page"{% endif %}
+                          >
+                              <span class="site-nav__label {% if grandchildlink.title == 'view all' %} for-line{% endif %}">{{ grandchildlink.title | escape }}</span>
+                            </a>
+                          </li>
+                        {% endfor %}
+                        </ul>
+                      {% endif %}
+
+                    </li>
+                  {% endfor %}
+                {% endif %}
+              </ul>
+            </div>
+
+          {% else %}
+            <ul>
+              {% for childlink in link.links %}
+                <li>
+                  <a href="{{ childlink.url }}"
+                  class="site-nav__link site-nav__child-link{% if forloop.last %} site-nav__link--last{% endif %}"
+                  {% if childlink.current %} aria-current="page"{% endif %}
+                >
+                    <span class="site-nav__label">{{ childlink.title | escape }}</span>
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+           
+          {% if has_image %}  
+          </div>
+          {% endif %}
+        </div>
+      </li>
+    {% else %}
+      <li class="{% if link.title == 'Paw Patrol' %}ranbow_color{% endif %}{% if link.title == 'Little IA Loves' %}menu_color_change{% endif %}{% if link.active %} site-nav--active{% endif %} {% if link.title == 'Christmas' %} color_red{% endif %}">
+      {% if link.title == 'Back to School' or link.title == 'Paw Patrol' %}<p class="new_label">New</p>{% endif %}
+        <a href="{{ link.url }}"
+          class="site-nav__link site-nav__link--main{% if link.active %} site-nav__link--active{% endif %}"
+          {% if link.current %} aria-current="page"{% endif %}
+        >
+        {% if link.title == 'Paw Patrol' %}
+            <span>P</span>
+            <span>a</span>
+            <span>w </span>
+            <span> P</span>
+            <span>a</span>
+            <span>t</span>
+            <span>r</span>
+            <span>o</span>
+            <span>l</span>
+            {% else %}
+              <span class="site-nav__label main_menu_label{% if link.title contains 'Christmas' %} label_with_hat{% endif %}">{{ link.title | escape }}</span>
+            {% endif %}
+        </a>
+      </li>
+    {% endif %}
+  {% endfor %}
+</ul>

@@ -1,0 +1,93 @@
+<div class="review_slider">
+  <div class="page-width">
+    
+    {% if section.settings.heading != blank %}
+      <div class="section-header text-center">
+        <h2>{{ section.settings.heading | escape }}</h2>
+      </div>
+    {% endif %}
+    <div class="review_slider_outer" style="position: relative;">
+    <div class="review_arrow review_arrow_prev">{% render 'icon-arrow-prev' %}</div>
+    <div class="review_slider_wrap{% if section.blocks.size > 4 %} review_slider_main{% endif %}">
+      {% for block in section.blocks %}
+        <div class="review_slider_inner">
+         <div class="heading_container">
+           <div class="title_wrapper">
+             {% if block.settings.review_heading != blank %}
+                <h1>{{ block.settings.review_heading }}</h1>
+             {% endif %}
+            </div>
+            <div class="rating_and_name">
+              <div class="rating_icon">
+                {% if  block.settings.star %}
+                  {% render 'icon-4_star' %}
+                {% else %}
+                  {% render 'icon-5_star' %}
+                {% endif %}
+              </div>
+              <p class="rating_name">
+                {{ block.settings.author_name }}
+              </p>
+            </div>
+         </div> 
+         <div class="description_wrapper">
+           <div class="quotes">
+             {{ block.settings.text }}
+           </div>
+         </div>
+        </div>
+      {% endfor %}
+    </div>
+  
+     <div class="review_arrow review_arrow_next">{% render 'icon-arrow-next' %}</div>
+      </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Review slider",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "label": "Heading",
+      "id": "heading"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "slide",
+      "settings": [
+        {
+          "type": "text",
+          "label": "Review heading",
+          "id": "review_heading"
+        },
+        {
+          "type": "text",
+          "label": "Author's name",
+          "id": "author_name"
+        },
+        {
+          "type": "richtext",
+          "label": "Text",
+          "id": "text"
+        },
+        {
+          "type": "checkbox",
+          "label": "4 star",
+          "id": "star",
+          "info": "Default 5 star"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Review slider"
+    }
+  ]
+}
+{% endschema %}

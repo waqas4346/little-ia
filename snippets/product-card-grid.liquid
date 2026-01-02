@@ -1,0 +1,154 @@
+{% comment %}
+Renders a product card using "Grid" style
+Accepts:
+- max_height: {Number} Maximum height of the product's image (required)
+- product: {Object} Product Liquid object (required)
+- show_vendor: {Boolean} Show the product's vendor depending on the section setting (optional)
+
+Usage:
+{% include 'product-card-grid', max_height: max_height, product: product, show_vendor: section.settings.show_vendor %}
+{% endcomment %}
+
+{%- assign personalized_name = false -%}
+{%- for cust_tag in product.tags -%}
+  {% assign cust_tag_lowercase = cust_tag | downcase %}
+  {%- if cust_tag_lowercase contains 'personalized_name' -%}
+    {%- assign personalized_name = true -%}
+  {%- endif -%}
+{%- endfor -%}
+
+<div class="grid-view-item{% unless product.available %} grid-view-item--sold-out{% endunless %} product-card product-card_grid_item">
+  <a class="grid-view-item__link grid-view-item__image-container full-width-link" href="{{ product.url | within: collection }}"{% if gift_sets == true %} pro_img_url="{{ product.featured_media | img_url: 'medium' }}" data-title="{{ product.title }}" data-price="{{ product.price }}" data-avilable="{{ product.available }}" data-pro-id="{{ product.selected_or_first_available_variant.id }}" data-personalized-name="{% if personalized_name == true %}true{% else %}false{% endif %}"{% endif %}>
+    <span class="visually-hidden">{{ product.title }}</span>
+  </a>
+
+  {% unless product.has_only_default_variant %}
+    {% assign size_variant = false %}
+    {%- for option in product.options -%}
+      {%- assign downcase_opt = option | downcase -%}
+      {%- if downcase_opt == 'Size' or downcase_opt == 'size' -%}
+        {% assign size_variant = true %}
+      {%- endif -%}
+    {%- endfor -%}
+
+    {% if size_variant == true %}
+      <div class="gift_bar_dropdown hidden hide">
+        {%- for option in product.options -%}
+          {%- assign opt = option | downcase -%}
+          {%- assign opt_index = forloop.index0 -%}
+          {%- if opt == 'Size' or opt == 'size' -%}
+            <select class="size_variant">
+              {% assign values = '' %}
+              {% for variant in product.variants %}
+                {% assign value = variant.options[opt_index] %}
+                {% unless values contains value %}
+                  {% assign values = values | join: ',' %}
+                  {% assign values = values | append: ',' | append: value %} 
+                  {% assign values = values | split: ',' %}
+                    <option value="{{ variant.id }}">{{ value }}</option>
+                {% endunless %}
+              {% endfor %}
+            </select>
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    {% endif %}
+  {% endunless %}
+  
+  {% capture img_id %}ProductCardImage-{{ section.id }}-{{ product.id }}{% endcapture %}
+  {% capture wrapper_id %}ProductCardImageWrapper-{{ section.id }}-{{ product.id }}{% endcapture %}
+  {%- assign preview_image = product.featured_media.preview_image -%}
+  {%- assign img_url = preview_image | img_url: '1x1' | replace: '_1x1.', '_{width}x.' -%}
+
+  {% unless preview_image == blank %}
+  {% include 'image-style', image: preview_image, height: max_height, wrapper_id: wrapper_id, img_id: img_id %}
+  {% endunless %}
+ 
+      <div class="product-card__image-with-placeholder-wrapper" data-image-with-placeholder-wrapper>
+        <div id="" class="grid-view-item__image-wrapper product-card__image-wrapper cardImgWrap js">{%- comment -%}CD*{%- endcomment -%}
+          {%- comment -%}[CD]<div style="padding-top:{% unless preview_image == blank %}{{ 1 | divided_by: preview_image.aspect_ratio | times: 100 }}%{% else %}100%{% endunless %};">{%- endcomment -%}
+            <div class="reveal">
+              <img id=""
+                   class="grid-view-item__image lazyload"
+                   alt="{{ preview_image.alt }}"
+                   data-src="{{ img_url }}"
+                   data-widths="[180, 360, 540, 720, 900, 1080, 1296, 1512, 1728, 2048]"
+                   data-aspectratio="{{ preview_image.aspect_ratio }}"
+                   data-sizes="auto"
+                   data-image>
+
+              <img class="featured-hidden" src="{{ product.images.last | img_url: '450x450' }}" alt="{{ product.images.last.alt | escape }}" />
+            </div>
+          {% unless product.available %}
+            <div class="price__badge price__badge--sold-out sold_out"> <span>sold out </span> </div>
+          {% endunless %}
+          {%- comment -%}[CD]</div>{%- endcomment -%}
+        </div>
+        <div class="placeholder-background placeholder-background--animation" data-image-placeholder></div>
+      </div>
+{% if product.tags contains 'B1T1' %}
+  <div class="badge-bogo">
+    <img src="https://cdn.shopify.com/s/files/1/0289/3240/7375/files/buy_one_get_one_free.png?v=1732177906" alt="Buy One Get One Free">
+  </div>
+{% endif %}
+
+  {% if product.tags contains 'FLB' %}
+  <div class="badge-bogo">
+    <img src="https://cdn.shopify.com/s/files/1/0289/3240/7375/files/free_lb.png?v=1732275894" alt="Free Lunch Bag">
+  </div>
+{% endif %}
+
+  {% if product.tags contains 'FGIFT' %}
+  <div class="badge-bogo">
+    <img src="https://cdn.shopify.com/s/files/1/0289/3240/7375/files/FREE_GIFT_1.png?v=1732279060" alt="Free Gift">
+  </div>
+{% endif %}
+
+  <noscript>
+    {% capture image_size %}{{ max_height }}x{{ max_height }}{% endcapture %}
+    <img class="grid-view-item__image" src="{{ preview_image | img_url: image_size, scale: 2 }}" alt="{{ preview_image.alt }}" style="max-width: {{ max_height | times: preview_image.aspect_ratio }}px;">
+  </noscript>
+  
+  <div class="h4 grid-view-item__title product-card__title" aria-hidden="true">{{ product.title }}</div>
+  {% include 'product-price-listing', product: product, show_vendor: show_vendor %}
+  {% if product.tags contains 'littleia_loves' %}
+    <span class='tag_wise_budge littleia_loves_badge'><img src='https://cdn.shopify.com/s/files/1/0289/3240/7375/files/LITTLE_IA_LOVES_ICON_1.png?v=1683637538'></span>
+  {% endif %}
+  
+    {% for tag in product.tags %}
+      {% if tag == 'bad_bestseller' %}
+        <div class="bad_bestseller">
+           <h4>BEST SELLER</h4>
+        </div>
+      {% endif %}
+      {% if tag == 'SELLINGFAST' %}
+      <div class="right_content selling_fast">
+        <h4>SELLING FAST</h4>
+      </div>
+      {% elsif  tag == 'NEWIN'  %}
+      <div class="right_content newin">
+        <h4 style="color:#7493b2;">NEW IN</h4>
+      </div>
+      {% elsif  tag == 'BESTSELLER'  %}
+      <div class="right_content bestseller">
+        <h4 style="color:#d1e4e0;">BESTSELLER</h4>
+      </div>
+      {% elsif  tag == 'MUMSCHOICE'  %}
+      <div class="right_content mums_choice">
+        <h4 style="color:#e6bbca;">MUM'S CHOICE</h4>
+      </div>
+      {% elsif  tag == 'sameday_collection' %}
+      <div class="right_content sameday">
+        <h4><img src="https://cdn.shopify.com/s/files/1/0289/3240/7375/files/0_1.png?v=1689074350"></h4>
+      </div>
+      {% elsif  tag == 'personalized'  %}
+      <div class="right_content personalized">
+        <h4><img src="https://cdn.shopify.com/s/files/1/0289/3240/7375/files/Icons_web.png?v=1690891538"></h4>
+      </div>
+     {% elsif  tag == 'pre-order'  %}
+        <div class='personalized_box'>
+          <h4>Pre order</h4>
+        </div>
+      {% endif %}
+    {% endfor %}
+</div>

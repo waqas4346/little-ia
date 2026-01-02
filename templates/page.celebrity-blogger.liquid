@@ -1,0 +1,17 @@
+<div class="page-width celebrity-blogger-section">
+  <div class="grid">
+    <div class="grid__item">
+      <div class="section-header text-center">
+        <h1>{{ page.title }}</h1>
+      </div>
+
+      <div class="rte">
+        {{ page.content }} 
+        
+        <div class="celebrity-blogger article__grid-meta">
+        	{% section 'celebrity-blogger-content' %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

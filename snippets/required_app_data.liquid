@@ -1,0 +1,6 @@
+<script>
+var requiredAppData = {
+    template: {{ template | json }},
+    collectionHandles: {{collections | map: 'handle' | join: ',' | json}}
+}
+</script>

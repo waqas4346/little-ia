@@ -1,0 +1,1 @@
+$(function(){var t="#PrintGiftCard",i="#GiftCardDigits",e=$("#QrCode");new QRCode(e[0],{text:e.attr("data-identifier"),width:120,height:120,imageAltText:theme.strings.qrImageAlt}),$(t).on("click",function(){window.print()}),$(i).on("focus",this.select)});

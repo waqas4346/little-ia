@@ -1,0 +1,59 @@
+{%- if section.settings.left_text != blank or section.settings.middle_text != blank or section.settings.button_label != blank -%}
+  <div class="custom_donation">
+    <div class="page-width">
+      <div class="custom_donation_content">
+        {%- if section.settings.left_text != blank -%}
+          <div class="custom_donation_block order_text_block">
+            <span>{{ section.settings.left_text }}</span>
+          </div>
+        {%- endif -%}
+        <div class="custom_donation_block equal_text_block">
+          <span>=</span>
+        </div>
+        {%- if section.settings.middle_text != blank -%}
+          <div class="custom_donation_block desc_text_block">
+            <span>{{ section.settings.middle_text }}</span>
+          </div>
+        {%- endif -%}
+        {%- if section.settings.button_label != blank -%}
+          <div class="custom_donation_block link_text_block">
+            <a href="{{ section.settings.button_url }}">{{ section.settings.button_label }}</a>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+  {
+    "name": "Custom Donation",
+    "settings": [
+      {
+        "type": "textarea",
+        "id": "left_text",
+        "label": "Left Text"
+      },
+      {
+        "type": "textarea",
+        "id": "middle_text",
+        "label": "Description"
+      },
+      {
+        "type": "text",
+        "id": "button_label",
+        "label": "Button Label"
+      },
+      {
+        "type": "url",
+        "id": "button_url",
+        "label": "Button URL"
+      }
+	],
+	"presets": [
+      {
+        "name": "Custom Donation"
+      }
+    ]
+  }
+{% endschema %}

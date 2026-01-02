@@ -1,0 +1,76 @@
+<div class="image-and-text-section">
+  <div class="page-width">
+  {% for block in section.blocks %}
+  <div class="list-block">
+    {% if block.settings.image != blank %}
+    <div class="images">
+      <img src="{{ block.settings.image | img_url: '2048x2048' }}">
+    </div>
+    {% endif %}
+    <div class="title_text_bgimg">
+      <div class="title_text">
+        {% if block.settings.title != blank %}<h1>{{ block.settings.title }}</h1>{% endif %}
+        {% if block.settings.text != blank %}<div class="desq">{{ block.settings.text }}</div>{% endif %}
+        {% if block.settings.link != blank or block.settings.button_text != blank %}
+        <a href="{{ block.settings.link }}" class="btn">{{ block.settings.button_text }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+</div>
+{% schema %}
+  {
+    "name": "Image And Text",
+    "blocks": [
+		{
+			"type": "block",
+			"name": "block",
+			"settings": [
+				{
+					"type": "image_picker",
+					"id": "image",
+					"label": "Image"
+				},
+				{
+					"type": "text",
+					"id": "title",
+					"label": "Title"
+				},
+				{
+					"type": "richtext",
+					"id": "text",
+					"label": "Description"
+				},
+				{
+					"type": "url",
+					"id": "link",
+					"label": "Link"
+				},
+				{
+					"type": "text",
+					"id": "button_text",
+					"label": "Button Text"
+				},
+                {
+                  "type": "color",
+                  "id": "back_color",
+                  "label": "Background Color"
+                },
+                {
+                  "type": "color",
+                  "id": "text_color",
+                  "label": "text Color"
+                }
+			]
+		}
+	],
+	"presets": [
+      {
+        "name": "Image And Text",
+        "category": "Image"
+      }
+    ]
+  }
+{% endschema %}

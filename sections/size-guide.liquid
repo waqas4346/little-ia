@@ -1,0 +1,26 @@
+<div class="size-guide-section">
+  <div class="size-guide-popup">
+    <div class="popup_close">
+      {% include 'icon-close' %}
+    </div>
+      
+    {% for collection in product.collections limit: 1 %}
+    {% if collection.metafields.custom.size_chart != blank %}
+      <img class="new" src="{{ collection.metafields.custom.size_chart.value | img_url: '2048x2048' }}">
+    {% endif %}
+    {% endfor %}
+    
+  </div>
+</div>
+{% schema %}
+  {
+    "name": "Size Guide",
+    "settings": [
+		{
+			"type": "image_picker",
+			"id": "image",
+			"label": "Image" 
+		}
+	]
+  }
+{% endschema %}

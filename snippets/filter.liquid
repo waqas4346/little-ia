@@ -1,0 +1,147 @@
+<div class="collectionFilter">
+  <div class="filterToggle">
+    <button class="btnFilterToggle btn jsFilterToggle">{{ section.settings.sidebar_menu_title }}</button>
+    {%- comment -%} CD {%- endcomment -%}
+    <div class="form-horizontal js-mobile_sort_by_filter sortBy-select {% if collection.all_tags.size > 0 %}tag-sort-exists{%endif%}">
+
+      {% assign sort_by = collection.sort_by | default: collection.default_sort_by %}
+      {%comment%}<label for="SortBy">{{ 'collections.sorting.title' | t }} :</label>{%endcomment%}
+      <span id="sortBy-filterSpan">Sort By</span>
+      <ul name="sort_by" id="SortBy"
+          class="filters-toolbar__input hidden"
+          aria-describedby="a11y-refresh-page-message a11y-selection-message"
+          data-default-sortby="{{ collection.sort_by }}">
+        {%comment%}<li value="sortby"><a href="?sort_by=sortby">Sort By</a></li>{%endcomment%}
+        {% if sort_by == collection.default_sort_by %}
+        <li value="price-descending"><a href="?sort_by=created-ascending">Newest</a></li>
+        <li value="price-descending"><a href="?sort_by=best-selling">Popular</a></li>
+        {% if collection.default_sort_by != 'price-ascending' %}
+        <li value="price-ascending"{% if sort_by == "price-ascending" %} selected="selected"{% endif %}><a href="?sort_by=price-ascending">Price, low to high</a></li>
+        {% endif %}
+        {% if collection.default_sort_by != 'price-descending' %}
+        <li value="price-descending"{% if sort_by == "price-descending" %} selected="selected"{% endif %}><a href="?sort_by=price-descending">Price, high to low</a></li>
+        {% endif %}
+        {% else %}
+        <li value="price-descending"><a href="?sort_by=created-ascending">Newest</a></li>
+        <li value="price-descending"><a href="?sort_by=best-selling">Popular</a></li>
+        <li value="price-ascending"{% if sort_by == "price-ascending" %} selected="selected"{% endif %}><a href="?sort_by=price-ascending">Price, low to high</a></li>
+        <li value="price-descending"{% if sort_by == "price-descending" %} selected="selected"{% endif %}><a href="?sort_by=price-descending">Price, high to low</a></li>
+        {% endif %}
+      </ul>    
+
+    </div> 
+  </div>
+  <div class="filter">
+    <h3 class="filter-heading">{{ section.settings.sidebar_menu_title }}</h3>
+    <div class="filter-group-item">
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'menu' -%}
+      	  {%- assign link_active = false -%}
+          {%- if block.settings.menu != blank -%}
+            {%- assign menu = linklists[block.settings.menu] -%}
+      		{%- capture menus -%}
+              {%- for link in menu.links -%}
+                {%- if link.active -%}
+                  {%- assign link_active = true -%}
+       			{%- endif -%}
+                <li><a{% if link.active %} class="active"{% endif %} href="{{ link.url }}">{{ link.title }}</a></li>
+              {%- endfor -%}
+      	    {%- endcapture -%}
+            <div class="filter-group menu-group">
+              <h4 class="filter-title">{{ block.settings.title | default: menu.title }}
+                <span class="filter-icon icon-plus">{%- render 'icon-plus' -%}</span>
+                <span class="filter-icon icon-minus">{%- render 'icon-minus' -%}</span>
+              </h4>
+              <ul class="filter-opts swatch-filter">
+                {{ menus }}
+              </ul>
+            </div>
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+    <div class="filter-group-item">
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'filter' -%}
+          <div class="filter-group">
+            <h4 class="filter-title">{{ block.settings.filter_title }}
+              <span class="filter-icon icon-plus">{%- render 'icon-plus' -%}</span>
+              <span class="filter-icon icon-minus">{%- render 'icon-minus' -%}</span>
+              {% comment %}<span class="filter-icon">{%- render 'down-arrow' -%}</span>{%- endcomment -%}
+            </h4>
+            {%- assign filter_values = block.settings.filter_values | split: ',' -%}
+
+            {%- assign currentTags = '' -%}
+            {%- if current_tags != blank -%}
+              {%- assign currentTags = current_tags | join: '|' | downcase | append: '|' | prepend: '|' | replace: '$','' -%}
+            {%- endif -%}
+            
+            {%- if filter_values != blank -%}
+              <ul class="filter-opts{% if block.settings.filter_style == 'rounded' %} rounded-filter{% else %} swatch-filter{% endif %} jsFilterWrap">
+                {%- if block.settings.show_clear_link -%}
+                  <li class="link-clear">
+                    <a href="#" class="jsFilterClear">Clear</a>
+                  </li>
+                {%- endif -%}
+                {%- for filter_value in filter_values -%}
+                  {%- assign filter_val = filter_value | strip -%}
+                  {%- assign tmp_value = filter_val | downcase | append: '|' | prepend: '|' | replace: '$','' | handle -%}
+                  <li class="jsFilter{% if currentTags == tmp_value %} active{% endif %}" data="{{ filter_val | handle }}">
+                    {%- if block.settings.filter_style == 'rounded' -%}
+                      <div class="rounded-opt">
+                        <span class="rounded-label" style="background-color: {{ filter_value | split: ' ' | last | handle }};background-image: url(//cdn.shopify.com/s/files/1/0289/3240/7375/files/{{ filter_value |  replace: ' ', '_' | append: '.' | append: 'png' }});"></span>
+                        <span class="rounded-label_title" cdcd11>{{ filter_value }}</span>
+                      </div>
+                    {%- else -%}
+                      <label>{{ filter_value }}</label>
+                    {%- endif -%}
+                  </li>
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+          </div>
+      	{%- endif -%}
+     {%- if block.type == 'vendor_filter' -%}
+          <div class="filter-group" >
+            <h4 class="filter-title">{{ block.settings.vendor_title }}
+              <span class="filter-icon icon-plus">{%- render 'icon-plus' -%}</span>
+              {% comment %}     <span class="filter-icon icon-minus">{%- render 'icon-minus' -%}</span>
+              <span class="filter-icon">{%- render 'down-arrow' -%}</span>{%- endcomment -%}
+            </h4>
+            {%- assign vendor_values = block.settings.vendor_values | split: ',' -%}
+
+            {%- assign currentTags = '' -%}
+            {%- if current_tags != blank -%}
+              {%- assign currentTags = current_tags | join: '|' | downcase | append: '|' | prepend: '|' | replace: '$','' -%}
+            {%- endif -%}
+            
+          {%- if vendor_values != blank -%}
+              <ul class="filter-opts{% if block.settings.filter_style == 'rounded' %} rounded-filter{% else %} swatch-filter{% endif %} jsFilterWrap">
+                {%- if block.settings.show_clear_link -%}
+                  <li class="link-clear">
+                    <a href="#" class="jsFilterClear">Clear</a>
+                  </li>
+                {%- endif -%}
+                {%- for vendor_value in vendor_values -%}
+                  {%- assign vendor_val = vendor_value | strip -%}
+                  {%- assign vendor_tmp_value = vendor_val | downcase | append: '|' | prepend: '|' | replace: '$','' | handle -%}
+                  <li class="jsFilter{% if currentTags contains vendor_tmp_value %} active{% endif %}" data="{{ filter_val | handle }}">
+                    {%- if block.settings.filter_style == 'rounded' -%}
+                      <div class="rounded-opt">
+                        <span class="rounded-label" style="background-color: {{ vendor_value | split: ' ' | last | handle }};background-image: url({{ vendor_value | handle | append: '.' | append: 'png' | asset_url }});"></span>
+                        <span class="rounded-label_title">{{ vendor_value }}</span>
+                      </div>
+                    {%- else -%}
+                      <a href="/collections/vendors?q={{ vendor_value }}" class="venodr_fliter">{{ vendor_value }}</a>
+                    {%- endif -%}
+                  </li>
+                {%- endfor -%}
+              </ul>
+            {%- endif -%}
+          </div>
+      	{%- endif -%}
+      {%- endfor -%}
+    </div>
+  </div>
+</div>

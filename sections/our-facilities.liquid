@@ -1,0 +1,65 @@
+<div class="our-facilities">
+  <div class="page-width">
+    <div class="our-facilities-wrapper">
+      {% for block in section.blocks %}
+      <div class="facilities-list">
+        {% if block.settings.image != blank %}
+        <div class="images">
+          <img src="{{ block.settings.image | img_url: '2048x2048' }}">
+        </div>
+        {% endif %}
+        <div class="title-subtitle">
+          {% if block.settings.image != blank %}
+          <p>{{ block.settings.title-italic }}</p>
+          {% endif %}
+          {% if block.settings.image != blank %}
+          <h3>{{ block.settings.title }}</h3>
+          {% endif %}
+          {% if block.settings.image != blank %}
+          <p class="sub_title">{{ block.settings.sub_title }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% schema %}
+  {
+    "name": "Our Facilities",
+	"blocks": [
+		{
+			"name": "block",
+			"type": "block",
+			"settings": [
+				{
+					"type":"image_picker",
+					"id":"image",
+					"label":"Icon Image"
+				},
+				{
+					"type":"text",
+					"id":"title-italic",
+					"label":"Title"
+				},
+				{
+					"type":"text",
+					"id":"title",
+					"label":"Title"
+				},
+				{
+					"type":"text",
+					"id":"sub_title",
+					"label":"Sub Title"
+				}
+			]
+		}
+	],
+	"presets": [
+      {
+        "name": "Our Facilities",
+        "category": "Image"
+      }
+    ]
+  }
+{% endschema %}

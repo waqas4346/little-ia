@@ -1,0 +1,80 @@
+<div class="collection-grid-section">
+  <div class="page-width">
+    <h2 class="headings">{{ section.settings.section-heading }}</h2>
+    <div class="collection-grid">
+      {% for block in section.blocks %}
+      <div class="collection-grid-list">
+        {% if block.settings.link != blank %}
+        <a href="{{ block.settings.link }}">
+        {% endif %}
+          {% if block.settings.image != blank %}
+          <div class="images">
+            <img src="{{ block.settings.image | img_url: "2048x2048" }}">
+          </div>
+          {% endif %}
+          {% if block.settings.image != blank or block.settings.title != blank %}
+          <div class="icon-title">
+            <span class="title" {% if block.settings.text_color != blank %} style="color: {{ block.settings.text_color }}" {% endif %}>{{ block.settings.title }}</span>{% if block.settings.icon_img != blank %}<img src="{{ block.settings.icon_img | image_url }}" alt="">{% endif %}
+            {% comment %}<p>SHOP NOW</p>{% endcomment %}
+          </div>
+          {% endif %}
+        {% if block.settings.link != blank %}
+        </a>
+        {% endif %}
+      </div>
+      {% endfor%}
+    </div>
+  </div>
+</div>
+{% schema %}
+  {
+    "name": "Collections Grid",
+	"settings": [ 
+      {
+        "type": "text",
+        "id": "section-heading",
+        "label": "Header",
+		"default": "Collection headings"
+      }
+],
+    "blocks": [
+		{
+			"type": "block",
+			"name": "block",
+			"settings": [
+				{
+					"type": "image_picker",
+					"id": "image",
+					"label": "Image"
+				},
+				{
+					"type": "image_picker",
+					"id": "icon_img",
+					"label": "Icon Image"
+				},
+				{
+					"type": "text",
+					"id": "title",
+					"label": "Title"
+				},
+				{
+					"type": "url",
+					"id": "link",
+					"label": "Link"
+				},
+				{
+					"type": "color",
+					"id": "text_color",
+					"label": "Text Color"
+				}
+			]
+		}
+	],
+	"presets": [
+      {
+        "name": "Collections Grid",
+        "category": "Collection"
+      }
+    ]
+  }
+{% endschema %}

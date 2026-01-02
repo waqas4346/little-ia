@@ -1,0 +1,398 @@
+
+<!-- Swiper -->
+<div class="product-slideshow">
+  <div class="product_slideshow-row">
+    <div class="swiper-container gallery-thumbs">
+      <div class="swiper-wrapper">
+        {%- for block in section.blocks -%}
+        {%- assign block_image = block.settings.image -%}
+        <div class="swiper-slide" style="background-image:url({{ block_image | img_url: '1024x1024' }});"></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="swiper-container gallery-top">
+      <div class="swiper-wrapper">
+        {%- for block in section.blocks -%}
+        {%- assign block_product = block.settings.product-image -%}
+        <div class="swiper-slide">
+          <div class="product_slideshow-right">
+            <div class="product_slideshow-head">
+              <h2>{{ block.settings.slide_title | escape }}</h2>
+              <p>{{ block.settings.subheading | escape }}</p>
+            </div>
+            <div class="product_slideshow-img">
+              <img src="{{ block_product | img_url: '1024x1024' }}" alt="" />
+            </div>
+            <div class="product_slideshow-title">
+              <h3>{{ block.settings.product_title | escape }}</h3>
+            </div>
+            {%- if block.settings.button_label != blank and block.settings.button_link != blank -%}
+            <div class="product_slideshow-btn">
+              <a href="{{ block.settings.button_link }}" class="btn slideshow__btn">
+                  {{ block.settings.button_label | escape }}
+                </a>
+            </div>
+            {%- endif -%}
+          </div>      
+        </div>
+        {% endfor %}
+      </div>
+      <!-- Add Pagination -->
+      <div class="swiper-pagination"></div>
+      <!-- Add Arrows -->
+      <div class="swiper-button-next swiper-button"></div>
+      <div class="swiper-button-prev swiper-button"></div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+{% schema %}
+{
+  "name": {
+    "da": "Diasshow",
+    "de": "Slideshow",
+    "en": "Product Slideshow",
+    "es": "Diapositivas",
+    "fi": "Diaesitys",
+    "fr": "Diaporama",
+    "hi": "स्लाइडशो",
+    "it": "Presentazione",
+    "ja": "スライドショー",
+    "ko": "슬라이드 쇼",
+    "nb": "Lysbildefremvisning",
+    "nl": "Diavoorstelling",
+    "pt-BR": "Apresentação de slides",
+    "pt-PT": "Apresentação de diapositivos",
+    "sv": "Bildspel",
+    "th": "สไลด์โชว์",
+    "zh-CN": "幻灯片",
+    "zh-TW": "素材輪播"
+  },
+  "class": "index-section index-section--flush index-product--slideshow",
+  "max_blocks": 99,
+  "settings": [
+
+  ],
+  "blocks": [
+    {
+      "type": "image",
+      "name": {
+        "da": "Billeddias",
+        "de": "Foto-Slide",
+        "en": "Image slide",
+        "es": "Diapositiva de imagen",
+        "fi": "Kuvadia",
+        "fr": "Diapositive (image)",
+        "hi": "इमेज स्लाइड",
+        "it": "Slide immagine",
+        "ja": "画像スライド",
+        "ko": "이미지 슬라이드",
+        "nb": "Lysbilde",
+        "nl": "Afbeelding dia",
+        "pt-BR": "Slide de imagem",
+        "pt-PT": "Diapositivo de imagem",
+        "sv": "Bild i bildspel",
+        "th": "สไลด์รูปภาพ",
+        "zh-CN": "图片幻灯片",
+        "zh-TW": "圖片投影片"
+      },
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": {
+            "da": "Billede",
+            "de": "Foto",
+            "en": "Left Image",
+            "es": "Imagen",
+            "fi": "Kuva",
+            "fr": "Image",
+            "hi": "इमेज",
+            "it": "Immagine",
+            "ja": "画像",
+            "ko": "이미지",
+            "nb": "Bilde",
+            "nl": "Afbeelding",
+            "pt-BR": "Imagem",
+            "pt-PT": "Imagem",
+            "sv": "Bild",
+            "th": "รูปภาพ",
+            "zh-CN": "图片",
+            "zh-TW": "圖片"
+          }
+        },
+        {
+          "type": "text",
+          "id": "slide_title",
+          "label": {
+            "da": "Overskrift",
+            "de": "Titel",
+            "en": "Heading",
+            "es": "Título",
+            "fi": "Otsake",
+            "fr": "En-tête",
+            "hi": "शीर्षक",
+            "it": "Heading",
+            "ja": "見出し",
+            "ko": "제목",
+            "nb": "Overskrift",
+            "nl": "Kop",
+            "pt-BR": "Título",
+            "pt-PT": "Título",
+            "sv": "Rubrik",
+            "th": "ส่วนหัว",
+            "zh-CN": "标题",
+            "zh-TW": "標題"
+          },
+          "default": {
+            "da": "Billeddias",
+            "de": "Foto-Slide",
+            "en": "MUMMY + ME",
+            "es": "Diapositiva de imagen",
+            "fi": "Kuvadia",
+            "fr": "Diapositive (image)",
+            "hi": "इमेज स्लाइड",
+            "it": "Slide immagine",
+            "ja": "画像スライド",
+            "ko": "이미지 슬라이드",
+            "nb": "Lysbilde",
+            "nl": "Afbeelding dia",
+            "pt-BR": "Slide de imagem",
+            "pt-PT": "Diapositivo de imagem",
+            "sv": "Bild i bildspel",
+            "th": "สไลด์รูปภาพ",
+            "zh-CN": "图片幻灯片",
+            "zh-TW": "圖片投影片"
+          }
+        },
+        {
+          "type": "text",
+          "id": "subheading",
+          "label": {
+            "da": "Underoverskrift",
+            "de": "Untertitel",
+            "en": "Subheading",
+            "es": "Subtítulo",
+            "fi": "Alaotsikko",
+            "fr": "Sous-titre",
+            "hi": "उपशीर्षक",
+            "it": "Sottotitolo",
+            "ja": "小見出し",
+            "ko": "소제목",
+            "nb": "Underoverskrift",
+            "nl": "Subkop",
+            "pt-BR": "Subtítulo",
+            "pt-PT": "Subtítulo",
+            "sv": "Underrubrik",
+            "th": "หัวเรื่องย่อย",
+            "zh-CN": "副标题",
+            "zh-TW": "子標題"
+          },
+          "default": {
+            "da": "Fortæl dit brands historie gennem billeder",
+            "de": "Erzählen Sie Ihre Geschichte mit Fotos",
+            "en": "Looking for a matching set.",
+            "es": "Cuenta la historia de tu marca a través de videos e imágenes",
+            "fi": "Kerro tuotemerkkisi tarina kuvien kautta",
+            "fr": "Racontez votre histoire avec des images",
+            "hi": "इमेज के माध्यम से अपने ब्रांड की कहानी बताएं",
+            "it": "Racconta la storia del tuo brand con video e immagini",
+            "ja": "あなたのブランドのストーリーをビデオや画像で伝える",
+            "ko": "이미지를 통해 브랜드 스토리 이야기하기",
+            "nb": "Fortell merkevarens historie gjennom bilder",
+            "nl": "Vertel met afbeeldingen het verhaal van uw merk",
+            "pt-BR": "Conte a história da sua marca com vídeos e imagens",
+            "pt-PT": "Conte a história da sua marca através de imagens",
+            "sv": "Berätta ditt varumärkes historia genom video och bilder",
+            "th": "บอกเล่าเรื่องราวของแบรนด์คุณผ่านรูปภาพ",
+            "zh-CN": "通过图片讲述您的品牌故事",
+            "zh-TW": "用圖片講述您的品牌故事"
+          }
+        },
+        {
+          "type": "image_picker",
+          "id": "product-image",
+          "label": {
+            "da": "Billede",
+            "de": "Foto",
+            "en": "Product Image",
+            "es": "Imagen",
+            "fi": "Kuva",
+            "fr": "Image",
+            "hi": "इमेज",
+            "it": "Immagine",
+            "ja": "画像",
+            "ko": "이미지",
+            "nb": "Bilde",
+            "nl": "Afbeelding",
+            "pt-BR": "Imagem",
+            "pt-PT": "Imagem",
+            "sv": "Bild",
+            "th": "รูปภาพ",
+            "zh-CN": "图片",
+            "zh-TW": "圖片"
+          }
+        },
+        {
+          "type": "text",
+          "id": "product_title",
+          "label": {
+            "da": "Overskrift",
+            "de": "Titel",
+            "en": "Product Title",
+            "es": "Título",
+            "fi": "Otsake",
+            "fr": "En-tête",
+            "hi": "शीर्षक",
+            "it": "Heading",
+            "ja": "見出し",
+            "ko": "제목",
+            "nb": "Overskrift",
+            "nl": "Kop",
+            "pt-BR": "Título",
+            "pt-PT": "Título",
+            "sv": "Rubrik",
+            "th": "ส่วนหัว",
+            "zh-CN": "标题",
+            "zh-TW": "標題"
+          },
+          "default": {
+            "da": "Billeddias",
+            "de": "Foto-Slide",
+            "en": "Blue Fur Hoodie",
+            "es": "Diapositiva de imagen",
+            "fi": "Kuvadia",
+            "fr": "Diapositive (image)",
+            "hi": "इमेज स्लाइड",
+            "it": "Slide immagine",
+            "ja": "画像スライド",
+            "ko": "이미지 슬라이드",
+            "nb": "Lysbilde",
+            "nl": "Afbeelding dia",
+            "pt-BR": "Slide de imagem",
+            "pt-PT": "Diapositivo de imagem",
+            "sv": "Bild i bildspel",
+            "th": "สไลด์รูปภาพ",
+            "zh-CN": "图片幻灯片",
+            "zh-TW": "圖片投影片"
+          }
+        },
+{
+          "type": "text",
+          "id": "button_label",
+          "label": {
+            "da": "Knaptekst",
+            "de": "Button-Name",
+            "en": "Button label",
+            "es": "Etiqueta de botón",
+            "fi": "Tekstipainike",
+            "fr": "Texte du bouton",
+            "hi": "बटन लेबल",
+            "it": "Etichetta pulsante",
+            "ja": "ボタンのラベル",
+            "ko": "버튼 레이블",
+            "nb": "Knappetikett",
+            "nl": "Knoplabel",
+            "pt-BR": "Etiqueta de botão",
+            "pt-PT": "Etiqueta do botão",
+            "sv": "Knappetikett",
+            "th": "ป้ายกำกับปุ่ม",
+            "zh-CN": "按钮标签",
+            "zh-TW": "按鈕標籤"
+          }
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": {
+            "da": "Knaplink",
+            "de": "Button-Link",
+            "en": "Button link",
+            "es": "Enlace de la diapositiva",
+            "fi": "Painikelinkki",
+            "fr": "Lien du bouton",
+            "hi": "बटन लिंक",
+            "it": "Link slide",
+            "ja": "ボタンのリンク",
+            "ko": "버튼 링크",
+            "nb": "Kobling for knapp",
+            "nl": "Knoplink",
+            "pt-BR": "Link do slide",
+            "pt-PT": "Ligação do botão",
+            "sv": "Knapplänk",
+            "th": "ลิงก์ปุ่ม",
+            "zh-CN": "按钮链接",
+            "zh-TW": "按鈕連結"
+          }
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": {
+        "da": "Diasshow",
+        "de": "Product Slideshow",
+        "en": "Product Slideshow",
+        "es": "Diapositivas",
+        "fi": "Diaesitys",
+        "fr": "Diaporama",
+        "hi": "स्लाइडशो",
+        "it": "Presentazione",
+        "ja": "スライドショー",
+        "ko": "슬라이드 쇼",
+        "nb": "Lysbildefremvisning",
+        "nl": "Diavoorstelling",
+        "pt-BR": "Apresentação de slides",
+        "pt-PT": "Apresentação de diapositivos",
+        "sv": "Bildspel",
+        "th": "สไลด์โชว์",
+        "zh-CN": "幻灯片",
+        "zh-TW": "素材輪播"
+      },
+      "category": {
+        "da": "Billede",
+        "de": "Foto",
+        "en": "Image",
+        "es": "Imagen",
+        "fi": "Kuva",
+        "fr": "Image",
+        "hi": "इमेज",
+        "it": "Immagine",
+        "ja": "画像",
+        "ko": "이미지",
+        "nb": "Bilde",
+        "nl": "Afbeelding",
+        "pt-BR": "Imagem",
+        "pt-PT": "Imagem",
+        "sv": "Bild",
+        "th": "รูปภาพ",
+        "zh-CN": "图片",
+        "zh-TW": "圖片"
+      },
+      "settings": {
+      
+      },
+      "blocks": [
+        {
+          "type": "image"
+        },
+        {
+          "type": "image"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
+
+
+{% javascript %}
+
+
+
+{% endjavascript %}

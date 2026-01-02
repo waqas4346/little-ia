@@ -1,0 +1,50 @@
+<div class="bg-image-text-section">
+  {% if section.settings.image != blank %}
+    <div class="bg-image desktop-img" style="background-image: url({{ section.settings.image | img_url: "2048x2048" }})"></div>
+    {% if section.settings.mobileimage != blank %}
+    <div class="bg-image mobile-img" style="background-image: url({{ section.settings.mobileimage | img_url: "2048x2048" }})"></div>
+    {% else %}
+    <div class="bg-image mobile-img" style="background-image: url({{ section.settings.image | img_url: "2048x2048" }})"></div>
+    {% endif %}
+    <div class="bg-title-text_wrapper">
+      <div class="bg-title-text">
+        <h1 class="title">{{ section.settings.title }}</h1>
+        {% if section.settings.link != blank %}
+        <a class="btn" href="{{section.settings.link}}">{{section.settings.button_text}}</a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% schema %}
+  {
+    "name": "Bg Image Text",
+    "settings": [
+      {
+        "type": "image_picker",
+        "id": "image",
+        "label": "Desktop Image"
+      },
+	  {
+        "type": "image_picker",
+        "id": "mobileimage",
+        "label": "Mobile Image"
+      },
+      {
+        "type": "text",
+        "id": "title",
+        "label": "Title"
+      },
+      {
+        "type": "text",
+        "id": "button_text",
+        "label": "Button Text"
+      },
+      {
+        "type": "url",
+        "id": "link",
+        "label": "Button Link"
+      }
+	]
+  }
+{% endschema %}

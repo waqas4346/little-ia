@@ -1,0 +1,46 @@
+<div class="page-width">
+  <div class="image-with-text_section">
+    {% for block in section.blocks %}
+    <div class="image-with-text_block">
+      {% if block.settings.image != blank %}
+      <div class="images">
+        <img src="{{ block.settings.image | img_url: '2048x2048' }}">
+      </div>
+      {% endif %}
+      {% if block.settings.text != blank %}
+      <div class="image_text">
+        {{ block.settings.text }}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% schema %}
+  {
+    "name": "Image With Text",
+    "blocks": [
+		{
+          "type": "block",
+          "name": "block",
+          "settings":[
+              {
+				"type": "image_picker",
+				"id": "image",
+				"label": "Image"
+              },
+			  {
+				"type": "richtext",
+				"id": "text",
+				"label": "Text"
+              },
+            {
+              "type": "color",
+              "id": "color",
+              "label": "Color"
+            }
+          ]
+		}
+	]
+  }
+{% endschema %}

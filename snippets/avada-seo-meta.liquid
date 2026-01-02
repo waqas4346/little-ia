@@ -1,0 +1,13 @@
+{%- assign avada_seo_ovr_product_ids = "" -%}
+{%- assign avada_seo_ovr_collection_ids = "" -%}
+{%- assign avada_seo_ovr_article_ids = "" -%}
+{% if avada_seo_meta_title %}
+{%- assign seo_title = avada_seo_meta_title | strip_html | strip -%}
+{%- assign page_title = seo_title -%}
+{%- assign og_title = seo_title -%}
+{% endif %}
+
+{% if avada_seo_meta_description %}
+{%- assign page_description = avada_seo_meta_description | strip_html | strip -%}
+{%- assign og_description = page_description -%}
+{% endif %}

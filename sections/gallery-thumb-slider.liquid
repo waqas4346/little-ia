@@ -1,0 +1,368 @@
+<div class="grid grid--no-gutters image-bar image-bar--{{ section.settings.section_height }}">
+  {% case section.blocks.size %}
+  {% when 1 %}
+  {%- assign column_size = '' -%}
+  {% when 2 %}
+  {%- assign column_size = 'medium-up--one-half' -%}
+  {% when 3 %}
+  {%- assign column_size = 'medium-up--one-third' -%}
+  {% else %}
+  {%- assign column_size = 'medium-up--one-quarter' -%}
+  {% endcase %}
+  <div id="slider" class="flexslider">
+    <ul class="slides">
+      {% for block in section.blocks %}
+      <li class="grid__item {{ column_size }} js" {{ block.shopify_attributes }}>
+        <div class="image-bar__item box ratio-container lazyload">
+          <img src="{{ block.settings.image | img_url: '2048x' }}">
+        </div>
+      </li>
+      {%comment%}
+      <noscript>
+        <div class="grid__item {{ column_size }}" {{ block.shopify_attributes }}>
+          <div class="image-bar__item image-bar__item--{{ block.id }}" style="background-image: url({{ block.settings.image | img_url: '2048x' }});"></div>
+        </div>
+      </noscript>
+      {%endcomment%}
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div id="carousel" class="flexslider">
+    <ul class="slides">
+      {% for block in section.blocks %}
+      <li class="grid__item {{ column_size }} js" {{ block.shopify_attributes }}>
+
+        <div class="image-bar__item box ratio-container lazyload">
+          <img src="{{ block.settings.image | img_url: '90x90' }}">
+        </div>
+      </li>
+      {%comment%}
+      <noscript>
+        <div class="grid__item {{ column_size }}" {{ block.shopify_attributes }}>
+          <div class="image-bar__item image-bar__item--{{ block.id }}" style="background-image: url({{ block.settings.image | img_url: '2048x' }});"></div>
+        </div>
+      </noscript>
+      {%endcomment%}
+      {% endfor %}
+    </ul>
+  </div>
+
+
+</div>
+
+{% if section.blocks.size == 0 %}
+  {% include 'no-blocks' %}
+{% endif %}
+
+
+
+{% schema %}
+{
+  "name": {
+    "da": "Galleri",
+    "de": "Galerie",
+    "en": "Gallery Thumb Slide",
+    "es": "Galería",
+    "fi": "Galleria",
+    "fr": "Galerie",
+    "hi": "गैलरी",
+    "it": "Galleria",
+    "ja": "ギャラリー",
+    "ko": "갤러리",
+    "nb": "Galleri",
+    "nl": "Galerie",
+    "pt-BR": "Galeria",
+    "pt-PT": "Galeria",
+    "sv": "Galleri",
+    "th": "แกลเลอรี",
+    "zh-CN": "图库",
+    "zh-TW": "圖庫"
+  },
+  "class": "index-section index-section--thumb",
+  "settings": [
+    {
+      "type": "select",
+      "id": "section_height",
+      "label": {
+        "da": "Højde på afsnit",
+        "de": "Bereichs-Höhe",
+        "en": "Section height",
+        "es": "Altura de la sección",
+        "fi": "Osan korkeus",
+        "fr": "Hauteur de la section",
+        "hi": "सेक्शन की ऊंचाई",
+        "it": "Altezza sezione",
+        "ja": "セクションの高さ",
+        "ko": "섹션 높이",
+        "nb": "Høyde på del",
+        "nl": "Sectiehoogte",
+        "pt-BR": "Altura da seção",
+        "pt-PT": "Altura da secção",
+        "sv": "Sektionshöjd",
+        "th": "ความสูงของส่วน",
+        "zh-CN": "分区高度",
+        "zh-TW": "區塊高度"
+      },
+      "default": "medium",
+      "options": [
+        {
+          "label": {
+            "da": "Ekstra lille",
+            "de": "Extra klein",
+            "en": "Extra Small",
+            "es": "Extra pequeña",
+            "fi": "Erikoispieni",
+            "fr": "Très petite",
+            "hi": "अतिरिक्त छोटा",
+            "it": "Molto piccola",
+            "ja": "極小",
+            "ko": "특소",
+            "nb": "Ekstra liten",
+            "nl": "Extra klein",
+            "pt-BR": "Muito pequeno",
+            "pt-PT": "Extra pequeno",
+            "sv": "Extra liten",
+            "th": "ขนาดเล็กพิเศษ",
+            "zh-CN": "特小",
+            "zh-TW": "超小型"
+          },
+          "value": "x-small"
+        },
+        {
+          "label": {
+            "da": "Lille",
+            "de": "Klein",
+            "en": "Small",
+            "es": "Pequeña",
+            "fi": "Pieni",
+            "fr": "Petite",
+            "hi": "छोटा",
+            "it": "Piccolo",
+            "ja": "小",
+            "ko": "스몰",
+            "nb": "Liten",
+            "nl": "Klein",
+            "pt-BR": "Pequeno",
+            "pt-PT": "Pequeno",
+            "sv": "Liten",
+            "th": "เล็ก",
+            "zh-CN": "小",
+            "zh-TW": "小型"
+          },
+          "value": "small"
+        },
+        {
+          "label": {
+            "da": "Medium",
+            "de": "Mittel",
+            "en": "Medium",
+            "es": "Mediana",
+            "fi": "Keskisuuri",
+            "fr": "Moyenne",
+            "hi": "मध्यम",
+            "it": "Medio",
+            "ja": "中",
+            "ko": "보통",
+            "nb": "Middels",
+            "nl": "Gemiddeld",
+            "pt-BR": "Médio",
+            "pt-PT": "Médio",
+            "sv": "Medium",
+            "th": "ปานกลาง",
+            "zh-CN": "中等",
+            "zh-TW": "中等"
+          },
+          "value": "medium"
+        },
+        {
+          "label": {
+            "da": "Stor",
+            "de": "Groß",
+            "en": "Large",
+            "es": "Grande",
+            "fi": "Suuri",
+            "fr": "Grande",
+            "hi": "बड़ा",
+            "it": "Grande",
+            "ja": "大",
+            "ko": "라지",
+            "nb": "Stor",
+            "nl": "Groot",
+            "pt-BR": "Grande",
+            "pt-PT": "Grande",
+            "sv": "Stor",
+            "th": "ใหญ่",
+            "zh-CN": "大",
+            "zh-TW": "大型"
+          },
+          "value": "large"
+        },
+        {
+          "label": {
+            "da": "Ekstra stor",
+            "de": "Extra groß",
+            "en": "Extra Large",
+            "es": "Extra grande",
+            "fi": "Erikoissuuri",
+            "fr": "Très grande",
+            "hi": "अतिरिक्त बड़ा",
+            "it": "Molto grande",
+            "ja": "特大",
+            "ko": "특대",
+            "nb": "Ekstra stort",
+            "nl": "Extra groot",
+            "pt-BR": "Muito grande",
+            "pt-PT": "Extra grande",
+            "sv": "Extra stor",
+            "th": "ขนาดใหญ่พิเศษ",
+            "zh-CN": "特大",
+            "zh-TW": "超大型"
+          },
+          "value": "x-large"
+        }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "type": "image",
+      "name": {
+        "da": "Billede",
+        "de": "Foto",
+        "en": "Image",
+        "es": "Imagen",
+        "fi": "Kuva",
+        "fr": "Image",
+        "hi": "इमेज",
+        "it": "Immagine",
+        "ja": "画像",
+        "ko": "이미지",
+        "nb": "Bilde",
+        "nl": "Afbeelding",
+        "pt-BR": "Imagem",
+        "pt-PT": "Imagem",
+        "sv": "Bild",
+        "th": "รูปภาพ",
+        "zh-CN": "图片",
+        "zh-TW": "圖片"
+      },
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": {
+            "da": "Billede",
+            "de": "Foto",
+            "en": "Image",
+            "es": "Imagen",
+            "fi": "Kuva",
+            "fr": "Image",
+            "hi": "इमेज",
+            "it": "Immagine",
+            "ja": "画像",
+            "ko": "이미지",
+            "nb": "Bilde",
+            "nl": "Afbeelding",
+            "pt-BR": "Imagem",
+            "pt-PT": "Imagem",
+            "sv": "Bild",
+            "th": "รูปภาพ",
+            "zh-CN": "图片",
+            "zh-TW": "圖片"
+          }
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": {
+        "da": "Galleri",
+        "de": "Galerie",
+        "en": "Gallery Slide",
+        "es": "Galería",
+        "fi": "Galleria",
+        "fr": "Galerie",
+        "hi": "गैलरी",
+        "it": "Galleria",
+        "ja": "ギャラリー",
+        "ko": "갤러리",
+        "nb": "Galleri",
+        "nl": "Galerie",
+        "pt-BR": "Galeria",
+        "pt-PT": "Galeria",
+        "sv": "Galleri",
+        "th": "แกลเลอรี",
+        "zh-CN": "图库",
+        "zh-TW": "圖庫"
+      },
+      "category": {
+        "da": "Billede",
+        "de": "Foto",
+        "en": "Image",
+        "es": "Imagen",
+        "fi": "Kuva",
+        "fr": "Image",
+        "hi": "इमेज",
+        "it": "Immagine",
+        "ja": "画像",
+        "ko": "이미지",
+        "nb": "Bilde",
+        "nl": "Afbeelding",
+        "pt-BR": "Imagem",
+        "pt-PT": "Imagem",
+        "sv": "Bild",
+        "th": "รูปภาพ",
+        "zh-CN": "图片",
+        "zh-TW": "圖片"
+      },
+      "blocks": [
+        {
+          "type": "image"
+        },
+        {
+          "type": "image"
+        },
+        {
+          "type": "image"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
+
+  
+  {% stylesheet %}
+{% endstylesheet %}
+
+{% javascript %}
+
+
+
+$(window).load(function() {
+  // The slider being synced must be initialized first
+  $('#carousel').flexslider({
+    animation: "slide",
+    controlNav: false,
+    animationLoop: false,
+    slideshow: false,
+    itemWidth: 90,
+    itemMargin: 0,
+    asNavFor: '#slider'
+  });
+ 
+  $('#slider').flexslider({
+    animation: "slide",
+    controlNav: false,
+    animationLoop: false,
+    slideshow: false,
+    sync: "#carousel"
+  });
+});
+
+
+
+
+{% endjavascript %}

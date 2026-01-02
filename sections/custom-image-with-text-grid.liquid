@@ -1,0 +1,115 @@
+<div class="custom_image_with_text">
+  <div class="page-width">
+    <div class="custom_image_with_text_content">
+      {%- if section.settings.main_title != blank or section.settings.description != blank -%}
+        <div class="header_content">
+          {%- if section.settings.main_title != blank -%}
+            <h1>{{ section.settings.main_title }}</h1>
+          {%- endif -%}
+          {%- if section.settings.description != blank -%}
+            <p>{{ section.settings.description }}</p>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+      <div class="custom_image_grid_content">
+        <button class="slider-btn prev-arrow medium-up--hide">{%- include 'icon-arrow-prev' -%}</button>
+        <button class="slider-btn next-arrow medium-up--hide">{%- include 'icon-arrow-next' -%}</button>
+        <div class="custom_image_grid image_grid_slider_mobile">
+          {%- for block in section.blocks -%}
+          <div class="image_block">
+            {%- if block.settings.block_link != blank -%}
+            <a href="{{ block.settings.block_link }}">
+              {%- endif -%}
+              {%- if block.settings.image != blank -%}
+              <div class="image_main_grid">
+                <div class="custom_image">
+                  <img src="{{ block.settings.image | img_url: '2048x2048' }}">
+                </div>
+              </div>
+              {%- endif -%}
+              {%- if block.settings.block_title != blank or block.settings.block_description != blank -%}
+              <div class="block_info">
+                {%- if block.settings.block_title != blank -%}
+                <h1>{{ block.settings.block_title }}</h1>
+                {%- endif -%}
+                {%- if block.settings.block_description != blank -%}
+                <p>{{ block.settings.block_description }}</p>
+                {%- endif -%}
+              </div>
+              {%- endif -%}
+              {%- if block.settings.block_link != blank -%}
+            </a>
+            {%- endif -%}
+          </div>
+          {%- endfor -%}
+        </div>
+      </div>
+      {%- if section.settings.button_label != blank or section.settings.button_url != blank -%}
+      <div class="button_link">
+        <a href="{{ section.settings.button_url }}">{{ section.settings.button_label }}</a>
+      </div>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+  {
+    "name": "Custom Image Grid",
+    "settings": [
+      {
+        "type": "text",
+        "id": "main_title",
+        "label": "Section Title"
+      },
+      {
+        "type": "textarea",
+        "id": "description",
+        "label": "Description"
+      },
+      {
+        "type": "text",
+        "id": "button_label",
+        "label": "Button Label"
+      },
+      {
+        "type": "url",
+        "id": "button_url",
+        "label": "Button URL"
+      }
+    ],
+    "blocks": [
+      {
+        "type": "block",
+        "name": "block",
+        "settings": [
+          {
+            "type": "image_picker",
+            "id": "image",
+            "label": "Image"
+          },
+          {
+            "type": "text",
+            "id": "block_title",
+            "label": "Block Title"
+          },
+          {
+            "type": "textarea",
+            "id": "block_description",
+            "label": "Description"
+          },
+          {
+            "type": "url",
+            "id": "block_link",
+            "label": "Link"
+          }
+        ]
+      }
+	],
+	"presets": [
+      {
+        "name": "Custom Image Grid"
+      }
+    ]
+  }
+{% endschema %}

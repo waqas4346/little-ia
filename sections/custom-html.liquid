@@ -1,0 +1,73 @@
+<div id="huratips-custom-section">  
+  {%- if section.settings.title != blank -%}
+  <div class="huratips-custom-title"><h2>{{section.settings.title}}</h2></div>  
+  {%- endif -%}    
+  <div class="huratips-custom-code">{{section.settings.custom_html}}</div>
+<!--   <p class="hura-credit">Powered by <a href="//www.huratips.com" target="_blank">HuraTips.Com</a></p> -->
+</div>
+<style> 
+  div#shopify-section-1642615085932ad1d8{position:relative;background: #f6f6f6;
+    padding:50px 0 50px;}
+  .huratips-custom-title{text-align:center;}
+  .hura-credit{text-align:right;font-size:11px; margin-bottom:20px;font-style:italic;}
+  .bestseller-items {
+    padding: 0 22px;
+    margin: auto;
+}
+.bestseller-items a {
+    display: inline-block;
+    padding: 8px 14px;
+    background: #fff;
+    margin: 10px 4px 10px;
+    color: #6e757c;
+    font-family: 'FuturaPT-Demi';
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-align: center;
+    width: calc(100% - 12px);
+    border-radius: 4px;
+}
+  .bestseller-items li {
+    display: inline-block;width:33.33%;
+}
+.template-index div#shopify-section-1642615085932ad1d8 h2 {
+    margin-bottom: 30px;
+}
+  .template-index div#shopify-section-1642615085932ad1d8 h2:after{
+     content: "Shop Our";
+    top: -25px;
+    transform: rotate(-5deg);
+  }
+  div#shopify-section-1642656778a1c9965f h2:after {
+    content: 'why';
+    left: -20px;
+}
+</style>
+
+{% schema %}
+  {
+    "name": "HTML",
+    "settings": [
+      {
+        "type": "text",
+        "id": "title",
+        "label": "Title"
+      },
+      {
+        "type":"textarea",
+        "id": "custom_html",
+        "label": "HTML"
+      }
+    ],
+    "presets": [
+      {
+        "name": "Custom HTML",
+        "category": "Hura",
+        "settings": {
+
+        }
+      }
+    ]
+  }
+{% endschema %}

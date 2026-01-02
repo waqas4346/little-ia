@@ -1,0 +1,963 @@
+<!doctype html>
+<html class="no-js" lang="{{ shop.locale }}">
+  <head>
+<link rel='preconnect dns-prefetch' href='https://api.config-security.com/' crossorigin />
+<link rel='preconnect dns-prefetch' href='https://conf.config-security.com/' crossorigin />
+<link rel='preconnect dns-prefetch' href='https://whale.camera/' crossorigin />
+<script>
+/* >> TriplePixel :: start*/
+window.TriplePixelData={TripleName:"izaakazaneilittle.myshopify.com",ver:"2.12",plat:"SHOPIFY",isHeadless:false},function(W,H,A,L,E,_,B,N){function O(U,T,P,H,R){void 0===R&&(R=!1),H=new XMLHttpRequest,P?(H.open("POST",U,!0),H.setRequestHeader("Content-Type","text/plain")):H.open("GET",U,!0),H.send(JSON.stringify(P||{})),H.onreadystatechange=function(){4===H.readyState&&200===H.status?(R=H.responseText,U.includes(".txt")?eval(R):P||(N[B]=R)):(299<H.status||H.status<200)&&T&&!R&&(R=!0,O(U,T-1,P))}}if(N=window,!N[H+"sn"]){N[H+"sn"]=1,L=function(){return Date.now().toString(36)+"_"+Math.random().toString(36)};try{A.setItem(H,1+(0|A.getItem(H)||0)),(E=JSON.parse(A.getItem(H+"U")||"[]")).push({u:location.href,r:document.referrer,t:Date.now(),id:L()}),A.setItem(H+"U",JSON.stringify(E))}catch(e){}var i,m,p;A.getItem('"!nC`')||(_=A,A=N,A[H]||(E=A[H]=function(t,e,a){return void 0===a&&(a=[]),"State"==t?E.s:(W=L(),(E._q=E._q||[]).push([W,t,e].concat(a)),W)},E.s="Installed",E._q=[],E.ch=W,B="configSecurityConfModel",N[B]=1,O("https://conf.config-security.com/model",5),i=L(),m=A[atob("c2NyZWVu")],_.setItem("di_pmt_wt",i),p={id:i,action:"profile",avatar:_.getItem("auth-security_rand_salt_"),time:m[atob("d2lkdGg=")]+":"+m[atob("aGVpZ2h0")],host:A.TriplePixelData.TripleName,plat:A.TriplePixelData.plat,url:window.location.href,ref:document.referrer,ver:A.TriplePixelData.ver},O("https://api.config-security.com/event",5,p),O("https://whale.camera/live/dot.txt",5)))}}("","TriplePixel",localStorage);
+/* << TriplePixel :: end*/
+</script>
+<link rel='preconnect dns-prefetch' href='https://triplewhale-pixel.web.app/' crossorigin />
+<link rel='preconnect dns-prefetch' href='https://triplewhale-pixel.web.app/' crossorigin />
+<script>
+/* >> TriplePixel :: start*/
+window.TriplePixelData={TripleName:"izaakazaneilittle.myshopify.com",ver:"1.9.0"},function(W,H,A,L,E,_,B,N){function O(U,T,P,H,R){void 0===R&&(R=!1),H=new XMLHttpRequest,P?(H.open("POST",U,!0),H.setRequestHeader("Content-Type","application/json")):H.open("GET",U,!0),H.send(JSON.stringify(P||{})),H.onreadystatechange=function(){4===H.readyState&&200===H.status?(R=H.responseText,U.includes(".txt")?eval(R):P||(N[B]=R)):(299<H.status||H.status<200)&&T&&!R&&(R=!0,O(U,T-1))}}if(N=window,!N[H+"sn"]){N[H+"sn"]=1;try{A.setItem(H,1+(0|A.getItem(H)||0)),(E=JSON.parse(A.getItem(H+"U")||"[]")).push(location.href),A.setItem(H+"U",JSON.stringify(E))}catch(e){}var i,m,p;A.getItem('"!nC`')||(_=A,A=N,A[H]||(L=function(){return Date.now().toString(36)+"_"+Math.random().toString(36)},E=A[H]=function(t,e){return"State"==t?E.s:(W=L(),(E._q=E._q||[]).push([W,t,e]),W)},E.s="Installed",E._q=[],E.ch=W,B="configSecurityConfModel",N[B]=1,O("//conf.config-security.com/model",5),i=L(),m=A[atob("c2NyZWVu")],_.setItem("di_pmt_wt",i),p={id:i,action:"profile",avatar:_.getItem("auth-security_rand_salt_"),time:m[atob("d2lkdGg=")]+":"+m[atob("aGVpZ2h0")],host:A.TriplePixelData.TripleName,url:window.location.href,ref:document.referrer,ver:window.TriplePixelData.ver},O("//api.config-security.com/",5,p),O("//triplewhale-pixel.web.app/dot1.9.txt",5)))}}("","TriplePixel",localStorage);
+/* << TriplePixel :: end*/
+</script>
+    <meta name="google-site-verification" content="hqTAf5L78pkFgVHII6IxwQZ-Rr4vQe0otmA_sc4xkTw" />
+<!-- Added by AVADA SEO Suite -->
+{% include 'avada-seo' %}
+<!-- /Added by AVADA SEO Suite -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+    <meta name="theme-color" content="{{ settings.color_button }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    {%- if settings.favicon != blank -%}
+    <link rel="shortcut icon" href="{{ settings.favicon | img_url: '32x32' }}" type="image/png">
+    {%- endif -%}
+    {%- capture seo_title -%}
+    {%- if request.page_type == 'search' and search.performed == true -%}
+    {{ 'general.search.heading' | t: count: search.results_count }}: {{ 'general.search.results_with_count' | t: terms: search.terms, count: search.results_count }}
+    {%- else -%}
+    {{ page_title }}
+    {%- endif -%}
+    {%- if current_tags -%}
+    {%- assign meta_tags = current_tags | join: ', ' -%} &ndash; {{ 'general.meta.tags' | t: tags: meta_tags -}}
+    {%- endif -%}
+    {%- if current_page != 1 -%}
+    &ndash; {{ 'general.meta.page' | t: page: current_page }}
+    {%- endif -%}
+    {%- assign escaped_page_title = page_title | escape -%}
+    {%- unless escaped_page_title contains shop.name -%}
+    &ndash; {{ shop.name }}
+    {%- endunless -%}
+    {%- endcapture -%}
+    
+
+  <!-- Avada Size Chart Script -->
+ {% include 'avada-sc-setting' %}
+  <!-- /Avada Size Chart Script -->
+
+<title>{{ seo_title | strip }}</title>
+    {%- if page_description -%}
+    <meta name="description" content="{{ page_description | escape }}">
+    {%- endif -%}
+    {% include 'social-meta-tags' %}
+    {{ 'theme.scss.css' | asset_url | stylesheet_tag }}
+    {{ 'fancybox.css' | asset_url | stylesheet_tag }}
+    {{ 'swiper-bundle.min.css' | asset_url | stylesheet_tag }}
+    {{ 'slick.css' | asset_url | stylesheet_tag }}
+    {{ 'flexslider.min.css' | asset_url | stylesheet_tag }}
+    {{ 'style.css' | asset_url | stylesheet_tag }}
+    <script>
+      var theme = {
+        breakpoints: {
+          medium: 750,
+          large: 990,
+          widescreen: 1400
+        },
+        strings: {
+          addToCart: {{ 'products.product.add_to_cart' | t | json }},
+          soldOut: {{ 'products.product.sold_out' | t | json }},
+          unavailable: {{ 'products.product.unavailable' | t | json }},
+          regularPrice: {{ 'products.product.regular_price' | t | json }},
+          salePrice: {{ 'products.product.sale_price' | t | json }},
+          sale: {{ 'products.product.on_sale' | t | json }},
+          fromLowestPrice: {{ 'products.product.from_lowest_price_html' | t: lowest_price: '[price]' | json }},
+          vendor: {{'products.product.vendor' | t | json }},
+          showMore: {{ 'general.filters.show_more' | t | json }},
+          showLess: {{ 'general.filters.show_less' | t | json }},
+          searchFor: {{ 'general.search.search_for' | t | json }},
+          addressError: {{ 'sections.map.address_error' | t | json }},
+          addressNoResults: {{ 'sections.map.address_no_results' | t | json }},
+          addressQueryLimit: {{ 'sections.map.address_query_limit_html' | t | json }},
+          authError: {{ 'sections.map.auth_error_html' | t | json }},
+          newWindow: {{ 'general.accessibility.link_messages.new_window' | t | json }},
+          external: {{ 'general.accessibility.link_messages.external' | t | json }},
+          newWindowExternal: {{ 'general.accessibility.link_messages.new_window_and_external' | t | json }},
+          removeLabel: {{ 'cart.label.remove' | t: product: '[product]' | json }},
+          update: {{ 'cart.label.update' | t | json }},
+          quantity: {{ 'cart.label.quantity' | t | json }},
+          discountedTotal: {{ 'cart.label.discounted_total' | t | json }},
+          regularTotal: {{ 'cart.label.regular_total' | t | json }},
+          priceColumn: {{ 'cart.label.price_column' | t | json }},
+          quantityMinimumMessage: {{ 'products.product.quantity_minimum_message' | t | json }},
+          cartError: {{ 'cart.general.cart_error' | t | json }},
+          removedItemMessage: {{ 'cart.general.removed_item_html' | t: quantity: '[quantity]', link: '[link]' | json }},
+          unitPrice: {{ 'products.product.unit_price_label' | t | json }},
+          unitPriceSeparator: {{ 'general.accessibility.unit_price_separator' | t | json }},
+          oneCartCount: {{ 'cart.popup.cart_count' | t: count: 1 | json }},
+          otherCartCount: {{ 'cart.popup.cart_count' | t: count: '[count]' | json }},
+          quantityLabel: {{ 'cart.popup.quantity_label' | t: quantity_count: '[count]' | json }},
+          products: {{ 'general.search.products' | t | json }},
+          loading: {{ 'general.search.loading' | t | json }},
+          number_of_results: {{ 'general.search.number_of_results' | t: result_number: '[result_number]', results_count: '[results_count]' | json }},
+          number_of_results_found: {{ 'general.search.number_of_results_found' | t: results_count: '[results_count]' | json }},
+          one_result_found: {{ 'general.search.one_result_found' | t | json }}
+        },
+        moneyFormat: {{ shop.money_format | json }},
+        moneyFormatWithCurrency: {{ shop.money_with_currency_format | json }},
+        settings: {
+        predictiveSearchEnabled: {{ settings.predictive_search_enabled | json }},
+        predictiveSearchShowPrice: {{ settings.predictive_search_show_price | json }},
+        predictiveSearchShowVendor: {{ settings.predictive_search_show_vendor | json }}
+      }
+      }
+      document.documentElement.className = document.documentElement.className.replace('no-js', 'js');
+    </script>
+    {%- if request.page_type contains 'customers/' -%}
+    <script src="{{ 'shopify_common.js' | shopify_asset_url }}" defer="defer"></script>
+    {%- endif -%}
+    <script src="{{ 'lazysizes.js' | asset_url }}" async="async"></script>
+    <script src="{{ 'vendor.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'theme.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'fancybox.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'slick.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'jquery.flexslider.min.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'jquery_sticky-kit.min.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'swiper-bundle.min.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'script.js' | asset_url }}" defer="defer"></script>
+    {% include 'buddha-megamenu-before' %}
+    {% include 'buddha-megamenu' %}
+    
+    {{ content_for_header }}
+
+    {% include 'globo.menu.script' %}
+    {% include 'sca-quick-view-init' %}
+    
+    <!--   footer subscribe form   -->
+    <script>
+      (function(w, d, t, s, n) {
+        w.FlodeskObject = n;
+        var fn = function() {
+          (w[n].q = w[n].q || []).push(arguments);
+        };
+        w[n] = w[n] || fn;
+        var f = d.getElementsByTagName(t)[0];
+        var e = d.createElement(t);
+        var h = '?v=' + new Date().getTime();
+        e.async = true;
+        e.src = s + h;
+        f.parentNode.insertBefore(e, f);
+      })(window, document, 'script', 'https://assets.flodesk.com/universal.js', 'fd');
+    </script>
+    
+    <script>
+      (function(w, d, t, s, n) {
+        w.FlodeskObject = n;
+        var fn = function() {
+          (w[n].q = w[n].q || []).push(arguments);
+        };
+        w[n] = w[n] || fn;
+        var f = d.getElementsByTagName(t)[0];
+        var e = d.createElement(t);
+        var h = '?v=' + new Date().getTime();
+        e.async = true;
+        e.src = s + h;
+        f.parentNode.insertBefore(e, f);
+      })(window, document, 'script', 'https://assets.flodesk.com/universal.js', 'fd');
+    </script>
+    
+    <a href="https://codifyinfotech.com/" style="display: none;" rel="noopener">Codify Infotech</a>
+
+
+    <!-- SnappicSnipStart -->
+    <script>
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','//connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '259904318915558');
+      fbq('track', 'PageView');
+    </script>
+    <noscript>
+      <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=259904318915558&ev=PageView&noscript=1" />
+    </noscript>
+    <!-- SnappicSnipEnd -->
+    {% capture cur %}{% include "booster-currency" %}{% endcapture %}{% unless cur contains "Liquid error" %}{{ cur }}{% endunless %}
+  {% include 'hulk_po_vd.liquid' %}</head>
+  <body class="template-{{ request.page_type | handle }}" id="{{ page_title | handleize }}">
+    {% if template == 'index' %}
+    <!--   flodesk form start here   -->
+    <script>
+      (function(w, d, t, h, s, n) {
+        w.FlodeskObject = n;
+        var fn = function() {
+          (w[n].q = w[n].q || []).push(arguments);
+        };
+        w[n] = w[n] || fn;
+        var f = d.getElementsByTagName(t)[0];
+        var v = '?v=' + Math.floor(new Date().getTime() / (120 * 1000)) * 60;
+        var sm = d.createElement(t);
+        sm.async = true;
+        sm.type = 'module';
+        sm.src = h + s + '.mjs' + v;
+        f.parentNode.insertBefore(sm, f);
+        var sn = d.createElement(t);
+        sn.async = true;
+        sn.noModule = true;
+        sn.src = h + s + '.js' + v;
+        f.parentNode.insertBefore(sn, f);
+      })(window, document, 'script', 'https://assets.flodesk.com', '/universal', 'fd');
+    </script>
+    <script>
+      window.fd('form', {
+        formId: '616bd19674d564fa09f3f760'
+      });
+    </script>
+
+   {% comment %} <div class="fd-ef-5f4538ef746e8b002c053a08 izaak_subscribe-Popup" style="display: none;">
+      <style>
+    @import url('https://assets.flodesk.com/futurapt.css');
+    html.fd-ef-5f4538ef746e8b002c053a08 {
+      font-size: 10px;
+      font-family: sans-serif;
+      line-height: 1.15;
+      -ms-overflow-style: scrollbar;
+      -ms-text-size-adjust: 100%;
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 *,
+    .fd-ef-5f4538ef746e8b002c053a08 *::before,
+    .fd-ef-5f4538ef746e8b002c053a08 *::after {
+      box-sizing: border-box;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 body {
+      margin: 0;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 [tabindex="-1"]:focus {
+      outline: none !important;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 hr {
+      height: 0;
+      overflow: visible;
+      box-sizing: content-box;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 h1,
+    .fd-ef-5f4538ef746e8b002c053a08 h2,
+    .fd-ef-5f4538ef746e8b002c053a08 h3,
+    .fd-ef-5f4538ef746e8b002c053a08 h4,
+    .fd-ef-5f4538ef746e8b002c053a08 h5,
+    .fd-ef-5f4538ef746e8b002c053a08 h6 {
+      margin-top: 0;
+      margin-bottom: 0.7em;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 abbr[title],
+    .fd-ef-5f4538ef746e8b002c053a08 abbr[data-original-title] {
+      cursor: help;
+      border-bottom: 0;
+      -webkit-text-decoration: underline dotted;
+      text-decoration: underline dotted;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 address {
+      font-style: normal;
+      line-height: inherit;
+      margin-bottom: 1.4rem;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 ol,
+    .fd-ef-5f4538ef746e8b002c053a08 ul,
+    .fd-ef-5f4538ef746e8b002c053a08 dl {
+      margin-top: 0;
+      margin-bottom: 1.4rem;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 ol ol,
+    .fd-ef-5f4538ef746e8b002c053a08 ul ul,
+    .fd-ef-5f4538ef746e8b002c053a08 ol ul,
+    .fd-ef-5f4538ef746e8b002c053a08 ul ol {
+      margin-bottom: 0;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 dt {
+      font-weight: bolder;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 dd {
+      margin-left: 0;
+      margin-bottom: 0.7rem;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 blockquote {
+      margin: 0 0 1.4rem;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 dfn {
+      font-style: italic;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 b,
+    .fd-ef-5f4538ef746e8b002c053a08 strong {
+      font-weight: bolder;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 small {
+      font-size: 80%;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 sub,
+    .fd-ef-5f4538ef746e8b002c053a08 sup {
+      position: relative;
+      font-size: 75%;
+      line-height: 0;
+      vertical-align: baseline;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 sub {
+      bottom: -0.25em;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 sup {
+      top: -0.5em;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 a {
+      color: #000000;
+      text-decoration: none;
+      background-color: transparent;
+      -webkit-text-decoration-skip: objects;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 a:hover {
+      color: #4396fd;
+      text-decoration: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 pre,
+    .fd-ef-5f4538ef746e8b002c053a08 code,
+    .fd-ef-5f4538ef746e8b002c053a08 kbd,
+    .fd-ef-5f4538ef746e8b002c053a08 samp {
+      font-size: 1em;
+      font-family: monospace;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 pre {
+      overflow: auto;
+      margin-top: 0;
+      margin-bottom: 1.4rem;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 figure {
+      margin: 0 0 1.4rem;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 img {
+      border-style: none;
+      vertical-align: middle;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 svg:not(:root) {
+      overflow: hidden;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 a,
+    .fd-ef-5f4538ef746e8b002c053a08 area,
+    .fd-ef-5f4538ef746e8b002c053a08 button,
+    .fd-ef-5f4538ef746e8b002c053a08 [role="button"],
+    .fd-ef-5f4538ef746e8b002c053a08 input,
+    .fd-ef-5f4538ef746e8b002c053a08 label,
+    .fd-ef-5f4538ef746e8b002c053a08 select,
+    .fd-ef-5f4538ef746e8b002c053a08 summary,
+    .fd-ef-5f4538ef746e8b002c053a08 textarea {
+      touch-action: manipulation;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 label {
+      display: inline-block;
+      font-weight: bolder;
+      margin-bottom: 0.7rem;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 button:focus {
+      outline: 1px dotted;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 input,
+    .fd-ef-5f4538ef746e8b002c053a08 button,
+    .fd-ef-5f4538ef746e8b002c053a08 select,
+    .fd-ef-5f4538ef746e8b002c053a08 optgroup,
+    .fd-ef-5f4538ef746e8b002c053a08 textarea {
+      margin: 0;
+      font-size: inherit;
+      font-family: inherit;
+      line-height: inherit;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 button,
+    .fd-ef-5f4538ef746e8b002c053a08 input {
+      overflow: visible;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 button,
+    .fd-ef-5f4538ef746e8b002c053a08 select {
+      text-transform: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 button,
+    html.fd-ef-5f4538ef746e8b002c053a08 [type="button"],
+    .fd-ef-5f4538ef746e8b002c053a08 [type="reset"],
+    .fd-ef-5f4538ef746e8b002c053a08 [type="submit"] {
+      -webkit-appearance: button;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 button::-moz-focus-inner,
+    .fd-ef-5f4538ef746e8b002c053a08 [type="button"]::-moz-focus-inner,
+    .fd-ef-5f4538ef746e8b002c053a08 [type="reset"]::-moz-focus-inner,
+    .fd-ef-5f4538ef746e8b002c053a08 [type="submit"]::-moz-focus-inner {
+      padding: 0;
+      border-style: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 input[type="radio"],
+    .fd-ef-5f4538ef746e8b002c053a08 input[type="checkbox"] {
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 input[type="date"],
+    .fd-ef-5f4538ef746e8b002c053a08 input[type="time"],
+    .fd-ef-5f4538ef746e8b002c053a08 input[type="datetime-local"],
+    .fd-ef-5f4538ef746e8b002c053a08 input[type="month"] {
+      -webkit-appearance: listbox;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 textarea {
+      resize: vertical;
+      overflow: auto;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 fieldset {
+      border: 0;
+      margin: 0;
+      padding: 0;
+      min-width: 0;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 legend {
+      color: inherit;
+      width: 100%;
+      display: block;
+      padding: 0;
+      font-size: 2.0999999999999996rem;
+      max-width: 100%;
+      line-height: inherit;
+      white-space: normal;
+      margin-bottom: 0.7rem;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 progress {
+      vertical-align: baseline;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 [type="number"]::-webkit-inner-spin-button,
+    .fd-ef-5f4538ef746e8b002c053a08 [type="number"]::-webkit-outer-spin-button {
+      height: auto;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 [type="search"] {
+      outline-offset: -2px;
+      -webkit-appearance: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 [type="search"]::-webkit-search-cancel-button,
+    .fd-ef-5f4538ef746e8b002c053a08 [type="search"]::-webkit-search-decoration {
+      -webkit-appearance: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 ::-webkit-file-upload-button {
+      font: inherit;
+      -webkit-appearance: button;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 output {
+      display: inline-block;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 summary {
+      display: list-item;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 template {
+      display: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 [hidden] {
+      display: none !important;
+    }
+    html.fd-ef-5f4538ef746e8b002c053a08,
+    html.fd-ef-5f4538ef746e8b002c053a08 body {
+      width: 100%;
+      height: 100%;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-modal.fd-is-open {
+      opacity: 1;
+      z-index: 1040;
+      visibility: visible;
+    }
+    @media (max-width: 575px) {
+      .fd-ef-5f4538ef746e8b002c053a08 .fd-modal__dialog {
+        width: calc(100% - 30px);
+        margin: 15px auto;
+        min-height: calc(100% - 30px);
+      }
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-control:focus {
+      outline: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-control::-webkit-input-placeholder {
+      color: inherit;
+      opacity: 1;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-control::-webkit-input-placeholder,
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-control::-moz-placeholder,
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-control:-ms-input-placeholder,
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-control::placeholder {
+      color: inherit;
+      opacity: 1;
+      color: #999;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-description {
+      margin: 5px 0 0 0;
+      font-size: 0.9em;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-feedback {
+      margin: 5px 0 0 0;
+      font-size: 0.9em;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-group.fd-has-success .fd-form-feedback,
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-group.fd-has-success .fd-form-check {
+      color: #02dba8 !important;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-group.fd-has-success .fd-form-control {
+      color: #02dba8 !important;
+      border-color: #02dba8 !important;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-group.fd-has-success .fd-form-feedback {
+      display: block;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-group.fd-has-error .fd-form-feedback,
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-group.fd-has-error .fd-form-check {
+      color: #eb3d3b !important;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-group.fd-has-error .fd-form-control {
+      color: #eb3d3b !important;
+      border-color: #eb3d3b !important;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-form-group.fd-has-error .fd-form-feedback {
+      display: block;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-btn {
+      cursor: pointer;
+      display: inline-flex;
+      box-shadow: none;
+      text-align: center;
+      transition: all 0.4s;
+      align-items: center;
+      text-shadow: none;
+      white-space: normal;
+      justify-content: center;
+      text-decoration: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-btn.disabled,
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-btn:disabled {
+      opacity: 0.8;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-btn p {
+      margin: 0;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-has-success .ff__fields {
+      display: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .ff__fields>*:last-child {
+      margin-bottom: 0;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-has-success .ff__footer {
+      display: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .ff__button {
+      color: #ffffff;
+      width: 100%;
+      border: 1px solid #000000;
+      display: inline-block;
+      padding: 12px 20px;
+      font-size: 13px;
+      background: #000000;
+      text-align: center;
+      font-family: Helvetica, sans-serif;
+      font-weight: 400;
+      line-height: 20px;
+      border-radius: 0px;
+      letter-spacing: 0.1px;
+      text-transform: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .ff__success {
+      display: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-has-success .ff__success {
+      display: block;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .ff__success>*:last-child {
+      margin-bottom: 0;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .ff__error {
+      margin: 15px 0 0 0;
+      display: none;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .fd-has-error .ff__error {
+      display: block;
+    }
+    .fd-ef-5f4538ef746e8b002c053a08 .ff__error>*:last-child {
+      margin-bottom: 0;
+    }
+  </style>
+      <div class="fd-modal ff__modal">
+        <div class="fd-modal__dialog ff__dialog">
+          <div class="fd-modal__content ff__content">
+            <div class="fd-modal__body ff__body">
+              <div class="ff__wrapper">
+                <form class="ff__form" action="https://form.flodesk.com/submit" method="post" data-form="fdv2">
+                  <h3 class="ff__title">
+                    <div>
+                      <p><span>Welcome to Little IA</span></p>
+                    </div>
+                  </h3>
+                  <div class="ff__subtitle">
+                    <div>
+                      <p>Join us and enjoy 10% OFF your first order.</p>
+                    </div>
+                  </div>
+                  <div class="ff__fields">
+                    <div class="fd-form-group">
+                      <input class="fd-form-control ff__control" type="text" name="firstName" placeholder="First name">
+                    </div>
+                    <div class="fd-form-group">
+                      <input class="fd-form-control ff__control" type="text" name="lastName" placeholder="Last name">
+                    </div>
+                    <div class="fd-form-group">
+                      <input class="fd-form-control ff__control" type="text" name="email" placeholder="Email address">
+                    </div>
+                    <input type="text" name="name" value="" style="display: none" />
+                    <input type="hidden" name="submitToken" value="25c2b95ee2acbdde6f45e76225016400630ef42d51c090d45e3f249e31b54f57a4b5036e7adbab5993dca661d622a237eef7330a34e04241dff9e77e268044d80a179bc73f33ad60242562c1f6146c88f5827ba90bbec762856cb19e11d1b120" />
+                  </div>
+                  <div class="ff__footer">
+                    <button type="submit" class="fd-btn ff__button" data-form-el="submit">
+                      <span>Yes Please</span>
+                    </button>
+                  </div>
+                  <div class="fd-success ff__success" data-form-el="success">
+                    <p>Thank you for subscribing!</p>
+                  </div>
+                  <div class="fd-error ff__error" data-form-el="error"></div>
+                </form>
+              </div>
+            </div>
+            <button class="fd-modal__close ff__close">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14.51 14.51">
+                <line x1="1" y1="1" x2="13.51" y2="13.51" fill="none" stroke="currentColor" strokeLinecap="round" strokeMiterlimit="10" strokeWidth="2" />
+                <line x1="13.51" y1="1" x2="1" y2="13.51" fill="none" stroke="currentColor" strokeLinecap="round" strokeMiterlimit="10" strokeWidth="2" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <img height="1" width="1" style="display:none" src="https://t.flodesk.com/utm.gif?r=5f4538ef746e8b002c053a08" />
+    </div>{% endcomment %}
+    <!--   flodesk form end here   -->
+    <!-- Begin Mailchimp Signup Form -->
+    <link href="//cdn-images.mailchimp.com/embedcode/classic-10_7.css" rel="stylesheet" type="text/css">
+    <style type="text/css">
+      #mc_embed_signup{background:#fff; clear:left; font:14px Helvetica,Arial,sans-serif; }
+      /* Add your own Mailchimp form style overrides in your site stylesheet or in this style block.
+      We recommend moving this block and the preceding CSS link to the HEAD of your HTML file. */
+    </style>
+    <div id="mc_embed_signup" class="izaak_subscribe-popup" style="display:none;">
+      <form action="https://littleizaakazanei.us8.list-manage.com/subscribe/post?u=42acb6679e869adfb6e8451d7&amp;id=c868bb0bf0" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+        <div id="subscribe_form-close"></div>
+        <div id="mc_embed_signup_scroll">
+          <div class="mc-field-heading">
+            <h2>Welcome to Little IA</h2>
+            <p>Join us & enjoy 10% OFF your first your order.</p>
+          </div>
+          <div class="mc-field-groupName">
+            <div class="mc-field-group">
+              <label for="mce-FNAME">First Name</label>
+              <input type="text" value="" name="FNAME" placeholder="First Name" class="form-control required" id="mce-FNAME">
+            </div>
+            <div class="mc-field-group">
+              <label for="mce-LNAME">Last Name</label>
+              <input type="text" value="" name="LNAME" placeholder="Last Name" class="form-control required" id="mce-LNAME">
+            </div>
+          </div>
+          <div class="mc-field-group">
+            <label for="mce-EMAIL">Email Address  <span class="asterisk">*</span>
+            </label>
+            <input type="email" value="" name="EMAIL" placeholder="Email Address" class="form-control required email" id="mce-EMAIL">
+          </div>
+          <div class="mc-field-groupSelect">
+            <div class="mc-field-group">
+              <label for="mce-MMERGE6">Country</label>
+              <select name="COUNTRY" class="form-control required" id="mce-COUNTRY">
+                <option value="">Country</option>
+                <option value="Afghanistan">Afghanistan</option>
+                <option value="Albania">Albania</option>
+                <option value="American Samoa">American Samoa</option>
+                <option value="Andorra">Andorra</option>
+                <option value="Angola">Angola</option>
+                <option value="Anguilla">Anguilla</option>
+                <option value="Antigua &amp; Barbuda">Antigua &amp; Barbuda</option>
+                <option value="Argentina">Argentina</option>
+                <option value="Armenia">Armenia</option>
+                <option value="Aruba">Aruba</option>
+                <option value="Australia">Australia</option>
+                <option value="Austria">Austria</option>
+                <option value="Azerbaijan">Azerbaijan</option>
+                <option value="Bahamas">Bahamas</option>
+                <option value="Bahrain">Bahrain</option>
+                <option value="Bangladesh">Bangladesh</option>
+                <option value="Barbados">Barbados</option>
+                <option value="Belarus">Belarus</option>
+                <option value="Belgium">Belgium</option>
+                <option value="Belize">Belize</option>
+                <option value="Benin">Benin</option>
+                <option value="Bermuda">Bermuda</option>
+                <option value="Bhutan">Bhutan</option>
+                <option value="Bolivia">Bolivia</option>
+                <option value="Bonaire">Bonaire</option>
+                <option value="Bosnia &amp; Herzegovina">Bosnia &amp; Herzegovina</option>
+                <option value="Botswana">Botswana</option>
+                <option value="Brazil">Brazil</option>
+                <option value="British Indian Ocean Ter">British Indian Ocean Ter</option>
+                <option value="Brunei">Brunei</option>
+                <option value="Bulgaria">Bulgaria</option>
+                <option value="Burkina Faso">Burkina Faso</option>
+                <option value="Burundi">Burundi</option>
+                <option value="Cambodia">Cambodia</option>
+                <option value="Canada">Canada</option>
+                <option value="Canary Islands">Canary Islands</option>
+                <option value="Cape Verde">Cape Verde</option>
+                <option value="Cayman Islands">Cayman Islands</option>
+                <option value="Central African Republic">Central African Republic</option>
+                <option value="Chad">Chad</option>
+                <option value="Channel Islands">Channel Islands</option>
+                <option value="Chile">Chile</option>
+                <option value="China">China</option>
+                <option value="Christmas Island">Christmas Island</option>
+                <option value="Cocos Island">Cocos Island</option>
+                <option value="Colombia">Colombia</option>
+                <option value="Comoros">Comoros</option>
+                <option value="Congo">Congo</option>
+                <option value="Cook Islands">Cook Islands</option>
+                <option value="Costa Rica">Costa Rica</option>
+                <option value="Cote DIvoire">Cote DIvoire</option>
+                <option value="Croatia">Croatia</option>
+                <option value="Cuba">Cuba</option>
+                <option value="Curacao">Curacao</option>
+                <option value="Cyprus">Cyprus</option>
+                <option value="Czech Republic">Czech Republic</option>
+                <option value="Denmark">Denmark</option>
+                <option value="Djibouti">Djibouti</option>
+                <option value="Dominica">Dominica</option>
+                <option value="Dominican Republic">Dominican Republic</option>
+                <option value="East Timor">East Timor</option>
+                <option value="Ecuador">Ecuador</option>
+                <option value="Egypt">Egypt</option>
+                <option value="El Salvador">El Salvador</option>
+                <option value="Equatorial Guinea">Equatorial Guinea</option>
+                <option value="Eritrea">Eritrea</option>
+                <option value="Estonia">Estonia</option>
+                <option value="Ethiopia">Ethiopia</option>
+                <option value="Falkland Islands">Falkland Islands</option>
+                <option value="Faroe Islands">Faroe Islands</option>
+                <option value="Fiji">Fiji</option>
+                <option value="Finland">Finland</option>
+                <option value="France">France</option>
+                <option value="French Guiana">French Guiana</option>
+                <option value="French Polynesia">French Polynesia</option>
+                <option value="French Southern Ter">French Southern Ter</option>
+                <option value="Gabon">Gabon</option>
+                <option value="Gambia">Gambia</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Germany">Germany</option>
+                <option value="Ghana">Ghana</option>
+                <option value="Gibraltar">Gibraltar</option>
+                <option value="Great Britain">Great Britain</option>
+                <option value="Greece">Greece</option>
+                <option value="Greenland">Greenland</option>
+                <option value="Grenada">Grenada</option>
+                <option value="Guadeloupe">Guadeloupe</option>
+                <option value="Guam">Guam</option>
+                <option value="Guatemala">Guatemala</option>
+                <option value="Guinea">Guinea</option>
+                <option value="Guyana">Guyana</option>
+                <option value="Haiti">Haiti</option>
+                <option value="Hawaii">Hawaii</option>
+                <option value="Honduras">Honduras</option>
+                <option value="Hong Kong">Hong Kong</option>
+                <option value="Hungary">Hungary</option>
+                <option value="Iceland">Iceland</option>
+                <option value="Indonesia">Indonesia</option>
+                <option value="India">India</option>
+                <option value="Iran">Iran</option>
+                <option value="Iraq">Iraq</option>
+                <option value="Ireland">Ireland</option>
+                <option value="Isle of Man">Isle of Man</option>
+                <option value="Israel">Israel</option>
+                <option value="Italy">Italy</option>
+                <option value="Jamaica">Jamaica</option>
+                <option value="Japan">Japan</option>
+                <option value="Jordan">Jordan</option>
+                <option value="Kazakhstan">Kazakhstan</option>
+                <option value="Kenya">Kenya</option>
+                <option value="Kiribati">Kiribati</option>
+                <option value="Korea North">Korea North</option>
+                <option value="Korea South">Korea South</option>
+                <option value="Kuwait">Kuwait</option>
+                <option value="Kyrgyzstan">Kyrgyzstan</option>
+                <option value="Laos">Laos</option>
+                <option value="Latvia">Latvia</option>
+                <option value="Lebanon">Lebanon</option>
+                <option value="Lesotho">Lesotho</option>
+                <option value="Liberia">Liberia</option>
+                <option value="Libya">Libya</option>
+                <option value="Liechtenstein">Liechtenstein</option>
+                <option value="Lithuania">Lithuania</option>
+                <option value="Luxembourg">Luxembourg</option>
+                <option value="Macau">Macau</option>
+                <option value="Macedonia">Macedonia</option>
+                <option value="Madagascar">Madagascar</option>
+                <option value="Malaysia">Malaysia</option>
+                <option value="Malawi">Malawi</option>
+                <option value="Maldives">Maldives</option>
+                <option value="Mali">Mali</option>
+                <option value="Malta">Malta</option>
+                <option value="Marshall Islands">Marshall Islands</option>
+                <option value="Martinique">Martinique</option>
+                <option value="Mauritania">Mauritania</option>
+                <option value="Mauritius">Mauritius</option>
+                <option value="Mayotte">Mayotte</option>
+                <option value="Mexico">Mexico</option>
+                <option value="Midway Islands">Midway Islands</option>
+                <option value="Moldova">Moldova</option>
+                <option value="Monaco">Monaco</option>
+                <option value="Mongolia">Mongolia</option>
+                <option value="Montserrat">Montserrat</option>
+                <option value="Morocco">Morocco</option>
+                <option value="Mozambique">Mozambique</option>
+                <option value="Myanmar">Myanmar</option>
+                <option value="Nambia">Nambia</option>
+                <option value="Nauru">Nauru</option>
+                <option value="Nepal">Nepal</option>
+                <option value="Netherland Antilles">Netherland Antilles</option>
+                <option value="Netherlands (Holland, Europe)">Netherlands (Holland, Europe)</option>
+                <option value="Nevis">Nevis</option>
+                <option value="New Caledonia">New Caledonia</option>
+                <option value="New Zealand">New Zealand</option>
+                <option value="Nicaragua">Nicaragua</option>
+                <option value="Niger">Niger</option>
+                <option value="Nigeria">Nigeria</option>
+                <option value="Niue">Niue</option>
+                <option value="Norfolk Island">Norfolk Island</option>
+                <option value="Norway">Norway</option>
+                <option value="Oman">Oman</option>
+                <option value="Pakistan">Pakistan</option>
+                <option value="Palau Island">Palau Island</option>
+                <option value="Palestine">Palestine</option>
+                <option value="Panama">Panama</option>
+                <option value="Papua New Guinea">Papua New Guinea</option>
+                <option value="Paraguay">Paraguay</option>
+                <option value="Peru">Peru</option>
+                <option value="Philippines">Philippines</option>
+                <option value="Pitcairn Island">Pitcairn Island</option>
+                <option value="Poland">Poland</option>
+                <option value="Portugal">Portugal</option>
+                <option value="Puerto Rico">Puerto Rico</option>
+                <option value="Qatar">Qatar</option>
+                <option value="Republic of Montenegro">Republic of Montenegro</option>
+                <option value="Republic of Serbia">Republic of Serbia</option>
+                <option value="Reunion">Reunion</option>
+                <option value="Romania">Romania</option>
+                <option value="Russia">Russia</option>
+                <option value="Rwanda">Rwanda</option>
+                <option value="St Barthelemy">St Barthelemy</option>
+                <option value="St Eustatius">St Eustatius</option>
+                <option value="St Helena">St Helena</option>
+                <option value="St Kitts-Nevis">St Kitts-Nevis</option>
+                <option value="St Lucia">St Lucia</option>
+                <option value="St Maarten">St Maarten</option>
+                <option value="St Pierre &amp; Miquelon">St Pierre &amp; Miquelon</option>
+                <option value="St Vincent &amp; Grenadines">St Vincent &amp; Grenadines</option>
+                <option value="Saipan">Saipan</option>
+                <option value="Samoa">Samoa</option>
+                <option value="Samoa American">Samoa American</option>
+                <option value="San Marino">San Marino</option>
+                <option value="Sao Tome &amp; Principe">Sao Tome &amp; Principe</option>
+                <option value="Saudi Arabia">Saudi Arabia</option>
+                <option value="Senegal">Senegal</option>
+                <option value="Seychelles">Seychelles</option>
+                <option value="Sierra Leone">Sierra Leone</option>
+                <option value="Singapore">Singapore</option>
+                <option value="Slovakia">Slovakia</option>
+                <option value="Slovenia">Slovenia</option>
+                <option value="Solomon Islands">Solomon Islands</option>
+                <option value="Somalia">Somalia</option>
+                <option value="South Africa">South Africa</option>
+                <option value="Spain">Spain</option>
+                <option value="Sri Lanka">Sri Lanka</option>
+                <option value="Sudan">Sudan</option>
+                <option value="Suriname">Suriname</option>
+                <option value="Swaziland">Swaziland</option>
+                <option value="Sweden">Sweden</option>
+                <option value="Switzerland">Switzerland</option>
+                <option value="Syria">Syria</option>
+                <option value="Tahiti">Tahiti</option>
+                <option value="Taiwan">Taiwan</option>
+                <option value="Tajikistan">Tajikistan</option>
+                <option value="Tanzania">Tanzania</option>
+                <option value="Thailand">Thailand</option>
+                <option value="Togo">Togo</option>
+                <option value="Tokelau">Tokelau</option>
+                <option value="Tonga">Tonga</option>
+                <option value="Trinidad &amp; Tobago">Trinidad &amp; Tobago</option>
+                <option value="Tunisia">Tunisia</option>
+                <option value="Turkey">Turkey</option>
+                <option value="Turkmenistan">Turkmenistan</option>
+                <option value="Turks &amp; Caicos Is">Turks &amp; Caicos Is</option>
+                <option value="Tuvalu">Tuvalu</option>
+                <option value="Uganda">Uganda</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="Ukraine">Ukraine</option>
+                <option value="United Arab Emirates">United Arab Emirates</option>
+                <option value="United States of America">United States of America</option>
+                <option value="Uruguay">Uruguay</option>
+                <option value="Uzbekistan">Uzbekistan</option>
+                <option value="Vanuatu">Vanuatu</option>
+                <option value="Vatican City State">Vatican City State</option>
+                <option value="Venezuela">Venezuela</option>
+                <option value="Vietnam">Vietnam</option>
+                <option value="Virgin Islands (Brit)">Virgin Islands (Brit)</option>
+                <option value="Virgin Islands (USA)">Virgin Islands (USA)</option>
+                <option value="Wake Island">Wake Island</option>
+                <option value="Wallis &amp; Futana Is">Wallis &amp; Futana Is</option>
+                <option value="Yemen">Yemen</option>
+                <option value="Zaire">Zaire</option>
+                <option value="Zambia">Zambia</option>
+                <option value="Zimbabwe">Zimbabwe</option>
+              </select>
+            </div>
+            {% comment %}
+            <div class="mc-field-group mc-field-birthday size1of2">
+              <label for="mce-BIRTHDAY-month">Birthday </label>
+              <div class="datefield">
+                <span class="subfield monthfield"><input class="birthday " type="text" pattern="[0-9]*" value="" placeholder="MM" size="2" maxlength="2" name="BIRTHDAY[month]" id="mce-BIRTHDAY-month"></span> / 
+                <span class="subfield dayfield"><input class="birthday " type="text" pattern="[0-9]*" value="" placeholder="DD" size="2" maxlength="2" name="BIRTHDAY[day]" id="mce-BIRTHDAY-day"></span>
+              </div>
+            </div>
+            {% endcomment %}
+          </div>
+          <div id="mce-responses" class="clear">
+            <div class="response" id="mce-error-response" style="display:none"></div>
+            <div class="response" id="mce-success-response" style="display:none"></div>
+          </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+          <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_42acb6679e869adfb6e8451d7_c868bb0bf0" tabindex="-1" value=""></div>
+          <div class="mc-field-submit"><input type="submit" value="Subscribe" name="Yes Please" id="mc-embedded-subscribe" class="button"></div>
+        </div>
+      </form>
+    </div>
+    <script type='text/javascript' src='//s3.amazonaws.com/downloads.mailchimp.com/js/mc-validate.js'></script><script type='text/javascript'>(function($) {window.fnames = new Array(); window.ftypes = new Array();fnames[0]='EMAIL';ftypes[0]='email';fnames[1]='FNAME';ftypes[1]='text';fnames[2]='LNAME';ftypes[2]='text';fnames[3]='ADDRESS';ftypes[3]='address';fnames[4]='PHONE';ftypes[4]='phone';fnames[5]='BIRTHDAY';ftypes[5]='birthday';fnames[6]='MMERGE6';ftypes[6]='dropdown';}(jQuery));var $mcj = jQuery.noConflict(true);</script>
+    <!--End mc_embed_signup-->
+    {% endif %}
+    {% include 'buddha-megamenu-wireframe' %}
+    <a class="in-page-link visually-hidden skip-link" href="#MainContent">{{ 'general.accessibility.skip_to_content' | t }}</a>
+    {%- if settings.enable_ajax -%}
+    {% include 'cart-popup' %}
+    {%- endif -%}
+    {% section 'announcement-bar' %}
+    {% section 'header' %}
+    
+    <div class="page-container drawer-page-content" id="PageContainer">
+      <main class="main-content js-focus-hidden" id="MainContent" role="main" tabindex="-1">
+        {{ content_for_layout }}
+      </main>
+      {% section 'footer' %}
+      <div id="slideshow-info" class="visually-hidden" aria-hidden="true">
+        {{- 'sections.slideshow.navigation_instructions' | t -}}
+      </div>
+    </div>
+    <ul hidden>
+      <li id="a11y-refresh-page-message">{{ 'general.accessibility.refresh_page' | t }}</li>
+      <li id="a11y-selection-message">{{ 'general.accessibility.selection_help' | t }}</li>
+    </ul>
+    {% include 'sca-quick-view-template' %} 
+    {% include 'globo.menu.action' %}{% comment %}This is for Badge Master By Hulkapps{% endcomment %} {% include 'hulkcode_trustbadge' %}{% include "aph_cart" %}</body>
+</html>

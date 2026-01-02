@@ -1,0 +1,51 @@
+<div class="faq_tab">
+  <div class="page-width">
+    <h1 class="faq-title">{{ section.settings.title }}</h1>
+    <div class="faq-blocks">
+      {% for block in section.blocks %}
+        <div class="faq-block">
+          <h3 class="faq-question">{{ block.settings.questions }}
+          <span>
+            {% render 'icon-plus' %}
+            {% render 'icon-minus' %}
+          </span>
+          </h3>
+          <div class="faq-answer">{{ block.settings.answer }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+
+{% schema %}
+{
+  "name": "FAQ Tabs",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "label": "Title",
+      "id": "title"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "block",
+      "name": "block",
+      "settings": [
+        {
+          "type": "text",
+          "label": "Questions",
+          "id": "questions"
+        },
+        {
+          "type": "richtext",
+          "label": "Answer",
+          "id": "answer"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

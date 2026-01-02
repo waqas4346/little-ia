@@ -1,0 +1,159 @@
+<style>
+  .breadcrumbs { margin: 0 0 1em;padding:0 0 0 20px;}
+  .breadcrumbs__list { list-style-type: none; margin: 0; padding: 0; }
+  .breadcrumbs__item { display: inline-block; }
+  .breadcrumbs__item:not(:last-child):after { border-style: solid; border-width: .10em .10em 0 0; content: ''; display: inline-block;color:#6896c1; height: .20em; margin: 0 .20em; position: relative; transform: rotate(45deg); vertical-align: middle; width: .20em; }
+  .breadcrumbs .breadcrumbs__list .breadcrumbs__item:first-child {margin-right:6px;}
+  .breadcrumbs__link[aria-current="page"] { color: inherit; font-weight: normal; text-decoration: none; }
+  .breadcrumbs__link[aria-current="page"]:hover,
+  .breadcrumbs__link[aria-current="page"]:focus {
+    text-decoration: underline;
+  }
+  .breadcrumbs__item a {color:#6896c1;}
+  @media screen and (max-width: 767px) {
+  	.breadcrumbs { padding:0 0 0 40px;}
+  }
+</style>
+
+{%- unless template == 'index' or template == 'cart' or template == 'list-collections' or template == '404' -%}
+  {%- assign t = template | split: '.' | first -%}
+  {% if sort_enable %}
+    <div class="breadcrumbs__sorting page-width">
+  {% endif %}
+  <nav class="breadcrumbs" role="navigation" aria-label="breadcrumbs">
+    <ol class="breadcrumbs__list">
+      <li class="breadcrumbs__item">
+        <a class="breadcrumbs__link" href="/">Home</a>
+      </li>
+      {%- case t -%}
+        {%- when 'page' -%}
+          <li class="breadcrumbs__item">
+            <a class="breadcrumbs__link" href="{{ page.url }}" aria-current="page">{{ page.title }}</a>
+          </li>
+        {%- when 'product' -%}
+          {%- if collection.url -%}
+            <li class="breadcrumbs__item">
+              {{ collection.title | link_to: collection.url }}
+            </li>
+          {%- endif -%}
+          {%- comment -%}
+            <li class="breadcrumbs__item">
+              <a class="breadcrumbs__link" href="{{ product.url }}" aria-current="page">{{ product.title }}</a>
+            </li>
+          {%- endcomment -%}
+        {%- when 'collection' and collection.handle -%}
+          {%- if current_tags -%}
+            <li class="breadcrumbs__item">
+              {{ collection.title | link_to: collection.url }}
+            </li>
+            <li class="breadcrumbs__item">
+              {%- capture tag_url -%}{{ collection.url }}/{{ current_tags | join: "+"}}{%- endcapture -%}
+              <a class="breadcrumbs__link" href="{{ tag_url }}" aria-current="page">{{ current_tags | join: ' + ' }}</a>
+            </li>
+          {%- else -%}
+            <li class="breadcrumbs__item">
+              <a class="breadcrumbs__link" href="{{ collection.url }}" aria-current="page">{{ collection.title }}</a>
+            </li>
+          {%- endif -%}
+        {%- when 'blog' -%}
+          {%- if current_tags -%}
+            <li class="breadcrumbs__item">
+              {{ blog.title | link_to: blog.url }}
+            </li>
+            <li class="breadcrumbs__item">
+              {%- capture tag_url -%}{{blog.url}}/tagged/{{ current_tags | join: "+" }}{%- endcapture -%}
+              <a class="breadcrumbs__link" href="{{ tag_url }}" aria-current="page">{{ current_tags | join: ' + ' }}</a>
+            </li>
+          {%- else -%}
+            <li class="breadcrumbs__item">
+              <a class="breadcrumbs__link" href="{{ blog.url }}" aria-current="page">{{ blog.title }}</a>
+            </li>
+          {%- endif -%}
+        {%- when 'article' -%}
+          <li class="breadcrumbs__item">
+            {{ blog.title | link_to: blog.url }}
+          </li>
+          <li class="breadcrumbs__item">
+            <a class="breadcrumbs__link" href="{{ article.url }}" aria-current="page">{{ article.title }}</a>
+          </li>
+        {%- else -%}
+          <li class="breadcrumbs__item">
+            <a class="breadcrumbs__link" href="{{ request.path }}" aria-current="page">{{ page_title }}</a>
+          </li>
+      {%- endcase -%}
+    </ol>
+  </nav>
+{%- endunless -%}
+
+{% if sort_enable %}
+  <div class="filters-toolbar-wrapper">
+    <div class="filters-toolbar">
+      <div class="filters-toolbar__item-wrapper">
+        <div class="template-collectionCol">
+          <div class="filters-toolbar__item-child">
+            <div class="form-horizontal sortBy-select {% if collection.all_tags.size > 0 %}tag-sort-exists{%endif%}">
+              {% assign sort_by = collection.sort_by | default: collection.default_sort_by %}
+              {% comment %}<label for="SortBy">{{ 'collections.sorting.title' | t }} :</label>{% endcomment %}
+              <span id="sortBy-filterSpan">Sort By</span>
+              <ul
+                name="sort_by"
+                id="SortBy"
+                class="filters-toolbar__input hidden"
+                aria-describedby="a11y-refresh-page-message a11y-selection-message"
+                data-default-sortby="{{ collection.sort_by }}"
+              >
+                {% comment %}<li value="sortby"><a href="?sort_by=sortby">Sort By</a></li>{% endcomment %}
+                {% if sort_by == collection.default_sort_by %}
+                  <li value="price-descending"><a href="?sort_by=created-ascending">Newest</a></li>
+                  <li value="price-descending"><a href="?sort_by=best-selling">Popular</a></li>
+                  {% if collection.default_sort_by != 'price-ascending' %}
+                    <li
+                      value="price-ascending"
+                      {% if sort_by == 'price-ascending' %}
+                        selected="selected"
+                      {% endif %}
+                    >
+                      <a href="?sort_by=price-ascending">Price, low to high</a>
+                    </li>
+                  {% endif %}
+                  {% if collection.default_sort_by != 'price-descending' %}
+                    <li
+                      value="price-descending"
+                      {% if sort_by == 'price-descending' %}
+                        selected="selected"
+                      {% endif %}
+                    >
+                      <a href="?sort_by=price-descending">Price, high to low</a>
+                    </li>
+                  {% endif %}
+                {% else %}
+                  <li value="price-descending"><a href="?sort_by=created-ascending">Newest</a></li>
+                  <li value="price-descending"><a href="?sort_by=best-selling">Popular</a></li>
+                  <li
+                    value="price-ascending"
+                    {% if sort_by == 'price-ascending' %}
+                      selected="selected"
+                    {% endif %}
+                  >
+                    <a href="?sort_by=price-ascending">Price, low to high</a>
+                  </li>
+                  <li
+                    value="price-descending"
+                    {% if sort_by == 'price-descending' %}
+                      selected="selected"
+                    {% endif %}
+                  >
+                    <a href="?sort_by=price-descending">Price, high to low</a>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% if sort_enable %}
+  </div>
+{% endif %}

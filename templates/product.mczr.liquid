@@ -1,0 +1,14 @@
+<script>
+var onMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+  window.navigator.userAgent
+);
+if (onMobile) {
+  window.location = '{{ request.path | replace: "?view=mczrmobile", "" | append:'?view=mczrmobile' }}';
+}
+</script>
+{% include 'mczr' %}
+{% comment %}
+  You can add or include some content in this page.
+{% endcomment %}
+<div id="mczrLoader" style="text-align: center;">
+</div>

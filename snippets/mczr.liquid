@@ -1,0 +1,14 @@
+{% if template contains 'product'%}
+      <script id="mczr" type="application/json">
+      {
+          "settings"    : {{ shop.metafields.mczr.settings }},
+          "domain"  : {{shop.permanent_domain | json }},
+          "template"    : {{ template | json }}
+
+          {% if product.metafields.mczr.isCustomizable %}
+               ,"product"    : {{ product | json }},
+               "metafields" : {{ product.metafields.mczr | json }}
+          {% endif %}
+      }
+      </script>
+{% endif %}

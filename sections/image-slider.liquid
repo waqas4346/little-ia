@@ -1,0 +1,60 @@
+{% assign sectionId = section.id %}
+{% assign title = section.settings.title %}
+<section id="{{ sectionId }}">
+  <div class="only_image_slider">
+    <div class="page-width">
+      {% if title != blank %}
+        <h2>{{ title }}</h2>
+      {% endif %}
+      <div class="img_slider_main">
+     <div class="img_arrow img_arrow_prev">{% render 'icon-arrow-prev' %}</div>
+        <div class="img_slider">
+          {% for block in section.blocks %}
+            {% assign image = block.settings.image %}
+            {% if image %}
+              <img src="{{ image | img_url: 'master' }}" alt="Slider Image">
+            {% endif %}
+          {% endfor %}
+        </div>
+      <div class="img_arrow img_arrow_next">{% render 'icon-arrow-next' %}</div>
+      </div>
+      <div class="gogle_img">
+        <a href="https://www.google.com/search?q=little+ia&oq=little+ia+&aqs=chrome..69i57j46i175i199i512j0i22i30j0i10i22i30j0i22i30j69i60l3.3044j0j7&sourceid=chrome&ie=UTF-8#lrd=0x3e5f6d1fa1d9e1b3:0x80b42c389ada321e,1,,,">
+          <img src="https://cdn.shopify.com/s/files/1/0289/3240/7375/files/0_3.png?v=1690975083">
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Image slider",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "label": "Title",
+      "id": "title"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "block",
+      "name": "block",
+      "settings": [
+        {
+          "type": "image_picker",
+          "label": "Image",
+          "id": "image"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Image slider"
+    }
+  ]
+}
+{% endschema %}

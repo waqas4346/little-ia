@@ -1,0 +1,66 @@
+        {% if settings.social_twitter_link != blank %}
+            <a class="icon-fallback-text" href="{{ settings.social_twitter_link }}" title="{{ shop.name }} on Twitter" target="_blank" itemprop="sameAs">
+              <span class="icon icon-twitter" aria-hidden="true">{% include 'icon-twitter' %}</span>
+              <span class="icon__fallback-text">Twitter</span>
+            </a>
+        {% endif %}
+        {% if settings.social_facebook_link != blank %}
+            <a class="icon-fallback-text" href="{{ settings.social_facebook_link }}" title="{{ shop.name }} on Facebook" target="_blank" itemprop="sameAs">
+              <span class="icon icon-facebook" aria-hidden="true">{% include 'icon-facebook' %}</span>
+              <span class="icon__fallback-text">Facebook</span>
+            </a>
+        {% endif %}
+        {% if settings.social_instagram_link != blank %}
+            <a class="icon-fallback-text" href="{{ settings.social_instagram_link }}" title="{{ shop.name }} on Instagram" target="_blank" itemprop="sameAs">
+              <span class="icon icon-instagram" aria-hidden="true">{% include 'icon-instagram' %}</span>
+              <span class="icon__fallback-text">Instagram</span>
+            </a>
+        {% endif %}
+        {% if settings.social_pinterest_link != blank %}
+            <a class="icon-fallback-text" href="{{ settings.social_pinterest_link }}" title="{{ shop.name }} on Pinterest" target="_blank" itemprop="sameAs">
+              <span class="icon icon-pinterest" aria-hidden="true">{% include 'icon-pinterest' %}</span>
+              <span class="icon__fallback-text">Pinterest</span>
+            </a>
+        {% endif %}
+        {% if settings.social_tiktok_link != blank %}
+            <a class="icon-fallback-text" href="{{ settings.social_tiktok_link }}" title="{{ shop.name }} on Pinterest" target="_blank" itemprop="sameAs">
+              <span class="icon icon-tiktok" aria-hidden="true">{% include 'icon-tiktok' %}</span>
+              <span class="icon__fallback-text">Pinterest</span>
+            </a>
+        {% endif %}
+        {% if settings.social_linkedin_link != blank %}
+            <a class="icon-fallback-text" href="{{ settings.social_linkedin_link }}" title="{{ shop.name }} on Pinterest" target="_blank" itemprop="sameAs">
+              <span class="icon icon-linkedin" aria-hidden="true">{% include 'icon-linkdin' %}</span>
+              <span class="icon__fallback-text">Pinterest</span>
+            </a>
+        {% endif %}
+        {% if settings.mailto_link != blank %}
+            <a class="icon-fallback-text" href="mailto:{{ settings.mailto_link }}" title="{{ shop.name }} on Email" target="_blank" itemprop="sameAs">
+              <span class="icon icon-google_plus" aria-hidden="true">{% include 'icon-mail' %}</span>
+              <span class="icon__fallback-text">Mail</span>
+            </a>
+        {% endif %}
+        {% if settings.social_youtube_link != blank %}
+            <a class="icon-fallback-text" href="{{ settings.social_youtube_link }}" title="{{ shop.name }} on Youtube" target="_blank" itemprop="sameAs">
+              <span class="icon icon-youtube" aria-hidden="true">{% include 'icon-youtube' %}</span>
+              <span class="icon__fallback-text">Youtube</span>
+            </a>
+        {% endif %}
+        {% if settings.social_vimeo_link != blank %}
+            <a class="icon-fallback-text" href="{{ settings.social_vimeo_link }}" title="{{ shop.name }} on Vimeo" target="_blank" itemprop="sameAs">
+              <span class="icon icon-vimeo" aria-hidden="true">{% include 'icon-vimeo' %}</span>
+              <span class="icon__fallback-text">Vimeo</span>
+            </a>
+        {% endif %}
+        {% if settings.social_tumblr_link != blank %}
+            <a class="icon-fallback-text" href="{{ settings.social_tumblr_link }}" title="{{ shop.name }} on Tumblr" target="_blank" itemprop="sameAs">
+              <span class="icon icon-tumblr" aria-hidden="true">{% include 'icon-tumblr' %}</span>
+              <span class="icon__fallback-text">Tumblr</span>
+            </a>
+        {% endif %}
+        {% if settings.social_snapchat_link != blank %}
+            <a class="icon-fallback-text" href="{{ settings.social_snapchat_link }}" title="{{ shop.name }} on Snapchat" target="_blank" itemprop="sameAs">
+              <span class="icon icon-fancy" aria-hidden="true">{% include 'icon-snapchat' %}</span>
+              <span class="icon__fallback-text">Snapchat</span>
+            </a>
+        {% endif %}

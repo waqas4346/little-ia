@@ -1,0 +1,1857 @@
+{%- assign product_tags = product.tags | join: ' ' | downcase -%}
+<div class="page_breadcrumbs_nav page-width">
+  <div class="grid">
+    <div class="grid__item product-single__media-group medium-up--one-half">
+      {% render 'breadcrumbs' %}
+    </div>
+    <div class="grid__item product-single__media-group medium-up--one-half">
+      
+      {% if collection %}
+      <div class="ia_product-btns" style="overflow:hidden">
+        <a href="{% if collection.previous_product %}{{ collection.previous_product }}{% endif %}" 
+           title="PREVIOUS" class="">< Previous</a> /
+          <a href="{% if collection.next_product %}{{ collection.next_product }}{% endif %}" title="NEXT" 
+             class="">Next ></a>    
+          </div>
+        {% endif %}
+    </div>
+  </div>
+</div>
+             
+{%- capture gift_html -%}
+  {%- if product.tags contains 'custom_gift_wrap' -%}
+    {%- assign gift_product = all_products['gift-wrap'] -%}
+    <div class="add-gift-wrap">
+      <div class="add-gift">
+        <input type="checkbox" id="chkAddGift" class="chk_add_gift" value="{{ gift_product.selected_or_first_available_variant.id }}" data="{{ product.id }}">
+        <label for="chkAddGift"><span class="gift-icon">{%- render 'icon-gift' -%}</span><span class="lbl-text">{{ gift_product.title }}(+{{ gift_product.price | money }})</span></label>
+      </div>
+    </div>
+  {% endif %}
+  {% if product.tags contains 'christmas_gift' %}
+   {%- assign christmas_product = all_products['christmas-gift-wrap'] -%}
+   <div class="christmas-add-gift-wrap">
+    <div class="christmas-add-gift">
+   
+      <input type="checkbox" id="christmas_chkAddGift" class="christmas-chk_add_gift" value="{{ christmas_product.selected_or_first_available_variant.id }}" data="{{ product.id }}">
+      <label for="christmas_chkAddGift"><span class="gift-icon">{%- render 'icon-gift' -%}</span><span class="lbl-text">Add {{ christmas_product.title }} ({{ christmas_product.price | money }})</span></label>
+    </div>
+   </div>
+  {% endif %}
+  {% #CD shubham %}
+  {%- if product.tags contains 'gift_message' -%}
+     <div class="personalized_field_block">
+        <label class="text_label">Enter a gift message<span style="color: red;">*</span></label>
+        <input type="text" name="properties[Gift Message]"  id="custm_name" maxlength="300" style=" width: 100%; ">
+      </div>
+  {% endif %}
+
+{%- endcapture -%}  
+
+<div class="product-template__container page-width"
+     id="ProductSection-{{ section.id }}"
+     data-section-id="{{ section.id }}"
+     data-section-type="product"
+     data-enable-history-state="true"
+     data-ajax-enabled="{{ settings.enable_ajax }}"
+     >
+  {% comment %}
+  Get first variant, or deep linked one
+  {% endcomment %}
+  {%- assign current_variant = product.selected_or_first_available_variant -%}
+  {%- assign product_image_zoom_size = '1024x1024' -%}
+  {%- assign product_image_scale = '2' -%}
+  {%- assign enable_image_zoom = section.settings.enable_image_zoom -%}
+  {%- assign compare_at_price = current_variant.compare_at_price -%}
+  {%- assign price = current_variant.price -%}
+
+  {% case section.settings.media_size %}
+  {% when 'small' %}
+  {%- assign product_media_width = 'medium-up--one-third' -%}
+  {%- assign product_description_width = 'medium-up--two-thirds' -%}
+  {%- assign height = 345 -%}
+  {% when 'medium' %}
+  {%- assign product_media_width = 'medium-up--one-half' -%}
+  {%- assign product_description_width = 'medium-up--one-half' -%}
+  {%- assign height = 530 -%}
+  {% when 'large' %}
+  {%- assign product_media_width = 'medium-up--two-thirds' -%}
+  {%- assign product_description_width = 'medium-up--one-third' -%}
+  {%- assign height = 720 -%}
+  {% when 'full' %}
+  {%- assign product_media_width = '' -%}
+  {%- assign product_description_width = '' -%}
+  {%- assign height = 1090 -%}
+  {%- assign enable_image_zoom = false -%}
+  {% endcase %}
+
+  <div class="grid product-single{% if section.settings.enable_payment_button %} product-single--{{ section.settings.media_size }}-media{% endif %}">
+    {%- comment -%} CD {%- endcomment -%}
+    {%- render 'breadcrumb' -%}
+    <div class="grid__item product-single__media-group {{ product_media_width }}{% if section.settings.media_size == 'full' %} product-single__media-group--full{% endif %}" data-product-single-media-group>
+      {%- assign featured_media = product.selected_or_first_available_variant.featured_media | default: product.featured_media -%}
+<div class="announcement-list-crousal">
+      {%- for media in product.media -%}
+      {% include 'media', media: media, featured_media: featured_media, height: height, enable_image_zoom: enable_image_zoom, image_zoom_size: product_image_zoom_size, image_scale: product_image_scale %}
+      {%- endfor -%}
+      </div>
+      <noscript>
+        {% capture product_image_size %}{{ height }}x{% endcapture %}
+        <img src="{{ featured_media | img_url: product_image_size, scale: product_image_scale }}" alt="{{ featured_media.alt }}" id="FeaturedMedia-{{ section.id }}" class="product-featured-media" style="max-width: {{ height }}px;">
+      </noscript>
+
+      {% assign first_3d_model = product.media | where: "media_type", "model" | first %}
+
+      {%- if first_3d_model -%}
+      <button
+              aria-label="{{ 'products.product.view_in_space_label' | t }}"
+              class="product-single__view-in-space"
+              data-shopify-xr
+              data-shopify-model3d-id="{{ first_3d_model.id }}"
+              data-shopify-title="{{ product.title | escape }}"
+              data-shopify-xr-hidden
+              >
+        {% include 'icon-3d-badge-full-color' %}<span class='product-single__view-in-space-text'>{{ 'products.product.view_in_space' | t }}</span>
+      </button>
+      {%- endif -%}
+
+
+      {% if product.media.size > 1 %}
+      {% if product.media.size > 4 %}
+      {%- assign enable_thumbnail_slides = true -%}
+      {% endif %}
+
+      <div class="thumbnails-wrapper thumbnails-slider--active">
+        {% comment %}{% if enable_thumbnail_slides == true %}{% endif %}{% endcomment %}
+        <button type="button" class="btn btn--link medium-up--hide thumbnails-slider__btn thumbnails-slider__prev thumbnails-slider__prev--{{ section.id }}">
+          {% include 'icon-chevron-left' %}
+          <span class="icon__fallback-text">{{ 'sections.slideshow.previous_slide' | t }}</span>
+        </button>
+        
+        <ul class="product-single__thumbnails thumbnails-wrapper_slider product-single__thumbnails-{{ section.id }}">
+          {% for media in product.media %}
+          <li class="product-single__thumbnails-item product-single__thumbnails-item--{{ section.settings.media_size }} js">
+            <a href="{{ media.preview_image | img_url: product_image_zoom_size, scale: product_image_scale }}"
+               class="text-link product-single__thumbnail product-single__thumbnail--{{ section.id }}"
+               data-thumbnail-id="{{ section.id }}-{{ media.id }}"
+               {% if enable_image_zoom %}data-zoom="{{ media.preview_image | img_url: product_image_zoom_size, scale: product_image_scale }}"{% endif %}>
+
+              {%- capture thumbnailAlt -%}
+              {%- if media.media_type == 'video' or media.media_type == 'external_video' -%}
+              {{ 'sections.featured_product.video_thumbnail_alt' | t: imageAlt: media.alt | escape }}
+              {%- elsif media.media_type == 'model' -%}
+              {{ 'sections.featured_product.model_thumbnail_alt' | t: imageAlt: media.alt | escape }}
+              {%- else -%}
+              {{ 'sections.featured_product.gallery_thumbnail_alt' | t: imageAlt: media.alt | escape }}
+              {%- endif -%}
+              {%- endcapture -%}
+
+              <img class="product-single__thumbnail-image" src="{{ media.preview_image | img_url: '110x110', scale: 2 }}" alt="{{ thumbnailAlt }}">
+              {%- if media.media_type == 'video' or media.media_type =='external_video' -%}
+              <div class="product-single__thumbnail-badge">
+                {% include 'icon-video-badge-full-color' %}
+              </div>
+              {%- endif -%}
+              {%- if media.media_type == 'model' -%}
+              <div class="product-single__thumbnail-badge">
+                {% include 'icon-3d-badge-full-color' %}
+              </div>
+              {%- endif -%}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% comment %}{% if enable_thumbnail_slides == true %}{% endif %}{% endcomment %}
+        <button type="button" class="btn btn--link medium-up--hide thumbnails-slider__btn thumbnails-slider__next thumbnails-slider__next--{{ section.id }}">
+          {% include 'icon-chevron-right' %}
+          <span class="icon__fallback-text">{{ 'sections.slideshow.next_slide' | t }}</span>
+        </button>
+        {% comment %}{% endif %}{% endcomment %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="grid__item {{ product_description_width }}">
+      <div class="product-single__meta">
+
+        <h1 class="product-single__title">{{ product.title }}</h1>
+<div class="ruk_rating_snippet" data-sku="{{ product.handle }};{{ product.variants | map: 'sku' | join: ';' }};{{ product.variants | map: 'id' | join: ';' }}"></div>
+
+        {% comment %}cd code{% endcomment %}
+        {%- if product.tags contains 'custom_gift_set' -%}
+          <div class="custom_gift_set">
+            <span>(Free gift wrap included)</span>
+          </div>
+        {%- endif -%}
+        
+        <div class="product__price product__price_change">
+         {% #CD shubham %}
+             {% comment %}{%- if product.tags contains 'marks_design' -%} 
+            <span class="marks_design_title medium-up--hide">Shipping: This product will be fulfilled within 10 to 14 days</span>
+            {% endif %}
+             {%- if product.tags contains 'markdesigns_10days' -%} 
+            <span class="marks_design_title medium-up--hide">Shipping: This product will be fulfilled within 8 to 10 days</span>
+            {% endif %}
+             {%- if product.tags contains 'markdesigns_12days' -%} 
+            <span class="marks_design_title medium-up--hide">Shipping: This product will be fulfilled within 10 to 12 days</span>
+            {% endif %}{% endcomment %}
+          {% include 'product-price', variant: current_variant, show_vendor: section.settings.show_vendor, removesoldout: true %}
+          {% comment %} CD Sanket {% endcomment %}
+          {%- if product.tags contains 'uae_only' -%} <span class="uae_only_title">Available in the UAE only</span>  {% endif %}
+           {% comment %}{%- if product.tags contains 'marks_design' -%} 
+            <span class="marks_design_title small--hide">Shipping: This product will be fulfilled within 10 to 14 days</span>
+            {% endif %}
+             {%- if product.tags contains 'markdesigns_10days' -%} 
+            <span class="marks_design_title small--hide">Shipping: This product will be fulfilled within 8 to 10 days</span>
+            {% endif %}
+             {%- if product.tags contains 'markdesigns_12days' -%} 
+            <span class="marks_design_title small--hide">Shipping: This product will be fulfilled within 10 to 12 days</span>
+            {% endif %}{% endcomment %}
+        </div>
+        
+        {%- if product.tags contains 'art_pix' -%} <div class="art_pix_title">Processing time is 2 to 4 weeks</div>  {% endif %}
+        {% for meta in product.metafields.custom.product_list.value %}
+          {% assign meta_pro = forloop.length %}
+        {% endfor %}
+        {% if product.metafields.custom.product_list != blank %}
+        <div class="pro_meta">
+          <h1 class="pro_title">Also available in</h1>
+       {% if meta_pro > 3 %} <div class="img_arrow img_arrow_prev">{% render 'icon-arrow-prev' %}</div>{% endif %}
+          <div class="product_meta_slider{% if meta_pro > 3 %} product_slider_main{% endif %}">
+            
+            {% for meta in product.metafields.custom.product_list.value %}
+              {% assign meta_title = meta.title %}
+              {% assign meta_img = meta.featured_image %}
+              {% assign meta_price = meta.price | money_with_currency %}
+              {% assign meta_url = meta.handle %}
+              <div class="product_slider">
+              <a href="/products/{{ meta_url }}">
+                <div class="pro_meta_img">
+                  <img src="{{ meta_img | img_url: 'master' }}">
+                </div>
+                <p class="pro_meta_title hide">{{ meta_title }}</p>
+                <p class="pro_meta_price hide">{{ meta_price }}</p>
+                  </a>
+              </div>
+            {% endfor %}
+           </div>
+         {% if meta_pro > 3 %}  <div class="img_arrow img_arrow_next">{% render 'icon-arrow-next' %}</div>{% endif %}
+        </div>
+        {% endif %}
+        {% comment %} CD Sanket 
+        {% if product.tags contains 'pre-order' %}
+          <div class='personalized_box'>
+            <h4>
+              <img src="https://cdn.shopify.com/s/files/1/0289/3240/7375/files/73_1.png?v=1644905798">
+              Pre order
+            </h4>
+          </div>
+          {% endif %}
+      {% endcomment %}
+        
+        {% comment %}
+        {%- if shop.taxes_included or shop.shipping_policy.body != blank -%}
+        <div class="product__policies rte" data-product-policies>
+          {%- if shop.taxes_included -%}
+          {{ 'products.product.include_taxes' | t }}
+          {%- endif -%}
+          {%- if shop.shipping_policy.body != blank -%}
+          {{ 'products.product.shipping_policy_html' | t: link: shop.shipping_policy.url }}
+          {%- endif -%}
+        </div>
+        {%- endif -%}
+        {% endcomment %}
+        
+
+        {% comment %} 
+        <div class="product-single__description rte">
+          {{ product.description }}
+        </div>  
+        {% endcomment %}
+
+        {% capture "form_classes" -%}
+        product-form product-form-{{ section.id }} product_form
+        {%- unless section.settings.show_variant_labels %} product-form--hide-variant-labels {% endunless %}
+        {%- if section.settings.enable_payment_button and product.has_only_default_variant %} product-form--payment-button-no-variants {%- endif -%}
+        {%- if current_variant.available == false %} product-form--variant-sold-out {%- endif -%}
+        {%- endcapture %}
+
+        {% form 'product', product, class:form_classes, novalidate: 'novalidate', data-product-form: '' %}
+     {% #CD shubham %}
+          
+          {%- if product.tags contains 'art_pix' -%} 
+            <input id="affirmation-engraving" class="hidden" value="Processing time is 2 to 4 weeks" type="hidden" name="properties[Processing time]"> 
+          {% endif %}
+          {%- if product.tags contains 'marks_design' -%} 
+            <input id="affirmation-engraving" class="hidden" value="This product will be fulfilled within 10 to 14 days" type="hidden" name="properties[Shipping]"> 
+          {% endif %}
+          {%- if product.tags contains 'party_processing' -%} 
+            <input id="affirmation-engraving" class="hidden" value="5 to 7 working days" type="hidden" name="properties[Processing time]"> 
+          {% endif %}
+          {%- if product.tags contains 'tag_me' -%}
+            <input id="affirmation-engraving" class="hidden" value="This product will be fulfilled within 5 to 7 days." type="hidden" name="properties[Shipping]"> 
+          {% endif %}
+          {%- if product.tags contains 'markdesigns_10days' -%} 
+            <input id="affirmation-engraving" class="hidden" value="This product will be fulfilled within 8 to 10 days." type="hidden" name="properties[Shipping]"> 
+          {% endif %}
+          {%- if product.tags contains 'markdesigns_12days' -%} 
+            <input id="affirmation-engraving" class="hidden" value=" This product will be fulfilled within 10 to 12 days." type="hidden" name="properties[Shipping]"> 
+            {% endif %}
+          {%- if product.tags contains 'pre-order' -%}
+            <div class="custom_estimate_delivery">
+              <input id="affirmation-engraving" class="hidden" value="Please note this product will be shipped within 5 to 7 working days. Same day delivery is not available." type="hidden" name="properties[Pre-order]"> 
+              <span></span>
+            </div>
+          {% endif %}
+          {% unless product.has_only_default_variant %}
+        <div class="product-form__controls-group varient-group var_btn">
+          {% if product.options_with_values.size > 1 %}
+            {% assign choose_opt = true %}
+          {% endif %}
+
+          
+         {%- if product.tags contains 'own_mug' -%}
+            <div class="customised_field_block">
+              <label class="text_label_1" style="display: block; color: #5d5b5b;">Enter the text for inside<span style="color:red;">*</span></label>
+              <input type="text" name="properties[Inside Text]" id="custom_name_1" maxlength="25" style="width: 100%; margin-top: 5px; margin-bottom: 10px;">
+          
+              <label class="text_label_2" style="display: block; color: #5d5b5b;">Enter the text for outside<span style="color:red;">*</span></label>
+              <input type="text" name="properties[Outside Text]" id="custom_name_2" maxlength="15" style="width: 100%; margin-top: 5px; margin-bottom: 10px;">
+
+              <!-- Error message area -->
+    <div id="custom-error-message" style="color: red; margin-top: 10px; display: none;"></div>
+            </div>
+            <!-- Custom validation script -->
+  <!-- Custom validation script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+      console.log('Custom validation script loaded.');
+
+      // Get the form element (assuming Avis Options also uses a similar form structure)
+      var productForm = document.querySelector('form[action="/cart/add"]');
+      var errorMessage = document.getElementById('custom-error-message');
+
+      // Ensure the form exists
+      if (productForm) {
+        console.log('Form found, adding event listener.');
+
+        // Add event listener for form submission
+        productForm.addEventListener('submit', function (event) {
+          console.log('Form submission triggered.');
+
+          // Get the values of the input fields
+          var insideText = document.getElementById('custom_name_1').value.trim();
+          var outsideText = document.getElementById('custom_name_2').value.trim();
+
+          console.log('Inside Text:', insideText);
+          console.log('Outside Text:', outsideText);
+
+          // Check if both fields are filled
+          if (insideText === '' || outsideText === '') {
+            console.log('Validation failed, showing error message.');
+
+            // Prevent form submission
+            event.preventDefault();
+            event.stopImmediatePropagation(); // Stop any other event listeners
+
+            // Show the error message
+            if (errorMessage) {
+              errorMessage.textContent = 'Please fill in both text fields before adding the product to the cart.';
+              errorMessage.style.display = 'block';
+            }
+          } else {
+            console.log('Validation passed, proceeding with submission.');
+            // Hide the error message if both fields are filled
+            if (errorMessage) {
+              errorMessage.style.display = 'none';
+            }
+          }
+        });
+      } else {
+        console.log('Form not found.');
+      }
+    });
+  </script>
+          {%- endif -%}
+
+
+          {% for option in product.options_with_values %}
+          <div class="selector-wrapper js product-form__item as-{{ forloop.index }}" style='display: none;'>
+           <label {% if option.name == 'default' %}class="label--hidden" {% endif %}for="SingleOptionSelector-{{ forloop.index0 }}">
+              {{ option.name }}
+            </label>
+            {%- unless option.name == 'Gift Wrap' -%}
+            <span>{{ option.name }} <span class="red_stars">*</span></span>
+          <select class="single-option-selector custom_gift_select_box single-option-selector-{{ section.id }} product-form__input {% if choose_opt == false %}choose-the-design {% else %}size{% endif %}"
+                    id="SingleOptionSelector-{{ forloop.index0 }}"
+                    data-index="option{{ forloop.index }}"
+                    style='display: none;'
+                    >
+
+              {% for value in option.values %}
+                <option value="{{ value | escape }}">{{ value }}</option>
+              {% endfor %}
+              
+            </select>
+             
+               
+            {% endunless %}        
+        
+            {% if forloop.last %}
+           {%- if option.name == 'Gift Wrap' -%}
+               {% assign option_position = forloop.index %}
+                <fieldset>
+                  {%- for value in option.values -%}
+                      <div class="main-inpt"><input type="radio" class="single-option-selector-{{ section.id }} "
+                        {% if option.selected_value == value %} checked="checked"{% endif %}
+                        value="{{ value | escape }}"
+                        data-index="option{{option_position}}"
+                        name="{{ option.name | handleize }}"
+                        id="SingleOptionSelector-{{option_position}}">
+                      <label for="SingleOptionSelector-{{ forloop.index0 }}">
+                      {% if forloop.first %} <span><svg fill="#6896c1"width="15px" height="auto" viewBox="-17 0 483 483.02631" xmlns="http://www.w3.org/2000/svg"><path d="m194.492188 109.507812c2.523437 0 4.902343-1.191406 6.410156-3.214843 1.511718-2.023438 1.980468-4.636719 1.261718-7.058594-5.734374-19.582031-15.644531-37.6875-29.054687-53.0625-10.804687-11.496094-26.886719-16.417969-42.273437-12.9375-2.125.8125-3.800782 2.492187-4.613282 4.617187-.441406 1.195313-.769531 2.429688-.976562 3.6875-.246094 1.492188-.378906 3-.402344 4.511719v.128907c.097656 12.757812 5.238281 24.960937 14.304688 33.941406 15.375 13.398437 33.46875 23.304687 53.039062 29.035156.75.222656 1.523438.34375 2.304688.351562zm-44-40.714843c-3.175782-3.179688-5.667969-6.980469-7.328126-11.160157v-.078124c-.351562-.886719-.65625-1.777344-.917968-2.632813-.136719-.464844-.234375-.902344-.351563-1.359375-.121093-.457031-.226562-.800781-.304687-1.199219-.082032-.402343-.097656-.5625-.152344-.847656-.234375-1.195313-.398438-2.402344-.488281-3.617187 7.890625.597656 15.300781 4.003906 20.894531 9.601562 7.953125 8.992188 14.363281 19.238281 18.96875 30.328125-11.101562-4.621094-21.363281-11.054687-30.359375-19.035156zm0 0"></path><path d="m440.011719 115.027344h-123.488281c5.339843-3.648438 10.355468-7.753906 14.984374-12.265625 28.617188-28.703125 29.554688-72.222657 11.273438-90.503907s-61.785156-17.359374-90.519531 11.289063c-11.75 12.789063-21.296875 27.4375-28.25 43.351563-6.953125-15.925782-16.507813-30.582032-28.269531-43.375-28.703126-28.617188-72.21875-29.554688-90.503907-11.273438-18.289062 18.28125-17.34375 61.800781 11.277344 90.511719 4.632813 4.511719 9.648437 8.617187 14.984375 12.265625h-123.488281c-4.417969 0-8.0000002 3.582031-8.0000002 8v80c0 4.417968 3.5820312 8 8.0000002 8h16v232c.027343 22.078125 17.921875 39.972656 40 40h320c22.082031-.027344 39.976562-17.921875 40-40v-232h16c4.417969 0 8-3.582032 8-8v-80c0-4.417969-3.582031-8-8-8zm-176.429688-80.175782c22.992188-22.921874 56.527344-22.65625 67.894531-11.289062 11.367188 11.367188 11.640626 44.886719-11.28125 67.886719-10.496093 9.703125-22.480468 17.660156-35.496093 23.578125h-47.804688c0-.167969 0-.351563 0-.519532 0-1.824218-.136719-3.671874-.3125-5.53125-.066406-.613281-.136719-1.222656-.207031-1.847656-.183594-1.535156-.410156-3.066406-.683594-4.589844-.085937-.535156-.175781-1.074218-.269531-1.601562-.382813-1.992188-.800781-3.953125-1.28125-5.847656-.0625-.273438-.136719-.511719-.199219-.800782-.425781-1.65625-.863281-3.199218-1.3125-4.796874-.0625-.21875-.121094-.457032-.183594-.675782 6.554688-19.9375 17.15625-38.3125 31.136719-53.964844zm-7.570312 160.175782h-64v-64h64zm-128.175781-103.570313c-22.925782-23-22.65625-56.519531-11.285157-67.894531 11.367188-11.375 44.886719-11.640625 67.871094 11.265625 14.554687 16.304687 25.464844 35.53125 32 56.390625.902344 2.808594 1.597656 5.503906 2.253906 8.121094.183594.75.335938 1.476562.496094 2.214844.433594 1.953124.78125 3.816406 1.042969 5.601562.085937.605469.199218 1.230469.269531 1.820312.253906 1.996094.390625 4.007813.410156 6.019532h-57.570312c-13.007813-5.90625-24.988281-13.851563-35.488281-23.539063zm-111.824219 39.570313h160v64h-160zm24 312v-232h152v256h-128c-13.253907 0-24-10.746094-24-24zm168 24v-256h32v256zm200-24c0 13.253906-10.742188 24-24 24h-128v-256h152zm24-248h-160v-64h160zm0 0"></path><path d="m253.507812 109.53125c.769532 0 1.535157-.109375 2.273438-.328125 19.59375-5.726563 37.707031-15.652344 53.078125-29.089844 11.382813-10.886719 16.289063-26.902343 12.960937-42.296875-.804687-2.117187-2.480468-3.789062-4.597656-4.597656-15.394531-3.328125-31.410156 1.578125-42.296875 12.960938-13.433593 15.371093-23.359375 33.484374-29.089843 53.078124-.714844 2.421876-.25 5.039063 1.261718 7.058594 1.511719 2.023438 3.886719 3.214844 6.410156 3.214844zm32.730469-52.039062c5.601563-5.59375 13.019531-8.996094 20.910157-9.601563-.597657 7.894531-4.003907 15.316406-9.597657 20.917969-9 8.007812-19.277343 14.453125-30.402343 19.074218 4.625-11.125 11.078124-21.394531 19.089843-30.390624zm0 0"></path></svg></span>{% endif %} {{value}}
+                      </label>
+                  </div>
+                  {%- endfor -%}
+                </fieldset>{% endif %}
+              {% endif %} 
+           
+          </div>
+          <p class="select_error">Please select {{ option.name }}.</p>
+
+           {% assign choose_opt = false %}
+          {% endfor %}
+            
+           {% if product.available and product.variants.size > 1 %}
+              {% render 'swatch' for product.options as swatch %}
+            {% endif %}
+        </div>
+        {% endunless %}
+
+        
+         {% if product.tags contains 'COY' %}
+<div class="color-selection-section">
+  <label style="font-size: 14px;">Select Text Colour:<span style="color:red;">*</span></label>
+  <div class="color-options">
+    <div class="radio-group">
+      <input type="radio" id="color-white" value="White" name="properties[Text Color]" />
+      <label for="color-white">White</label>
+    </div>
+    <div class="radio-group">
+      <input type="radio" id="color-pink" value="Pink" name="properties[Text Color]" />
+      <label for="color-pink">Pink</label>
+    </div>
+    <div class="radio-group">
+      <input type="radio" id="color-blue" value="Blue" name="properties[Text Color]" />
+      <label for="color-blue">Blue</label>
+    </div>
+    <div class="radio-group">
+      <input type="radio" id="color-red" value="Red" name="properties[Text Color]" />
+      <label for="color-red">Red</label>
+    </div>
+  </div>
+   <div id="custom-error-message" style="display: none; color: red;"></div>
+
+</div>
+
+{% endif %}
+
+          <script>
+
+document.addEventListener('DOMContentLoaded', function () {
+  console.log('Custom validation script loaded.');
+
+  // Get the form element and the Add to Cart button
+  var productForm = document.querySelector('form[action="/cart/add"]');
+  var addToCartButton = document.querySelector('form[action="/cart/add"] button[type="submit"]');
+  var errorMessage = document.getElementById('custom-error-message');
+
+  // Validation function for products with the COY tag
+  function validateForm() {
+    var isValid = true;
+
+    // Check if the product has the COY tag by looking for the custom input and color section
+    var colorOptions = document.getElementsByName('properties[Text Color]');
+    var textInput = document.getElementById('custom-input');
+
+    // If these elements don't exist, skip validation
+    if (!colorOptions.length || !textInput) {
+      return true; // Skip validation for products without COY tag
+    }
+
+    // Check if a color is selected
+    var colorSelected = false;
+    for (var i = 0; i < colorOptions.length; i++) {
+      if (colorOptions[i].checked) {
+        colorSelected = true;
+        break;
+      }
+    }
+
+    // Get the text input value
+    var textValue = textInput.value.trim();
+
+    // Validation logic
+    if (!colorSelected || textValue === '') {
+      isValid = false;
+
+      // Show the error message
+      if (errorMessage) {
+        errorMessage.textContent = 'Please select a color and enter text before adding the product to the cart.';
+        errorMessage.style.display = 'block';
+      }
+    } else {
+      // Hide the error message
+      if (errorMessage) {
+        errorMessage.style.display = 'none';
+      }
+    }
+
+    return isValid;
+  }
+
+  // Intercept Add to Cart Button Click
+  if (addToCartButton) {
+    addToCartButton.addEventListener('click', function (event) {
+      console.log('Add to Cart button clicked.');
+
+      // Perform validation only for products with COY tag
+      if (!validateForm()) {
+        console.log('Validation failed, preventing action.');
+
+        // Prevent form submission
+        event.preventDefault();
+        event.stopImmediatePropagation(); // Stop any other event listeners from running
+      } else {
+        console.log('Validation passed, allowing submission.');
+      }
+    });
+  }
+
+  // Intercept form submission to ensure validation happens before submission
+  if (productForm) {
+    productForm.addEventListener('submit', function (event) {
+      console.log('Form submission triggered.');
+
+      // Perform validation before submitting
+      if (!validateForm()) {
+        console.log('Validation failed, blocking submission.');
+
+        // Prevent the form submission
+        event.preventDefault();
+        event.stopImmediatePropagation(); // Prevent further handling of the submit event
+      } else {
+        console.log('Validation passed, proceeding with submission.');
+      }
+    });
+  }
+});
+
+          </script>     
+          {% if section.settings.show_quantity_selector %}
+            {% unless product.tags contains 'no_qty' %}
+              <div class="product-form__controls-group">
+                <div class="product-form__item">
+                  <label for="Quantity-{{ section.id }}">{{ 'products.product.quantity' | t }}</label>
+                  {% assign tag = false %}
+                  {% assign max_qty = '' %}
+                  {% for tag in product.tags %}
+                    {% if tag contains "qty_" %}
+                       {% assign tag = true %}
+                      {% assign tagsplit =  tag  | split: '_'  %}
+                      {% assign max_qty = tagsplit[1] %}
+                    {% endif %}
+                  {% endfor %}
+                  {% if tag == true %}
+                    <p class="tagsplit_val" value="{{ max_qty }}" style="display:none;">{{ max_qty }}</p>
+                  {% endif %}
+                  <label for="Quantity-{{ section.id }}" style="display: block; position: unset !important; overflow: visible; width: 100%;">Quantity: </label>
+                  <div class="qtybox" style="margin-top: 10px;">
+                    <span class="btnqty qtyminus icon icon-minus intro">-</span>
+                  {% if tag == true  %}
+                    <input type="text" id="Quantity-{{ section.id }}"name="quantity" value="{{ tagsplit[1] }}" min="{{ tagsplit[1] }}" pattern="[0-9]*"class="product-form__input product-form__input--quantity quantity-selector quantity-input" data-quantity-input readonly>
+                  {% else %}
+                    <input type="text" id="Quantity-{{ section.id }}"name="quantity" value="1" min="1" pattern="[0-9]*"class="product-form__input product-form__input--quantity quantity-selector quantity-input" data-quantity-input readonly>
+                  {% endif %}
+                    <span class="btnqty qtyplus icon icon-plus">+</span>
+                  </div>
+                </div>
+              </div>
+            {% endunless %}
+            
+          {% comment %} Inventory tracking on product page 
+          <div id="variant-inventory" class="common-class {% unless current_variant.available %} hide {% endunless %}">
+            {% if current_variant.inventory_management == "shopify" and current_variant.inventory_policy != "continue" %}
+            
+            	{%if current_variant.inventory_quantity < 3 %}
+                Low in stock.
+            	{% endif %}
+            {% else %}
+              This product is available.
+            {% endif %}
+          </div>{% endcomment %}
+  
+  
+          {% endif %}
+
+          {% # CD Arshit %}
+          <div class="size_guide_delivery">
+           {% if product.metafields.custom.size_guide != blank %}
+              <div class="size_guide">
+                <div class="single_block js_size_guide">
+                  <span class="image_icon"><img src="https://cdn.shopify.com/s/files/1/0289/3240/7375/files/size_guide.png?v=1690800752"></span>
+                  <span class="guide_text">Size guide</span>
+                </div>
+              </div>
+           {% endif %}
+            {% if product.tags contains 'delivery' %}
+              <div class="delivery_truck">
+                <div class="single_block">
+                  <span class="image_icon"><img src="https://www.little-ia.com/cdn/shop/files/Truck_2048x2048.png?v=1689157201"></span>
+                  <span class="guide_text"><a href="/pages/shipping-and-delivery">Same day delivery available. Order cut-off at 11 AM.</a></span>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        <style> fieldset label { clip: auto !important; display: inline-block !important; width: 100%; height: auto !important; } .selector-wrapper.js.product-form__item.as-2 { width: 100%; display: block; } .main-inpt label { width: 100% !important; min-width: auto !important; display: inline-block !important; font-size: 14px; vertical-align: middle;    letter-spacing: 1px; } .main-inpt input { min-height: auto !important; margin-right: 10px; } .main-inpt { margin-bottom: 5px; } .product-form__controls-group.varient-group fieldset{padding: 10px;margin:0;border: none;} .product-form__controls-group.varient-group { width: 47% !important; }</style>
+
+{% if product.tags contains 'COY' %}
+  <div class="custom-text-box">
+    <label style="font-size: 14px;"for="custom-input">Enter your text here:<span style="color:red;">*</label>
+    <input 
+      type="text" 
+      id="custom-input" 
+      name="properties[Custom Text]"  
+      placeholder="Enter your text here(max 30 characters, no special characters):" 
+      maxlength="30" 
+      oninput="validateInput(this)"
+      class="custom-input"
+    />
+      <span id="error-message" style="color:red; display:none;">Special characters are not allowed.</span>
+  </div>
+{% endif %}
+
+
+            {%- if product.tags contains"markdesigns_10days" -%}
+            <p class="mark_processing">
+              *This product is made in collaboration with Mark Designs.>
+              <span class="second_line">The processing time is 8-10 working days.*</span>
+          {% endif %}
+          {%- if product.tags contains"markdesigns_12days" -%}
+            <p class="mark_processing">
+            *This product is made in collaboration with Mark Designs.
+            <span class="second_line">The processing time is 10-12 working days.*</span>
+          {% endif %}
+  
+        {%- if product.tags contains 'view_size_guide' -%}
+          <div class="stock_chart">
+  <!--           {% if current_variant.available %}
+            <p class="quantity_message">in stock</p>
+            {% else %}
+            <p class="quantity_message red_text">sold out</p>
+            {% endif %} -->
+
+          {% #CD shubham %}
+           {% for collection in product.collections limit: 1 %}
+            {% if collection.metafields.custom.size_chart != blank %}
+            <div class="product-size-guide">
+              <span class="js-size-guide-popup">View size guide</span>
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        {%- endif -%}
+
+        {%- if product.tags contains 'custom_same_day_delivery' -%}
+          <p class="same_day_delivery"><img src="//cdn.shopify.com/s/files/1/0289/3240/7375/files/TOP_medium.png?v=1642706693" style="width:20px;"> Same day delivery available in Dubai (order cut off at 1 PM)</p>  
+        {%- endif -%}
+        {%- if product.tags contains 'Jewellery_delivery' -%}
+          <p class="jewellery_delivery"><img src="//cdn.shopify.com/s/files/1/0289/3240/7375/files/TOP_medium.png?v=1642706693" style="width:20px;"> Processing time is 8-10 working days. This product will be shipped separately.</p>  
+        {%- endif -%}
+          
+        <select name="id" id="ProductSelect-{{ section.id }}" class="product-form__variants no-js">
+          {%- comment -%}<option value="" selected="selected" disabled>{%- endcomment -%}
+          {% for variant in product.variants %}
+          <option value="{{ variant.id }}" {% comment %}{%- if variant == current_variant %} selected="selected" {%- endif -%}{% endcomment %}>
+            {{ variant.title }}  {%- if variant.available == false %} - {{ 'products.product.sold_out' | t }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+
+<!--         {% if section.settings.show_quantity_selector %}
+        <div class="product-form__controls-group">
+          <div class="product-form__item">
+            <label for="Quantity-{{ section.id }}">{{ 'products.product.quantity' | t }}</label>
+            {% comment %}<input type="number" id="Quantity-{{ section.id }}"
+                   name="quantity" value="1" min="1" pattern="[0-9]*"
+                   class="product-form__input product-form__input--quantity" data-quantity-input
+                   >{% endcomment %}
+            <div class="qtybox">
+              <span class="btnqty qtyminus icon icon-minus">-</span>
+              <input type="text" id="Quantity-{{ section.id }}"name="quantity" value="1" min="1" pattern="[0-9]*"class="product-form__input product-form__input--quantity quantity-selector quantity-input" data-quantity-input>
+              <span class="btnqty qtyplus icon icon-plus">+</span>
+            </div>
+          </div>
+        </div>
+        
+        {% comment %} Inventory tracking on product page 
+        <div id="variant-inventory" class="common-class {% unless current_variant.available %} hide {% endunless %}">
+          {% if current_variant.inventory_management == "shopify" and current_variant.inventory_policy != "continue" %}
+          
+          	{%if current_variant.inventory_quantity < 3 %}
+              Low in stock.
+          	{% endif %}
+          {% else %}
+            This product is available.
+          {% endif %}
+        </div>{% endcomment %}
+
+
+        {% endif %} -->
+
+        <div class="product-form__error-message-wrapper product-form__error-message-wrapper--hidden{% if section.settings.enable_payment_button %} product-form__error-message-wrapper--has-payment-button{% endif %}"
+             data-error-message-wrapper
+             role="alert"
+             >
+          <span class="visually-hidden">{{ 'general.accessibility.error' | t }} </span>
+          {% include 'icon-error' %}
+          <span class="product-form__error-message" data-error-message>{{ 'products.product.quantity_minimum_message' | t }}</span>
+        </div>
+        
+          {%- comment -%}CD{%- endcomment -%}
+          {%- assign personalise_tag = '' -%}
+          {%- for tag in product.tags -%}
+            {% assign tag_lowercase = tag | downcase %}
+            {% if tag_lowercase contains 'personalise_' %}
+              {%- assign personalise_tag = tag_lowercase -%}
+            {% endif %}
+          {%- endfor -%}
+
+          {% if personalise_tag != blank %}
+          {% comment %}<div class="personalise_box">
+            <div class="personalise-checkbox personalise_wrapper">
+              <input type="checkbox" id="checkbox" class="checkbox">
+              <label for="checkbox">PERSONALISE ME FOR FREE</label>
+            </div>
+            <div class="Personalise-text_confirm">
+              
+              {%- for personalise in product.tags -%}
+                {% if personalise contains 'Personalise_' %}
+                  {%- assign text_limit = personalise | split: 'Personalise_' -%} 
+                  {% capture counts %}{% increment count %}{% endcapture %}
+                  <input type="text" id="personalise-text" name="properties[Personalisation {{ counts | plus: 1 }}]" placeholder="Enter your little one’s name" maxlength="{{ text_limit }}" class="personalise-text">
+              	  <label>Maximum {{ text_limit }} letters only</label>
+                {% endif %}
+              {%- endfor -%}
+              <div class="personalise-checkbox">
+                <input type="radio" id="confirm_checkbox" class="confirm_checkbox">
+                <label for="confirm_checkbox">I confirm the spelling is correct</label>
+                 <input type="radio" id="confirm_checkbox" class="confirm_checkbox">
+                <label for="confirm_checkbox">I don’t want <span class="color:#7196bd">Personalisation</span></label>
+             
+              </div>
+            </div>
+          </div>{% endcomment %}
+      
+        
+<!--           <button type="submit" name="add"
+                        {% unless current_variant.available %} aria-disabled="true"{% endunless %}
+                        aria-label="{% unless current_variant.available %}{{ 'products.product.sold_out' | t }}{% else %}{{ 'products.product.add_to_cart' | t }}{% endunless %}"
+                        class="btn product-form__cart-submit{% if section.settings.enable_payment_button %} btn--secondary-accent{% endif %}"
+                        data-add-to-cart disabled>
+                  <span data-add-to-cart-text>
+                    {% unless current_variant.available %}
+                    {{ 'products.product.sold_out' | t }}
+                    {% else %}
+                    {{ 'products.product.add_to_cart' | t }}
+                    {% endunless %}
+                  </span>
+                  <span class="hide" data-loader>
+                    {% include 'icon-spinner' %}
+                  </span>
+                </button>
+ -->
+        
+        {% comment %}{{ gift_html }}{% endcomment %}
+        
+          {% comment %}<div class="personalise_box-tab">
+              <div id="hulkapps_custom_options_{{ product.id }}"> </div>
+           <div class="tab_buttons">
+              <p class="tab_btn active_tab" data-id="tab_content1">
+                <label for="Personalisation"><input id="Personalisation" type="checkbox" class="show_checkbox">{{ 'sewing.png' | file_url | img_tag }}&nbsp;<span>Free<strong>Personalisation</strong></span></label></p>
+            </div>
+            <div class="tab_content">
+              <div class="Personalise-text_confirm tab_list" id="tab_content1">
+                {%- for personalise in product.tags -%}
+                {% if personalise contains 'Personalise_' %}
+                {%- assign text_limit = personalise | split: 'Personalise_' -%} 
+                {% capture counts %}{% increment count %}{% endcapture %}
+                <input type="text" id="personalise-text" name="properties[Personalisation {{ counts | plus: 1 }}]" maxlength="{{ text_limit }}" class="personalise-text" placeholder="Enter {{ text_limit }} characters (Case Sensitive)">
+                {% endif %}
+                {%- endfor -%}
+                <div class="personalise-checkbox">
+                  <div class="check-boxes">
+                   <input type="checkbox" id="confirm_checkbox" class="confirm_checkbox">
+                   <label for="confirm_checkbox">I confirm the spelling is correct</label>
+                    
+                  </div>
+                  
+                </div> </div>
+              
+             
+
+             
+            </div>
+		  </div>{% endcomment %}
+
+        {% comment %}cd code{% endcomment %}
+        {%- assign show_personalized = false -%}
+        {%- assign personalized_textcolour = false -%}
+        {%- assign personalized_name = false -%}
+        {%- assign personalized_dob = false -%}
+        {%- assign personalized_textbox = false -%}
+        {%- for cust_tag in product.tags -%}
+          {% assign cust_tag_lowercase = cust_tag | downcase %}
+          {%- if cust_tag_lowercase contains 'cust_personalized' -%}
+            {%- assign show_personalized = true -%}
+          {%- endif -%}
+          {%- if cust_tag_lowercase contains 'personalized_textcolor' -%}
+            {%- assign personalized_textcolour = true -%}
+          {%- endif -%}
+          {%- if cust_tag_lowercase contains 'personalized_name' -%}
+            {%- assign personalized_name = true -%}
+          {%- endif -%}
+          {%- if cust_tag_lowercase contains 'personalized_dob' -%}
+            {%- assign personalized_dob = true -%}
+          {%- endif -%}
+          {%- if cust_tag_lowercase contains 'personalise_textbox' -%}
+            {%- assign personalized_textbox = true -%}
+          {%- endif -%}
+          {% if cust_tag_lowercase contains 'personalise_' %}
+            {% assign maxlength = cust_tag_lowercase | split: '_' %}
+          {% endif %}
+          {% if cust_tag_lowercase contains 'color_' %}
+            {% assign color_tag = true %}
+          {% endif %}
+        {%- endfor -%}
+            
+        {% comment %}CD CODE{% endcomment %}
+        {% assign font_family_feild = false %}
+        {% for tag in product.tags %}
+          {% if tag contains 'font_' %}
+            {% assign font_family_feild = true %}
+          {% endif %}
+        {% endfor %} 
+        {%- if show_personalized -%}
+          <div class="custom_personalized">
+            <div class="custom_personalized_content">
+              <div class="custom_personalized_tab">
+                <h1 class="custom_personalized_title personalized_show tab_open"><span>Personalise Me for Free</span></h1>
+                <h1 class="custom_personalized_title dont_persolnalized"><span>Don't Personalise</span></h1>
+              </div>
+              <div class="custom_personalized_block" id="cust_personalized_block">
+                <p class="personalized_error_msg hide"></p>
+                {%- if personalized_textcolour -%}
+                  <div class="personalized_field_block">
+                    <label class="text_label">Text Colour <span style="color: red;">*</span></label>
+                    <div class="text_color_block">
+                      {% for product_tag in product.tags %}
+                        {% if product_tag contains 'color_' %}
+                          {% assign color_tag = product_tag | split: '_' %}
+                          <input type="radio" id="textcolor_{{ color_tag[1] }}" value="{{ color_tag[1] }}" name="properties[Text Color]">
+                          <label for="textcolor_{{ color_tag[1] }}" color-value="{{ color_tag[1] }}">
+                          {% #CD shubham %}
+                            {%if  color_tag[1] == 'grey' %}<span>{%- render 'icon-grey' -%}</span>
+                            {% elsif color_tag[1] == 'pink' %} <span>{%- render 'icon-pink' -%}</span>
+                            {% elsif color_tag[1] == 'white' %}<span>{%- render 'icon-white' -%}</span>
+                            {% elsif color_tag[1] == 'red' %}<span>{%- render 'icon-red' -%}</span>
+                            {% elsif color_tag[1] == 'green' %}<span>{%- render 'icon-green' -%}</span>
+                            {% elsif color_tag[1] == 'blue' %}<span>{%- render 'icon-blue' -%}</span>
+                            {% elsif color_tag[1] == 'orange' %}<span>{%- render 'icon-orange' -%}</span>
+                            {% elsif color_tag[1] == 'yellow' %}<span>{%- render 'icon-yellow' -%}</span>
+                            {% elsif color_tag[1] == 'purple' %}<span>{%- render 'icon-purple' -%}</span>
+                            {% elsif color_tag[1] == 'gold' %}<span>{%- render 'icon-gold' -%}</span>
+                            {% elsif color_tag[1] == 'silver' %}<span>{%- render 'icon-silver' -%}</span>
+                            {% elsif color_tag[1] == 'multicolour' %}<span>{%- render 'icon-multicolour' -%}</span>
+                            {% elsif color_tag[1] == 'white' %}<span>{%- render 'icon-white' -%}</span>
+                            {% elsif color_tag[1] == 'black' %}<span>{%- render 'icon-black' -%}</span>{% endif %}
+                            {% comment %}<span>{%- render 'icon-textcolor' -%}</span>{% endcomment %}
+                            <br>
+                            <span>{{ color_tag[1] | capitalize  }}</span>
+                          </label>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                {%- endif -%}
+          
+                
+          
+                {% if font_family_feild == true %}
+                  <div class="personalized_field_block">
+                    <label class="text_label">Choose Your Font <span style="color: red;">*</span></label>
+                    <div class="text_font_block">
+                      {% for product_tag in product.tags %}
+                        {% if product_tag contains 'font_rockwell-condensed' %}
+                          <input type="radio" id="font_family_rockwell-condensed" value="Rockwell Condensed" name="properties[Text Font]">
+                          <label for="font_family_rockwell-condensed"><span style="font-family: Rockwell Condensed;">Rockwell Condensed</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_ariel' %}
+                          <input type="radio" id="font_ariel " value="Ariel round" name="properties[Text Font]">
+                          <label for="font_ariel "><span style="font-family: Ariel round;">Ariel round</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_monotype-corsiva' %}
+                          <input type="radio" id="font_family_monotype-corsiva" value="Monotype Corsiva" name="properties[Text Font]">
+                          <label for="font_family_monotype-corsiva"><span style="font-family: Monotype Corsiva;">Monotype Corsiva</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_coronation' %}
+                          <input type="radio" id="font_family_coronation" value="Coronation" name="properties[Text Font]">
+                          <label for="font_family_coronation"><span style="font-family: Coronation;">Coronation</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_ballantines' %}
+                          <input type="radio" id="font_family_ballantines" value="Ballantines" name="properties[Text Font]">
+                          <label for="font_family_ballantines"><span style="font-family: Ballantines;">Ballantines</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_jester' %}
+                          <input type="radio" id="font_family_jester" value="Jester" name="properties[Text Font]">
+                          <label for="font_family_jester"><span style="font-family: Jester;">Jester</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_miss-neally' %}
+                          <input type="radio" id="font_family_miss-neally" value="Miss Neally" name="properties[Text Font]">
+                          <label for="font_family_miss-neally"><span style="font-family: Miss Neally;">Miss Neally</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_castle' %}
+                          <input type="radio" id="font_family_castle" value="Castle" name="properties[Text Font]">
+                          <label for="font_family_castle"><span style="font-family: Castle;">Castle</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_london' %}
+                          <input type="radio" id="font_family_london" value="London" name="properties[Text Font]">
+                          <label for="font_family_london"><span style="font-family: London;">London</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_garamond' %}
+                          <input type="radio" id="font_family_garamond" value="Garamond" name="properties[Text Font]">
+                          <label for="font_family_garamond"><span style="font-family: Garamond;">Garamond</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_comic-sans' %}
+                          <input type="radio" id="font_family_comic-sans" value="Comic Sans" name="properties[Text Font]">
+                          <label for="font_family_comic-sans"><span style="font-family: Comic Sans;">Comic Sans</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_amsterdam' %}
+                          <input type="radio" id="font_family_amsterdam" value="Amsterdam" name="properties[Text Font]">
+                          <label for="font_family_amsterdam"><span style="font-family: Amsterdam; font-size:12px;">Amsterdam</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_black_jack' %}
+                          <input type="radio" id="font_family_black_jack" value="Black Jack" name="properties[Text Font]">
+                          <label for="font_family_black_jack"><span style="font-family: Black Jack;">Black Jack</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_rochester' %}
+                          <input type="radio" id="font_family_rochester" value="Rochester" name="properties[Text Font]">
+                            <label for="font_family_rochester"><span style="font-family: Rochester;">Rochester</span></label>
+                        {% endif %}
+                        {% if product_tag contains 'font_poppins' %}
+                          <input type="radio" id='font_family_poppins' value="Poppins" name="properties[Text Font]">
+                          <label for="font_family_poppins"><span styles="font-family: Poppins;">Poppins</span></label>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                {% endif %}
+
+                  {%- assign dynamic_max = maxlength[1] -%}
+
+                    {% if product.tags contains 'personalise_5' %}
+                      {% assign dynamic_max = 5 %}
+                    {% elsif product.tags contains 'personalise_7' %}
+                      {% assign dynamic_max = 7 %}
+                    {% elsif product.tags contains 'personalise_9' %}
+                      {% assign dynamic_max = 9 %}
+                    {% endif %}
+
+                {%- if personalized_name -%}
+                  <div class="personalized_field_block">
+                    <label class="text_label">Enter the Name or Initials (Free) <span style="color: red;">*</span></label>
+                    <input type="text" name="properties[Name]"  id="custm_name" maxlength="{{ dynamic_max }}">
+                    <p class="info_text">Maximum {{ dynamic_max }} characters.No special character</p>
+                  </div>
+                {%- endif -%}
+
+                
+          
+                  {% comment %}  CD Sanket {% endcomment %}
+                  {% assign product_tag_low = product.tags | downcase %}
+
+                  {% if product_tag_low contains 'school_year' %}
+                    <div class="personalized_field_block">
+                      <label class="text_label text_label_color">School Year</label>
+                      <input type="text" name="properties[School Year]" maxlength="20">
+                    </div>
+                  {% endif %}
+                
+                  {% if product_tag_low contains 'name1' %}
+                    <div class="personalized_field_block">
+                      <label class="text_label text_label_color">Name 1</label>
+                      <input type="text" name="properties[Name 1]" maxlength="8">
+                      <p class="info_text">English or Arabic. Maximum 8 characters.*</p>
+                    </div>
+                  {% endif %}
+                  {% if product_tag_low contains 'name2' %}
+                     <div class="personalized_field_block">
+                      <label class="text_label text_label_color">Name 2</label>
+                      <input type="text" name="properties[Name 2]"  maxlength="8">
+                      <p class="info_text">English or Arabic. Maximum 8 characters.*</p>
+                    </div>
+                  {% endif %}
+                  {% if product_tag_low contains 'name3' %}
+                     <div class="personalized_field_block">
+                      <label class="text_label text_label_color">Name 3</label>
+                      <input type="text" name="properties[Name 3]" maxlength="8">
+                      <p class="info_text">English or Arabic. Maximum 8 characters.</p>
+                    </div>
+                  {% endif %}
+                  {% if product_tag_low contains 'name4' %}
+                     <div class="personalized_field_block">
+                      <label class="text_label text_label_color">Name 4</label>
+                      <input type="text" name="properties[Name 4]" maxlength="8">
+                      <p class="info_text">English or Arabic. Maximum 8 characters.*</p>
+                    </div>
+                  {% endif %}
+                {%- if personalized_dob -%}
+                  <div class="personalized_field_block">
+                    <label class="text_label">Date of Birth + AED 10 (optional)</label>
+                    <input type="text" name="properties[Date of Birth]"  placeholder="dd-mm-yyyy" id="custom_dob_field"  pattern="\d{2}-\d{2}-\d{4}">
+                  </div>
+                {%- endif -%}
+                {% if product.tags contains 'optional_fields' %}
+                  <div class="personalized_field_block">
+                    <label class="text_label">Date of Birth (optional)</label>
+                    <input type="date" placeholder="dd-mm-yy" id="dob_field_val">
+                    <input type="hidden" name="properties[Personalise Date of Birth]" id="dob_field">
+                  </div>
+                 <div class="personalized_field_block">
+                    <label class="text_label">Time of Birth (optional)</label>
+                    <div class="input-group time" id="custom_time_field">
+                     <input name="properties[Time]" class="form-control" placeholder="HH:MM AM/PM"><span class="input-group-append input-group-addon"><span class="input-group-text"><i class="fa fa-clock"></i></span></span>
+                    </div>
+                  </div>
+                   <div class="personalized_field_block">
+                    <label class="text_label">Weight (kg) (optional)</label>
+                    <input type="text" name="properties[Weight]" id="custom_weight_field">
+                  </div>
+                {% endif %}
+          
+              </div>
+            </div>
+          </div>
+            {{ gift_html }}
+          {% #CD Shubham %}
+          {%# if product.tags contains 'pro_confirm'  %}
+            <div class="pro_confirm">
+              <input type="checkbox" id="pro_confirm_check">
+              <label for="chkgift"><span>*</span>I confirm that the personalisation (name, colour, and font) is correct. No changes can be made once it is confirmed.</label>
+            </div>
+          {%# endif %}
+        {%- endif -%}
+
+        {% # CD Arshit %}
+        {%- if personalized_textbox -%}
+          <div class="personalized_field_block seprate_per_block">
+            <label class="text_label">Enter the names here:</label>
+            <textarea name="properties[Personalisation:]" placeholder="(e.g. Sarah,Jane,Robert)" maxlength="500" style="width: 100%;"></textarea>
+          </div>
+        {%- endif -%}
+            
+      
+          {%- if product.tags contains 'create_20' -%}
+            <div class="personalized_field_block seprate_per_block">
+              <label class="text_label">Enter the text here:</label>
+              <textarea name="properties[Message]" maxlength="50" style="width: 100%;"></textarea>
+            </div>
+          {%- endif -%}
+
+            
+      
+        {% comment %}cd code{% endcomment %}
+        {%- if product.tags contains 'est_pro' -%}
+          <div class="custom_estimate_delivery">
+            <span>Available for PRE-ORDER - estimated delivery on 25th to 31st August 2022</span>
+          </div>
+        {% endif %}
+        <div class="tab_list active_list" id="tab_content2">
+          <button type="submit" name="add"
+                  {% unless current_variant.available %} aria-disabled="true"{% endunless %}
+                  id="AddToCart"
+                  aria-label="{% unless current_variant.available %}{{ 'products.product.sold_out' | t }}{% else %}{{ 'products.product.add_to_cart' | t }}{% endunless %}"
+                  class="asd btn product-form__cart-submit{% if section.settings.enable_payment_button %} btn--secondary-accent{% endif %}{% if product.tags contains 'pro_confirm'  %} disabled{% endif %}"
+                  data-add-to-cart{% if product.tags contains 'pre-order' %} cust-pre-order{% endif %}>
+            <span data-add-to-cart-text>
+              {% if product.tags contains 'pre-order' %}
+                Pre order
+              {% else %}
+                {% unless current_variant.available %}
+                  {{ 'products.product.sold_out' | t }}
+                {% else %}  
+                  {{ 'products.product.add_to_cart' | t }}
+                {% endunless %}
+              {% endif %}
+            </span>
+            <span class="hide" data-loader>
+              {% include 'icon-spinner' %}
+            </span>
+          </button>
+        </div>
+ 
+        
+          {% endif %}
+          
+         
+
+
+        {%- comment -%}CD{%- endcomment -%}
+        {%- if product.metafields.bundle.bundle != blank -%}
+          <div class="bundleWrap">
+            <h4 class="bundleWrapHead">Set Includes:</h4>
+            <ul class="bundleItems">
+              {%- assign bundle_arr = product.metafields.bundle.bundle | split: '|' -%}
+              {%- for bundle_item in bundle_arr -%}
+              	{%- assign bundle_product = all_products[bundle_item] -%}
+              	{%- if bundle_product -%}
+                  <li class="bundleItem">
+                    <p class="bundleItemTitle">{{ bundle_product.title }}</p>
+                    {%- assign first_opt = '' -%}
+                    {%- unless bundle_product.has_only_default_variant -%}
+                    <div class="bundleOptsWrap">
+                      {%- for option in bundle_product.options_with_values -%}
+                      	{%- assign opt = option.name | downcase -%}
+                        {%- if opt contains 'color' or opt contains 'colour' -%}
+                          <ul class="bundleOpts colorOpts">
+                            {%- for value in option.values -%}
+                              {%- if forloop.first -%} 	
+                                {%- assign first_opt = first_opt | append: value -%}	
+                              {%- endif -%}
+                              <li class="colorOpt">
+                                <span class="colorLabel{% if forloop.first %} selected{% endif %}" style="background-color: {{ value }};background-image: url({{ value | handle | append: '.png' | file_img_url: 'value' }})" data="{{ value }}"></span>
+                              </li>
+                            {%- endfor -%}
+                          </ul>
+                      	{%- else -%}
+                          <div class="bundleOpts">
+                            <select class="bundleSel">
+                              {%- for value in option.values -%}
+                              
+                              	{% comment %}CD CODE{% endcomment %}
+                                {%- assign variant_label_state = false -%}
+                                {%- if bundle_product.variants[forloop.index0].available -%}
+                                {%- assign variant_label_state = true -%}
+                                {%- endif -%}
+                              
+                              	{%- if option.selected_value == value -%} 	
+                                  {%- assign first_opt = first_opt | append: value -%}	
+                                {%- endif -%}
+                                <option value="{{ value }}" {% if option.selected_value == value %} selected="selected"{% endif %} {% if variant_label_state == false %}disabled="disabled"{% endif %}>{{ value }}</option>
+                              {%- endfor -%}
+                            </select>
+                          </div>
+                      	{%- endif -%}
+                      {%- endfor -%}
+                    </div>
+                    {%- endunless -%}
+                    <input type="hidden" name="properties[Set Includes: {{ forloop.index }}]" value="{{ bundle_product.title }}{% if first_opt != blank %} - {{ first_opt }}{% endif %}" data-title="{{ bundle_product.title }}" class="bundleName"/>
+                  </li>
+                {%- endif -%}
+              {%- endfor -%}
+            </ul>
+          </div>
+        {%- endif -%}
+          
+        {% if show_personalized == false %}
+          {%- if product.tags contains 'create_20' -%}
+          <div class="personalized_field_block seprate_per_block">
+            <label class="text_label">Enter the text here:</label>
+            <textarea name="properties[Message]" maxlength="50" style="width: 100%;"></textarea>
+          </div>
+          {%- endif -%}
+          {{ gift_html }}  
+        {% endif %}
+          
+        {% if personalise_tag == blank %}
+        {% if product.tags contains 'pro_confirm'  %}
+          <div class="pro_confirm">
+            <input type="checkbox" id="pro_confirm_check">
+            <label for="chkgift">I confirm the personalisation (name, colour, and font) is correct. Changes cannot be made once confirmed.</label>
+          </div>
+        {% endif %}
+        <div class="product-form__controls-group product-form__controls-group--submit confirmation">
+
+          <div class="product-form__item product-form__item--submit
+                      {%- if section.settings.enable_payment_button %} product-form__item--payment-button {%- endif -%}
+                      {%- if product.has_only_default_variant %} product-form__item--no-variants {%- endif -%}"
+               >
+
+            <button type="submit" name="add"
+                    {% unless current_variant.available %} aria-disabled="true"{% endunless %}
+                    aria-label="{% unless current_variant.available %}{{ 'products.product.sold_out' | t }}{% else %}{{ 'products.product.add_to_cart' | t }}{% endunless %}"
+                    class="dsa btn product-form__cart-submit{% if section.settings.enable_payment_button %} btn--secondary-accent{% endif %}{% if product.tags contains 'pro_confirm'  %} disabled{% endif %}"
+                    data-add-to-cart>
+              <span data-add-to-cart-text>
+                {% unless current_variant.available %}
+                {{ 'products.product.sold_out' | t }}
+                {% else %}
+                {{ 'products.product.add_to_cart' | t }}
+                {% endunless %}
+              </span>
+              <span class="hide" data-loader>
+                {% include 'icon-spinner' %}
+              </span>
+            </button>
+            {% if section.settings.enable_payment_button %}
+            {{ form | payment_button }}
+            {% endif %}
+          </div>
+        </div>
+        
+{% comment %}         {{ gift_html }} {% endcomment %}
+        
+        {% endif %}
+              
+           <div class="custom_product_desc">
+        <div class="product_details">
+          {%- if product.description != blank -%} 
+          
+            <h2 class="cust_tab">Product Features
+              <span class="cust_down_arrow">{%- render 'icon-plus' -%}</span>
+              <span class="cust_up_arrow ">{%- render 'icon-minus' -%}</span>
+            </h2>
+            <div class="panel cust_panel">
+              <p>{{ product.description }}</p>
+            </div>
+          {%- endif -%}
+
+          {%- if product.tags contains 'custom_fabric_size_care' -%}
+            {% render 'fabric-care-unit' %}
+          {%- endif -%}
+
+          {% # CD Arshit %}
+          <h2 class="cust_tab">DELIVERY & RETURN
+            <span class="cust_down_arrow">{%- render 'icon-plus' -%}</span>
+            <span class="cust_up_arrow ">{%- render 'icon-minus' -%}</span>
+          </h2>
+          <div class="panel cust_panel">
+            {% if product.metafields.custom.delivery_tab != blank %}
+              {{ product.metafields.custom.delivery_tab }}
+            {% endif %}
+            <p class="tab_desc_title"><span>Returns</span></p>
+            <p>We endeavor to keep all our customers happy and to provide the utmost best service. If you are unhappy with your purchase, please send an email to <a href="mailto:support@izaakazanei.com">support@little-ia.com </a>with as much information as possible. We will be able to offer you a refund as per our Refund Policy stated here. Due to the nature of personalised items, they are not eligible for refund or exchange, unless the personalisation has been done incorrectly.</p>
+            {% comment %}<p class="tab_desc_title"><span>Spiral Academic Year Diary</span></p>
+            <p>Calling all students. Our much-loved academic diary now comes in a softback spiral home, with larger, tearaway pages and a printed inside cover. Running from Aug ‘23 to July "24, this study companion helps you track grades, finances, deadlines and timetables, plus plan meals</p>
+          {% endcomment %}
+          </div>
+          
+          {%- comment -%}
+          {%- if product.metafields.size_fit.size_fit != blank -%}
+          <div class="slide">
+            <div class="tabs_title">
+              <button class="accordion">Size & Care</button>
+              <div class="plus-minus"><span class="plus"></span><span class="minus"></span></div>
+            </div>
+            <div class="panel">
+              <p>{{ product.metafields.size_fit.size_fit }}</p>
+            </div>
+          </div>
+          {%- endif -%}
+          {%- if product.metafields.personalisation.personalisation != blank -%}
+          <div class="slide">
+            <div class="tabs_title">
+              <button class="accordion">Personalisation</button>
+              <div class="plus-minus"><span class="plus"></span><span class="minus"></span></div>
+            </div>
+            <div class="panel">
+              <p>{{ product.metafields.personalisation.personalisation }}</p>
+            </div>
+          </div>
+          {%- endif -%}
+          <div class="slide">
+            <div class="tabs_title">
+              <button class="accordion">Delivery & Returns</button>
+              <div class="plus-minus"><span class="plus"></span><span class="minus"></span></div>
+            </div>
+            <div class="panel">
+              <p>{{ shop.shipping_policy }}</p>
+            </div>
+          </div>
+          {%- endcomment -%}
+        </div>
+      
+         {%- comment -%} CD 
+        <div class="support mobile-tabs">
+          <div>
+            <div class="details_slide">
+              <div class="slide">
+                <button class="accordion">Description</button>
+                <div class="panel">
+                  {{ product.description }}
+                </div>
+              </div>
+              {%- if product.metafields.size_fit.size_fit != blank -%}
+              <div class="slide">
+                <button class="accordion">Size & Fit</button>
+                <div class="panel">
+                  <span>{{ product.metafields.size_fit.size_fit }}</span>
+                </div>
+              </div>
+              {%- endif -%}
+              {%- if product.metafields.personalisation.personalisation != blank -%}
+              <div class="slide">
+                <button class="accordion">Personalisation</button>
+                <div class="panel">
+                  <span>{{ product.metafields.personalisation.personalisation }}</span>
+                </div>
+              </div>
+              {%- endif -%}
+              <div class="slide">
+                <button class="accordion">Delivery & Returns</button>
+                <div class="panel">
+                  {{ shop.shipping_policy }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>{%- endcomment -%}
+        
+        {% comment %}CD
+        <div class="accordion ia_accordion-panel">
+          <div class="accordion-panel">
+            <h3 class="accordion-header">Shipping & Returns</h3>
+            <div class="accordion-body">{{ shop.shipping_policy }}</div>
+          </div>
+          <div class="accordion-panel">
+            <h3 class="accordion-header">Size Guide</h3>
+            <div class="accordion-body">
+              <img src="{{ 'Size_Guide.jpg' | asset_url }}" alt=" Size_Guide">
+            </div>
+          </div>
+        </div>
+  		{% endcomment %}
+
+      </div>
+          {% #CD Nirav %}
+          {% if product.tags contains 'party_processing5' %}
+            <input type="hidden" name="properties[Processing time]" value="3 to 5 working days">
+          {% endif %}
+          {% if product.tags contains 'not_gift' %}
+            <input type="hidden" name="properties[Note]" value="This product cannot be gift wrapped">
+          {% endif %}
+          {% if product.tags contains 'order_day' %}
+              <input type="hidden" name="properties[Processing time]" value="8 to 10 working days. This product will be shipped separately.">
+          {% endif %}
+          {% if product.tags contains 'vendor_ship' %}
+              <input type="hidden" name="properties[Shipping]" value="Transit time is 2 to 3 working days. This product will be fulfilled by Mama Care">
+              {% comment %}<p class='properties_vendor_ship'>This product will be fulfilled by the vendor.</p>{% endcomment %}
+          {% endif %}
+        {% endform %}
+      </div>
+
+      {%- comment -%}
+      Live region for announcing updated price and availability to screen readers
+      {%- endcomment -%}
+      <p class="visually-hidden" data-product-status
+         aria-live="polite"
+         role="status"
+         ></p>
+
+      {%- comment -%}
+      Live region for announcing that the product form has been submitted and the
+      product is in the process being added to the cart
+      {%- endcomment -%}
+      <p class="visually-hidden" data-loader-status
+         aria-live="assertive"
+         role="alert"
+         aria-hidden="true"
+         >{{ 'products.product.loader_label' | t }}</p>
+		
+      <div class="little-ia_btn">
+        <a class="qwe btn product-form__cart-submit btn--secondary-accent btn-1" target="_blank" href="https://izaakazanei.myshopify.com/products/the-grey-embellished-fur-trim-cardigan">Mummy & Me Looks</a>
+        <a class="ewq btn product-form__cart-submit btn--secondary-accent btn-2" target="_blank" href="https://izaakazanei.myshopify.com/collections/sequins-1/products/the-sequin-embellished-pink-cable-cardigan">Mummy & Me Looks</a>
+      </div>
+      
+      {%- comment -%} CD 
+      <div class="detail_tabs desktop-tabs">
+        <div class="tabs-nav-wrap">
+          <ul class="tabs-nav">
+            <li class="tab-nav-link current" data-id="descriptions">Product Features</li>
+            {%- if product.metafields.size_fit.size_fit != blank -%}
+            <li class="tab-nav-link" data-id="size">Size & Fit</li>
+            {%- endif -%}
+            {%- if product.metafields.personalisation.personalisation != blank -%}
+            <li class="tab-nav-link" data-id="personalisation">Personalisation</li>
+            {%- endif -%}
+            <li class="tab-nav-link" data-id="delivery">Delivery & Returns</li>
+          </ul>
+          <div style="clear:both;"></div>
+        </div>
+        <div class="descriptions tab tabVideo" id="descriptions">
+          {{ product.description }}
+        </div>
+        {%- if product.metafields.size_fit.size_fit != blank -%}
+        <div class="size hide tab" id="size">
+          <span>{{ product.metafields.size_fit.size_fit }}</span>
+        </div>
+        {%- endif -%}
+        {%- if product.metafields.personalisation.personalisation != blank -%}
+        <div class="personalisation hide tab" id="personalisation">
+          {{ product.metafields.personalisation.personalisation }}
+        </div>
+        {%- endif -%}
+        <div class="delivery hide tab" id="delivery">
+         	{{ shop.shipping_policy }}
+        </div>
+      </div>{%- endcomment -%}     
+      {% if section.settings.show_share_buttons %}
+
+    
+      
+<!--       <div class="fabric-size-c">
+        <div class="inner-size">
+          <div class="item item11">
+          	<img src="https://cdn.shopify.com/s/files/1/0289/3240/7375/files/New_Project_3.png?v=1643088363">
+            <p>Personalisation</p>
+          </div>
+          <div class="item item12">
+          	<img src="https://cdn.shopify.com/s/files/1/0289/3240/7375/files/New_Project_6.png?v=1643088424">
+            <p>Gift-Wrap</p>
+          </div>
+         
+        </div>
+      </div> -->
+      {% comment %}<hr style="margin:0;margin-bottom: 10px;">{% endcomment %}
+      
+      <div class="sp_social-sharing">
+        {% include 'social-icons' %}
+      </div>
+
+      {% comment %}
+      {% include 'social-sharing', share_title: product.title, share_permalink: product.url, share_image: product.featured_media %}
+      {% endcomment %}
+
+      {% endif %}
+    </div>
+  </div>
+  <div style="margin-top:50px;" class="fether-widget"></div>
+</div>
+
+{% unless product == empty %}
+<script type="application/json" id="ProductJson-{{ section.id }}">
+    {{ product | json }}
+</script>
+<script type="application/json" id="ModelJson-{{ section.id }}">
+    {{ product.media | where: 'media_type', 'model' | json }}
+</script>
+{% endunless %}
+
+
+
+{% schema %}
+{
+"name": {
+"da": "Produktsider",
+"de": "Produktseiten",
+"en": "Product pages",
+"es": "Páginas de productos",
+"fi": "Tuotesivut",
+"fr": "Pages de produits",
+"hi": "उत्पाद पेज",
+"it": "Pagine di prodotto",
+"ja": "商品ページ",
+"ko": "제품 페이지",
+"nb": "Produktsider",
+"nl": "Productpagina's",
+"pt-BR": "Páginas de produtos",
+"pt-PT": "Páginas de produtos",
+"sv": "Produktsidor",
+"th": "หน้าสินค้า",
+"zh-CN": "产品页面",
+"zh-TW": "產品頁面"
+},
+"settings": [
+  { 
+      "type":"text",
+      "id":"title",
+      "label":"Title"
+     } ,
+{
+"type": "checkbox",
+"id": "show_quantity_selector",
+"label": {
+"da": "Vis antalsvælger",
+"de": "Quantitäts-Auswahl anzeigen",
+"en": "Show quantity selector",
+"es": "Mostrar selector de cantidad",
+"fi": "Näytä määrän valitsin",
+"fr": "Afficher le sélecteur de quantité",
+"hi": "मात्रा चयनकर्ता दिखाएं",
+"it": "Mostra selettore quantità",
+"ja": "数量セレクターを表示する",
+"ko": "수량 선택기 표시",
+"nb": "Vis mengdevelger",
+"nl": "Hoeveelheidskiezer weergeven",
+"pt-BR": "Exibir seletor de quantidade",
+"pt-PT": "Mostrar um seletor de quantidade",
+"sv": "Visa kvantitetsväljare",
+"th": "แสดงตัวเลือกจำนวน",
+"zh-CN": "显示数量选择器",
+"zh-TW": "顯示數量選擇器"
+},
+"default": false
+},
+{
+"type": "checkbox",
+"id": "show_variant_labels",
+"label": {
+"da": "Vis variantlabels",
+"de": "Varianten-Etiketten anzeigen",
+"en": "Show variant labels",
+"es": "Mostrar etiquetas de variantes",
+"fi": "Näytä vaihtoehtoiset tarrat",
+"fr": "Afficher le nom des variantes",
+"hi": "वेरिएंट लेबल दिखाएं",
+"it": "Mostra etichette varianti",
+"ja": "バリエーションのラベルを表示する",
+"ko": "이형 상품 레이블 표시",
+"nb": "Vis variantetiketter",
+"nl": "Variantlabels weergeven",
+"pt-BR": "Exibir etiquetas de variantes",
+"pt-PT": "Mostrar etiquetas de variantes",
+"sv": "Visa variantetiketter",
+"th": "แสดงป้ายกำกับตัวเลือกสินค้า",
+"zh-CN": "显示多属性标签",
+"zh-TW": "顯示子類選項標籤"
+},
+"default": true
+},
+{
+"type": "checkbox",
+"id": "show_vendor",
+"label": {
+"da": "Vis leverandør",
+"de": "Lieferanten anzeigen",
+"en": "Show vendor",
+"es": "Mostrar proveedor",
+"fi": "Näytä myyjä",
+"fr": "Afficher les vendeurs",
+"hi": "विक्रेता दिखाएं",
+"it": "Mostra fornitore",
+"ja": "販売元を表示する",
+"ko": "공급업체 표시",
+"nb": "Vis leverandør",
+"nl": "Leverancier weergeven",
+"pt-BR": "Exibir fornecedor",
+"pt-PT": "Mostrar fornecedor",
+"sv": "Visa säljare",
+"th": "แสดงผู้ขาย",
+"zh-CN": "显示厂商",
+"zh-TW": "顯示廠商"
+},
+"default": false
+},
+{
+"type": "checkbox",
+"id": "enable_payment_button",
+"label": {
+"da": "Vis dynamisk betalingsknap",
+"de": "Dynamischen Checkout Button anzeigen",
+"en": "Show dynamic checkout button",
+"es": "Mostrar botón de pago dinámico",
+"fi": "Näytä dynaaminen kassapainike",
+"fr": "Afficher le bouton de passage à la caisse dynamique",
+"hi": "डायनेमिक चेकआउट बटन दिखाएं",
+"it": "Mostra pulsante di check-out dinamico",
+"ja": "ダイナミックチェックアウトボタンを表示する",
+"ko": "동적 결제 버튼 표시",
+"nb": "Vis dynamisk knapp for å gå til kassen",
+"nl": "Dynamische checkout knop weergeven",
+"pt-BR": "Exibir botão dinâmico de finalização da compra",
+"pt-PT": "Mostrar o botão dinâmico de finalização da compra",
+"sv": "Visa dynamiska utcheckningsknappar",
+"th": "แสดงปุ่มชำระเงินแบบไดนามิก",
+"zh-CN": "显示动态结账按钮",
+"zh-TW": "顯示動態結帳按鈕"
+},
+"info": {
+"da": "Den enkelte kunde vil se sin foretrukne betalingsmetode blandt dem, der er tilgængelige i din butik, f.eks. PayPal eller Apple Pay. [Få mere at vide](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"de": "Jeder Kunde sieht seine bevorzugte Zahlungsmethode aus den in Ihrem Shop verfügbaren Zahlungsmethoden wie PayPal oder Apple Pay. [Mehr Informationen](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"en": "Each customer will see their preferred payment method from those available on your store, such as PayPal or Apple Pay. [Learn more](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"es": "Cada cliente verá su forma de pago preferida entre las disponibles en tu tienda, como PayPal o Apple Pay. [Más información](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"fi": "Kukin asiakas näkee ensisijaisen valintansa kauppasi tarjoamista maksutavoista, esim. PayPal tai Apple Pay. [Lisätietoja](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"fr": "Chaque client verra son moyen de paiement préféré parmi ceux qui sont proposés sur votre boutique, tels que PayPal ou Apple Pay. [En savoir plus](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"hi": "प्रत्येक ग्राहक आपके स्टोर पर उपलब्ध अपनी पसंदीदा भुगतान की विधि देखेंगे जैसे PayPal या Apple Pay. [अधिक जानें](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"it": "Ogni cliente vedrà il suo metodo di pagamento preferito tra quelli disponibili nel tuo negozio, come PayPal o Apple Pay. [Maggiori informazioni](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"ja": "PayPalやApple Payなど、ストアで利用可能な希望の決済方法がお客様に表示されます。[詳細情報](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"ko": "각 고객은 PayPal 또는 Apple Pay와 같이 스토어에서 사용 가능한 지불 방법을 확인할 수 있습니다. [자세히 알아보기](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"nb": "Hver enkelt kunde vil se sin foretrukne betalingsmåte blant de som er tilgjengelig i butikken din, som PayPal eller Apple Pay. [Finn ut mer](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"nl": "Elke klant ziet zijn of haar beschikbare voorkeursmethode om af te rekenen, zoals PayPal of Apple Pay. [Meer informatie](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"pt-BR": "Cada cliente verá a forma de pagamento preferencial dele dentre as disponíveis na loja, como PayPal ou Apple Pay. [Saiba mais](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"pt-PT": "Cada cliente irá ver o seu método de pagamento preferido entre os disponíveis na loja, como o PayPal ou Apple Pay. [Saiba mais](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"sv": "Varje kund kommer att se den föredragna betalningsmetoden från de som finns tillgängliga i din butik, till exempel PayPal eller Apple Pay. [Läs mer](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"th": "ลูกค้าแต่ละรายจะเห็นวิธีการชำระเงินที่ต้องการจากวิธีที่ใช้ได้ในร้านค้าของคุณ เช่น PayPal หรือ Apple Pay [เรียนรู้เพิ่มเติม](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"zh-CN": "每位客户都可在您商店提供的付款方式中看到他们的首选付款方式，例如 PayPal 或 Apple Pay。[了解详细信息](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+"zh-TW": "每位顧客都可以在您商店內開放使用的付款方式中看見他們偏好使用的方式，如 PayPal、Apple Pay 等。[深入瞭解](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)"
+},
+"default": true
+},
+{
+"type": "checkbox",
+"id": "show_share_buttons",
+"label": {
+"da": "Vis knapper til deling på sociale medier",
+"de": "Buttons für Social Media anzeigen",
+"en": "Show social sharing buttons",
+"es": "Mostrar botones para compartir en redes sociales",
+"fi": "Näytä sosiaalisen median jakamispainikkeet",
+"fr": "Affichez les boutons de partage sur les médias sociaux",
+"hi": "सोशल शेयरिंग बटन दिखाएं",
+"it": "Mostra i pulsanti per la condivisione sui social",
+"ja": "ソーシャル共有ボタンを表示する",
+"ko": "소셜 공유 버튼 표시",
+"nb": "Vis knapper for deling på sosiale medier",
+"nl": "Knoppen voor sociaal delen weergeven",
+"pt-BR": "Exibir botões de compartilhamento em redes sociais",
+"pt-PT": "Mostrar botões de partilha nas redes sociais",
+"sv": "Visa knappar för delning i sociala medier",
+"th": "แสดงปุ่มสำหรับแชร์ลงโซเชียล",
+"zh-CN": "显示社交分享按钮",
+"zh-TW": "顯示社群分享按鈕"
+},
+"default": true
+},
+{
+"type": "header",
+"content": {
+"da": "Medie",
+"de": "Medien",
+"en": "Media",
+"es": "Medios de comunicación",
+"fi": "Media",
+"fr": "Support multimédia",
+"hi": "मीडिया",
+"it": "Media",
+"ja": "メディア",
+"ko": "미디어",
+"nb": "Medier",
+"nl": "Media",
+"pt-BR": "Mídia",
+"pt-PT": "Multimédia",
+"sv": "media",
+"th": "สื่อ",
+"zh-CN": "媒体",
+"zh-TW": "媒體"
+},
+"info": {
+"da": "Få mere at vide om [media types](https://help.shopify.com/manual/products/product-media)",
+"de": "Mehr Informationen über [Medientypen ](https://help.shopify.com/manual/products/product-media)",
+"en": "Learn more about [media types](https://help.shopify.com/manual/products/product-media)",
+"es": "Más información sobre [tipos de archivos multimedia](https://help.shopify.com/manual/products/product-media)",
+"fi": "Lue lisää [mediatyypeistä](https://help.shopify.com/manual/products/product-media)",
+"fr": "En savoir plus sur les [types de supports multimédia](https://help.shopify.com/manual/products/product-media)",
+"hi": "[मीडिया प्रकार](https://help.shopify.com/manual/products/product-media) के बारे में और जानें",
+"it": "Scopri di più sulle [tipologie di file multimediali](https://help.shopify.com/manual/products/product-media)",
+"ja": "[メディアのタイプ](https://help.shopify.com/manual/products/product-media) について詳しく知る",
+"ko": "[미디어 유형](https://help.shopify.com/manual/products/product-media)에 대해 자세히 알아보기",
+"nb": "Lær mer om [medietyper](https://help.shopify.com/manual/products/product-media)",
+"nl": "Meer informatie over [mediatypen](https://help.shopify.com/manual/products/product-media)",
+"pt-BR": "Saiba mais sobre [tipos de mídia](https://help.shopify.com/manual/products/product-media)",
+"pt-PT": "Saiba mais sobre [media types](https://help.shopify.com/manual/products/product-media)",
+"sv": "Läs mer om [mediatyper](https://help.shopify.com/manual/products/product-media)",
+"th": "ดูข้อมูลเพิ่มเติมเกี่ยวกับ [ประเภทของสื่อ](https://help.shopify.com/manual/products/product-media)",
+"zh-CN": "详细了解[媒体类型](https://help.shopify.com/manual/products/product-media)",
+"zh-TW": "深入瞭解 [媒體類型](https://help.shopify.com/manual/products/product-media)"
+}
+},
+{
+"type": "select",
+"id": "media_size",
+"label": {
+"da": "Størrelse",
+"de": "Größe",
+"en": "Size",
+"es": "Tamaño",
+"fi": "Koko",
+"fr": "Taille",
+"hi": "आकार",
+"it": "Dimensione",
+"ja": "サイズ",
+"ko": "사이즈",
+"nb": "Størrelse",
+"nl": "Grootte",
+"pt-BR": "Tamanho",
+"pt-PT": "Tamanho",
+"sv": "Storlek",
+"th": "ขนาด",
+"zh-CN": "大小",
+"zh-TW": "尺寸"
+},
+"options": [
+{
+"value": "small",
+"label": {
+"da": "Lille",
+"de": "Klein",
+"en": "Small",
+"es": "Pequeño",
+"fi": "Pieni",
+"fr": "Petit",
+"hi": "छोटा",
+"it": "Piccolo",
+"ja": "スモール",
+"ko": "스몰",
+"nb": "Liten",
+"nl": "Klein",
+"pt-BR": "Pequeno",
+"pt-PT": "Pequeno",
+"sv": "Liten",
+"th": "เล็ก",
+"zh-CN": "小",
+"zh-TW": "小型"
+}
+},
+{
+"value": "medium",
+"label": {
+"da": "Medium",
+"de": "Mittel",
+"en": "Medium",
+"es": "Mediano",
+"fi": "Keskisuuri",
+"fr": "Moyenne",
+"hi": "मध्यम",
+"it": "Medio",
+"ja": "中",
+"ko": "보통",
+"nb": "Middels",
+"nl": "Gemiddeld",
+"pt-BR": "Médio",
+"pt-PT": "Médio",
+"sv": "Medium",
+"th": "ปานกลาง",
+"zh-CN": "中等",
+"zh-TW": "中等"
+}
+},
+{
+"value": "large",
+"label": {
+"da": "Stor",
+"de": "Groß",
+"en": "Large",
+"es": "Grande",
+"fi": "Suuri",
+"fr": "Grande",
+"hi": "बड़ा",
+"it": "Grande",
+"ja": "大",
+"ko": "라지",
+"nb": "Stor",
+"nl": "Groot",
+"pt-BR": "Grande",
+"pt-PT": "Grande",
+"sv": "Stor",
+"th": "ใหญ่",
+"zh-CN": "大",
+"zh-TW": "大型"
+}
+},
+{
+"value": "full",
+"label": {
+"da": "Fuld bredde",
+"de": "Volle Breite",
+"en": "Full-width",
+"es": "Ancho completo",
+"fi": "Täysi leveys",
+"fr": "Pleine largeur",
+"hi": "पूर्ण चौड़ाई",
+"it": "Intera larghezza",
+"ja": "全幅",
+"ko": "전체 폭",
+"nb": "Full bredde",
+"nl": "Volledige breedte",
+"pt-BR": "Largura completa",
+"pt-PT": "Largura completa",
+"sv": "Full bredd",
+"th": "เต็มความกว้าง",
+"zh-CN": "全宽",
+"zh-TW": "完整寬度"
+}
+}
+],
+"default": "medium"
+},
+{
+"type": "checkbox",
+"id": "enable_image_zoom",
+"label": {
+"da": "Aktivér billedzoom",
+"de": "Foto-Zoom zulassen",
+"en": "Enable image zoom",
+"es": "Habilitar zoom de imagen",
+"fi": "Ota kuvan zoomaus käyttöön",
+"fr": "Activer le zoom d'image",
+"hi": "इमेज ज़ूम सक्षम करें",
+"it": "Abilita lo zoom dell'immagine",
+"ja": "画像ズームを有効にする",
+"ko": "이미지 확대 사용",
+"nb": "Aktiver bildezoom",
+"nl": "Inzoomen op afbeelding inschakelen",
+"pt-BR": "Habilitar o zoom da imagem",
+"pt-PT": "Ativar o zoom da imagem",
+"sv": "Aktivera bildzoom",
+"th": "เปิดใช้การซูมภาพ",
+"zh-CN": "启用图片缩放",
+"zh-TW": "啟用圖片縮放"
+},
+"default": true
+},
+{
+"type": "checkbox",
+"id": "enable_video_looping",
+"label": {
+"da": "Aktivér looping af videoer",
+"de": "Videschleife aktivieren",
+"en": "Enable video looping",
+"es": "Habilitar la reproducción de video en bucle",
+"fi": "Ota käyttöön videosilmukka",
+"fr": "Activer le bouclage de la vidéo",
+"hi": "वीडियो लूपिंग सक्षम करें",
+"it": "Abilita la riproduzione in loop dei video",
+"ja": "ビデオのループを有効にする",
+"ko": "동영상 루프",
+"nb": "Aktiver løkkeavspilling av video",
+"nl": "Video-looping inschakelen",
+"pt-BR": "Habilitar loop de vídeo",
+"pt-PT": "Ativar ciclo de vídeo",
+"sv": "Aktivera video-loopning",
+"th": "เปิดใช้งานการวนซ้ำวิดีโอ",
+"zh-CN": "启用视频循环",
+"zh-TW": "啟用影片循環功能"
+},
+"default": false
+}
+],
+  "blocks": [
+		{
+			"name": "block",
+			"type": "block",
+			"settings": [
+				{
+					"type":"image_picker",
+					"id":"icon",
+					"label":"Icon Image"
+				},
+				{
+					"type":"html",
+					"id":"icon-text",
+					"label":"Text"
+				}
+			]
+		}
+	]
+}
+{% endschema %}

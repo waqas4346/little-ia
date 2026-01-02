@@ -1,0 +1,91 @@
+<div class="ia_blog-header">
+  <div class="page-width">
+    <div class="section-header text-center">
+       <h1>{{ section.settings.blog_title }}</h1>
+      <div class="rte">{{ section.settings.column_richtext }}</div>   
+    </div> 
+  </div>
+</div>
+<div class="blog_filter_main">
+  {% for block in section.blocks %}
+    <div class="blog_filter_inner">
+      {% if block.settings.icon != blank %}
+        <div class="blog_filter_icon">
+          <img src="{{ block.settings.icon | img_url: 'master' }}">
+        </div>
+      {% endif %}
+      {% if block.settings.tag != blank %}
+        {% assign tag = block.settings.tag | downcase %}
+        {% assign tag = tag | replace: '& ','' %}
+        {% assign tag = tag | replace: ' ','-' %}        
+        <a href="/blogs/{{ tag }}" class="blog_filter_tag">{{ block.settings.tag }}</a>
+      {% endif %}
+    </div>
+  {% endfor %}
+ {% comment %} <aside>
+    <div id="blog-tags-slider" class="swiper-container">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide"><a href="/blogs/receips">Recipes</a></div>
+        <div class="swiper-slide"><a href="/blogs/arts-crafts">Arts & Crafts</a></div>
+        <div class="swiper-slide"><a href="/blogs/baby-toddler">baby & toddler</a></div>
+        <div class="swiper-slide"><a href="/blogs/bookclub">BookClub</a></div>
+        <div class="swiper-slide"><a href="/blogs/expert-learning">Expert Learning</a></div>
+       </div>
+    </div>
+    <p class="blog_filter_title">Filter by:</p>
+    <div class="blog_filter">
+      <div class="blog_filter_inner"><a href="/blogs/receips">Recipes</a></div>
+      <div class="blog_filter_inner"><a href="/blogs/arts-crafts">Arts & Crafts</a></div>
+      <div class="blog_filter_inner"><a href="/blogs/baby-toddler">baby & toddler</a></div>
+      <div class="blog_filter_inner"><a href="/blogs/bookclub">BookClub</a></div>
+      <div class="blog_filter_inner"><a href="/blogs/expert-learning">Expert Learning</a></div>
+    </div>
+  </aside>{% endcomment %}
+</div>
+
+
+
+
+{% schema %}
+  {
+    "name": "Page Header",
+    "settings": [
+        {
+          "type": "text",
+          "id": "blog_title",
+          "default": "Momsveration",
+          "label": "Title"
+        },
+        {
+           "type": "richtext",
+           "id": "column_richtext",
+           "label": "Description",
+           "default": "<p>There’s no strength than that of a mother, and this time at home is a true testament to that. It’s in times like this where you realise the strength of community.</p>"
+        }
+    ],
+     "blocks": [
+    {
+      "type": "block",
+      "name": "block",
+      "settings": [
+        {
+          "type": "image_picker",
+          "label": "Icon",
+          "id": "icon"
+        },
+        {
+          "type": "text",
+          "label": "Tag",
+          "id": "tag"
+        }
+      ]
+    }
+  ]
+  }
+{% endschema %}
+
+{% stylesheet %}
+{% endstylesheet %}
+
+{% javascript %}
+{% endjavascript %}

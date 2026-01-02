@@ -1,0 +1,58 @@
+div.cart-attribute__field {
+  /* Spacing between fields. */
+  margin-bottom: 15px;
+
+  /* Width of the entire field: 100% to avoid other elements on same line */
+  display: block;
+  width: 100%;
+
+  div.required-error {
+    /* Styling when a field is required, but not filled out or invalid.  */
+    outline: solid #DE1A61;
+    background-color: #FBEAE5;
+    outline-width: thin
+  }
+
+  & > div {
+    & > label:first-of-type {
+      /* Space between the label and its field. */
+      margin-bottom: 5px;
+
+      /* Font weight of the label. */
+      font-weight: bold;
+
+      /* How to display the label; */
+      display: block;
+    }
+
+    & > label:first-of-type.required::after {
+      /* Show asterisk next to required field label. */
+      content: ' *';
+    }
+
+    &[data-required-text-field] > input[type="text"] {
+      /* Minimum width of the text input.  */
+      min-width: 1px;
+    }
+
+    &[data-required-checkbox-field] > input[type="checkbox"] {
+      /* Spacing between checkbox choices.  */
+      margin-bottom: 5px;
+    }
+
+    &[data-required-radio-field] > input[type="radio"] {
+      /* Spacing between radio choices.  */
+      margin-bottom: 5px;
+    }
+
+    &[data-required-dropdown-field] > input[type="select"] {
+      /* Width of the dropdown field.  */
+      min-width: 50px;
+    }
+
+    &[data-required-textarea-field] > textarea {
+      /* Styling for the textarea field.  */
+    }
+  }
+}
+

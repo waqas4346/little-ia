@@ -1,0 +1,1 @@
+{%- layout none -%}{%- assign comma = '' -%}[{%- for list in linklists -%}{%- unless list.handle contains '-child-' or link.links.size == 0 -%}{{comma}}{%- assign comma = ',' -%}{"label": {{list.title | json}},"value": {{list.handle | json}}}{%- endunless -%}{%- endfor -%}]

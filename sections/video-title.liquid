@@ -1,0 +1,29 @@
+{% if section.settings.file_url != blank %}
+<div class="video-title-wrapper">
+  <div class="video-wrapper">
+    <video width="100%" height="100%" autoplay muted loop playsinline>
+      <source src="{{ section.settings.file_url }}" type="video/mp4">
+    </video>
+  </div>
+  <div class="title">
+    <h1>{{ section.settings.title }}</h1>
+  </div>
+</div>
+{% endif %}
+{% schema %}
+  {
+    "name": "Video",
+    "settings": [
+		{
+			"type":"text",
+			"id":"file_url",
+			"label":"Video Url"
+		},
+		{
+			"type":"text",
+			"id":"title",
+			"label":"Heading"
+		}
+	]
+  }
+{% endschema %}

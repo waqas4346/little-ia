@@ -1,0 +1,21 @@
+<div class="new_filter">
+  {% comment %}<h3 class="new_filter_title">Choose a theme</h3>{% endcomment %}
+  <div class="icon fliter_prev_arrow filter_arrow">{% render 'icon-arrow-prev' %}</div>
+  <div class="new_filter_wrrap  new_filter_slider">
+  {% for block in section.blocks %}
+    <!-- block.typeblock.type {{ block.type }} -->
+    {% if block.type == 'block' %}
+    <div class="new_filter_inner">
+    {% if block.settings.image != blank %}  
+      {% assign url_tag = block.settings.tag | downcase %}
+    <a href="/collections/{{ collection.title | downcase |replace: ' ', '-' }}/{{ url_tag }}">
+      <img src="{{ block.settings.image | img_url:'master' }}">
+      <p class="new_filter_text">{{ block.settings.title }}</p>
+    </a>
+    {% endif %}
+    </div>
+    {% endif %}
+  {% endfor %}
+  </div>
+  <div class="icon fliter_next_arrow filter_arrow">{% render 'icon-arrow-next' %}</div>
+</div>

@@ -1,0 +1,68 @@
+<div class="image_with_link">
+	<div class="page-width">
+		<div class="bestsellers bestsellers_change">
+			<div class="image_with_link_heading headings">
+				{{ section.settings.heading }}
+			</div>
+			<div class="bestseller-items">
+				<ul>
+					{% for block in section.blocks %}
+					<li>
+						<a href="{{ block.settings.link }}">
+						<div class="image_block">
+							<img src="{{ block.settings.image | img_url: 'master' }}">
+						</div>		
+						<div class="text_block">
+							{{ block.settings.block_heading }}
+						</div>
+					</a>
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+{% schema %}
+{
+  "name": "Image with Link",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "richtext",
+      "label": "Heading",
+      "id": "heading"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "block",
+      "name": "Block",
+      "settings": [
+        {
+          "type": "image_picker",
+          "label": "Image",
+          "id": "image"
+        },
+        {
+          "type": "richtext",
+          "label": "Block Heading",
+          "id": "block_heading"
+        },
+		{
+			"type": "url",
+			"label": "Link",
+			"id": "link"
+		}
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Image with Link"
+    }
+  ]
+}
+{% endschema %}

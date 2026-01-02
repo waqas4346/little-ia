@@ -1,0 +1,19 @@
+{{ 'globo.menu.css' | asset_url | stylesheet_tag }}
+<script type="text/javascript">
+  {%- assign assets_url = 'product-1.png' | asset_img_url: '50x' | split: 'product-1_50x.png' -%}
+  {%- assign files_url  = 'product-1.png' | file_img_url: '50x' | split: 'product-1_50x.png' -%}
+  window.GloboMenuMoneyFormat = {{ shop.money_format | json }};
+  window.shopCurrency = "{{ shop.currency }}";
+  window.GloboMenuCustomer = {% if customer %}true{% else %}false{% endif %};
+  window.assetsUrl = '{{ assets_url[0] }}';
+  window.filesUrl = '{{ files_url[0] }}';
+  window.GloboMenuSignature = 'fb5c54c4d893c98e54d0127842024389';
+  window.GloboMenuTimestamp = 1595848616;
+  window.GloboMenuLinklists = {
+    {%- assign comma = '' -%}{%- for list in linklists -%}{%- unless list.handle contains '-child-' or list.links.size == 0 -%}{{comma}}{%- assign comma = ',' -%}{{ list.handle | json }}: [{%- for link in list.links -%}{'url' :{{ link.url | json }}, 'title': {{ link.title | json }}}{%- unless forloop.last -%},{%- endunless -%}{%- endfor -%}]{%- endunless -%}{%- endfor -%}
+  };
+</script>
+<script src="{{ 'globo.menu.data.js' | asset_url }}"></script>
+<script src="{{ 'globo.menu.render.js' | asset_url }}"></script>
+<script src="{{ 'globo.menu.app.js' | asset_url }}"></script>
+<script type="text/javascript">var globoMenu = new GloboMenu(window.GloboMenuConfig, window.GloboMenuRenderFunction);</script>

@@ -1,0 +1,47 @@
+<div class="gift_sets_bar">
+  <div class="page-width">
+    <div class="page_wrapper">
+      <div class="bar_header">
+        <div class="title-with-close_icon">
+          <span class="dubble_arrows">{% render 'dubble_arrow' %}</span>
+          <h4 class="bar_title">Please select at least 2 products</h4>
+          <span class="bar_close_icon">{% render 'icon-close' %}</span>
+        </div>
+      </div>
+      <div class="bar_scroll_pro">
+        <div class="bar_product_list">
+          <div class="main_product_list"></div>
+          <div class="bar_product_item">
+            <div class="bar_product_text">
+              <b>Select the next item</b><br>
+              from product list above
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="select_gift">
+        <input type="checkbox" value="gift" id="gift-checkbox" class="gift-checkbox">
+        <label for="gift-checkbox" class="input_label">Add gift wrap</label>
+        <div class="gift_list hide">
+          <select class="gift_select_box">
+            <option value="The Perfect Gift wrap +30 dhs" data-id="32836402544719" selected>The Perfect Gift wrap +30 dhs</option>
+            <option value="Christmas Gift Wrap +15 dhs" data-id="40438264397903">Christmas Gift Wrap +15 dhs</option>
+            {% comment %}<option value="Christmas Gift Wrap (fits 3-4 small-sized items) + 15 dhs" data-id="40431874211919">Christmas Gift Wrap (fits 3-4 small-sized items) + 15 dhs</option>{% endcomment %}
+          </select>
+          <label class="select_box_label">Select gift wrap</label>
+        </div>
+      </div>
+      <div class="action-buttons-wrap">
+        <button type="button" id="startOver">Start over</button>
+        <button type="button" id="personaliseAll" class="personaliseAll">Personalise all</button>
+        <button type="button" id="addAllToCart">
+          <span class="adding hide">..Adding</span>
+          <span class="button_text">
+            <span class="add-set-ico">{% render 'cart_icon' %}</span>
+            Add all to cart (<span id="setTotal">0.00</span>)
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,29 @@
+<div class="ia_page-header" style="background-image:url({{ section.settings.header_bg | img_url: '2048x2048' }});">
+  <div class="page-width">
+    <div class="section-header text-center">
+      <h1>{{ page.title }}</h1>
+    </div> 
+  </div>
+</div>
+
+
+
+
+{% schema %}
+  {
+    "name": "Page Header",
+    "settings": [
+        {
+          "type": "image_picker",
+          "id": "header_bg",
+          "label": "Background Image"
+        }
+    ]
+  }
+{% endschema %}
+
+{% stylesheet %}
+{% endstylesheet %}
+
+{% javascript %}
+{% endjavascript %}

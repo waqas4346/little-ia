@@ -1,0 +1,82 @@
+<div class="ia_gift-finder gift-finder_section{% if section.settings.custom_class != blank %} {{ section.settings.custom_class }}{% endif %}">
+  <div class="page-width">
+    <div class="gift-finder-new-design{% if section.settings.bg_image_left != blank %} gift-new-design{% endif %}">
+      {% if section.settings.bg_image_left != blank %}
+        <a href="{{ section.settings.link | default: "#" }}" class="gift-finder-new-link">
+          <div class='gift-finder-new-img'>
+            <img src="{{ section.settings.bg_image_left | img_url: "master" }}">
+          </div>
+        </a>
+      {% endif %}
+      <div class="ia_gift-finderFilter">
+        <div class="ia_gift-finderFilter-box" {% if section.settings.bg_image != blank %}style='background-image: url({{ section.settings.bg_image | img_url: '2048x2048' }});'{% endif %}>
+          <div class="ia_gift-finderFilter-FormTitle">
+            <h2>A GIFT</h2>
+          </div>
+          <div class="ia_gift-finderFilter-FormBox">
+            <p>Looking for the perfect gift?</p>
+            <form id="ia_gift-finderFilter-Form">
+              
+              <div class="form-group">
+                <select class="form-control" id="select_gender">
+                  <option value="0">Select Gender</option>
+                  <option value="personalised-gifts">Boy</option>
+                  <option value="personalised-gifts">Girl</option>
+                  <option value="personalised-gifts">Neutral</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <select class="form-control" id="select_age">
+                  <option value="0">Select Age</option>
+                  <option value="0-12months">0-12 months</option>
+                  <option value="1-2years">1-2 years</option>
+                  <option value="2-3years">2-3 years</option>
+                  <option value="3-4years">3-4 years</option>
+                  <option value="4-5years">4-5 years</option>
+                  <option value="5-6years">5-6 years</option>
+                  <option value="all_ages">All Ages</option>
+                </select>
+              </div>
+              <div class="form-submit">
+                <button type="submit" id="search_product">Find A Gift</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% schema %}
+  {
+    "name": "Gift Finder",
+    "settings": [
+		{
+			"type": "image_picker",
+			"id": "bg_image_left",
+			"label": "Left Background Image"
+		},
+        {
+			"type": "url",
+			"id": "link",
+			"label": "Link"
+		},
+        {
+			"type": "image_picker",
+			"id": "bg_image",
+			"label": "Background Image"
+		},
+      	{
+			"type": "text",
+			"id": "custom_class",
+			"label": "Custom Class"
+		}
+	],
+	"presets": [
+      {
+        "name": "Gift Finder",
+        "category": "Gift Finder"
+      }
+    ]
+  }
+{% endschema %}

@@ -1,0 +1,50 @@
+{% comment %}
+  The contents of the cart.liquid template can be found in /sections/cart-template.liquid
+{% endcomment %}
+{% section 'cart-template' %}
+<!-- required_app__do_not_edit -->
+{% include 'required_app_data' %}
+{{ 'required_app_cart_style.scss.css' | asset_url | stylesheet_tag }}
+{{ 'required_app_script.js' | asset_url | script_tag }}
+<!-- required_app__do_not_edit -->
+<!-- SnappicSnipStart -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','//connect.facebook.net/en_US/fbevents.js');
+fbq('init', '259904318915558');
+fbq('track', 'PageView');
+var money_format = '{{ shop.money_format }}';
+var value;
+if (money_format.match(/amount_with_apostrophe_separator/)) {
+  // 1'134.65 -> 1134.65
+  value = "{{ cart.total_price | money_without_currency | remove: "'" }}";
+}
+else if (money_format.match(/amount_no_decimals_with_comma_separator/)) {
+  // 1.135 -> 1135
+  value = "{{ cart.total_price | money_without_currency | remove: '.' }}";
+}
+else if (money_format.match(/amount_with_comma_separator/)) {
+  // 1.134,65 -> 1134.65
+  value = "{{ cart.total_price | money_without_currency | remove: '.' | replace: ',', '.' }}";
+}
+else if (money_format.match(/amount_no_decimals/)) {
+  // 1,135 -> 1135
+  value = "{{ cart.total_price | money_without_currency | remove: ',' }}";
+}
+else if (money_format.match(/amount/)) {
+  // 1,134.65 -> 1134.65
+  value = "{{ cart.total_price | money_without_currency | remove: ',' }}";
+}
+else {
+  value = "{{ cart.total_price | money_without_currency }}";
+}
+fbq('track', 'AddToCart', {
+  value: value,
+  currency: '{{shop.currency}}',
+  content_type: 'product',
+  content_ids: [{% for item in cart.items %}'snappic_{{item.product.id}}',{% endfor %}],
+});
+</script>
+<noscript>
+  <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=259904318915558&ev=PageView&noscript=1" />
+</noscript>
+<!-- SnappicSnipEnd -->

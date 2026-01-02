@@ -1,0 +1,28 @@
+{%- if section.settings.video_file_url != blank -%}
+  <div class="custom_video">
+    <div class="custom_video_content">
+      <video autoplay muted playsinline loop>
+        <source src="{{ section.settings.video_file_url }}" type="video/mp4">
+      </video>
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+  {
+    "name": "Custom Video",
+    "settings": [
+      {
+        "type": "text",
+        "id": "video_file_url",
+        "label": "Video URL",
+        "info": "Enter File URL (please do not add youtube or vimeo url at here)"
+      }
+    ],
+	"presets": [
+      {
+        "name": "Custom Video"
+      }
+    ]
+  }
+{% endschema %}

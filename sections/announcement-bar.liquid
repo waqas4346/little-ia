@@ -1,0 +1,63 @@
+<div class="announcement_bar-section announcement_bar-change" style="visibility: hidden;">
+
+  <div class="announcement-list">
+    {% for block in section.blocks %}
+    <div class="announcement-blocks">
+      <div class="image-with-text">
+          <div class="title">
+            {% if block.settings.url_link != blank %}
+            <a href='{{ block.settings.url_link }}'>
+            {% endif %}
+            <h3>{% if block.settings.image_left != blank %}<img src="{{ block.settings.image_left | img_url: 'medium' }}" style="width:20px;"{% endif %}>&nbsp {{ block.settings.text }}</h3>
+            {% if block.settings.url_link != blank %}
+            </a>
+            {% endif %}
+          </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% schema %}
+  {
+    "name": "Announcement Bar",
+    "blocks": [
+		{
+			"name": "block",
+			"type": "block",
+			"settings": [
+				{
+					"type": "image_picker",
+					"id": "image_left",
+					"label": "Left Image"
+				},
+				{
+					"type": "image_picker",
+					"id": "image_right",
+					"label": "Right Image"
+				},
+				{
+					"type": "image_picker",
+					"id": "full_img",
+					"label": "Full Image"
+				},
+				{
+					"type": "image_picker",
+					"id": "full-mobile_img",
+					"label": "Full Mobile Image"
+				},
+				{
+					"type": "text",
+					"id": "text",
+					"label": "Text"
+				},
+                {
+  					"type": "url",
+					"id": "url_link",
+					"label": "Link"
+				}
+			]
+		}
+	]
+  }
+{% endschema %}

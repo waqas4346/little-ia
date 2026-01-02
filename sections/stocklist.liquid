@@ -1,0 +1,99 @@
+<div class="page_stocklist">
+  <div class="page-width">
+    {% if section.settings.title != blank %}
+      <h2>{{ section.settings.title }}</h2>
+    {% endif %}
+    <div class="stocklist_wrap">
+      {% for block in section.blocks %}
+         {% if block.type == 'block' %}
+        <div class="stocklist_inner">
+          {% if block.settings.main_title != blank %}
+            <p class="sl_main_title">{{ block.settings.main_title }}</p>
+          {% endif %}
+          <div class="stocklist_bottom">
+            {% if block.settings.block_title != blank %}
+              <p class="sl_block_title">{{ block.settings.block_title }}</p>
+            {% endif %}
+            {% if block.settings.address != blank %}
+              <p class="sl_address">{{ block.settings.address }}</p>
+            {% endif %}          
+          </div>
+          {% assign main_title =  block.settings.main_title %}
+          {% for block in section.blocks %}
+             {% if block.type == 'sub_block' %}
+               {% if main_title == block.settings.sub_main_title %}
+               <div class="stocklist_bottom">
+                {% if block.settings.sub_block_title != blank %}
+                  <p class="sl_block_title">{{ block.settings.sub_block_title }}</p>
+                {% endif %}
+                {% if block.settings.sub_address != blank %}
+                  <p class="sl_address">{{ block.settings.sub_address }}</p>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "stocklist",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "label": "title",
+      "id": "title"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "block",
+      "name": "block",
+      "settings": [
+        {
+          "type": "text",
+          "label": "Main Title",
+          "id": "main_title"
+        },
+        {
+          "type": "text",
+          "label": "Title",
+          "id": "block_title"
+        },
+        {
+          "type": "textarea",
+          "label": "Address",
+          "id": "address"
+        }
+      ]
+    },
+    {
+      "type": "sub_block",
+      "name": "Sub block",
+      "settings": [
+        {
+          "type": "text",
+          "label": "Metch Title",
+          "id": "sub_main_title"
+        },
+        {
+          "type": "text",
+          "label": "Title",
+          "id": "sub_block_title"
+        },
+        {
+          "type": "textarea",
+          "label": "Address",
+          "id": "sub_address"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
