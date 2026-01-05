@@ -78,6 +78,9 @@
             endif
           -%}
 
+          {%- comment -%} Gift Wrap and Gift Message Section {%- endcomment -%}
+          {% render 'gift-wrap-message', product: product, form: form, product_form_id: product_form_id %}
+
           {%- comment -%} Personalise It Button {%- endcomment -%}
           <button
             type="button"

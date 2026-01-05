@@ -99,7 +99,7 @@
                 {%- endif %}
               </span>
               {%- if variant_style == 'tile' -%}
-                <a href="#size-guide" class="variant-option__size-guide-link">
+                {% comment %} <a href="#size-guide" class="variant-option__size-guide-link">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                     <rect width="16" height="16" fill="url(#pattern0_860_37881)"/>
                     <defs>
@@ -111,7 +111,7 @@
                     </svg>
 
                   <span>Size Guide</span>
-                </a>
+                </a> {% endcomment %}
               {%- endif %}
             </legend>
             {%- for product_option_value in product_option.values -%}

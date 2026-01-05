@@ -137,7 +137,7 @@
                 <span class="personalise-modal__counter" ref="charCounter">
                   <span ref="charCount">0</span>/{{ dynamic_max }}
                 </span>
-                <p class="personalise-modal__info-text">Maximum {{ dynamic_max }} characters. No special character</p>
+                {% comment %} <p class="personalise-modal__info-text">Maximum {{ dynamic_max }} characters. No special character</p> {% endcomment %}
               </div>
             </div>
           {% endif %}
@@ -596,7 +596,6 @@
     color: #7295BB;
     font-style: normal;
     font-weight: 400;
-    font-size: 17px;
     line-height: 156%;
   }
 

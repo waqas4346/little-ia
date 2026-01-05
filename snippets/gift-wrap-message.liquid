@@ -1,0 +1,334 @@
+{%- doc -%}
+  Renders gift wrap and gift message section for product page.
+  Based on GIFT_MESSAGE_AND_WRAP_SYSTEM.md documentation.
+
+  @param {object} product - The product object
+  @param {object} form - The product form object
+  @param {string} product_form_id - The product form ID
+{%- enddoc -%}
+
+{% liquid
+  assign product = product | default: closest.product
+  assign form_id = product_form_id | default: form.id | default: 'product-form'
+  assign show_gift_wrap = false
+  assign show_christmas_gift = false
+  assign show_gift_message = false
+  
+  if product.tags contains 'custom_gift_wrap'
+    assign show_gift_wrap = true
+    assign gift_product = all_products['gift-wrap']
+  endif
+  
+  if product.tags contains 'christmas_gift'
+    assign show_christmas_gift = true
+    assign christmas_product = all_products['christmas-gift-wrap']
+  endif
+  
+  if product.tags contains 'gift_message'
+    assign show_gift_message = true
+  endif
+%}
+
+{% if show_gift_wrap or show_christmas_gift or show_gift_message %}
+  <div class="gift-wrap-message-section">
+    {% if show_gift_wrap and gift_product %}
+      <div class="gift-wrap-option">
+        <div class="gift-wrap-option__content">
+          <input 
+            type="checkbox" 
+            id="chkAddGift" 
+            class="gift-wrap-option__checkbox chk_add_gift" 
+            value="{{ gift_product.selected_or_first_available_variant.id }}" 
+            data-product-id="{{ product.id }}"
+            form="{{ form_id }}"
+          >
+          <label for="chkAddGift" class="gift-wrap-option__label">
+            <span class="gift-wrap-option__icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 6H17.82C17.93 5.69 18 5.35 18 5C18 3.34 16.66 2 15 2C13.95 2 13.04 2.54 12.5 3.35L12 4.02L11.5 3.35C10.96 2.54 10.05 2 9 2C7.34 2 6 3.34 6 5C6 5.35 6.07 5.69 6.18 6H4C2.89 6 2.01 6.89 2.01 8L2 19C2 20.11 2.89 21 4 21H20C21.11 21 22 20.11 22 19V8C22 6.89 21.11 6 20 6ZM15 4C15.55 4 16 4.45 16 5C16 5.55 15.55 6 15 6C14.45 6 14 5.55 14 5C14 4.45 14.45 4 15 4ZM9 4C9.55 4 10 4.45 10 5C10 5.55 9.55 6 9 6C8.45 6 8 5.55 8 5C8 4.45 8.45 4 9 4ZM4 8H20V11H4V8ZM20 19H4V13H20V19Z" fill="currentColor"/>
+              </svg>
+            </span>
+            <div class="gift-wrap-option__text">
+              <span class="gift-wrap-option__title">Add Gift Wrap</span>
+              <span class="gift-wrap-option__price">(+{{ gift_product.price | money }})</span>
+            </div>
+          </label>
+        </div>
+        {% if gift_product.featured_image %}
+          <div class="gift-wrap-option__image">
+            {{
+              gift_product.featured_image
+              | image_url: width: 200
+              | image_tag: loading: 'lazy', alt: gift_product.title, class: 'gift-wrap-option__img'
+            }}
+          </div>
+        {% endif %}
+        <p class="gift-wrap-option__description">
+          Comes in a beautiful designed box, perfect for gifting.
+        </p>
+      </div>
+    {% endif %}
+
+    {% if show_christmas_gift and christmas_product %}
+      <div class="gift-wrap-option christmas-gift-wrap">
+        <div class="gift-wrap-option__content">
+          <input 
+            type="checkbox" 
+            id="christmas_chkAddGift" 
+            class="gift-wrap-option__checkbox christmas-chk_add_gift" 
+            value="{{ christmas_product.selected_or_first_available_variant.id }}" 
+            data-product-id="{{ product.id }}"
+            form="{{ form_id }}"
+          >
+          <label for="christmas_chkAddGift" class="gift-wrap-option__label">
+            <span class="gift-wrap-option__icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 6H17.82C17.93 5.69 18 5.35 18 5C18 3.34 16.66 2 15 2C13.95 2 13.04 2.54 12.5 3.35L12 4.02L11.5 3.35C10.96 2.54 10.05 2 9 2C7.34 2 6 3.34 6 5C6 5.35 6.07 5.69 6.18 6H4C2.89 6 2.01 6.89 2.01 8L2 19C2 20.11 2.89 21 4 21H20C21.11 21 22 20.11 22 19V8C22 6.89 21.11 6 20 6ZM15 4C15.55 4 16 4.45 16 5C16 5.55 15.55 6 15 6C14.45 6 14 5.55 14 5C14 4.45 14.45 4 15 4ZM9 4C9.55 4 10 4.45 10 5C10 5.55 9.55 6 9 6C8.45 6 8 5.55 8 5C8 4.45 8.45 4 9 4ZM4 8H20V11H4V8ZM20 19H4V13H20V19Z" fill="currentColor"/>
+              </svg>
+            </span>
+            <div class="gift-wrap-option__text">
+              <span class="gift-wrap-option__title">Add {{ christmas_product.title }}</span>
+              <span class="gift-wrap-option__price">({{ christmas_product.price | money }})</span>
+            </div>
+          </label>
+        </div>
+        {% if christmas_product.featured_image %}
+          <div class="gift-wrap-option__image">
+            {{
+              christmas_product.featured_image
+              | image_url: width: 200
+              | image_tag: loading: 'lazy', alt: christmas_product.title, class: 'gift-wrap-option__img'
+            }}
+          </div>
+        {% endif %}
+        <p class="gift-wrap-option__description">
+          Comes in a beautiful designed box, perfect for gifting.
+        </p>
+      </div>
+    {% endif %}
+
+    {% if show_gift_message %}
+      <div class="gift-message-section">
+        <label for="gift-message-input" class="gift-message-section__label">
+          Enter a Gift Message
+        </label>
+        <div class="gift-message-section__input-wrapper">
+          <input
+            type="text"
+            id="gift-message-input"
+            name="properties[Gift Message]"
+            class="gift-message-section__input"
+            placeholder="Enter a Gift Message"
+            maxlength="300"
+            form="{{ form_id }}"
+            {% comment %} required {% endcomment %}
+          >
+          <button
+            type="button"
+            class="gift-message-section__done-button"
+            onclick="this.closest('.gift-message-section').classList.add('gift-message-section--completed')"
+          >
+            DONE
+          </button>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endif %}
+
+<script src="{{ 'gift-wrap-handler.js' | asset_url }}" defer></script>
+
+{% stylesheet %}
+  .gift-wrap-message-section {
+    margin-block: 24px;
+    padding: 0;
+    background-color: transparent;
+  }
+
+  .gift-wrap-option {
+    margin-block-end: 24px;
+  }
+
+  .gift-wrap-option:last-of-type {
+    margin-block-end: 0;
+  }
+
+  .gift-wrap-option__content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-block-end: 12px;
+  }
+
+  .gift-wrap-option__checkbox {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    margin-block-start: 2px;
+    cursor: pointer;
+    accent-color: #7295BB;
+    flex-shrink: 0;
+    border: 2px solid #7295BB;
+    border-radius: 2px;
+  }
+
+  .gift-wrap-option__label {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    flex: 1;
+  }
+
+  .gift-wrap-option__icon {
+    display: none; /* Hide icon as per image design */
+  }
+
+  .gift-wrap-option__text {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .gift-wrap-option__title {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--color-foreground, #000);
+    line-height: 1.5;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .gift-wrap-option__price {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--color-foreground, #000);
+    line-height: 1.5;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .gift-wrap-option__image {
+    width: 80px;
+    height: 80px;
+    margin-block-start: 0;
+    margin-inline-start: 32px;
+    border-radius: 0;
+    overflow: hidden;
+    background-color: #F5F5F5;
+    flex-shrink: 0;
+  }
+
+  .gift-wrap-option__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .gift-wrap-option__description {
+    margin-block-start: 8px;
+    margin-inline-start: 32px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #666;
+    line-height: 1.5;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .gift-message-section {
+    margin-block-start: 24px;
+    padding-block-start: 24px;
+    border-top: 1px solid #E0E0E0;
+  }
+
+  .gift-message-section__label {
+    display: block;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--color-foreground, #000);
+    margin-block-end: 12px;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .gift-message-section__input-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .gift-message-section__input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #D0D0D0;
+    border-radius: 0;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    background-color: #FFFFFF;
+    color: var(--color-foreground, #000);
+    transition: border-color 0.2s ease;
+    line-height: 1.56;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  .gift-message-section__input:focus {
+    outline: none;
+    border-color: #7295BB;
+  }
+
+  .gift-message-section__input::placeholder {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.56;
+    color: #797979;
+  }
+
+  .gift-message-section__done-button {
+    width: auto !important;
+    color: #7295BB;
+    border: none;
+    font-weight: 500;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    letter-spacing: 0.5px;
+    border: none;
+    background-color: none;
+    padding: 0;
+    background: none;
+    padding-block: 0px !important;
+  }
+
+  
+
+  .gift-message-section--completed .gift-message-section__input {
+    border-color: #7295BB;
+    background-color: #F4F9FF;
+  }
+
+  @media screen and (max-width: 749px) {
+    .gift-wrap-message-section {
+      margin-block: 20px;
+    }
+
+    .gift-wrap-option__image {
+      width: 60px;
+      height: 60px;
+    }
+
+    .gift-message-section__input-wrapper {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .gift-message-section__done-button {
+      width: 100%;
+    }
+  }
+{% endstylesheet %}
+
