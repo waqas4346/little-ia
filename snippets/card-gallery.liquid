@@ -215,7 +215,7 @@
           {% if tag_icon != blank %}
             <span class="product-tag-badge__icon">
               {% if tag_icon contains '.svg' or tag_icon contains '.png' or tag_icon contains '.jpg' or tag_icon contains '.jpeg' or tag_icon contains '.gif' or tag_icon contains '.webp' %}
-                <img src="{{ tag_icon }}" alt="" loading="lazy" />
+                <img src="{{ tag_icon }}" alt="" width="14" height="14" loading="lazy" />
               {% else %}
                 {{ tag_icon }}
               {% endif %}
@@ -431,6 +431,19 @@
 
   [product-grid-view='zoom-out'] .card-gallery .slideshow-control {
     min-width: auto;
+  }
+
+  /* Product Card Arrow Icons Size */
+  .card-gallery slideshow-arrows .slideshow-control--style-arrow .svg-wrapper,
+  .card-gallery slideshow-arrows .slideshow-control--style-arrow .svg-wrapper svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .card-gallery slideshow-arrows .slideshow-control--style-blue_arrows .svg-wrapper,
+  .card-gallery slideshow-arrows .slideshow-control--style-blue_arrows .svg-wrapper svg {
+    width: 28px;
+    height: 28px;
   }
 
   /* Product Tag Badge */

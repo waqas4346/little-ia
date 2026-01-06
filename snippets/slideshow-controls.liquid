@@ -101,57 +101,79 @@
 
     {% case style %}
       {% when 'thumbnails' %}
-        <scroll-hint
-          ref="thumbnailsContainer"
-          class="slideshow-controls__thumbnails-container"
-        >
-          <div class="slideshow-controls__thumbnails">
-            {% for media in thumbnails %}
-              <button
-                class="slideshow-control button button-unstyled slideshow-controls__thumbnail"
-                aria-label="{{ 'accessibility.slide_status' | t: index: forloop.index, length: forloop.length }}"
-                on:click="/select/{{ forloop.index0 }}"
-                style="--aspect-ratio: {% if aspect_ratio == 'adapt' %}{{ media.preview_image.aspect_ratio | default: 1.0 }}{% else %}{{ aspect_ratio }}{% endif %};"
-                ref="thumbnails[]"
-                {% if forloop.first %}
-                  aria-selected="true"
-                {% endif %}
-              >
-                {% liquid
-                  assign focal_point_style = ''
-                  if media.presentation.focal_point != blank
-                    assign focal_point_style = 'object-position: ' | append: media.presentation.focal_point | append: ';'
-                  endif
-                %}
-                {{
-                  media.preview_image
-                  | image_url: width: 144
-                  | image_tag: loading: 'lazy', alt: media.alt, style: focal_point_style
-                  | escape
-                }}
+        <div class="slideshow-controls__thumbnails-wrapper">
+          <button
+            type="button"
+            class="slideshow-controls__thumbnail-arrow slideshow-controls__thumbnail-arrow--prev"
+            aria-label="{{ 'accessibility.previous' | t | default: 'Previous' }}"
+            on:click="slideshow-component/scrollThumbnails/prev"
+          >
+            <svg width="11" height="19" viewBox="0 0 11 19" fill="none" xmlns="http://www.w3.org/2000/svg" style="transform: rotate(180deg);">
+              <path d="M1.63672 16.6844L9.73975 9.16021L1.63672 1.63596" stroke="#7295BB" stroke-width="2.31515" stroke-linecap="square" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <scroll-hint
+            ref="thumbnailsContainer"
+            class="slideshow-controls__thumbnails-container"
+          >
+            <div class="slideshow-controls__thumbnails">
+              {% for media in thumbnails %}
+                <button
+                  class="slideshow-control button button-unstyled slideshow-controls__thumbnail"
+                  aria-label="{{ 'accessibility.slide_status' | t: index: forloop.index, length: forloop.length }}"
+                  on:click="/select/{{ forloop.index0 }}"
+                  style="--aspect-ratio: {% if aspect_ratio == 'adapt' %}{{ media.preview_image.aspect_ratio | default: 1.0 }}{% else %}{{ aspect_ratio }}{% endif %};"
+                  ref="thumbnails[]"
+                  {% if forloop.first %}
+                    aria-selected="true"
+                  {% endif %}
+                >
+                  {% liquid
+                    assign focal_point_style = ''
+                    if media.presentation.focal_point != blank
+                      assign focal_point_style = 'object-position: ' | append: media.presentation.focal_point | append: ';'
+                    endif
+                  %}
+                  {{
+                    media.preview_image
+                    | image_url: width: 144
+                    | image_tag: loading: 'lazy', alt: media.alt, style: focal_point_style
+                    | escape
+                  }}
 
-                {% if media.media_type == 'video' or media.media_type == 'external_video' %}
-                  <span class="slideshow-controls__thumbnail-badge">
-                    {{ 'icon-play.svg' | inline_asset_content }}
-                  </span>
-                {% elsif media.media_type == 'model' %}
-                  <span class="slideshow-controls__thumbnail-badge">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden="true"
-                      focusable="false"
-                      class="icon icon-3d-model"
-                      fill="none"
-                      viewBox="0 0 18 21"
-                    >
-                      {% render 'icon', icon: '3d-model' %}
-                    </svg>
-                  </span>
-                {% endif %}
-              </button>
-            {% endfor %}
-          </div>
-        </scroll-hint>
+                  {% if media.media_type == 'video' or media.media_type == 'external_video' %}
+                    <span class="slideshow-controls__thumbnail-badge">
+                      {{ 'icon-play.svg' | inline_asset_content }}
+                    </span>
+                  {% elsif media.media_type == 'model' %}
+                    <span class="slideshow-controls__thumbnail-badge">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                        focusable="false"
+                        class="icon icon-3d-model"
+                        fill="none"
+                        viewBox="0 0 18 21"
+                      >
+                        {% render 'icon', icon: '3d-model' %}
+                      </svg>
+                    </span>
+                  {% endif %}
+                </button>
+              {% endfor %}
+            </div>
+          </scroll-hint>
+          <button
+            type="button"
+            class="slideshow-controls__thumbnail-arrow slideshow-controls__thumbnail-arrow--next"
+            aria-label="{{ 'accessibility.next' | t | default: 'Next' }}"
+            on:click="slideshow-component/scrollThumbnails/next"
+          >
+            <svg width="11" height="19" viewBox="0 0 11 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1.63672 16.6844L9.73975 9.16021L1.63672 1.63596" stroke="#7295BB" stroke-width="2.31515" stroke-linecap="square" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
       {% when 'counter' %}
         <div class="slideshow-controls__counter">
           <span ref="current">1</span><span class="slash">/</span>{{ item_count -}}
@@ -460,12 +482,52 @@
   }
 
   /* Slideshow Thumbnails */
+  .slideshow-controls__thumbnails-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    gap: var(--padding-xs, 8px);
+  }
+
   .slideshow-controls__thumbnails-container {
     display: flex;
     width: 100%;
     max-height: 100%;
     overflow-x: scroll;
     scrollbar-width: none;
+    flex: 1;
+  }
+
+  .slideshow-controls__thumbnail-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: var(--padding-xs, 8px);
+    flex-shrink: 0;
+    transition: opacity 0.2s ease;
+    min-width: 44px;
+    min-height: 44px;
+    opacity: 1;
+
+    &:hover:not(:disabled) {
+      opacity: 0.7;
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    svg {
+      width: 11px;
+      height: 19px;
+      display: block;
+    }
   }
 
   .slideshow-controls__thumbnails {

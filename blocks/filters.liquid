@@ -291,39 +291,7 @@
       {{ facets_margin_style }}
     "
   >
-    {% if block_settings.enable_filtering %}
-      <div class="facets-toggle__wrapper">
-        <button
-          class="button facets-toggle__button button-unstyled button-unstyled--with-icon"
-          on:click="#filters-drawer/showDialog"
-          type="button"
-        >
-          <span class="svg-wrapper">
-            {{ 'icon-filter.svg' | inline_asset_content }}
-          </span>
-
-          {{ 'actions.show_filters' | t }}
-
-          {% if total_active_values > 0 %}
-            <div
-              id="filter-count-bubble-toggle"
-              class="filter-count-bubble"
-              aria-label="{{ 'accessibility.filter_count' | t: count: total_active_values }}"
-            >
-              <span class="filter-count-bubble__background"></span>
-
-              <span
-                ref="cartBubbleText"
-                class="filter-count-bubble__text"
-                aria-hidden="true"
-              >
-                {{ total_active_values }}
-              </span>
-            </div>
-          {% endif %}
-        </button>
-      </div>
-    {% endif %}
+    
 
     {% liquid
       assign child_count = 0
@@ -481,14 +449,23 @@
         </form>
       </facets-form-component>
 
-      {% render 'facets-actions',
-        results_url: results_url,
-        is_active: is_active,
-        products_count: products_count,
-        form_component: form_component,
-        should_show_clear_all: true,
-        clear_all_button_style: 'button-secondary'
-      %}
+      <div class="facets-drawer__sticky-bar">
+        <button 
+          type="button" 
+          class="facets-drawer__sticky-button facets-drawer__sticky-button--sort"
+          id="filters-drawer-sort-button"
+        >
+          <span class="facets-drawer__sticky-label">Sort By</span>
+        </button>
+        <div class="facets-drawer__sticky-divider"></div>
+        <button 
+          type="button" 
+          class="facets-drawer__sticky-button facets-drawer__sticky-button--filter facets-drawer__sticky-button--active"
+          on:click="#filters-drawer/showDialog"
+        >
+          <span class="facets-drawer__sticky-label">Filter</span>
+        </button>
+      </div>
     </dialog>
   </dialog-component>
 {% endif %}
@@ -744,6 +721,22 @@
     padding-inline: 0;
   }
 
+  @media screen and (max-width: 749px) {
+    .facets--drawer.dialog-drawer--right,
+    dialog.facets--drawer.dialog-drawer--right {
+      max-width: 100% !important;
+      width: 100% !important;
+      max-height: 100vh !important;
+      height: 100vh !important;
+      margin: 0 !important;
+      position: fixed !important;
+      top: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      left: auto !important;
+    }
+  }
+
   .facets--drawer[open] {
     display: flex;
     flex-direction: column;
@@ -781,9 +774,75 @@
     overflow: visible;
   }
 
+  @media screen and (max-width: 749px) {
+    .facets--drawer sorting-filter-component,
+    .facets--drawer .sorting-filter-component,
+    .facets--drawer .sorting-filter {
+      display: none !important;
+    }
+  }
+
   .facets--drawer .facets__actions {
     flex-shrink: 0;
     background-color: var(--color-background);
+  }
+
+  @media screen and (max-width: 749px) {
+    .facets--drawer .facets__actions {
+      display: none !important;
+    }
+
+    /* Sticky bar in filter drawer */
+    .facets-drawer__sticky-bar {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      background-color: #F8F3ED;
+      border-top: 0.5px solid #D4D4D4;
+      z-index: 100;
+      gap: 0;
+      flex-shrink: 0;
+    }
+
+    .facets-drawer__sticky-button {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      font-family: 'Outfit', sans-serif;
+      transition: background-color 0.2s ease;
+    }
+
+    .facets-drawer__sticky-button--active {
+      background-color: #7295BB;
+    }
+
+    .facets-drawer__sticky-button--active .facets-drawer__sticky-label {
+      color: #FFFFFF;
+    }
+
+    .facets-drawer__sticky-label {
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 140%;
+      color: #1D425A;
+    }
+
+    .facets-drawer__sticky-divider {
+      width: 1px;
+      height: 40px;
+      background-color: #CDCDCD;
+      margin: 0 8px;
+    }
   }
 
   .facets.facets-controls-wrapper {

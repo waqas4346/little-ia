@@ -1218,7 +1218,6 @@ results-list[initialized] {
   box-shadow: var(--shadow-popover);
 
   @media screen and (min-width: 750px) {
-    border-radius: var(--style-border-radius-popover);
     max-width: var(--normal-content-width);
   }
 

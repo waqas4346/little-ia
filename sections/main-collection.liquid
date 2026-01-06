@@ -265,6 +265,29 @@
       });
     }
     
+    // Handle switching between sort and filter modals from sticky bars
+    const sortModalFilterButton = document.getElementById('mobile-sort-modal-filter-button');
+    const filtersDrawer = document.getElementById('filters-drawer');
+    const filtersDrawerSortButton = document.getElementById('filters-drawer-sort-button');
+    
+    if (sortModalFilterButton && filtersDrawer) {
+      sortModalFilterButton.addEventListener('click', () => {
+        if (mobileSortModal) {
+          mobileSortModal.querySelector('dialog')?.close();
+        }
+        filtersDrawer.querySelector('dialog')?.showModal();
+      });
+    }
+    
+    if (filtersDrawerSortButton && mobileSortModal) {
+      filtersDrawerSortButton.addEventListener('click', () => {
+        if (filtersDrawer) {
+          filtersDrawer.querySelector('dialog')?.close();
+        }
+        mobileSortModal.querySelector('dialog')?.showModal();
+      });
+    }
+    
     const resultsList = document.querySelector('results-list');
     
     if (resultsList) {
@@ -540,20 +563,21 @@
             {% endfor %}
           </div>
           
-          <div class="mobile-sort-modal__actions">
-            <button
-              type="button"
-              class="mobile-sort-modal__button mobile-sort-modal__button--apply"
-              id="mobile-sort-apply"
+          <div class="mobile-sort-modal__sticky-bar">
+            <button 
+              type="button" 
+              class="mobile-sort-modal__sticky-button mobile-sort-modal__sticky-button--sort mobile-sort-modal__sticky-button--active"
+              on:click="#mobile-sort-modal/showDialog"
             >
-              Apply
+              <span class="mobile-sort-modal__sticky-label">Sort By</span>
             </button>
-            <button
-              type="button"
-              class="mobile-sort-modal__button mobile-sort-modal__button--reset"
-              id="mobile-sort-reset"
+            <div class="mobile-sort-modal__sticky-divider"></div>
+            <button 
+              type="button" 
+              class="mobile-sort-modal__sticky-button mobile-sort-modal__sticky-button--filter"
+              id="mobile-sort-modal-filter-button"
             >
-              Reset
+              <span class="mobile-sort-modal__sticky-label">Filter</span>
             </button>
           </div>
         </form>
@@ -1081,6 +1105,57 @@
     .mobile-sort-modal__dialog {
       display: none;
     }
+  }
+
+  /* Sticky bar in sort modal */
+  .mobile-sort-modal__sticky-bar {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    background-color: #F8F3ED;
+    border-top: 0.5px solid #D4D4D4;
+    z-index: 100;
+    gap: 0;
+  }
+
+  .mobile-sort-modal__sticky-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    transition: background-color 0.2s ease;
+  }
+
+  .mobile-sort-modal__sticky-button--active {
+    background-color: #7295BB;
+  }
+
+  .mobile-sort-modal__sticky-button--active .mobile-sort-modal__sticky-label {
+    color: #FFFFFF;
+  }
+
+  .mobile-sort-modal__sticky-label {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 140%;
+    color: #1D425A;
+  }
+
+  .mobile-sort-modal__sticky-divider {
+    width: 1px;
+    height: 40px;
+    background-color: #CDCDCD;
+    margin: 0 8px;
   }
 {% endstylesheet %}
 

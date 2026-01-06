@@ -463,6 +463,7 @@ export class Slideshow extends Component {
     document.addEventListener('visibilitychange', this.#handleVisibilityChange);
 
     this.#updateControlsVisibility();
+    this.#setupThumbnailArrows();
 
     this.disabled = this.isNested || this.disabled;
 
@@ -748,6 +749,7 @@ export class Slideshow extends Component {
     if (!(slideshowControls instanceof HTMLElement)) return;
 
     slideshowControls.hidden = scroller.scrollWidth <= scroller.offsetWidth;
+    this.#updateThumbnailArrows();
   }
 
   /**
@@ -771,6 +773,89 @@ export class Slideshow extends Component {
       block: 'center',
       inline: 'center',
     });
+  }
+
+  /**
+   * Scrolls the thumbnails container left or right
+   * @param {'prev'|'next'} direction - The scroll direction
+   * @param {Event} event - The click event
+   */
+  scrollThumbnails(direction, event) {
+    event?.preventDefault();
+
+    const { thumbnailsContainer } = this.refs;
+    if (!thumbnailsContainer || !(thumbnailsContainer instanceof HTMLElement)) return;
+
+    const scrollAmount = thumbnailsContainer.offsetWidth * 0.8; // Scroll 80% of container width
+    const currentScroll = thumbnailsContainer.scrollLeft;
+    const targetScroll = direction === 'next' 
+      ? currentScroll + scrollAmount 
+      : currentScroll - scrollAmount;
+
+    thumbnailsContainer.scrollTo({
+      left: targetScroll,
+      behavior: 'smooth'
+    });
+
+    // Update arrow states after a short delay to allow scroll to complete
+    setTimeout(() => {
+      this.#updateThumbnailArrows();
+    }, 100);
+  }
+
+  /**
+   * Sets up scroll listener for thumbnail arrows
+   */
+  #setupThumbnailArrows() {
+    const { thumbnailsContainer } = this.refs;
+    if (!thumbnailsContainer || !(thumbnailsContainer instanceof HTMLElement)) return;
+
+    // Update arrows on scroll
+    thumbnailsContainer.addEventListener('scroll', () => {
+      this.#updateThumbnailArrows();
+    });
+
+    // Update arrows on resize
+    if (this.#resizeObserver && thumbnailsContainer) {
+      this.#resizeObserver.observe(thumbnailsContainer);
+    }
+
+    // Initial update
+    requestAnimationFrame(() => {
+      this.#updateThumbnailArrows();
+    });
+  }
+
+  /**
+   * Updates the disabled state of thumbnail arrows based on scroll position
+   */
+  #updateThumbnailArrows() {
+    const { thumbnailsContainer } = this.refs;
+    if (!thumbnailsContainer || !(thumbnailsContainer instanceof HTMLElement)) return;
+
+    const wrapper = thumbnailsContainer.closest('.slideshow-controls__thumbnails-wrapper');
+    if (!wrapper) return;
+
+    const prevArrow = wrapper.querySelector('.slideshow-controls__thumbnail-arrow--prev');
+    const nextArrow = wrapper.querySelector('.slideshow-controls__thumbnail-arrow--next');
+
+    if (!prevArrow || !nextArrow) return;
+
+    const { scrollLeft, scrollWidth, offsetWidth } = thumbnailsContainer;
+    const needsScrolling = scrollWidth > offsetWidth;
+    const isAtStart = scrollLeft <= 0;
+    const isAtEnd = scrollLeft + offsetWidth >= scrollWidth - 1; // -1 for rounding errors
+
+    // Hide arrows if scrolling isn't needed
+    if (!needsScrolling) {
+      prevArrow.style.display = 'none';
+      nextArrow.style.display = 'none';
+    } else {
+      prevArrow.style.display = 'flex';
+      nextArrow.style.display = 'flex';
+      prevArrow.disabled = isAtStart;
+      nextArrow.disabled = isAtEnd;
+    }
   }
 
   #updateVisibleSlides() {
