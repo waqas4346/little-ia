@@ -23,6 +23,35 @@
     endif
   endif
 
+  # Get CB- Tag metafield (metaobject reference)
+  assign product_tag_metafield = blank
+  assign product_tag = blank
+  assign tag_color = blank
+  assign tag_icon = blank
+  assign tag_text = blank
+  
+  if product != blank
+    # Try common namespace/key combinations for CB- Tag metafield
+    assign product_tag_metafield = product.metafields.custom.cb_tag | default: product.metafields.custom['cb-tag'] | default: product.metafields.cb.tag | default: blank
+    
+    if product_tag_metafield != blank and product_tag_metafield.value != blank
+      assign product_tag = product_tag_metafield.value
+      
+      # Access metaobject fields: Color, Icon, Text
+      if product_tag.color != blank
+        assign tag_color = product_tag.color.value | default: product_tag.color
+      endif
+      
+      if product_tag.icon != blank
+        assign tag_icon = product_tag.icon.value | default: product_tag.icon
+      endif
+      
+      if product_tag.text != blank
+        assign tag_text = product_tag.text.value | default: product_tag.text
+      endif
+    endif
+  endif
+
   # if the card-gallery has a section.settings.product_card_size:
   # assume grid-template autofill(card-size, 1fr) and calculate the sizes attribute based on the minimum card size
   #
@@ -179,6 +208,24 @@
           <div class="product-card-scrollbar-thumb"></div>
         </div>
       </div>
+      
+      {%- comment -%} Product Tag Badge {%- endcomment -%}
+      {% if tag_text != blank or tag_icon != blank %}
+        <div class="product-tag-badge" style="{% if tag_color != blank %}color: {{ tag_color }};{% endif %}">
+          {% if tag_icon != blank %}
+            <span class="product-tag-badge__icon">
+              {% if tag_icon contains '.svg' or tag_icon contains '.png' or tag_icon contains '.jpg' or tag_icon contains '.jpeg' or tag_icon contains '.gif' or tag_icon contains '.webp' %}
+                <img src="{{ tag_icon }}" alt="" loading="lazy" />
+              {% else %}
+                {{ tag_icon }}
+              {% endif %}
+            </span>
+          {% endif %}
+          {% if tag_text != blank %}
+            <span class="product-tag-badge__text">{{ tag_text }}</span>
+          {% endif %}
+        </div>
+      {% endif %}
     </a>
   {% elsif product != blank and product.media.size == 0 %}
     <product-title class="product-card-gallery__title-placeholder">
@@ -216,6 +263,7 @@
     container-type: inline-size; /* Make card-gallery a container */
     container-name: card-gallery-container; /* Optional: name the container */
     background-color: #F7F7F7;
+    position: relative;
   }
 
   .card-gallery slideshow-component,
@@ -383,6 +431,43 @@
 
   [product-grid-view='zoom-out'] .card-gallery .slideshow-control {
     min-width: auto;
+  }
+
+  /* Product Tag Badge */
+  .product-tag-badge {
+    box-sizing: border-box;
+    padding: 2px 16px;
+    background: #FFFFFF;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 160%;
+    position: absolute;
+    top: 20px;
+    left: 0;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .product-tag-badge__icon {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+  }
+
+  .product-tag-badge__icon img {
+    width: auto;
+    height: 14px;
+    display: block;
+  }
+
+  .product-tag-badge__text {
+    display: inline-block;
   }
 
   /* Mobile scrollbar for product card image slider */
