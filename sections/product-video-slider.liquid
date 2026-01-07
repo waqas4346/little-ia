@@ -16,9 +16,6 @@
   "
   style="
     {% render 'spacing-style', settings: section.settings %}
-    {% if section.settings.section_width == 'page-width' %}
-      overflow: visible;
-    {% endif %}
   "
 >
   <div class="product-video-slider__header">
@@ -217,9 +214,36 @@
 </div>
 
 {% stylesheet %}
+  /* Prevent horizontal scroll on mobile */
   @media screen and (max-width: 749px) {
     .section--page-width {
-      overflow: visible !important;
+      overflow-x: hidden !important;
+      overflow-y: visible;
+    }
+    
+    .product-video-slider__carousel-wrapper {
+      overflow-x: hidden;
+      overflow-y: visible;
+      width: 100%;
+      max-width: 100%;
+      position: relative;
+    }
+    
+    .product-video-slider__carousel {
+      width: 100%;
+      max-width: 100%;
+    }
+    
+    .product-video-slider__carousel slideshow-slides {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+  
+  /* Allow overflow visible on desktop for arrows positioned outside */
+  @media screen and (min-width: 750px) {
+    .section--page-width {
+      overflow-x: visible;
     }
   }
   
@@ -726,6 +750,30 @@
     }
   }
   
+  @media screen and (max-width: 749px) {
+    /* On mobile, keep arrows inside the container to prevent horizontal scroll */
+    .product-video-slider__carousel-wrapper {
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .product-video-slider__carousel slideshow-arrows {
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+      left: 0;
+      right: 0;
+    }
+    
+    .product-video-slider__carousel slideshow-arrows .slideshow-control--previous {
+      left: 10px;
+    }
+    
+    .product-video-slider__carousel slideshow-arrows .slideshow-control--next {
+      right: 10px;
+    }
+  }
+  
   /* Let resource-list__carousel base styles handle all slide sizing via container queries */
   /* Just ensure content visibility for our custom slides */
   .product-video-slider__carousel .product-video-slider__slide {
@@ -802,12 +850,73 @@
     const slides = Array.from(carousel.querySelectorAll('slideshow-slide'));
     if (slides.length === 0) return;
     
+    const slideshowComponent = carousel.closest('slideshow-component');
+    if (!slideshowComponent) return;
+    
     let currentCenterSlide = null;
     let isUpdating = false;
     let rafId = null;
+    let isNavigating = false;
+    
+    // Function to center a specific slide
+    function centerSlide(slide, instant = false) {
+      if (!slide || !slidesContainer) return;
+      
+      const containerRect = slidesContainer.getBoundingClientRect();
+      const slideRect = slide.getBoundingClientRect();
+      const containerCenter = containerRect.left + containerRect.width / 2;
+      const slideCenter = slideRect.left + slideRect.width / 2;
+      const scrollOffset = slideCenter - containerCenter;
+      
+      // Calculate the current scroll position
+      const currentScroll = slidesContainer.scrollLeft;
+      let targetScroll = currentScroll + scrollOffset;
+      
+      // Clamp to valid scroll range
+      const maxScroll = slidesContainer.scrollWidth - slidesContainer.clientWidth;
+      targetScroll = Math.max(0, Math.min(maxScroll, targetScroll));
+      
+      // Scroll to center the slide
+      slidesContainer.scrollTo({
+        left: targetScroll,
+        behavior: instant ? 'auto' : 'smooth'
+      });
+      
+      // Update center slide class
+      if (currentCenterSlide) {
+        currentCenterSlide.classList.remove('product-video-slider__center-slide');
+      }
+      slide.classList.add('product-video-slider__center-slide');
+      currentCenterSlide = slide;
+    }
+    
+    // Function to find the slide closest to center
+    function findCenterSlide() {
+      const containerRect = slidesContainer.getBoundingClientRect();
+      const containerCenter = containerRect.left + containerRect.width / 2;
+      
+      let centerSlide = null;
+      let minDistance = Infinity;
+      
+      slides.forEach(slide => {
+        const slideRect = slide.getBoundingClientRect();
+        const slideCenter = slideRect.left + slideRect.width / 2;
+        const distance = Math.abs(containerCenter - slideCenter);
+        
+        // Only consider slides that are at least partially visible
+        if (slideRect.right > containerRect.left && slideRect.left < containerRect.right) {
+          if (distance < minDistance) {
+            minDistance = distance;
+            centerSlide = slide;
+          }
+        }
+      });
+      
+      return centerSlide;
+    }
     
     function updateCenterSlide() {
-      if (isUpdating) return;
+      if (isUpdating || isNavigating) return;
       isUpdating = true;
       
       // Use requestAnimationFrame for smooth updates
@@ -816,27 +925,7 @@
       }
       
       rafId = requestAnimationFrame(function() {
-        // Get container dimensions
-        const containerRect = slidesContainer.getBoundingClientRect();
-        const containerCenter = containerRect.left + containerRect.width / 2;
-        
-        // Find the slide closest to the center
-        let centerSlide = null;
-        let minDistance = Infinity;
-        
-        slides.forEach(slide => {
-          const slideRect = slide.getBoundingClientRect();
-          const slideCenter = slideRect.left + slideRect.width / 2;
-          const distance = Math.abs(containerCenter - slideCenter);
-          
-          // Only consider slides that are at least partially visible
-          if (slideRect.right > containerRect.left && slideRect.left < containerRect.right) {
-            if (distance < minDistance) {
-              minDistance = distance;
-              centerSlide = slide;
-            }
-          }
-        });
+        const centerSlide = findCenterSlide();
         
         // Only update if the center slide actually changed
         if (centerSlide && centerSlide !== currentCenterSlide) {
@@ -855,8 +944,86 @@
       });
     }
     
+    // Custom navigation: move one item at a time and center it
+    function navigateOneItem(direction) {
+      if (isNavigating) return;
+      isNavigating = true;
+      
+      // Find current center slide
+      let currentIndex = -1;
+      const currentCenter = findCenterSlide();
+      
+      if (currentCenter) {
+        currentIndex = slides.indexOf(currentCenter);
+      } else {
+        // Fallback: find first visible slide
+        const containerRect = slidesContainer.getBoundingClientRect();
+        for (let i = 0; i < slides.length; i++) {
+          const slideRect = slides[i].getBoundingClientRect();
+          if (slideRect.right > containerRect.left && slideRect.left < containerRect.right) {
+            currentIndex = i;
+            break;
+          }
+        }
+      }
+      
+      if (currentIndex === -1) {
+        isNavigating = false;
+        return;
+      }
+      
+      // Calculate next index (move by 1)
+      let nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+      
+      // Clamp to valid range
+      nextIndex = Math.max(0, Math.min(slides.length - 1, nextIndex));
+      
+      // If we're at the edge and can't move further, center the current item
+      if (nextIndex === currentIndex) {
+        // Already at edge, try to center the current item
+        if (currentCenter) {
+          centerSlide(currentCenter, false);
+        }
+        isNavigating = false;
+        return;
+      }
+      
+      const nextSlide = slides[nextIndex];
+      if (!nextSlide) {
+        isNavigating = false;
+        return;
+      }
+      
+      // Center the next slide
+      centerSlide(nextSlide, false);
+      
+      // Update slideshow component's current index
+      if (slideshowComponent.select) {
+        slideshowComponent.select(nextIndex, null, { animate: false });
+      }
+      
+      // Reset navigation flag after scroll completes
+      setTimeout(() => {
+        isNavigating = false;
+        updateCenterSlide();
+      }, 500);
+    }
+    
+    // Intercept the slideshow component's next/previous methods to move one item at a time
+    slideshowComponent.next = function(event, options) {
+      navigateOneItem('next');
+    };
+    
+    slideshowComponent.previous = function(event, options) {
+      navigateOneItem('previous');
+    };
+    
     // Initial update with delay to ensure DOM is ready
     setTimeout(function() {
+      const initialCenterSlide = findCenterSlide();
+      if (initialCenterSlide) {
+        centerSlide(initialCenterSlide, true);
+      }
       updateCenterSlide();
     }, 200);
     
@@ -864,6 +1031,8 @@
     let scrollTimeout;
     let lastScrollTime = 0;
     slidesContainer.addEventListener('scroll', function() {
+      if (isNavigating) return;
+      
       const now = Date.now();
       // Throttle to max once per 100ms
       if (now - lastScrollTime < 100) {
@@ -881,16 +1050,23 @@
     let resizeTimeout;
     window.addEventListener('resize', function() {
       clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(updateCenterSlide, 200);
+      resizeTimeout = setTimeout(function() {
+        const resizedCenterSlide = findCenterSlide();
+        if (resizedCenterSlide) {
+          centerSlide(resizedCenterSlide, false);
+        }
+        updateCenterSlide();
+      }, 200);
     });
     
     // Update when slideshow component changes slide (for arrow navigation)
-    const slideshowComponent = carousel.closest('slideshow-component');
     if (slideshowComponent) {
       // Listen for slide changes via MutationObserver (less frequent than scroll)
       const observer = new MutationObserver(function() {
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(updateCenterSlide, 150);
+        if (!isNavigating) {
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(updateCenterSlide, 150);
+        }
       });
       
       observer.observe(slidesContainer, {
