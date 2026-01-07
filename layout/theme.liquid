@@ -21,6 +21,8 @@
     >
 
     {%- render 'meta-tags' -%}
+    {%- render 'analytics-head' -%}
+    {%- render 'email-marketing-head' -%}
     {%- render 'stylesheets' -%}
     {%- render 'fonts' -%}
     {%- render 'scripts' -%}
@@ -35,6 +37,7 @@
   </head>
 
   <body class="page-width-{{ settings.page_width }} card-hover-effect-{{ settings.card_hover_effect }}">
+    {% render 'analytics-body' %}
     {% render 'skip-to-content-link', href: '#MainContent', text: 'accessibility.skip_to_text' %}
     <div id="header-group">
       {% sections 'header-group' %}
@@ -109,5 +112,8 @@
     {% if settings.quick_add or settings.mobile_quick_add %}
       {% render 'quick-add-modal' %}
     {% endif %}
+    
+    {% render 'facebook-pixel-product' %}
+    {% render 'klaviyo-atc-tracking' %}
   </body>
 </html>

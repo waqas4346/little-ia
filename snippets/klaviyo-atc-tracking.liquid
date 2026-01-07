@@ -1,0 +1,70 @@
+{%- comment -%}
+  Klaviyo Add to Cart Tracking
+  Tracks when products are added to cart
+  NOTE: This is a fallback/backup tracker. Klaviyo app embed may already handle ATC tracking automatically.
+  If you see duplicate events in Klaviyo dashboard, you can remove this snippet.
+{%- endcomment -%}
+<script type="text/javascript">
+  var _learnq = _learnq || [];
+  
+  // Check if Klaviyo app embed is already tracking ATC (if it intercepts the track method)
+  var klaviyoAlreadyTracking = false;
+  var originalTrack = _learnq.push;
+  var atcTrackCount = 0;
+  
+  // Listen for add to cart events (works with new theme's product-form.js)
+  document.addEventListener('DOMContentLoaded', function() {
+    // Listen for cart add events via custom events (this works with new theme's ProductFormComponent)
+    document.addEventListener('cart:add', function(event) {
+      // Only track if we haven't seen multiple ATC events (to avoid duplication)
+      atcTrackCount++;
+      if (atcTrackCount <= 1) {
+        if (event.detail && event.detail.item) {
+          // Enhanced tracking with product data
+          const productData = {
+            ProductID: event.detail.productId || event.detail.item.product_id || '',
+            SKU: event.detail.item.variant_id || event.detail.item.sku || '',
+            ProductName: event.detail.item.product_title || document.querySelector('h1')?.textContent || '',
+            Price: event.detail.item.price || 0,
+            Quantity: event.detail.itemCount || event.detail.item.quantity || 1
+          };
+          _learnq.push(['track', 'Added to Cart', productData]);
+        } else {
+          _learnq.push(['track', 'Added to Cart']);
+        }
+      }
+    });
+    
+    // Fallback: Listen for add to cart button clicks (if custom events don't fire)
+    setTimeout(function() {
+      const addToCartButtons = document.querySelectorAll('button[name="add"], add-to-cart-component button, [data-add-to-cart]');
+      
+      addToCartButtons.forEach(function(button) {
+        // Only add listener once
+        if (!button.dataset.klaviyoTracked) {
+          button.dataset.klaviyoTracked = 'true';
+          button.addEventListener('click', function(e) {
+            // Check if this click is part of a form submission (which would trigger cart:add event)
+            const form = button.closest('form') || button.closest('product-form-component');
+            if (!form) {
+              // Only track direct clicks if no form exists
+              setTimeout(function() {
+                if (atcTrackCount === 0) {
+                  const productTitle = document.querySelector('h1')?.textContent || '';
+                  const priceEl = document.querySelector('[data-product-price]') || document.querySelector('.price');
+                  const price = priceEl?.dataset?.price || priceEl?.textContent?.match(/[\d.]+/)?.[0] || 0;
+                  
+                  _learnq.push(['track', 'Added to Cart', {
+                    ProductName: productTitle,
+                    Price: parseFloat(price) || 0,
+                    Quantity: 1
+                  }]);
+                }
+              }, 500);
+            }
+          }, { once: true });
+        }
+      });
+    }, 1000);
+  });
+</script>
