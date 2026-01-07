@@ -216,9 +216,14 @@
     -webkit-tap-highlight-color: transparent;
     font-size: var(--font-size--md);
     font-weight: var(--font-weight-normal);
-    border-radius: calc(var(--pagination-radius) * 1px);
+    border-radius: 0;
     transition: color var(--hover-transition-duration) var(--hover-transition-timing),
       opacity var(--hover-transition-duration) var(--hover-transition-timing);
+  }
+
+  .pagination__link:hover:not([aria-current='page'], .pagination__link--gap, .pagination__link--disabled, .pagination__link--arrow) {
+    color: white;
+    font-weight: var(--font-weight-medium);
   }
 
   .pagination__link:focus-visible {
@@ -261,11 +266,11 @@
 
   /* Fallback for browsers without anchor positioning support */
   @supports not (anchor-name: --pagination-active) {
-    .pagination__link:not(.pagination__link--gap)::before {
+    .pagination__link:not(.pagination__link--gap, .pagination__link--arrow)::before {
       content: '';
       position: absolute;
       inset: var(--pagination-inset);
-      border-radius: calc(var(--pagination-radius) * 1px);
+      border-radius: 0;
       background: rgb(var(--color-foreground-rgb) / var(--opacity-10));
       z-index: -1;
       opacity: 0;
@@ -276,10 +281,13 @@
     .pagination__link[aria-current='page']::before {
       background: #7295BB;
       opacity: 1;
+      border-radius: 0;
     }
 
-    .pagination__link:hover:not([aria-current='page'], .pagination__link--gap, .pagination__link--disabled)::before {
+    .pagination__link:hover:not([aria-current='page'], .pagination__link--gap, .pagination__link--disabled, .pagination__link--arrow)::before {
+      background: #7295BB;
       opacity: 1;
+      border-radius: 0;
     }
   }
 
@@ -293,8 +301,8 @@
       aspect-ratio: 1;
       pointer-events: none;
       opacity: 0;
-      border-radius: calc(var(--pagination-radius) * 1px);
-      background: rgb(var(--color-foreground-rgb) / var(--opacity-10));
+      border-radius: 0;
+      background: #7295BB;
       transition: left var(--hover-transition-duration) var(--hover-transition-timing),
         top var(--hover-transition-duration) var(--hover-transition-timing);
     }
@@ -307,8 +315,13 @@
     }
 
     .pagination__list:has(
-        .pagination__link:is(:hover, :focus-visible):not(.pagination__link--gap, .pagination__link--disabled))::before {
+        .pagination__link:is(:hover, :focus-visible):not(.pagination__link--gap, .pagination__link--disabled, .pagination__link--arrow))::before {
       opacity: 1;
+    }
+
+    .pagination__link:hover:not([aria-current='page'], .pagination__link--gap, .pagination__link--disabled, .pagination__link--arrow) {
+      color: white;
+      font-weight: var(--font-weight-medium);
     }
 
     /* Style current page directly */
@@ -316,14 +329,14 @@
       content: '';
       position: absolute;
       inset: var(--pagination-inset);
-      border-radius: calc(var(--pagination-radius) * 1px);
       background: #7295BB;
+      border-radius: 0;
       z-index: -1;
     }
 
     .pagination__list
       .pagination__item:has(
-        .pagination__link:is(:hover, :focus-visible):not(.pagination__link--gap, .pagination__link--disabled)) {
+        .pagination__link:is(:hover, :focus-visible):not(.pagination__link--gap, .pagination__link--disabled, .pagination__link--arrow)) {
       anchor-name: --pagination-hover;
     }
 
