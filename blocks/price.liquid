@@ -53,6 +53,53 @@
     show_sale_price_first: block_settings.show_sale_price_first
   %}
 
+  {% comment %} Product Bullet Points from CB - Bullet metafield {% endcomment %}
+  {% liquid
+    assign bullet_points = blank
+    if product_resource != blank
+      # Access metafield: custom.bullet (metaobject: CB - Product bullets, field: Bullet Points)
+      assign bullet_metafield = product_resource.metafields.custom.bullet
+      
+      if bullet_metafield != blank
+        # Get the metaobject value (CB - Product bullets)
+        assign bullet_metaobject = bullet_metafield.value
+        
+        if bullet_metaobject != blank
+          # Get the Bullet Points list from the metaobject
+          # Field name is "Bullet Points" - try different access methods
+          assign bullet_points = bullet_metaobject.bullet_points.value | default: bullet_metaobject.bullet_points
+          
+          # If still blank, try with brackets
+          if bullet_points == blank
+            assign bullet_points = bullet_metaobject['Bullet Points'].value | default: bullet_metaobject['Bullet Points']
+          endif
+        endif
+      endif
+    endif
+  %}
+
+
+  {% if bullet_points != blank and bullet_points.size > 0 %}
+    <div class="product-price__bulletpoints">
+      <ul class="product-price__bulletpoints-list">
+        {% for bulletpoint in bullet_points %}
+          <li class="product-price__bulletpoint-item">
+            <span class="product-price__bulletpoint-icon">
+              <img src="{{ 'star-bullet-icon-pink.png' | asset_url }}" alt="" class="product-price__bulletpoint-icon-img">
+            </span>
+            <span class="product-price__bulletpoint-text">
+              {% if bulletpoint.value != blank %}
+                {{ bulletpoint.value }}
+              {% else %}
+                {{ bulletpoint }}
+              {% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
   {% comment %} Add View Product and + buttons for collection pages {% endcomment %}
   {% if template.name == 'collection' %}
     {% liquid
@@ -452,6 +499,59 @@
       line-height: 37px;
       color: #7295BB;
       top: -2px;
+    }
+  }
+
+  /* Product Price Bullet Points */
+  .product-price__bulletpoints {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .product-price__bulletpoints-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-inline-start: 0 !important;
+  }
+
+  .product-price__bulletpoint-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 150%;
+  }
+
+  .product-price__bulletpoint-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  .product-price__bulletpoint-icon-img {
+    width: 17px;
+    height: 17px;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .product-price__bulletpoint-text {
+    flex: 1;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-price__bulletpoint-item {
+      gap: 8px;
+    }
+    .product-price__bulletpoints {
+      margin-top: 26px;
     }
   }
 {% endstylesheet %}
