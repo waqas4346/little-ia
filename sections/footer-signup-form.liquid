@@ -1,0 +1,265 @@
+{% liquid
+  assign image_one = section.settings.image_one
+  assign image_two = section.settings.image_two
+  assign image_one_alt = section.settings.image_one_alt | default: ''
+  assign image_two_alt = section.settings.image_two_alt | default: ''
+  assign klaviyo_form = section.settings.klaviyo_form
+%}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+
+<div
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+    footer-signup-section
+  "
+  style="
+    {%- render 'spacing-style', settings: section.settings -%}
+    {%- render 'gap-style', value: section.settings.gap -%}
+  "
+>
+  <div class="footer-signup footer-signup--image-left">
+    <div class="footer-signup__form">
+      {% if klaviyo_form != blank %}
+        {{ klaviyo_form }}
+      {% endif %}
+    </div>
+
+    <div class="footer-signup__images">
+      {% if image_one != blank %}
+        <div class="footer-signup__image">
+          {{
+            image_one
+            | image_url: width: 1200
+            | image_tag:
+              class: 'footer-signup__image-img',
+              loading: 'lazy',
+              alt: image_one_alt,
+              sizes: '(min-width: 750px) 50vw, 100vw',
+              widths: '240, 352, 832, 1200'
+          }}
+        </div>
+      {% endif %}
+      {% if image_two != blank %}
+        <div class="footer-signup__image">
+          {{
+            image_two
+            | image_url: width: 1200
+            | image_tag:
+              class: 'footer-signup__image-img',
+              loading: 'lazy',
+              alt: image_two_alt,
+              sizes: '(min-width: 750px) 50vw, 100vw',
+              widths: '240, 352, 832, 1200'
+          }}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  <!-- /.footer-signup -->
+</div>
+
+{% stylesheet %}
+  /* Apply spacing on the Shopify section wrapper level (footer group) */
+  .shopify-section.shopify-section-group-footer-group.footer-signup {
+    margin-bottom: 40px;
+  }
+
+  .footer-signup-section {
+    width: 100%;
+  }
+
+  /* Make only the inner signup wrapper use a 1440px max width */
+  .footer-signup-section.section--page-width > .footer-signup {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+  }
+
+  .footer-signup {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .footer-signup__images {
+    width: 100%;
+    display: grid;
+    /* Mobile: one row (2 columns) */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .footer-signup__image {
+    width: 100%;
+    aspect-ratio: 361 / 329;
+    overflow: hidden;
+  }
+
+  .footer-signup__image-img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    border-radius: var(--border-radius, 0);
+  }
+
+  .footer-signup__form {
+    width: 100%;
+  }
+
+  /* Desktop */
+  @media screen and (min-width: 750px) {
+    .shopify-section.shopify-section-group-footer-group.footer-signup {
+      margin-bottom: 42px;
+    }
+
+    .footer-signup {
+      flex-direction: row;
+      align-items: center;
+      gap: 48px;
+    }
+
+    .footer-signup__images {
+      flex: 0 0 auto;
+      width: 50%;
+      max-width: 623px;
+      order: 1;
+      margin-right: auto;
+      grid-template-columns: repeat(2, 361px);
+      align-items: start;
+    }
+
+    .footer-signup__form {
+      flex: 1;
+      min-width: 0;
+      order: 2;
+    }
+
+    .footer-signup__image-img {
+      width: 361px;
+      height: 329px;
+      max-height: 329px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Footer signup form",
+  "tag": "section",
+  "class": "footer-signup",
+  "enabled_on": {
+    "groups": ["footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Images (left side)"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_one",
+      "label": "Left image 1"
+    },
+    {
+      "type": "text",
+      "id": "image_one_alt",
+      "label": "Image 1 alt text"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_two",
+      "label": "Left image 2"
+    },
+    {
+      "type": "text",
+      "id": "image_two_alt",
+      "label": "Image 2 alt text"
+    },
+    {
+      "type": "header",
+      "content": "Klaviyo form (right side)"
+    },
+    {
+      "type": "liquid",
+      "id": "klaviyo_form",
+      "label": "Klaviyo form embed",
+      "info": "Paste your Klaviyo embed code or Liquid here."
+    },
+    {
+      "type": "header",
+      "content": "t:content.section_layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:settings.width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:options.page"
+        },
+        {
+          "value": "full-width",
+          "label": "t:options.full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "t:settings.gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:settings.color_scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 24
+    }
+  ],
+  "presets": [
+    {
+      "name": "Footer signup form",
+      "category": "t:categories.footer"
+    }
+  ]
+}
+{% endschema %}
+
+
