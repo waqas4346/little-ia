@@ -74,18 +74,18 @@
   }
 
   /* Make only the inner signup wrapper use a 1440px max width */
-  .footer-signup-section.section--page-width > .footer-signup {
+  /* .footer-signup-section.section--page-width > .footer-signup {
     grid-column: 1 / -1;
     width: 100%;
     max-width: 1440px;
     margin-inline: auto;
-  }
+  } */
 
   .footer-signup {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 0;
   }
 
   .footer-signup__images {
@@ -93,6 +93,14 @@
     display: grid;
     /* Mobile: one row (2 columns) */
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    order: 2;
+    /* On mobile, break out to touch edges */
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
   }
 
   .footer-signup__image {
@@ -111,34 +119,63 @@
 
   .footer-signup__form {
     width: 100%;
+    order: 1;
+    padding-top: 20px;
+    padding-bottom: 20px;
   }
 
-  /* Desktop */
+  .klaviyo-form {
+    background-color: transparent !important;
+    padding: 0 !important;
+  }
+  .klaviyo-form p,
+  .klaviyo-form span {
+    font-family: 'Outfit' !important;
+    color: var(--color-foreground-heading) !important;
+  }
+
+  /* Tablet - keep mobile stacked layout */
   @media screen and (min-width: 750px) {
     .shopify-section.shopify-section-group-footer-group.footer-signup {
       margin-bottom: 42px;
     }
+  }
 
+  /* Desktop - side-by-side layout (only when enough space) */
+  @media screen and (min-width: 1200px) {
     .footer-signup {
       flex-direction: row;
       align-items: center;
-      gap: 48px;
+      gap: 42px;
     }
 
     .footer-signup__images {
-      flex: 0 0 auto;
-      width: 50%;
-      max-width: 623px;
+      flex: 0 0 722px;
+      width: 722px;
+      max-width: 722px;
       order: 1;
-      margin-right: auto;
-      grid-template-columns: repeat(2, 361px);
+      grid-template-columns: 361px 361px;
       align-items: start;
+      /* Reset mobile edge-to-edge styles */
+      position: static;
+      left: auto;
+      right: auto;
+      margin-left: 0;
+      margin-right: 0;
     }
 
     .footer-signup__form {
       flex: 1;
       min-width: 0;
       order: 2;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    .footer-signup__image {
+      width: 361px;
+      height: 329px;
+      aspect-ratio: auto;
     }
 
     .footer-signup__image-img {
