@@ -139,18 +139,21 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const colorGrid = this.refs.colorGrid || this.querySelector('.personalise-modal__color-grid');
     if (!colorGrid) return;
 
-    // Remove selected class from all buttons
-    const buttons = colorGrid.querySelectorAll('.personalise-modal__color-button');
-    buttons.forEach(btn => {
-      btn.classList.remove('personalise-modal__color-button--selected');
+    // Uncheck all radio inputs
+    const radioInputs = colorGrid.querySelectorAll('input[type="radio"]');
+    radioInputs.forEach(input => {
+      input.checked = false;
     });
 
-    // Add selected class to the clicked button
-    const selectedButton = Array.from(buttons).find(
+    // Check the selected radio input
+    const selectedButton = Array.from(colorGrid.querySelectorAll('.personalise-modal__color-button')).find(
       btn => btn.dataset.color === colorName
     );
     if (selectedButton) {
-      selectedButton.classList.add('personalise-modal__color-button--selected');
+      const radioInput = selectedButton.querySelector('input[type="radio"]');
+      if (radioInput) {
+        radioInput.checked = true;
+      }
       this.selectedColor = colorName;
       this.personalisationData.color = colorName;
     }

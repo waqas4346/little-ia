@@ -145,21 +145,29 @@
           {% if personalized_textcolour %}
             <div class="personalise-modal__field">
               <label class="personalise-modal__label">Text Colour <span style="color: red;">*</span></label>
-              <div class="personalise-modal__color-grid" ref="colorGrid">
+              <div class="personalise-modal__color-grid variant-option--image-thumbnails" ref="colorGrid">
                 {% for product_tag in product.tags %}
                   {% if product_tag contains 'color_' %}
                     {% assign color_tag = product_tag | split: '_' %}
-                    <button
-                      type="button"
-                      class="personalise-modal__color-button"
+                    <label
+                      class="personalise-modal__color-button variant-option__button-label variant-option__button-label--image-thumbnail"
                       data-color="{{ color_tag[1] }}"
                       ref="colorButton"
-                      on:click="/selectColor"
                       title="{{ color_tag[1] | capitalize }}"
                     >
-                      <span class="personalise-modal__color-indicator" style="background-color: {{ color_tag[1] }};"></span>
-                      <span class="personalise-modal__color-label">{{ color_tag[1] | capitalize }}</span>
-                    </button>
+                      <input
+                        type="radio"
+                        name="personalise-color"
+                        value="{{ color_tag[1] }}"
+                        on:click="/selectColor"
+                      >
+                      <div class="variant-option__image-thumbnail">
+                        <span
+                          class="swatch swatch--unscaled"
+                          style="--swatch-background: {{ color_tag[1] | downcase }}; background-color: {{ color_tag[1] | downcase }};"
+                        ></span>
+                      </div>
+                    </label>
                   {% endif %}
                 {% endfor %}
               </div>
@@ -650,49 +658,75 @@
   }
 
   .personalise-modal__color-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: var(--gap-sm);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
     margin-block-start: var(--margin-sm);
   }
 
   .personalise-modal__color-button {
-    padding: var(--padding-md);
-    border: 1px solid #e0e0e0;
+    padding: 2px;
+    border: none;
     border-radius: 0;
-    background-color: var(--color-background);
+    overflow: hidden;
+    position: relative;
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    min-height: 64px;
+    flex: 0 0 auto;
+    background: transparent;
     cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-    min-height: 44px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: var(--gap-xs);
   }
 
   .personalise-modal__color-button:hover {
-    border-color: #7295BB;
+    outline: none;
+    border-color: transparent !important;
+    background-color: transparent !important;
   }
 
-  .personalise-modal__color-button--selected {
-    background-color: #F4F9FF;
+  .personalise-modal__color-button:has(:checked) {
     border: 1px solid #7295BB;
+    outline: none;
   }
 
-  .personalise-modal__color-indicator {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 1px solid #e0e0e0;
+  .personalise-modal__color-button:has(:checked):hover {
+    border-color: #7295BB !important;
+    background-color: transparent !important;
+  }
+
+  .personalise-modal__color-button input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .personalise-modal__color-button .variant-option__image-thumbnail {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border-radius: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .personalise-modal__color-button .swatch {
+    width: 100%;
+    height: 100%;
     display: block;
+    background: var(--swatch-background);
+    border-radius: var(--variant-picker-swatch-radius, 0);
   }
 
-  .personalise-modal__color-label {
-    font-size: 12px;
-    color: var(--color-foreground);
-    font-weight: 500;
+  .personalise-modal__color-button:has(:focus-visible) {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
   }
 
   .personalise-modal__actions {
@@ -780,4 +814,5 @@
     }
   }
 {% endstylesheet %}
+
 
