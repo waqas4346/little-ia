@@ -98,6 +98,22 @@
         "padding-block-end": 60
       }
     },
+    "footer_signup_form_iMXCBn": {
+      "type": "footer-signup-form",
+      "name": "Footer signup form",
+      "settings": {
+        "image_one": "shopify:\/\/shop_images\/footer-signup-form-1.png",
+        "image_one_alt": "",
+        "image_two": "shopify:\/\/shop_images\/footer-signup-form-2.png",
+        "image_two_alt": "",
+        "klaviyo_form": "<div class=\"klaviyo-form-TA3gzb\"><\/div>",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-6",
+        "padding-block-start": 24,
+        "padding-block-end": 24
+      }
+    },
     "footer_m9NzUG": {
       "type": "footer",
       "blocks": {
@@ -295,6 +311,7 @@
   },
   "order": [
     "section_9NAmPG",
+    "footer_signup_form_iMXCBn",
     "footer_m9NzUG",
     "footer_utilities_jLGE8U"
   ]

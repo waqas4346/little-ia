@@ -1,12 +1,3 @@
-/*
- * ------------------------------------------------------------
- * IMPORTANT: The contents of this file are auto-generated.
- *
- * This file may be updated by the Shopify admin theme editor
- * or related systems. Please exercise caution as any changes
- * made to this file may be overwritten.
- * ------------------------------------------------------------
- */
 {
   "sections": {
     "slideshow_MNadQf": {
@@ -16,7 +7,7 @@
           "type": "_slide",
           "settings": {
             "media_type_1": "image",
-            "image_1": "shopify://shop_images/Frame_1400008471_2.png",
+            "image_1": "shopify:\/\/shop_images\/Frame_1400008471_2.png",
             "content_direction": "column",
             "vertical_on_mobile": true,
             "horizontal_alignment": "flex-start",
@@ -41,7 +32,7 @@
             "text_9r6ibq": {
               "type": "text",
               "settings": {
-                "text": "<h2>Made to Treasure </h2>",
+                "text": "<h2>Made to Treasure <\/h2>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -66,7 +57,7 @@
             "text_BEGWaL": {
               "type": "text",
               "settings": {
-                "text": "<p>Thoughtfully crafted  personalised  essentials that  become keepsakes for life.</p>",
+                "text": "<p>Thoughtfully crafted  personalised  essentials that \u2028become keepsakes for life.<\/p>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -92,7 +83,7 @@
               "type": "button",
               "settings": {
                 "label": "SHOP BABY ESSENTIALS",
-                "link": "shopify://collections/all",
+                "link": "shopify:\/\/collections\/all",
                 "open_in_new_tab": false,
                 "style_class": "button",
                 "width": "fit-content",
@@ -113,7 +104,7 @@
           "type": "_slide",
           "settings": {
             "media_type_1": "image",
-            "image_1": "shopify://shop_images/Frame_1400008471_2.png",
+            "image_1": "shopify:\/\/shop_images\/Frame_1400008471_2.png",
             "content_direction": "column",
             "vertical_on_mobile": true,
             "horizontal_alignment": "flex-start",
@@ -138,7 +129,7 @@
             "text_Wp3hWa": {
               "type": "text",
               "settings": {
-                "text": "<h2>Made to Treasure</h2>",
+                "text": "<h2>Made to Treasure<\/h2>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -163,7 +154,7 @@
             "text_Ghywey": {
               "type": "text",
               "settings": {
-                "text": "<p>Thoughtfully crafted  personalised  essentials that  become keepsakes for life.</p>",
+                "text": "<p>Thoughtfully crafted  personalised  essentials that \u2028become keepsakes for life.<\/p>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -189,7 +180,7 @@
               "type": "button",
               "settings": {
                 "label": "SHOP BABY ESSENTIALS",
-                "link": "shopify://collections/all",
+                "link": "shopify:\/\/collections\/all",
                 "open_in_new_tab": false,
                 "style_class": "button",
                 "width": "fit-content",
@@ -237,10 +228,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify://shop_images/personalization-icon-1.png",
+            "image_upload": "shopify:\/\/shop_images\/personalization-icon-1.png",
             "icon_size": 52,
             "icon_size_mobile": 34,
-            "heading": "<p>Free Pesonalisation</p>",
+            "heading": "<p>Free Pesonalisation<\/p>",
             "sub_heading": "",
             "alignment": "horizontal",
             "gap": 12
@@ -251,10 +242,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify://shop_images/bpa-free-icon.png",
+            "image_upload": "shopify:\/\/shop_images\/bpa-free-icon.png",
             "icon_size": 52,
             "icon_size_mobile": 34,
-            "heading": "<p>BPA Free Products</p>",
+            "heading": "<p>BPA Free Products<\/p>",
             "sub_heading": "",
             "alignment": "horizontal",
             "gap": 12
@@ -265,10 +256,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify://shop_images/gots-icon.png",
+            "image_upload": "shopify:\/\/shop_images\/gots-icon.png",
             "icon_size": 52,
             "icon_size_mobile": 34,
-            "heading": "<p>GOTS Certified Organic Cotton</p>",
+            "heading": "<p>GOTS Certified Organic Cotton<\/p>",
             "sub_heading": "",
             "alignment": "horizontal",
             "gap": 12
@@ -376,7 +367,7 @@
               "type": "icon",
               "settings": {
                 "icon": "eye",
-                "image_upload": "shopify://shop_images/Frame_1437254920.png",
+                "image_upload": "shopify:\/\/shop_images\/Frame_1437254920.png",
                 "width": 32,
                 "link": "",
                 "open_in_new_tab": false
@@ -425,7 +416,7 @@
                 "text_KT9GeW": {
                   "type": "text",
                   "settings": {
-                    "text": "<p>Free Pesonalisation</p>",
+                    "text": "<p>Free Pesonalisation<\/p>",
                     "width": "fit-content",
                     "max_width": "normal",
                     "alignment": "center",
@@ -527,7 +518,7 @@
               "type": "icon",
               "settings": {
                 "icon": "heart",
-                "image_upload": "shopify://shop_images/Frame_1437254920_1.png",
+                "image_upload": "shopify:\/\/shop_images\/Frame_1437254920_1.png",
                 "width": 32,
                 "link": "",
                 "open_in_new_tab": false
@@ -576,7 +567,7 @@
                 "text_8kECgc": {
                   "type": "text",
                   "settings": {
-                    "text": "<p>GOTS Certified Organic Cotton</p>",
+                    "text": "<p>GOTS Certified Organic Cotton<\/p>",
                     "width": "fit-content",
                     "max_width": "normal",
                     "alignment": "center",
@@ -678,7 +669,7 @@
               "type": "icon",
               "settings": {
                 "icon": "silhouette",
-                "image_upload": "shopify://shop_images/Frame_1437254920_2.png",
+                "image_upload": "shopify:\/\/shop_images\/Frame_1437254920_2.png",
                 "width": 32,
                 "link": "",
                 "open_in_new_tab": false
@@ -727,7 +718,7 @@
                 "text_BdUYVd": {
                   "type": "text",
                   "settings": {
-                    "text": "<p>BPA Free Products</p>",
+                    "text": "<p>BPA Free Products<\/p>",
                     "width": "fit-content",
                     "max_width": "normal",
                     "alignment": "center",
@@ -831,9 +822,9 @@
           "name": "Icon with text",
           "settings": {
             "icon": "none",
-            "image_upload": "shopify://shop_images/558631974d4b5a2c3447953f8c16eeab4062c551.png",
+            "image_upload": "shopify:\/\/shop_images\/558631974d4b5a2c3447953f8c16eeab4062c551.png",
             "icon_width": 24,
-            "text": "<p>Softness thatcomforts</p>"
+            "text": "<p>Softness thatcomforts<\/p>"
           },
           "blocks": {}
         },
@@ -842,7 +833,7 @@
           "name": "t:names.icon",
           "settings": {
             "icon": "price_tag",
-            "image_upload": "shopify://shop_images/Ellipse_3042.png",
+            "image_upload": "shopify:\/\/shop_images\/Ellipse_3042.png",
             "width": 6,
             "link": "",
             "open_in_new_tab": false
@@ -854,9 +845,9 @@
           "name": "Icon with text",
           "settings": {
             "icon": "none",
-            "image_upload": "shopify://shop_images/Frame_1437254550_1.png",
+            "image_upload": "shopify:\/\/shop_images\/Frame_1437254550_1.png",
             "icon_width": 24,
-            "text": "<p>Personalised to perfection</p>"
+            "text": "<p>Personalised to perfection<\/p>"
           },
           "blocks": {}
         },
@@ -865,7 +856,7 @@
           "name": "t:names.icon",
           "settings": {
             "icon": "price_tag",
-            "image_upload": "shopify://shop_images/Ellipse_3042.png",
+            "image_upload": "shopify:\/\/shop_images\/Ellipse_3042.png",
             "width": 6,
             "link": "",
             "open_in_new_tab": false
@@ -877,9 +868,9 @@
           "name": "Icon with text",
           "settings": {
             "icon": "none",
-            "image_upload": "shopify://shop_images/76fca7ebd920bfd109e4660fb371587870789d19.png",
+            "image_upload": "shopify:\/\/shop_images\/76fca7ebd920bfd109e4660fb371587870789d19.png",
             "icon_width": 24,
-            "text": "<p>Details that last</p>"
+            "text": "<p>Details that last<\/p>"
           },
           "blocks": {}
         },
@@ -888,7 +879,7 @@
           "name": "t:names.icon",
           "settings": {
             "icon": "price_tag",
-            "image_upload": "shopify://shop_images/Ellipse_3042.png",
+            "image_upload": "shopify:\/\/shop_images\/Ellipse_3042.png",
             "width": 6,
             "link": "",
             "open_in_new_tab": false
@@ -898,7 +889,7 @@
         "text_qmbz7c": {
           "type": "text",
           "settings": {
-            "text": "<p>We make things that work better and last longer</p>",
+            "text": "<p>We make things that work better and last longer<\/p>",
             "width": "fit-content",
             "max_width": "normal",
             "alignment": "left",
@@ -1069,7 +1060,7 @@
               "type": "_product-list-text",
               "name": "t:names.collection_title",
               "settings": {
-                "text": "<h3>{{ closest.collection.title }}</h3>",
+                "text": "<h3>{{ closest.collection.title }}<\/h3>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -1148,7 +1139,7 @@
         "text_Tfi8xR": {
           "type": "text",
           "settings": {
-            "text": "<p>Birthday & Gifts</p>",
+            "text": "<p>Birthday & Gifts<\/p>",
             "width": "fit-content",
             "max_width": "narrow",
             "alignment": "left",
@@ -1173,7 +1164,7 @@
         "text_mqbJhg": {
           "type": "text",
           "settings": {
-            "text": "<p>Thoughtful gift sets and personalised favourites, ready to wrap, treasure and make their day extra special.</p>",
+            "text": "<p>Thoughtful gift sets and personalised favourites, ready to wrap, treasure and make their day extra special.<\/p>",
             "width": "fit-content",
             "max_width": "narrow",
             "alignment": "left",
@@ -1200,7 +1191,7 @@
           "name": "t:names.button",
           "settings": {
             "label": "Shop All Birthday & gifts",
-            "link": "shopify://collections/all",
+            "link": "shopify:\/\/collections\/all",
             "open_in_new_tab": false,
             "style_class": "button",
             "width": "fit-content",
@@ -1219,7 +1210,7 @@
       "name": "t:names.hero",
       "settings": {
         "media_type_1": "image",
-        "image_1": "shopify://shop_images/birthday-gift.png",
+        "image_1": "shopify:\/\/shop_images\/birthday-gift.png",
         "media_type_2": "image",
         "stack_media_on_mobile": false,
         "custom_mobile_media": false,
@@ -1265,15 +1256,15 @@
       "settings": {
         "heading": "our promise",
         "heading_icon_left": "none",
-        "heading_image_left": "shopify://shop_images/Vector.png",
+        "heading_image_left": "shopify:\/\/shop_images\/Vector.png",
         "heading_icon_right": "star",
-        "heading_image_right": "shopify://shop_images/Vector_1.png",
+        "heading_image_right": "shopify:\/\/shop_images\/Vector_1.png",
         "heading_icon_size": 40,
-        "subheading": "<p>Eco-friendly, high-quality, and personalised with love. So you can celebrate the magic of childhood with items made to be treasured.</p>",
+        "subheading": "<p>Eco-friendly, high-quality, and personalised with love. So you can celebrate the magic of childhood with items made to be treasured.<\/p>",
         "subheading_icon_left": "heart",
-        "subheading_image_left": "shopify://shop_images/Vector_2.png",
+        "subheading_image_left": "shopify:\/\/shop_images\/Vector_2.png",
         "subheading_icon_right": "none",
-        "subheading_image_right": "shopify://shop_images/image_2856.png",
+        "subheading_image_right": "shopify:\/\/shop_images\/image_2856.png",
         "subheading_icon_size": 40,
         "color_scheme": "scheme-6",
         "padding-block-start": 40,
@@ -1286,7 +1277,7 @@
         "text_YpRRA4": {
           "type": "text",
           "settings": {
-            "text": "<p>At the heart of every product lies a unique story, driven by our passion for quality and innovation. Each item enhances your everyday life and sparks joy.</p>",
+            "text": "<p>At the heart of every product lies a unique story, driven by our passion for quality and innovation. Each item enhances your everyday life and sparks joy.<\/p>",
             "width": "100%",
             "max_width": "narrow",
             "alignment": "center",
@@ -1312,7 +1303,7 @@
           "type": "button",
           "settings": {
             "label": "Shop now",
-            "link": "shopify://collections/all",
+            "link": "shopify:\/\/collections\/all",
             "open_in_new_tab": false,
             "style_class": "link",
             "width": "fit-content",
@@ -1405,7 +1396,7 @@
               "type": "text",
               "name": "t:names.text",
               "settings": {
-                "text": "<h3>Shop by collection</h3>",
+                "text": "<h3>Shop by collection<\/h3>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -1540,9 +1531,9 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/floral-swatch.png",
+            "image": "shopify:\/\/shop_images\/floral-swatch.png",
             "link_text": "Floral",
-            "link_url": "shopify://collections/enchanted-floral-collection"
+            "link_url": "shopify:\/\/collections\/enchanted-floral-collection"
           },
           "blocks": {}
         },
@@ -1550,9 +1541,9 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/seaworld_a2d965b9-fdc2-4abd-a848-ddc7036520f2.png",
+            "image": "shopify:\/\/shop_images\/seaworld_a2d965b9-fdc2-4abd-a848-ddc7036520f2.png",
             "link_text": "Seaworld",
-            "link_url": "shopify://collections/seaworld"
+            "link_url": "shopify:\/\/collections\/seaworld"
           },
           "blocks": {}
         },
@@ -1560,9 +1551,9 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/footbal-swatch.png",
+            "image": "shopify:\/\/shop_images\/footbal-swatch.png",
             "link_text": "Football",
-            "link_url": "shopify://collections/football-collection"
+            "link_url": "shopify:\/\/collections\/football-collection"
           },
           "blocks": {}
         },
@@ -1570,9 +1561,9 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/mermaid-swatch.png",
+            "image": "shopify:\/\/shop_images\/mermaid-swatch.png",
             "link_text": "Mermaid",
-            "link_url": "shopify://collections/mermaid"
+            "link_url": "shopify:\/\/collections\/mermaid"
           },
           "blocks": {}
         },
@@ -1580,9 +1571,9 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/paw-patrol-swatch.png",
+            "image": "shopify:\/\/shop_images\/paw-patrol-swatch.png",
             "link_text": "Paw Patrol",
-            "link_url": "shopify://collections/paw-patrol-collection"
+            "link_url": "shopify:\/\/collections\/paw-patrol-collection"
           },
           "blocks": {}
         },
@@ -1590,9 +1581,9 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/unicorn-swatch.png",
+            "image": "shopify:\/\/shop_images\/unicorn-swatch.png",
             "link_text": "Unicorn",
-            "link_url": "shopify://collections/unicorn-collection"
+            "link_url": "shopify:\/\/collections\/unicorn-collection"
           },
           "blocks": {}
         },
@@ -1600,9 +1591,9 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/dinosaur_a217f0a8-e82d-4173-804d-90c460b058b7.png",
+            "image": "shopify:\/\/shop_images\/dinosaur_a217f0a8-e82d-4173-804d-90c460b058b7.png",
             "link_text": "Dinosaur",
-            "link_url": "shopify://collections/dinosaur-collection"
+            "link_url": "shopify:\/\/collections\/dinosaur-collection"
           },
           "blocks": {}
         },
@@ -1610,9 +1601,9 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/super-hero-swatch.png",
+            "image": "shopify:\/\/shop_images\/super-hero-swatch.png",
             "link_text": "Super Hero",
-            "link_url": "shopify://collections/superhero-collection"
+            "link_url": "shopify:\/\/collections\/superhero-collection"
           },
           "blocks": {}
         },
@@ -1620,7 +1611,7 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/pappa-pig-swatch.png",
+            "image": "shopify:\/\/shop_images\/pappa-pig-swatch.png",
             "link_text": "Peppa Pig",
             "link_url": ""
           },
@@ -1630,9 +1621,9 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/jungle-swatch.png",
+            "image": "shopify:\/\/shop_images\/jungle-swatch.png",
             "link_text": "Jungle",
-            "link_url": "shopify://collections/jungle-animal-collection"
+            "link_url": "shopify:\/\/collections\/jungle-animal-collection"
           },
           "blocks": {}
         },
@@ -1640,9 +1631,9 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/transport-swatch.png",
+            "image": "shopify:\/\/shop_images\/transport-swatch.png",
             "link_text": "Transport",
-            "link_url": "shopify://collections/transport-collection"
+            "link_url": "shopify:\/\/collections\/transport-collection"
           },
           "blocks": {}
         },
@@ -1650,7 +1641,7 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/rainbow-swatch.png",
+            "image": "shopify:\/\/shop_images\/rainbow-swatch.png",
             "link_text": "Rainbow",
             "link_url": ""
           },
@@ -1691,7 +1682,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify://shop_images/homepage-back-to-school.png",
+            "image": "shopify:\/\/shop_images\/homepage-back-to-school.png",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -1718,7 +1709,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify://shop_images/homepage-party-favours_527eaf2a-5777-4b90-9e75-06fa072ec651.png",
+            "image": "shopify:\/\/shop_images\/homepage-party-favours_527eaf2a-5777-4b90-9e75-06fa072ec651.png",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -1746,7 +1737,7 @@
           "name": "t:names.image",
           "disabled": true,
           "settings": {
-            "image": "shopify://shop_images/homepage-back-to-school.png",
+            "image": "shopify:\/\/shop_images\/homepage-back-to-school.png",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -1770,7 +1761,7 @@
           "name": "t:names.image",
           "disabled": true,
           "settings": {
-            "image": "shopify://shop_images/homepage-party-favours_527eaf2a-5777-4b90-9e75-06fa072ec651.png",
+            "image": "shopify:\/\/shop_images\/homepage-party-favours_527eaf2a-5777-4b90-9e75-06fa072ec651.png",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -1856,7 +1847,7 @@
               "type": "text",
               "name": "t:names.heading",
               "settings": {
-                "text": "<h2>Intentional design</h2>",
+                "text": "<h2>Intentional design<\/h2>",
                 "width": "100%",
                 "max_width": "normal",
                 "alignment": "center",
@@ -1882,7 +1873,7 @@
               "type": "text",
               "name": "t:names.description",
               "settings": {
-                "text": "<p>We create with intention. Our products solve real problems with clean design and honest materials.</p>",
+                "text": "<p>We create with intention. Our products solve real problems with clean design and honest materials.<\/p>",
                 "width": "100%",
                 "max_width": "normal",
                 "alignment": "center",
@@ -1978,7 +1969,7 @@
               "type": "text",
               "name": "t:names.heading",
               "settings": {
-                "text": "<h2>Quality first</h2>",
+                "text": "<h2>Quality first<\/h2>",
                 "width": "100%",
                 "max_width": "normal",
                 "alignment": "center",
@@ -2004,7 +1995,7 @@
               "type": "text",
               "name": "t:names.description",
               "settings": {
-                "text": "<p>We obsess over the details and strive to deliver the best products at the best prices, every time.</p>",
+                "text": "<p>We obsess over the details and strive to deliver the best products at the best prices, every time.<\/p>",
                 "width": "100%",
                 "max_width": "normal",
                 "alignment": "center",
@@ -2078,63 +2069,63 @@
         "video_item_zDPG4f": {
           "type": "video_item",
           "settings": {
-            "video": "shopify://files/videos/TransportSmallSize_5a3f6096-d7cf-4141-8508-2358bdb0b2f7.MOV",
+            "video": "shopify:\/\/files\/videos\/TransportSmallSize_5a3f6096-d7cf-4141-8508-2358bdb0b2f7.MOV",
             "product": "little-sister-embroidered-knit-sweater"
           }
         },
         "video_item_jr6mpD": {
           "type": "video_item",
           "settings": {
-            "video": "shopify://files/videos/Football_b7d10772-e7d1-4870-8493-a396775858d9.MOV",
+            "video": "shopify:\/\/files\/videos\/Football_b7d10772-e7d1-4870-8493-a396775858d9.MOV",
             "product": "holly-jolly-christmas-sweatshirt"
           }
         },
         "video_item_W9YJTa": {
           "type": "video_item",
           "settings": {
-            "video": "shopify://files/videos/footballstainlesssteel.MOV",
+            "video": "shopify:\/\/files\/videos\/footballstainlesssteel.MOV",
             "product": "future-ceo-embroidered-knit-sweater"
           }
         },
         "video_item_izWarm": {
           "type": "video_item",
           "settings": {
-            "video": "shopify://files/videos/DiaperBag.mp4",
+            "video": "shopify:\/\/files\/videos\/DiaperBag.mp4",
             "product": "daddys-mini-sweatshirt"
           }
         },
         "video_item_kxHayU": {
           "type": "video_item",
           "settings": {
-            "video": "shopify://files/videos/UnicornMediumBackpack.mp4",
+            "video": "shopify:\/\/files\/videos\/UnicornMediumBackpack.mp4",
             "product": "boss-lady-sweatshirt"
           }
         },
         "video_item_bggeH6": {
           "type": "video_item",
           "settings": {
-            "video": "shopify://files/videos/StuffPouch.MOV",
+            "video": "shopify:\/\/files\/videos\/StuffPouch.MOV",
             "product": "cousin-club-sweatshirt"
           }
         },
         "video_item_MNRdCW": {
           "type": "video_item",
           "settings": {
-            "video": "shopify://files/videos/Plainstainlesssteelbento.mp4",
+            "video": "shopify:\/\/files\/videos\/Plainstainlesssteelbento.mp4",
             "product": "boss-lady-sweatshirt"
           }
         },
         "video_item_Rib79t": {
           "type": "video_item",
           "settings": {
-            "video": "shopify://files/videos/TravelSnackkit_0972924c-5e21-49cb-8143-74b67478ce00.mp4",
+            "video": "shopify:\/\/files\/videos\/TravelSnackkit_0972924c-5e21-49cb-8143-74b67478ce00.mp4",
             "product": "big-sister-embroidered-knit-sweater"
           }
         },
         "video_item_8ewMTT": {
           "type": "video_item",
           "settings": {
-            "video": "shopify://files/videos/DoubledeckerLunchbag.mp4",
+            "video": "shopify:\/\/files\/videos\/DoubledeckerLunchbag.mp4",
             "product": "big-sister-sweatshirt"
           }
         }
@@ -2154,7 +2145,7 @@
       "name": "Product Video Slider",
       "settings": {
         "heading": "kids and babies",
-        "subheading": " In Little IA",
+        "subheading": "\u2028In Little IA",
         "columns_desktop": 5,
         "columns_mobile": "1",
         "gap": 12,
@@ -2214,7 +2205,7 @@
               "type": "text",
               "name": "t:names.text",
               "settings": {
-                "text": "<h3>Shop by collection</h3>",
+                "text": "<h3>Shop by collection<\/h3>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -2346,18 +2337,18 @@
       "type": "brands",
       "name": "Brands",
       "settings": {
-        "image": "shopify://shop_images/brands-section-image.png",
-        "logo": "shopify://shop_images/little-ia-logo.png",
+        "image": "shopify:\/\/shop_images\/brands-section-image.png",
+        "logo": "shopify:\/\/shop_images\/little-ia-logo.png",
         "title": "x&nbsp;&nbsp;ICONIC BRANDS",
-        "body": "<p>Find internationally renowned family favourite brands, alongside homegrown brands and exclusively personalise them.</p>",
-        "brand_logo_1": "shopify://shop_images/olliella-logo.png",
-        "brand_logo_2": "shopify://shop_images/bob-blossom-logo.png",
-        "brand_logo_3": "shopify://shop_images/hydro-flask-logo.png",
-        "brand_logo_4": "shopify://shop_images/le-toy-van-logo.png",
-        "brand_logo_5": "shopify://shop_images/omie-logo.png",
-        "brand_logo_6": "shopify://shop_images/mimi-lula-logo.png",
+        "body": "<p>Find internationally renowned family favourite brands, alongside homegrown brands and exclusively personalise them.<\/p>",
+        "brand_logo_1": "shopify:\/\/shop_images\/olliella-logo.png",
+        "brand_logo_2": "shopify:\/\/shop_images\/bob-blossom-logo.png",
+        "brand_logo_3": "shopify:\/\/shop_images\/hydro-flask-logo.png",
+        "brand_logo_4": "shopify:\/\/shop_images\/le-toy-van-logo.png",
+        "brand_logo_5": "shopify:\/\/shop_images\/omie-logo.png",
+        "brand_logo_6": "shopify:\/\/shop_images\/mimi-lula-logo.png",
         "button_text": "Shop All",
-        "button_url": "shopify://collections/little-ia-loves",
+        "button_url": "shopify:\/\/collections\/little-ia-loves",
         "section_width": "page-width",
         "color_scheme": "scheme-6",
         "padding-block-start": 48,
@@ -2373,7 +2364,7 @@
           "disabled": true,
           "static": true,
           "settings": {
-            "text": "<h3>{{ closest.blog.title }}</h3>",
+            "text": "<h3>{{ closest.blog.title }}<\/h3>",
             "width": "fit-content",
             "max_width": "normal",
             "alignment": "left",
@@ -2441,7 +2432,7 @@
                 "case": "none",
                 "wrap": "pretty",
                 "color": "var(--color-foreground)",
-                "text": "<h4>{{ closest.article.title }}</h4>",
+                "text": "<h4>{{ closest.article.title }}<\/h4>",
                 "read_only": false,
                 "alignment": "left",
                 "show_alignment": false,
@@ -2517,11 +2508,11 @@
       "type": "our-story",
       "name": "Our Story",
       "settings": {
-        "image": "shopify://shop_images/out-story.png",
-        "logo": "shopify://shop_images/little-ia-logo.png",
+        "image": "shopify:\/\/shop_images\/out-story.png",
+        "logo": "shopify:\/\/shop_images\/little-ia-logo.png",
         "title_prefix": "from",
         "title": "Our Family, To Yours",
-        "body": "<p>Many people ask how Little IA began. The truth is, it started with a blanket,or rather, four of them. All gifted with love, but all in tatters after just a few washes.<br/><br/>I realised parents deserved better: something softer, safer, and far more lasting. Fabrics that cared for delicate newborn skin and designs that <br/>felt truly unique.<br/><br/>So I set out to create treasures families could keep. And fittingly, our very first collection arrived the same week as my third child, a story stitched with love from the start.</p>",
+        "body": "<p>Many people ask how Little IA began. The truth is, it started with a blanket,or rather, four of them. All gifted with love, but all in tatters after just a few washes.<br\/><br\/>I realised parents deserved better: something softer, safer, and far more lasting. Fabrics that cared for delicate newborn skin and designs that <br\/>felt truly unique.<br\/><br\/>So I set out to create treasures families could keep. And fittingly, our very first collection arrived the same week as my third child, a story stitched with love from the start.<\/p>",
         "name": "– roshni khemlani mehta",
         "section_width": "page-width",
         "color_scheme": "scheme-9fa4efbe-6bfc-4f4c-8255-10dd25c96a2e",
@@ -2536,10 +2527,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify://shop_images/Union.svg",
+            "image_upload": "shopify:\/\/shop_images\/Union.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>COMPLIMENTARY<br/>PERSONALISATION</p>",
+            "heading": "<p>COMPLIMENTARY<br\/>PERSONALISATION<\/p>",
             "sub_heading": "on all items",
             "alignment": "vertical",
             "gap": 8
@@ -2550,10 +2541,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify://shop_images/Delivery-Truck-Clock--Streamline-Ultimate.svg",
+            "image_upload": "shopify:\/\/shop_images\/Delivery-Truck-Clock--Streamline-Ultimate.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>SAME DAY DELIVERY<br/>IN DUBAI</p>",
+            "heading": "<p>SAME DAY DELIVERY<br\/>IN DUBAI<\/p>",
             "sub_heading": "till 12pm",
             "alignment": "vertical",
             "gap": 8
@@ -2564,10 +2555,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify://shop_images/Gift-Card--Streamline-Tabler.png",
+            "image_upload": "shopify:\/\/shop_images\/Gift-Card--Streamline-Tabler.png",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>COMPLIMENTARY<br/>PACKAGING</p>",
+            "heading": "<p>COMPLIMENTARY<br\/>PACKAGING<\/p>",
             "sub_heading": "with gift sets",
             "alignment": "vertical",
             "gap": 8
@@ -2578,10 +2569,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify://shop_images/Vector_1.svg",
+            "image_upload": "shopify:\/\/shop_images\/Vector_1.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>WORLDWIDE<br/>EXPRESS SHIPPING</p>",
+            "heading": "<p>WORLDWIDE<br\/>EXPRESS SHIPPING<\/p>",
             "sub_heading": "5 to 7 working days",
             "alignment": "vertical",
             "gap": 8

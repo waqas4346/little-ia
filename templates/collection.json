@@ -1,12 +1,3 @@
-/*
- * ------------------------------------------------------------
- * IMPORTANT: The contents of this file are auto-generated.
- *
- * This file may be updated by the Shopify admin theme editor
- * or related systems. Please exercise caution as any changes
- * made to this file may be overwritten.
- * ------------------------------------------------------------
- */
 {
   "sections": {
     "section": {
@@ -16,7 +7,7 @@
           "type": "text",
           "name": "Title",
           "settings": {
-            "text": "<h1>{{ closest.collection.title }}</h1>",
+            "text": "<h1>{{ closest.collection.title }}<\/h1>",
             "width": "fit-content",
             "max_width": "normal",
             "alignment": "left",
@@ -287,10 +278,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify://shop_images/Union.svg",
+            "image_upload": "shopify:\/\/shop_images\/Union.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>COMPLIMENTARY<br/>PERSONALISATION</p>",
+            "heading": "<p>COMPLIMENTARY<br\/>PERSONALISATION<\/p>",
             "sub_heading": "on all items",
             "alignment": "vertical",
             "gap": 8
@@ -301,10 +292,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify://shop_images/Delivery-Truck-Clock--Streamline-Ultimate.svg",
+            "image_upload": "shopify:\/\/shop_images\/Delivery-Truck-Clock--Streamline-Ultimate.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>SAME DAY DELIVERY<br/>IN DUBAI</p>",
+            "heading": "<p>SAME DAY DELIVERY<br\/>IN DUBAI<\/p>",
             "sub_heading": "till 12pm",
             "alignment": "vertical",
             "gap": 8
@@ -315,10 +306,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify://shop_images/Gift-Card--Streamline-Tabler.svg",
+            "image_upload": "shopify:\/\/shop_images\/Gift-Card--Streamline-Tabler.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>COMPLIMENTARY<br/>PACKAGING</p>",
+            "heading": "<p>COMPLIMENTARY<br\/>PACKAGING<\/p>",
             "sub_heading": "with gift sets",
             "alignment": "vertical",
             "gap": 8
@@ -329,10 +320,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify://shop_images/Vector_1.svg",
+            "image_upload": "shopify:\/\/shop_images\/Vector_1.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>WORLDWIDE<br/>EXPRESS SHIPPING</p>",
+            "heading": "<p>WORLDWIDE<br\/>EXPRESS SHIPPING<\/p>",
             "sub_heading": "5 to 7 working days",
             "alignment": "vertical",
             "gap": 8
