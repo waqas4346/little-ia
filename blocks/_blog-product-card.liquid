@@ -100,8 +100,12 @@
               assign has_multiple_variants = true
             endif
             
-            # Always show "Quick Add" button that opens the popup, even for single-variant products
-            assign quick_add_button = 'choose'
+            # Set button type: 'add' for single variant, 'choose' for multiple variants
+            if has_multiple_variants
+              assign quick_add_button = 'choose'
+            else
+              assign quick_add_button = 'add'
+            endif
           -%}
           <div class="blog-product-card__price">
             <span class="blog-product-card__price-current">{{ price_formatted }}</span>
@@ -299,6 +303,16 @@
   .blog-product-card__quick-add {
     position: static;
     pointer-events: all;
+  }
+
+  /* Ensure Add button is visible for single-variant products */
+  .blog-product-card .blog-product-card__quick-add[data-quick-add-button='add'] add-to-cart-component {
+    display: block !important;
+  }
+
+  /* Ensure View button is visible for multi-variant products */
+  .blog-product-card .blog-product-card__quick-add[data-quick-add-button='choose'] .blog-product-card__button--view {
+    display: inline-block !important;
   }
 
   .blog-product-card__button {
