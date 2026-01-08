@@ -121,7 +121,7 @@
 
             <div class="personalise-modal__field">
               <label for="personalise-name" class="personalise-modal__label">
-                Enter the Name or Initials (Free) <span style="color: red;">*</span>
+                Name (Free Personlisation) 
               </label>
               <div class="personalise-modal__input-wrapper">
                 <input
@@ -413,14 +413,28 @@
 
 {% stylesheet %}
   .personalise-modal {
-    padding: 0;
+    padding: 20px;
     border: var(--style-border-popover);
     max-width: 90vw;
-    width: 1000px;
+    width: 79.86vw; /* 1150px at 1440px screen size */
     max-height: 90vh;
     overflow: hidden;
     box-shadow: 0 5px 30px rgb(0 0 0 / var(--opacity-15));
     background-color: var(--color-background);
+  }
+
+  /* At 1440px screen size, modal should be exactly 1150px */
+  @media screen and (min-width: 1440px) {
+    .personalise-modal {
+      width: 1150px;
+    }
+  }
+
+  /* Scale down proportionally for smaller screens */
+  @media screen and (max-width: 1439px) {
+    .personalise-modal {
+      width: 79.86vw;
+    }
   }
 
   .personalise-modal[open] {
@@ -450,18 +464,25 @@
     height: 100%;
     min-height: 500px;
     overflow: hidden;
+    padding: 0;
   }
 
-  /* Left Section: Preview (40%) */
+  /* Left Section: Preview */
   .personalise-modal__preview {
-    flex: 0 0 40%;
+    flex: 0 0 45.65%; /* 525px / 1150px = 45.65% for proportional scaling */
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--color-background-secondary);
-    padding: var(--padding-xl);
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
     position: relative;
     overflow: hidden;
+  }
+
+  /* At 1150px modal width, preview should be exactly 525px */
+  @media screen and (min-width: 1440px) {
+    .personalise-modal__preview {
+      flex: 0 0 525px;
+    }
   }
 
   .personalise-modal__preview-image {
@@ -479,22 +500,35 @@
     color: rgb(var(--color-foreground-rgb) / var(--opacity-50));
   }
 
-  /* Right Section: Form (60%) */
+  /* Right Section: Form */
   .personalise-modal__form {
-    flex: 0 0 60%;
+    flex: 0 0 46.09%; /* 530px / 1150px = 46.09% for proportional scaling */
     display: flex;
     flex-direction: column;
-    padding: var(--padding-4xl) var(--padding-3xl);
+    padding-left: 20px; 
     overflow-y: auto;
+  }
+
+  /* At 1150px modal width, form should be exactly 530px */
+  @media screen and (min-width: 1440px) {
+    .personalise-modal__form {
+      flex: 0 0 530px;
+    }
   }
 
   .personalise-modal__title {
     display: flex;
     align-items: center;
-    gap: var(--gap-sm);
-    font-size: var(--font-size--xl);
-    font-weight: 600;
-    margin-block-end: var(--margin-xs);
+    gap: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 156%;
+    text-align: center;
+    text-transform: capitalize;
+    color: #1D425A;
+    margin: 0;
   }
 
   .personalise-modal__title-icon {
@@ -505,21 +539,30 @@
   }
 
   .personalise-modal__instructions {
-    font-size: var(--font-size--sm);
-    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
-    margin-block-end: var(--margin-lg);
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 156%;
+    color: #777777;
+    margin: 0;
+    margin-top: 6px;
   }
 
   .personalise-modal__field {
-    margin-block-end: var(--margin-xl);
+    /* margin-block-end: var(--margin-xl); */
+    margin-top: 25px;
   }
 
   .personalise-modal__label {
     display: block;
-    font-size: var(--font-size--base);
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
     font-weight: 500;
+    font-size: 16px;
+    line-height: 156%;
+    color: #1D425A;
     margin-block-end: var(--margin-sm);
-    color: var(--color-foreground);
   }
 
   .personalise-modal__input-wrapper {

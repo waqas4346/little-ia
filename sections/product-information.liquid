@@ -106,7 +106,7 @@
               </svg>
 
             </span>
-            <span class="personalise-button__text">PERSONALISE IT</span>
+            <span class="personalise-button__text" data-personalise-text>PERSONALISE IT</span>
           </button>
 
           <button
@@ -211,6 +211,37 @@
       setTimeout(function() {
         document.addEventListener('click', openPersonaliseModal, true);
       }, 200);
+    }
+    
+    // Function to update button text based on personalization state
+    function updatePersonaliseButtonText() {
+      const productId = document.querySelector('product-form-component')?.dataset?.productId || 
+                        document.querySelector('sticky-add-to-cart')?.dataset?.productId;
+      if (!productId) return;
+      
+      const savedPersonalisation = localStorage.getItem(`personalisation_${productId}`);
+      const buttons = document.querySelectorAll('[data-personalise-button]');
+      
+      buttons.forEach(button => {
+        const textSpan = button.querySelector('[data-personalise-text]');
+        if (textSpan) {
+          if (savedPersonalisation) {
+            textSpan.textContent = 'EDIT';
+          } else {
+            textSpan.textContent = 'PERSONALISE IT';
+          }
+        }
+      });
+    }
+    
+    // Listen for personalisation-saved event to update button
+    document.addEventListener('personalisation-saved', updatePersonaliseButtonText);
+    
+    // Update button text on page load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', updatePersonaliseButtonText);
+    } else {
+      setTimeout(updatePersonaliseButtonText, 300);
     }
   })();
 </script>
