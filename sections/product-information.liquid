@@ -94,6 +94,8 @@
             class="sticky-add-to-cart__personalise-button personalise-button button-unstyled"
             data-personalise-button
           >
+            <span class="personalise-button__summary" data-personalise-summary style="display: none;"></span>
+            <div class="icon-tex-container"> 
             <span class="personalise-button__icon">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <rect width="18" height="18" fill="url(#pattern0_860_35083)"/>
@@ -107,7 +109,20 @@
 
             </span>
             <span class="personalise-button__text" data-personalise-text>PERSONALISE IT</span>
+           </div>
           </button>
+          
+          {%- comment -%} Personalisation Confirmation Checkbox {%- endcomment -%}
+          <div class="personalise-confirmation" data-personalise-confirmation style="display: none;">
+            <label class="personalise-confirmation__label">
+              <input 
+                type="checkbox" 
+                class="personalise-confirmation__checkbox"
+                data-personalise-confirm-checkbox
+              >
+              <span class="personalise-confirmation__text" data-personalise-confirm-text></span>
+            </label>
+          </div>
 
           <button
             type="button"
@@ -212,38 +227,233 @@
         document.addEventListener('click', openPersonaliseModal, true);
       }, 200);
     }
-    
-    // Function to update button text based on personalization state
-    function updatePersonaliseButtonText() {
-      const productId = document.querySelector('product-form-component')?.dataset?.productId || 
-                        document.querySelector('sticky-add-to-cart')?.dataset?.productId;
-      if (!productId) return;
-      
-      const savedPersonalisation = localStorage.getItem(`personalisation_${productId}`);
-      const buttons = document.querySelectorAll('[data-personalise-button]');
-      
-      buttons.forEach(button => {
-        const textSpan = button.querySelector('[data-personalise-text]');
-        if (textSpan) {
-          if (savedPersonalisation) {
-            textSpan.textContent = 'EDIT';
-          } else {
-            textSpan.textContent = 'PERSONALISE IT';
+  })();
+</script>
+
+<script>
+  // Function to update button text based on personalization state
+  // Only define once to avoid conflicts
+  if (!window.updatePersonaliseButtonText) {
+    window.updatePersonaliseButtonText = function() {
+      try {
+        // Try multiple ways to get product ID
+        let productId = document.querySelector('product-form-component')?.dataset?.productId;
+        if (!productId) {
+          productId = document.querySelector('sticky-add-to-cart')?.dataset?.productId;
+        }
+        if (!productId) {
+          // Try to get from the button's closest product-form-component
+          const button = document.querySelector('[data-personalise-button]');
+          if (button) {
+            productId = button.closest('product-form-component')?.dataset?.productId || 
+                        button.closest('sticky-add-to-cart')?.dataset?.productId;
           }
         }
-      });
-    }
+        
+        if (!productId) {
+          console.log('updatePersonaliseButtonText: Product ID not found');
+          return;
+        }
+        
+        // Convert to string to match localStorage key format
+        productId = String(productId);
+        const key = `personalisation_${productId}`;
+        
+        // Check all localStorage keys that start with 'personalisation_' for debugging
+        const allKeys = Object.keys(localStorage).filter(k => k.startsWith('personalisation_'));
+        console.log('All personalisation keys in localStorage:', allKeys);
+        console.log('Looking for key:', key);
+        
+        const savedPersonalisation = localStorage.getItem(key);
+        console.log('Found personalisation:', savedPersonalisation ? 'YES' : 'NO', savedPersonalisation);
+        
+        const buttons = document.querySelectorAll('[data-personalise-button]');
+        console.log('Found buttons:', buttons.length);
+        
+        buttons.forEach(button => {
+          const textSpan = button.querySelector('[data-personalise-text]');
+          const summarySpan = button.querySelector('[data-personalise-summary]');
+          
+          // Find the confirmation checkbox container
+          // Try multiple methods to find it
+          let confirmationContainer = button.nextElementSibling;
+          if (!confirmationContainer || !confirmationContainer.classList?.contains('personalise-confirmation')) {
+            // Try finding in the same parent
+            confirmationContainer = button.parentElement?.querySelector('[data-personalise-confirmation]');
+          }
+          if (!confirmationContainer) {
+            // Try finding in the sticky add to cart container
+            const stickyContainer = button.closest('.sticky-add-to-cart__bar');
+            if (stickyContainer) {
+              confirmationContainer = stickyContainer.querySelector('[data-personalise-confirmation]');
+            }
+          }
+          console.log('Confirmation container found:', confirmationContainer ? 'YES' : 'NO');
+          
+          if (textSpan) {
+            if (savedPersonalisation) {
+              try {
+                const personalisation = JSON.parse(savedPersonalisation);
+                
+                // Format the summary: "Personalised: {name} | {date} ({color})"
+                const parts = [];
+                if (personalisation.name) {
+                  parts.push(personalisation.name);
+                }
+                if (personalisation.optionalDob) {
+                  parts.push(personalisation.optionalDob);
+                }
+                const colorText = personalisation.color || '';
+                
+                let summaryText = 'Personalised:';
+                if (parts.length > 0) {
+                  summaryText += ' ' + parts.join(' | ');
+                }
+                if (colorText) {
+                  summaryText += ' (' + colorText + ')';
+                }
+                
+                // Show summary and update text
+                if (summarySpan) {
+                  summarySpan.textContent = summaryText;
+                  summarySpan.style.display = '';
+                  button.classList.add('has-summary');
+                }
+                textSpan.textContent = 'EDIT';
+                
+                // Show and update confirmation checkbox
+                if (confirmationContainer) {
+                  const confirmTextSpan = confirmationContainer.querySelector('[data-personalise-confirm-text]');
+                  if (confirmTextSpan) {
+                    // Build dynamic label based on available fields
+                    const fields = [];
+                    if (personalisation.name) {
+                      fields.push('name');
+                    }
+                    if (personalisation.color) {
+                      fields.push('colour');
+                    }
+                    if (personalisation.font) {
+                      fields.push('font');
+                    }
+                    
+                    let labelText = 'I confirm that the personalisation';
+                    if (fields.length > 0) {
+                      if (fields.length === 1) {
+                        labelText += ' (' + fields[0] + ')';
+                      } else if (fields.length === 2) {
+                        labelText += ' (' + fields[0] + ' and ' + fields[1] + ')';
+                      } else {
+                        labelText += ' (' + fields.slice(0, -1).join(', ') + ', and ' + fields[fields.length - 1] + ')';
+                      }
+                    }
+                    labelText += ' is correct.';
+                    confirmTextSpan.innerHTML = labelText + '<br>No changes can be made once it is confirmed.';
+                  }
+                  confirmationContainer.style.display = 'block';
+                  console.log('Confirmation container displayed');
+                } else {
+                  console.log('Confirmation container not found for button');
+                }
+                
+                console.log('Updated button to show summary and EDIT');
+              } catch (e) {
+                console.error('Error parsing personalisation:', e);
+                // Fallback: just show EDIT
+                if (summarySpan) {
+                  summarySpan.style.display = 'none';
+                  button.classList.remove('has-summary');
+                }
+                textSpan.textContent = 'EDIT';
+                if (confirmationContainer) {
+                  confirmationContainer.style.display = 'none';
+                }
+              }
+            } else {
+              // Hide summary and show PERSONALISE IT
+              if (summarySpan) {
+                summarySpan.style.display = 'none';
+                button.classList.remove('has-summary');
+              }
+              textSpan.textContent = 'PERSONALISE IT';
+              if (confirmationContainer) {
+                confirmationContainer.style.display = 'none';
+              }
+              console.log('Updated button to PERSONALISE IT');
+            }
+          } else {
+            console.log('Text span not found in button');
+          }
+        });
+      } catch (error) {
+        console.error('Error updating personalise button text:', error);
+      }
+    };
+  }
+  
+  // Listen for personalisation-saved event to update button
+  function handlePersonalisationSaved() {
+    setTimeout(function() {
+      if (window.updatePersonaliseButtonText) {
+        window.updatePersonaliseButtonText();
+      }
+    }, 100);
+  }
+  
+  // Set up event listeners
+  try {
+    document.addEventListener('personalisation-saved', handlePersonalisationSaved);
     
-    // Listen for personalisation-saved event to update button
-    document.addEventListener('personalisation-saved', updatePersonaliseButtonText);
+    // Also try to listen on the dialog element directly (wait for it to be available)
+    function setupDialogListener() {
+      try {
+        const dialog = document.querySelector('personalise-dialog');
+        if (dialog) {
+          dialog.addEventListener('personalisation-saved', handlePersonalisationSaved);
+        } else {
+          // Try again after a short delay (max 10 attempts)
+          if (setupDialogListener.attempts < 10) {
+            setupDialogListener.attempts = (setupDialogListener.attempts || 0) + 1;
+            setTimeout(setupDialogListener, 200);
+          }
+        }
+      } catch (error) {
+        console.error('Error setting up dialog listener:', error);
+      }
+    }
+    setupDialogListener.attempts = 0;
+    setupDialogListener();
+    
+    // Also listen for storage changes (in case localStorage is updated)
+    window.addEventListener('storage', function(e) {
+      if (e.key && e.key.startsWith('personalisation_')) {
+        if (window.updatePersonaliseButtonText) {
+          window.updatePersonaliseButtonText();
+        }
+      }
+    });
     
     // Update button text on page load
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', updatePersonaliseButtonText);
-    } else {
-      setTimeout(updatePersonaliseButtonText, 300);
+    function initButtonText() {
+      try {
+        if (window.updatePersonaliseButtonText) {
+          window.updatePersonaliseButtonText();
+        }
+      } catch (error) {
+        console.error('Error initializing button text:', error);
+      }
     }
-  })();
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(initButtonText, 500);
+      });
+    } else {
+      setTimeout(initButtonText, 500);
+    }
+  } catch (error) {
+    console.error('Error setting up personalise button listeners:', error);
+  }
 </script>
 
 {% render 'product-information-content',
@@ -419,6 +629,18 @@
     white-space: nowrap;
     height: var(--height-buy-buttons);
   }
+  
+  /* When summary is visible, space between left and right */
+  .sticky-add-to-cart__personalise-button.has-summary {
+    justify-content: space-between;
+  }
+  
+  .sticky-add-to-cart__personalise-button .icon-tex-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
 
   .sticky-add-to-cart__personalise-button:hover {
     background-color: transparent;
@@ -442,6 +664,69 @@
 
   .sticky-add-to-cart__personalise-button .personalise-button__text {
     line-height: 1;
+  }
+
+  .sticky-add-to-cart__personalise-button .personalise-button__summary {
+    display: inline-block;
+    margin-right: var(--margin-sm);
+    flex-shrink: 0;
+    color: #1D425A;
+    font-size: var(--font-size--sm);
+    font-weight: 400;
+    line-height: 1.4;
+    text-transform: none;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Personalisation Confirmation Checkbox */
+  .sticky-add-to-cart .personalise-confirmation {
+    margin-top: var(--margin-md);
+    width: 100%;
+  }
+
+  .sticky-add-to-cart .personalise-confirmation__label {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--gap-sm);
+    cursor: pointer;
+  }
+
+  .sticky-add-to-cart .personalise-confirmation__checkbox {
+    margin: 0;
+    margin-block-start: 2px;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    border: 1.5px solid #7295BB !important;
+    border-radius: 0px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #FFFFFF;
+    box-sizing: border-box;
+  }
+
+  .sticky-add-to-cart .personalise-confirmation__checkbox:checked {
+    background-color: #7295BB;
+    border-color: #7295BB !important;
+    background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.3333 4L6 11.3333L2.66667 8' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 14px 14px;
+  }
+
+  .sticky-add-to-cart .personalise-confirmation__text {
+    flex: 1;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 140%;
+    color: #1D425A;
   }
 
   /* Mobile adjustments */

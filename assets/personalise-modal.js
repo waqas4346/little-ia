@@ -40,7 +40,9 @@ export class PersonaliseDialogComponent extends DialogComponent {
   loadSavedPersonalisation() {
     const productId = this.closest('product-form-component')?.dataset?.productId;
     if (productId) {
-      const saved = localStorage.getItem(`personalisation_${productId}`);
+      // Ensure productId is a string to match localStorage key
+      const key = `personalisation_${String(productId)}`;
+      const saved = localStorage.getItem(key);
       if (saved) {
         try {
           const data = JSON.parse(saved);
@@ -220,6 +222,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
    */
   savePersonalisation = (event) => {
     event.preventDefault();
+    console.log('savePersonalisation called');
     
     // Collect all field values
     const nameInput = this.refs.nameInput || this.querySelector('#personalise-name');
@@ -227,6 +230,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Validate required fields (name is required for personalized_name products)
     if (nameInput && !name) {
+      console.log('Validation failed: name is required');
       return;
     }
 
@@ -290,9 +294,42 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (weightInput) personalisation.weight = weightInput.value.trim();
 
     // Store in localStorage with product ID as key
-    const productId = this.closest('product-form-component')?.dataset?.productId;
+    let productId = this.closest('product-form-component')?.dataset?.productId;
+    
+    // If not found, try to get from sticky-add-to-cart
+    if (!productId) {
+      productId = document.querySelector('sticky-add-to-cart')?.dataset?.productId;
+    }
+    
+    // If still not found, try to get from the form
+    if (!productId) {
+      const form = document.querySelector('form[data-type="add-to-cart-form"]');
+      if (form) {
+        const formComponent = form.closest('product-form-component');
+        productId = formComponent?.dataset?.productId;
+      }
+    }
+    
     if (productId) {
-      localStorage.setItem(`personalisation_${productId}`, JSON.stringify(personalisation));
+      // Ensure productId is a string to match localStorage key format
+      productId = String(productId);
+      const key = `personalisation_${productId}`;
+      
+      console.log('Saving personalisation:', { productId, key, personalisation });
+      localStorage.setItem(key, JSON.stringify(personalisation));
+      
+      // Verify it was saved
+      const saved = localStorage.getItem(key);
+      console.log('Verification - saved to localStorage:', saved ? 'SUCCESS' : 'FAILED');
+      
+      // Trigger update of button text
+      setTimeout(() => {
+        if (typeof window.updatePersonaliseButtonText === 'function') {
+          window.updatePersonaliseButtonText();
+        }
+      }, 100);
+    } else {
+      console.error('Product ID not found when saving personalisation');
     }
 
     // Also store globally for the current product
@@ -304,12 +341,23 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Dispatch custom event for other components to listen to
     const customEvent = new CustomEvent('personalisation-saved', {
       detail: personalisation,
-      bubbles: true
+      bubbles: true,
+      cancelable: true
     });
     this.dispatchEvent(customEvent);
+    
+    // Also dispatch on document to ensure it's caught
+    document.dispatchEvent(customEvent);
 
     // Close the dialog
     this.closeDialog();
+    
+    // Update buttons after a short delay to ensure localStorage is set and DOM is updated
+    setTimeout(() => {
+      if (typeof window.updatePersonaliseButtonText === 'function') {
+        window.updatePersonaliseButtonText();
+      }
+    }, 300);
   };
 
   /**
