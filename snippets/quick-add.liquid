@@ -150,6 +150,12 @@
     pointer-events: none;
   }
 
+  /* Hide quick add on hover when View Product button setting is enabled */
+  product-card[data-view-product-button-enabled="true"]:is(:hover, :focus-within) .quick-add__button {
+    opacity: 0;
+    pointer-events: none;
+  }
+
   .quick-add__button {
     display: var(--quick-add-mobile-display, none);
     align-items: center;

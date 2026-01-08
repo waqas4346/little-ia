@@ -72,6 +72,19 @@
   {% if template.name == 'collection' %}
     data-collection-page="true"
   {% endif %}
+  {% liquid
+    assign show_view_product = false
+    if block_settings.show_view_product_button == true or block_settings.show_view_product_button == 'true'
+      assign show_view_product = true
+    endif
+  %}
+  {% if show_view_product %}
+    data-view-product-button-enabled="true"
+    data-view-product-button-setting="true"
+  {% else %}
+    data-view-product-button-enabled="false"
+    data-view-product-button-setting="false"
+  {% endif %}
   {{ block.shopify_attributes }}
   {% if onboarding %}
     data-placeholder="true"
@@ -105,9 +118,9 @@
       {% render 'layout-panel-style', settings: block_settings %}
       {% render 'spacing-style', settings: block_settings %}
       {% render 'gap-style', value: product_card_gap_value, name: 'product-card-gap' %}
-      --quick-add-display: {% if has_quick_add %}flex{% else %}none{% endif %};
-      --quick-add-mobile-display: {% if has_mobile_quick_add %}flex{% else %}none{% endif %};
-      --quick-add-mobile-opacity: {% if has_mobile_quick_add %}1{% else %}0{% endif %};
+      --quick-add-display: {% if has_quick_add and block_settings.show_view_product_button == false %}flex{% else %}none{% endif %};
+      --quick-add-mobile-display: {% if has_mobile_quick_add and block_settings.show_view_product_button == false %}flex{% else %}none{% endif %};
+      --quick-add-mobile-opacity: {% if has_mobile_quick_add and block_settings.show_view_product_button == false %}1{% else %}0{% endif %};
       {% if block_settings.padding-inline-start > 0 %}--zoom-out-padding-inline-start: min(var(--padding-xs), {{ block_settings.padding-inline-start | times: 0.7}}px);{% endif %}
       {% if block_settings.padding-inline-end > 0 %}--zoom-out-padding-inline-end: min(var(--padding-xs), {{ block_settings.padding-inline-end | times: 0.7}}px);{% endif %}
       {% if block_settings.padding-block-start > 0 %}--zoom-out-padding-block-start: min(var(--padding-xs), {{ block_settings.padding-block-start | times: 0.7}}px);{% endif %}

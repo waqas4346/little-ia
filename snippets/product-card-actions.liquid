@@ -1,0 +1,287 @@
+{%- doc -%}
+  Renders product card actions (View Product button + Quick Add icon).
+  This snippet is used to show a unified View Product button and + icon across all product card sections.
+
+  @param {object} product - The product object
+  @param {string} section_id - The section ID
+  @param {object} [block] - The block object
+  @param {string} [classes] - Additional CSS classes
+{%- enddoc -%}
+
+{% liquid
+  assign has_quick_add = false
+  if settings.quick_add and product.available
+    assign has_quick_add = true
+  endif
+
+  assign variant = product.selected_or_first_available_variant
+  if block.id != blank
+    assign product_form_id = 'ProductCardActions-ProductForm-' | append: product.id | append: '-' | append: block.id
+  else
+    assign product_form_id = 'ProductCardActions-ProductForm-' | append: product.id | append: '-' | append: section_id
+  endif
+  assign quick_add_button = 'choose'
+  
+  assign container_classes = 'product-card-actions'
+  if classes != blank
+    assign container_classes = container_classes | append: ' ' | append: classes
+  endif
+%}
+
+{% comment %}
+  Always render the component - CSS will show/hide it based on the parent product-card's
+  data-view-product-button-setting attribute. This allows the setting on the product-card
+  block to control visibility.
+  
+  Note: Component requires quick add to be enabled globally to function properly.
+  If quick add is disabled, the component won't render (as it needs quick add functionality).
+{% endcomment %}
+{% if has_quick_add and product != blank %}
+  <div class="{{ container_classes }}" onclick="event.stopPropagation();">
+    <a 
+      href="{{ variant.url | default: product.url }}" 
+      class="product-card-actions__view-product-button"
+      onclick="event.stopPropagation();"
+    >
+      VIEW PRODUCT
+    </a>
+    <div onclick="event.stopPropagation();" class="product-card-actions__quick-add-wrapper">
+      <quick-add-component
+        class="quick-add product-card-actions__quick-add"
+        ref="quickAdd"
+        data-product-title="{{ product.title }}"
+        data-quick-add-button="{{ quick_add_button }}"
+        data-product-options-count="{{ product.options.size }}"
+      >
+        <product-form-component
+          data-section-id="{{ section_id }}"
+          data-product-id="{{ product.id }}"
+          on:submit="/handleSubmit"
+          class="quick-add__product-form-component"
+        >
+          {%- form 'product', product, id: product_form_id, novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+            <input
+              type="hidden"
+              name="id"
+              ref="variantId"
+              value="{{ variant.id }}"
+              {% if variant.available == false %}
+                disabled
+              {% endif %}
+            >
+            <input
+              type="hidden"
+              name="quantity"
+              value="{% if variant.quantity_rule.min %}{{ variant.quantity_rule.min }}{% else %}1{% endif %}"
+            >
+            <button
+              class="button product-card-actions__quick-add-button"
+              type="button"
+              name="add"
+              on:click="quick-add-component/handleClick"
+              onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();"
+              data-quick-add-trigger="true"
+              data-no-navigation="true"
+            >
+              <span class="product-card-actions__quick-add-plus">+</span>
+            </button>
+          {%- endform -%}
+        </product-form-component>
+      </quick-add-component>
+    </div>
+  </div>
+{% endif %}
+
+{% stylesheet %}
+  /* Unified Product Card Actions */
+  .product-card-actions {
+    display: none !important; /* Hidden by default */
+    align-items: center !important;
+    gap: 5px !important;
+    margin-top: 12px;
+    position: relative;
+    z-index: 10;
+    width: 100%;
+  }
+
+  /* Show when parent product-card has the setting enabled */
+  product-card[data-view-product-button-setting="true"] .product-card-actions,
+  product-card[data-view-product-button-setting="true"] product-price .product-card-actions,
+  [data-view-product-button-setting="true"] .product-card-actions {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Ensure it's hidden when setting is false */
+  product-card[data-view-product-button-setting="false"] .product-card-actions,
+  product-card[data-view-product-button-setting="false"] product-price .product-card-actions,
+  [data-view-product-button-setting="false"] .product-card-actions {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .product-card-actions__view-product-button {
+    background: #7295BB;
+    border: 1px solid #7295BB;
+    flex: 1;
+    padding: 10px 10px;
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease, border 0.2s ease;
+  }
+
+  .product-card-actions__view-product-button:hover {
+    background: white;
+    border: 1px solid #7295BB;
+    color: #7295BB;
+  }
+
+  .product-card-actions__quick-add-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    position: relative !important;
+    width: 32px;
+    height: 32px;
+  }
+
+  .product-card-actions__quick-add {
+    position: relative !important;
+    inset: unset !important;
+    top: unset !important;
+    right: unset !important;
+    bottom: unset !important;
+    left: unset !important;
+    width: auto !important;
+    height: auto !important;
+    pointer-events: all;
+    z-index: auto !important;
+  }
+
+  /* Hide "Add" button, only show "Choose" button (+) */
+  .product-card-actions__quick-add .quick-add__button--add {
+    display: none !important;
+  }
+
+  .product-card-actions__quick-add .quick-add__button--choose {
+    display: flex !important;
+    position: relative !important;
+    right: unset !important;
+    bottom: unset !important;
+    left: unset !important;
+    top: unset !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    margin: 0 !important;
+    transform: none !important;
+    translate: none !important;
+  }
+
+  .product-card-actions__quick-add-button {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    border-radius: 50% !important;
+    border: 1px solid #1D425A !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    transition: opacity 0.2s ease;
+    position: relative !important;
+    z-index: 1 !important;
+    pointer-events: auto !important;
+    flex-shrink: 0 !important;
+    backdrop-filter: none !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  .product-card-actions__quick-add-button:hover {
+    opacity: 0.8;
+  }
+
+  .product-card-actions__quick-add-plus {
+    font-family: 'Geologica', sans-serif;
+    font-style: normal;
+    font-weight: 100;
+    font-size: 19.5279px;
+    line-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #1D425A;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    top: -1px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-card-actions__view-product-button {
+      padding: 14px 20px;
+      font-size: 16px;
+      line-height: 140%;
+    }
+
+    .product-card-actions__quick-add-button {
+      border: 1px solid #7295BB !important;
+    }
+    
+    .product-card-actions__quick-add-plus {
+      font-size: 29.4042px;
+      line-height: 37px;
+      color: #7295BB;
+      top: -2px;
+    }
+  }
+
+  .product-card-actions__quick-add .quick-add__product-form-component {
+    position: relative !important;
+    height: auto !important;
+  }
+
+  .product-card-actions__quick-add .quick-add__product-form-component .shopify-product-form {
+    position: relative !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    height: auto !important;
+    width: auto !important;
+  }
+
+  .product-card-actions__quick-add .quick-add__button {
+    position: relative !important;
+    right: unset !important;
+    bottom: unset !important;
+    left: unset !important;
+    top: unset !important;
+    margin: 0 !important;
+    transform: none !important;
+    translate: none !important;
+  }
+{% endstylesheet %}
+
