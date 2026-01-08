@@ -22,8 +22,15 @@
 {% stylesheet %}
   @media screen and (min-width: 750px) {
     .quick-add-modal {
-      width: var(--wide-content-width);
-      max-width: none;
+      width: 90%;
+      max-width: 1000px;
+    }
+  }
+
+  @media screen and (min-width: 1400px) {
+    .quick-add-modal {
+      width: 1200px;
+      max-width: 1200px;
     }
   }
 
