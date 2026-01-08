@@ -1,0 +1,191 @@
+{%- doc -%}
+  Product Bullet Points Block
+  
+  Displays the product bullet points from the CB - Bullet metafield.
+  This block can be added to the product information section after the price block.
+{%- enddoc -%}
+
+{% liquid
+  assign product_resource = closest.product
+  assign block_settings = block.settings
+  
+  # Get bullet points from CB - Bullet metafield
+  assign bullet_points = blank
+  if product_resource != blank
+    # Access metafield: custom.bullet (metaobject: CB - Product bullets, field: Bullet Points)
+    assign bullet_metafield = product_resource.metafields.custom.bullet
+    
+    if bullet_metafield != blank
+      # Get the metaobject value (CB - Product bullets)
+      assign bullet_metaobject = bullet_metafield.value
+      
+      if bullet_metaobject != blank
+        # Get the Bullet Points list from the metaobject
+        # Field name is "Bullet Points" - try different access methods
+        assign bullet_points = bullet_metaobject.bullet_points.value | default: bullet_metaobject.bullet_points
+        
+        # If still blank, try with brackets
+        if bullet_points == blank
+          assign bullet_points = bullet_metaobject['Bullet Points'].value | default: bullet_metaobject['Bullet Points']
+        endif
+      endif
+    endif
+  endif
+%}
+
+<div 
+  class="product-bullet-points spacing-style{% unless bullet_points != blank and bullet_points.size > 0 %} product-bullet-points--empty{% endunless %}"
+  style="{% render 'spacing-style', settings: block_settings %}"
+  {{ block.shopify_attributes }}
+>
+  {% if bullet_points != blank and bullet_points.size > 0 %}
+    <ul class="product-bullet-points__list">
+      {% for bulletpoint in bullet_points %}
+        <li class="product-bullet-points__item">
+          <span class="product-bullet-points__icon">
+            <img src="{{ 'star-bullet-icon-pink.png' | asset_url }}" alt="" class="product-bullet-points__icon-img">
+          </span>
+          <span class="product-bullet-points__text">
+            {% if bulletpoint.value != blank %}
+              {{ bulletpoint.value }}
+            {% else %}
+              {{ bulletpoint }}
+            {% endif %}
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    {% comment %} Show placeholder in theme editor {% endcomment %}
+    {% if request.visual_preview_mode or request.design_mode %}
+      <div class="product-bullet-points__placeholder" style="padding: 8px; color: #999; font-size: 14px; border: 1px dashed #ccc; border-radius: 4px;">
+        Product Bullet Points (No data - configure in product metafield)
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+
+{% stylesheet %}
+  .product-bullet-points {
+    width: 100%;
+  }
+
+  .product-bullet-points__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-inline-start: 0 !important;
+  }
+
+  .product-bullet-points__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 150%;
+  }
+
+  .product-bullet-points__icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+  }
+
+  .product-bullet-points__icon-img {
+    width: 17px;
+    height: 17px;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .product-bullet-points__text {
+    flex: 1;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-bullet-points__item {
+      gap: 8px;
+    }
+    .product-bullet-points {
+      margin-top: 0;
+    }
+  }
+
+  /* Hide empty bullet points block (but show in design mode) */
+  .product-bullet-points--empty:not(:has(.product-bullet-points__list)):not(:has(.product-bullet-points__placeholder)) {
+    display: none;
+  }
+
+  /* Hide bullet points in product cards and sliders */
+  product-card .product-bullet-points,
+  [data-testid="product-slider-grid"] .product-bullet-points,
+  .product-grid__card .product-bullet-points,
+  .resource-list__item .product-bullet-points {
+    display: none !important;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Product Bullet Points",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Bullet Points"
+    }
+  ]
+}
+{% endschema %}
+
