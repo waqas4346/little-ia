@@ -102,11 +102,16 @@ class StickyAddToCartComponent extends Component {
     const productForm = this.#getProductForm();
     if (!productForm) return;
 
-    const buyButtonsBlock = productForm.closest('.buy-buttons-block');
+    // Try to find buy-buttons-block - it could be a parent of product-form or in the same section
+    let buyButtonsBlock = productForm.closest('.buy-buttons-block');
+    if (!buyButtonsBlock) {
+      // Fallback: search within the same section
+      const sectionElement = this.closest('.shopify-section');
+      if (sectionElement) {
+        buyButtonsBlock = sectionElement.querySelector('.buy-buttons-block');
+      }
+    }
     if (!buyButtonsBlock) return;
-
-    const footer = document.querySelector('footer');
-    if (!footer) return;
 
     // Observer for buy buttons visibility
     this.#buyButtonsIntersectionObserver = new IntersectionObserver((entries) => {
@@ -126,6 +131,9 @@ class StickyAddToCartComponent extends Component {
         this.#hiddenByBottom = false;
         this.#hideStickyBar();
       }
+    }, {
+      rootMargin: '0px',
+      threshold: 0
     });
 
     // Observer for footer visibility - disabled to keep sticky bar visible even when footer appears
@@ -155,6 +163,12 @@ class StickyAddToCartComponent extends Component {
     this.#buyButtonsIntersectionObserver.observe(buyButtonsBlock);
     // this.#mainBottomObserver.observe(footer);
     this.#targetAddToCartButton = productForm.querySelector('[ref="addToCartButton"]');
+
+    // Check initial state - if buy buttons are already out of view, show sticky bar immediately
+    const rect = buyButtonsBlock.getBoundingClientRect();
+    if (rect.bottom < 0 || rect.top < 0) {
+      this.#showStickyBar();
+    }
   }
 
   // Public action handlers
