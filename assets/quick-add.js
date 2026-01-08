@@ -297,6 +297,9 @@ export class QuickAddComponent extends Component {
           this.#ensureCloseButtonHandler(dialogComponent);
         }, 100);
       }
+
+      // Add View Product button to image container
+      this.#addViewProductButton(modalContent);
     });
     
     // Ensure personalise button event listeners work with dynamically loaded content
@@ -419,6 +422,67 @@ export class QuickAddComponent extends Component {
         break;
       }
     }
+  }
+
+  /**
+   * Adds View Product button to the image container
+   * @param {Element} modalContent - The modal content element
+   */
+  #addViewProductButton(modalContent) {
+    if (!modalContent || !this.productPageUrl) return;
+
+    const mediaContainer = modalContent.querySelector('.product-information__media');
+    if (!mediaContainer) return;
+
+    // Check if button already exists
+    let viewProductButton = mediaContainer.querySelector('.quick-add-modal__view-product-button');
+    if (viewProductButton) {
+      // Update href if it exists
+      viewProductButton.href = this.productPageUrl;
+      return;
+    }
+
+    // Create the button
+    viewProductButton = document.createElement('a');
+    viewProductButton.href = this.productPageUrl;
+    viewProductButton.className = 'quick-add-modal__view-product-button';
+    viewProductButton.setAttribute('aria-label', 'View Product');
+
+    // Create icon container
+    const iconContainer = document.createElement('span');
+    iconContainer.className = 'quick-add-modal__view-product-button-icon';
+    
+    // Create eye icon SVG
+    const iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    iconSvg.setAttribute('width', '18');
+    iconSvg.setAttribute('height', '18');
+    iconSvg.setAttribute('viewBox', '0 0 24 24');
+    iconSvg.setAttribute('fill', 'none');
+    iconSvg.setAttribute('stroke', 'currentColor');
+    iconSvg.setAttribute('stroke-width', '2');
+    iconSvg.setAttribute('stroke-linecap', 'round');
+    iconSvg.setAttribute('stroke-linejoin', 'round');
+    
+    const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path1.setAttribute('d', 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z');
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', '12');
+    circle.setAttribute('cy', '12');
+    circle.setAttribute('r', '3');
+    
+    iconSvg.appendChild(path1);
+    iconSvg.appendChild(circle);
+    iconContainer.appendChild(iconSvg);
+
+    // Create text
+    const text = document.createTextNode('View Product');
+
+    // Assemble button
+    viewProductButton.appendChild(iconContainer);
+    viewProductButton.appendChild(text);
+
+    // Add to media container
+    mediaContainer.appendChild(viewProductButton);
   }
 
   /**

@@ -38,6 +38,7 @@
     padding: 0;
     border: var(--style-border-popover);
     height: fit-content;
+    max-height: 90vh;
     overflow: hidden;
     min-height: 500px;
     box-shadow: 0 5px 30px rgb(0 0 0 / var(--opacity-15));
@@ -49,6 +50,7 @@
       min-height: unset;
       max-width: 100%;
       border-radius: 0;
+      max-height: 100vh;
     }
   }
 
@@ -87,17 +89,16 @@
   }
 
   .quick-add-modal__content {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: 100% 1fr;
-    position: relative;
-    overflow-y: auto;
-    max-height: 100vh;
-    flex-grow: 1;
+    display: flex;
+    height: 100%;
+    min-height: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    padding: 0;
 
     @media screen and (max-width: 750px) {
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: auto;
+      flex-direction: column;
+      min-height: unset;
       padding-inline: var(--padding-xl);
       padding-block: var(--padding-xl);
       gap: var(--gap-lg);
@@ -109,8 +110,60 @@
     }
   }
 
+  /* Override product-information__grid to use flex layout in quick add modal */
+  .quick-add-modal__content .product-information__grid {
+    display: flex !important;
+    flex-direction: row;
+    width: 100% !important;
+    height: 100% !important;
+    gap: 0;
+    grid-template-columns: none !important;
+    min-height: 500px;
+  }
+
+  /* Ensure all direct children are visible */
+  .quick-add-modal__content .product-information__grid > * {
+    display: block !important;
+    visibility: visible !important;
+  }
+
   .quick-add-modal__content .media-gallery--grid .media-gallery__grid {
     grid-template-columns: 1fr;
+    display: grid !important;
+  }
+
+  /* For grid layout, ensure first image is visible */
+  .quick-add-modal__content .product-information__media .media-gallery--grid .product-media-container:first-child {
+    display: grid !important;
+    width: 100% !important;
+    height: 100% !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .quick-add-modal__content .product-information__media .media-gallery--grid .product-media-container:first-child .product-media,
+  .quick-add-modal__content .product-information__media .media-gallery--grid .product-media-container:first-child img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Hide all media containers except the first one in quick add modal */
+  .quick-add-modal__content .product-information__media .product-media-container:not(:first-child) {
+    display: none !important;
+  }
+
+  /* Ensure first media container is visible */
+  .quick-add-modal__content .product-information__media .product-media-container:first-child {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    align-items: center;
+    justify-content: center;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .quick-add-modal__content .media-gallery--grid.media-gallery--two-column .product-media-container:first-child {
@@ -148,6 +201,11 @@
   }
 
   .quick-add-modal__content .product-header {
+    /* Hide product-header on desktop - only show on mobile */
+    @media screen and (min-width: 750px) {
+      display: none !important;
+    }
+
     @media screen and (max-width: 750px) {
       display: flex;
       flex-direction: column;
@@ -178,25 +236,38 @@
   }
 
   .quick-add-modal__content .product-details {
-    grid-column: 4 / -1;
-    grid-row: 1 / span 2;
-    display: flex;
+    flex: 0 0 46.09% !important; /* Similar to personalisation modal */
+    display: flex !important;
     flex-direction: column;
     justify-content: stretch;
     height: 100%;
     min-height: 0;
     overflow-y: auto;
+    padding-left: 20px;
+    order: 1 !important;
+    width: 46.09% !important;
+    max-width: 46.09% !important;
+    visibility: visible !important;
 
     dialog[open] & {
       animation: fadeSlideIn 0.3s var(--animation-timing-fade-in) both;
       animation-delay: 0.1s;
     }
 
+    @media screen and (min-width: 1400px) {
+      flex: 0 0 530px !important;
+      width: 530px !important;
+      max-width: 530px !important;
+    }
+
     @media screen and (max-width: 750px) {
-      grid-column: 2 / span 2;
-      grid-row: span 1;
+      flex: 1 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: var(--padding-xl);
       max-height: 100%;
       height: 100%;
+      order: 1 !important;
     }
   }
 
@@ -231,7 +302,7 @@
   }
 
   .quick-add-modal__content:not(:has(.product-information__media)) .product-details {
-    grid-column: 1 / -1;
+    flex: 1 1 100%;
   }
 
   .quick-add-modal__content .view-product-title {
@@ -258,30 +329,60 @@
     transition: color 0.2s var(--animation-easing);
   }
 
-  .quick-add-modal__content .view-product-title {
-    display: flex;
+  /* Hide ALL duplicate product title elements - only show .view-product-title */
+  @media screen and (min-width: 750px) {
+    /* Hide text blocks that contain headings (these are usually product title blocks) */
+    .quick-add-modal__content .product-details .text-block:has(h1),
+    .quick-add-modal__content .product-details .text-block:has(h2),
+    .quick-add-modal__content .product-details .text-block:has(h3) {
+      display: none !important;
+    }
+
+    /* Hide any standalone headings that aren't in .view-product-title */
+    .quick-add-modal__content .product-details h1:not(.view-product-title h1):not(.view-product-title *),
+    .quick-add-modal__content .product-details h2:not(.view-product-title h2):not(.view-product-title *),
+    .quick-add-modal__content .product-details h3:not(.view-product-title h3):not(.view-product-title *) {
+      display: none !important;
+    }
+
+    /* Hide product-title-text class */
+    .quick-add-modal__content .product-details .product-title-text {
+      display: none !important;
+    }
   }
 
-  .quick-add-modal__content
-    .product-details
-    *:not(
-      .group-block,
-      .group-block-content,
-      .buy-buttons-block,
-      .buy-buttons-block *,
-      .view-product-title,
-      .view-product-title *,
-      variant-picker,
-      variant-picker *,
-      product-price,
-      product-price *,
-      product-inventory,
-      product-inventory *,
-      .view-more-details__wrapper,
-      .view-more-details__wrapper *
-    ) {
-    @media screen and (min-width: 750px) {
-      /* stylelint-disable-next-line declaration-no-important */
+  /* Hide extra content in product-details on desktop in quick add modal */
+  @media screen and (min-width: 750px) {
+    /* Hide text blocks that contain product title (h1, h2, h3) - we only want .view-product-title */
+    .quick-add-modal__content .product-details .text-block:has(h1),
+    .quick-add-modal__content .product-details .text-block:has(h2),
+    .quick-add-modal__content .product-details .text-block:has(h3) {
+      display: none !important;
+    }
+
+    /* Keep showing essential elements */
+    .quick-add-modal__content
+      .product-details
+      *:not(
+        .group-block,
+        .group-block-content,
+        .buy-buttons-block,
+        .buy-buttons-block *,
+        .view-product-title,
+        .view-product-title *,
+        variant-picker,
+        variant-picker *,
+        product-price,
+        product-price *,
+        product-inventory,
+        product-inventory *,
+        .view-more-details__wrapper,
+        .view-more-details__wrapper *,
+        .text-block:has(h1),
+        .text-block:has(h2),
+        .text-block:has(h3)
+      ) {
+      /* Keep original behavior - hide other content */
       display: none !important;
     }
   }
@@ -330,34 +431,58 @@
     content-visibility: auto;
   }
 
-  .quick-add-modal__content .product-information__media {
-    width: 100%;
-    grid-column: 1 / span 1;
-    grid-row: 1;
-    position: relative;
-    top: 0;
-    animation: fadeIn 0.4s var(--animation-timing-fade-in) both;
+  /* Ensure first slide content is always visible */
+  .quick-add-modal__content .product-information__media slideshow-slide:first-child {
+    content-visibility: visible !important;
+  }
 
-    @media screen and (min-width: 750px) {
-      position: sticky;
-      grid-column: 1 / 4;
-      overflow-y: auto;
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+  .quick-add-modal__content .product-information__media {
+    flex: 0 0 45.65% !important; /* Similar to personalisation modal preview */
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.4s var(--animation-timing-fade-in) both;
+    width: 45.65% !important;
+    max-width: 45.65% !important;
+    min-width: 0 !important;
+    order: 0 !important;
+
+    @media screen and (min-width: 1400px) {
+      flex: 0 0 525px !important;
+      width: 525px !important;
+      max-width: 525px !important;
     }
 
-    &::-webkit-scrollbar {
-      display: none;
+    @media screen and (max-width: 750px) {
+      flex: 0 0 40% !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-height: 200px;
     }
   }
 
   .quick-add-modal__content .product-information__media media-gallery {
     pointer-events: none;
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
 
-    @media screen and (min-width: 750px) {
-      position: absolute;
-      inset: 0;
-    }
+  /* Ensure slideshow-component is visible */
+  .quick-add-modal__content .product-information__media slideshow-component {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .quick-add-modal media-gallery {
@@ -369,15 +494,20 @@
   }
 
   .quick-add-modal__content .product-information__media slideshow-container {
-    display: block;
+    display: block !important;
+    width: 100%;
+    height: 100%;
   }
 
   .quick-add-modal__content .product-information__media slideshow-slides {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-2xs);
-    overflow: visible;
+    display: flex !important;
+    flex-direction: row;
+    gap: 0;
+    overflow: hidden;
     scroll-snap-type: none;
+    width: 100% !important;
+    height: 100% !important;
+    position: relative;
   }
 
   .quick-add-modal__content .product-information__media slideshow-slide {
@@ -386,15 +516,172 @@
     scroll-snap-align: unset;
     position: relative;
     transform: none;
-    opacity: 1;
-    visibility: visible;
     transition: opacity 0.3s var(--animation-easing);
   }
 
-  .quick-add-modal__content .product-information__media slideshow-slide[aria-hidden='true'] {
-    @media screen and (max-width: 750px) {
-      display: none;
+  /* Hide all slides except the first one - show only one image like personalisation modal */
+  .quick-add-modal__content .product-information__media slideshow-slide:not(:first-child) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Force first slide to be visible regardless of aria-hidden */
+  .quick-add-modal__content .product-information__media slideshow-slide:first-child {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Override aria-hidden for first slide */
+  .quick-add-modal__content .product-information__media slideshow-slide:first-child[aria-hidden='true'] {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Ensure all image/media elements are visible in first slide */
+  .quick-add-modal__content .product-information__media slideshow-slide:first-child .product-media,
+  .quick-add-modal__content .product-information__media slideshow-slide:first-child .product-media > *,
+  .quick-add-modal__content .product-information__media slideshow-slide:first-child img,
+  .quick-add-modal__content .product-information__media slideshow-slide:first-child video,
+  .quick-add-modal__content .product-information__media slideshow-slide:first-child iframe,
+  .quick-add-modal__content .product-information__media slideshow-slide:first-child .product-media-container,
+  .quick-add-modal__content .product-information__media .product-media,
+  .quick-add-modal__content .product-information__media .product-media img,
+  .quick-add-modal__content .product-information__media img,
+  .quick-add-modal__content .product-information__media .product-media__image,
+  .quick-add-modal__content .product-information__media .product-media__image img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Ensure product-media-container in first slide is visible */
+  .quick-add-modal__content .product-information__media slideshow-slide:first-child .product-media-container {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Ensure product-media element itself is visible */
+  .quick-add-modal__content .product-information__media .product-media {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative;
+  }
+
+  /* Handle deferred-media (lazy loaded images) */
+  .quick-add-modal__content .product-information__media deferred-media,
+  .quick-add-modal__content .product-information__media deferred-media img,
+  .quick-add-modal__content .product-information__media deferred-media > * {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    object-fit: contain !important;
+  }
+
+  /* Ensure any nested image elements are visible */
+  .quick-add-modal__content .product-information__media * img {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+  }
+
+  /* General rule: make sure first visible slide or container shows its content */
+  .quick-add-modal__content .product-information__media > *:first-child,
+  .quick-add-modal__content .product-information__media media-gallery > *:first-child,
+  .quick-add-modal__content .product-information__media slideshow-component > *:first-child,
+  .quick-add-modal__content .product-information__media slideshow-slides > *:first-child {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* View Product button on image container */
+  .quick-add-modal__content .product-information__media .quick-add-modal__view-product-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #FFFFFF;
+    border: 1px solid #7295BB;
+    border-radius: 50px;
+    color: #7295BB;
+    text-decoration: none;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    text-transform: uppercase;
+    z-index: var(--layer-raised);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .quick-add-modal__content .product-information__media .quick-add-modal__view-product-button:hover {
+    background: #7295BB;
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .quick-add-modal__content .product-information__media .quick-add-modal__view-product-button-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .quick-add-modal__content .product-information__media .quick-add-modal__view-product-button-icon svg {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    fill: none;
+  }
+
+  @media screen and (min-width: 750px) {
+    .quick-add-modal__content .product-information__media .quick-add-modal__view-product-button {
+      padding: 12px 20px;
+      font-size: 16px;
+      line-height: 140%;
     }
+
+    .quick-add-modal__content .product-information__media .quick-add-modal__view-product-button-icon {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  /* Only hide non-first slides with aria-hidden */
+  .quick-add-modal__content .product-information__media slideshow-slide:not(:first-child)[aria-hidden='true'] {
+    display: none !important;
   }
 
   .quick-add-modal__content .product-information__media slideshow-slide:nth-child(1) {
