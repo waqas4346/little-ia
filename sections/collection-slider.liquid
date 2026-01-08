@@ -352,7 +352,7 @@
     display: none;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 767px) {
     .collection-slider-desktop {
       display: none;
     }
@@ -455,7 +455,7 @@
     }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 767px) {
     .collection-slider-header {
       margin-bottom: 16px;
     }
@@ -560,15 +560,63 @@
   }
 
   /* Desktop: Show arrows, hide on mobile */
-  @media (max-width: 768px) {
+  @media (max-width: 767px) {
     .collection-slider-carousel slideshow-arrows {
       display: none !important;
     }
   }
 
-  @media (min-width: 769px) {
+  @media (min-width: 768px) {
     .collection-slider-carousel slideshow-arrows {
       display: flex;
+    }
+  }
+
+  /* Tablet and iPad responsive adjustments - ensure desktop view shows */
+  @media (min-width: 768px) {
+    .collection-slider-desktop {
+      display: block !important;
+    }
+
+    .collection-slider-mobile {
+      display: none !important;
+    }
+
+    /* Ensure proper column count for tablets */
+    .collection-slider-desktop .resource-list__carousel {
+      --column-count: {{ section.settings.items_per_view | default: 4 }};
+    }
+  }
+
+  /* iPad Mini (768px) - base tablet height */
+  @media (min-width: 768px) and (max-width: 819px) {
+    .collection-slider-card__image-wrapper {
+      height: 350px;
+    }
+  }
+
+  /* iPad Air and similar (820px - 1023px) */
+  @media (min-width: 820px) and (max-width: 1023px) {
+    .collection-slider-card__image-wrapper {
+      height: 380px;
+    }
+  }
+
+  /* iPad Pro (1024px) - show 3 collections per row and full desktop height */
+  @media (min-width: 1024px) and (max-width: 1199px) {
+    .collection-slider-card__image-wrapper {
+      height: 417px;
+    }
+
+    /* Note: --column-count must be set via JavaScript to override inline styles */
+  }
+
+  /* Large desktop (1200px+) - use default items_per_view setting */
+  @media (max-width: 1200px) {
+   
+
+    .collection-slider-desktop .resource-list__carousel {
+      --column-count: 3;
     }
   }
 </style>
