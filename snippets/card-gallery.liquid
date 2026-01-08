@@ -43,7 +43,22 @@
       endif
       
       if product_tag.icon != blank
-        assign tag_icon = product_tag.icon.value | default: product_tag.icon
+        # Handle different icon field types: file reference, image reference, or URL string
+        assign icon_field = product_tag.icon.value | default: product_tag.icon
+        
+        # Check if it's a file/image reference object (has .url property)
+        if icon_field.url
+          # It's a file/image reference - get the URL
+          assign tag_icon = icon_field.url
+        # Check if it's already a URL string
+        elsif icon_field contains 'http' or icon_field contains '//' or icon_field contains 'shopifycdn.com' or icon_field contains 'cdn.shopify.com'
+          # It's already a URL
+          assign tag_icon = icon_field
+        # Try accessing .url if it's a reference object (fallback)
+        elsif icon_field != blank
+          # If it's a reference, try to get URL property
+          assign tag_icon = icon_field
+        endif
       endif
       
       if product_tag.text != blank
@@ -211,11 +226,28 @@
       
       {%- comment -%} Product Tag Badge {%- endcomment -%}
       {% if tag_text != blank or tag_icon != blank %}
-        <div class="product-tag-badge" style="{% if tag_color != blank %}color: {{ tag_color }};{% endif %}">
+        <div class="product-tag-badge" style="{% if tag_color != blank %}color: {{ tag_color }}; border-color: {{ tag_color }};{% endif %}">
           {% if tag_icon != blank %}
             <span class="product-tag-badge__icon">
-              {% if tag_icon contains '.svg' or tag_icon contains '.png' or tag_icon contains '.jpg' or tag_icon contains '.jpeg' or tag_icon contains '.gif' or tag_icon contains '.webp' %}
-                <img src="{{ tag_icon }}" alt="" width="14" height="14" loading="lazy" />
+              {% liquid
+                # Check if it's an image URL (has http/https or is a Shopify CDN URL)
+                assign is_image_url = false
+                if tag_icon contains 'http' or tag_icon contains '//' or tag_icon contains 'shopifycdn.com' or tag_icon contains 'cdn.shopify.com'
+                  assign is_image_url = true
+                elsif tag_icon contains '.svg' or tag_icon contains '.png' or tag_icon contains '.jpg' or tag_icon contains '.jpeg' or tag_icon contains '.gif' or tag_icon contains '.webp'
+                  assign is_image_url = true
+                endif
+              %}
+              {% if is_image_url %}
+                {{
+                tag_icon
+                | image_url: width: 1000
+                | image_tag:
+                  class: 'educational-content__thumbnail-img',
+                  loading: 'lazy',
+                  sizes: '(min-width: 750px) 25vw, 50vw',
+                  widths: '240, 352, 14'
+              }}
               {% else %}
                 {{ tag_icon }}
               {% endif %}
@@ -465,6 +497,8 @@
     gap: 6px;
     white-space: nowrap;
     pointer-events: none;
+    border-width: 1px 1px 1px 0px;
+    border-style: solid;
   }
 
   .product-tag-badge__icon {
