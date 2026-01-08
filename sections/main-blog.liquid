@@ -6,7 +6,7 @@
   fetchpriority="low"
 ></script>
 
-<blog-posts-list section-id="{{ section.id }}">
+<blog-posts-list section-id="{{ section.id }}" infinite-scroll="{{ section.settings.enable_infinite_scroll }}">
   <div class="section-background color-{{ section.settings.color_scheme }}"></div>
   <div
     class="
@@ -21,7 +21,9 @@
     {% content_for 'blocks' %}
 
     {%- paginate blog.articles by 12 -%}
-      <span ref="viewMorePrevious"></span>
+      {%- if section.settings.enable_infinite_scroll -%}
+        <span ref="viewMorePrevious"></span>
+      {%- endif -%}
       <div
         ref="grid"
         class="blog-posts-container"
@@ -37,7 +39,22 @@
           </div>
         {% endfor %}
       </div>
-      <span ref="viewMoreNext"></span>
+      {%- if section.settings.enable_infinite_scroll -%}
+        <span ref="viewMoreNext"></span>
+      {%- else -%}
+        {%- if paginate.next -%}
+          <div class="blog-posts-load-more-wrapper">
+            <button
+              ref="loadMoreButton"
+              type="button"
+              class="blog-posts-load-more-button"
+              aria-label="{{ section.settings.load_more_text | default: 'Load more articles' }}"
+            >
+              {{ section.settings.load_more_text | default: 'Load More' }}
+            </button>
+          </div>
+        {%- endif -%}
+      {%- endif -%}
     {%- endpaginate -%}
   </div>
 </blog-posts-list>
@@ -130,6 +147,39 @@
     border: none;
     padding: 0;
   }
+
+  .blog-posts-load-more-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: var(--padding-xl, 24px) 0;
+    margin-top: var(--padding-xl, 24px);
+  }
+
+  .blog-posts-load-more-button {
+    padding: var(--padding-md, 12px) var(--padding-lg, 24px);
+    background-color: var(--color-primary, #7295BB);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: var(--font-size--md, 16px);
+    font-weight: var(--font-weight-medium, 500);
+    cursor: pointer;
+    transition: background-color var(--hover-transition-duration, 0.2s) var(--hover-transition-timing, ease),
+                opacity var(--hover-transition-duration, 0.2s) var(--hover-transition-timing, ease);
+  }
+
+  .blog-posts-load-more-button:hover {
+    background-color: var(--color-primary-hover, #5a7a9a);
+  }
+
+  .blog-posts-load-more-button:active {
+    opacity: 0.8;
+  }
+
+  .blog-posts-load-more-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 {% endstylesheet %}
 
 {% schema %}
@@ -176,6 +226,24 @@
       "id": "color_scheme",
       "label": "t:settings.color_scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Pagination"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_infinite_scroll",
+      "label": "Enable infinite scroll",
+      "info": "When disabled, shows a 'Load More' button instead",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "load_more_text",
+      "label": "Load More button text",
+      "default": "Load More",
+      "info": "Text displayed on the Load More button"
     },
     {
       "type": "header",

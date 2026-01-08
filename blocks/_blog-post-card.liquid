@@ -34,6 +34,12 @@
   <div class="blog-post-card__content">
     <a href="{{ article.url }}">{{ title }}</a>
 
+    {%- if block_settings.show_read_time -%}
+      <div class="blog-post-card__read-time">
+        {% render 'blog-read-time', article: article %}
+      </div>
+    {%- endif -%}
+
     {{ details }}
 
     {{ description }}
@@ -103,6 +109,16 @@
   .blog-post-card__content a:hover [style*='--color: var(--color-foreground)'] {
     color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
   }
+
+  .blog-post-card__read-time {
+    margin-top: var(--gap-xs, 0.5rem);
+    margin-bottom: 0;
+  }
+
+  .blog-post-card__read-time .blog-read-time {
+    font-size: 14px;
+    display: block;
+  }
 {% endstylesheet %}
 
 {% schema %}
@@ -114,6 +130,12 @@
       "id": "alignment",
       "label": "t:settings.alignment",
       "default": "left"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_read_time",
+      "label": "Show read time",
+      "default": false
     }
   ]
 }

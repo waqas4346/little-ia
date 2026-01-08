@@ -103,6 +103,11 @@
 
     <div class="featured-blog-posts-card__content layout-panel-flex--column">
       <h4 class="featured-blog-posts-card__title" style="--horizontal-alignment: {{ flex_alignment }}; --text-align: {{ block_settings.alignment }};">{{ title }}</h4>
+      {%- if block_settings.show_read_time and article != blank -%}
+        <div class="featured-blog-posts-card__read-time">
+          {% render 'blog-read-time', article: article %}
+        </div>
+      {%- endif -%}
       {{ details }}
       {{ description }}
       {% if section.settings.layout_type == 'grid' and block_settings.show_read_now_link and block_settings.read_now_text != blank %}
@@ -242,6 +247,16 @@
   .featured-blog-posts-card__read-now-link:hover {
     color: var(--color-primary-hover, var(--color-primary, var(--color-foreground)));
   }
+
+  .featured-blog-posts-card__read-time {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  .featured-blog-posts-card__read-time .blog-read-time {
+    font-size: 14px;
+    display: block;
+  }
 {% endstylesheet %}
 
 {% schema %}
@@ -281,6 +296,12 @@
       "step": 1,
       "unit": "px",
       "default": 8
+    },
+    {
+      "type": "checkbox",
+      "id": "show_read_time",
+      "label": "Show read time",
+      "default": false
     },
     {
       "type": "checkbox",
