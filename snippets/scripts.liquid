@@ -270,6 +270,8 @@
   <script type="module">
     import { RecentlyViewed } from '@theme/recently-viewed-products';
     RecentlyViewed.addProduct('{{ product.id }}');
+    // Dispatch event to update recently viewed products sections
+    document.dispatchEvent(new CustomEvent('recently-viewed-updated'));
   </script>
 {% endif %}
 

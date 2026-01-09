@@ -1,0 +1,461 @@
+<script
+  src="{{ 'recently-viewed-products-section.js' | asset_url }}"
+  type="module"
+  fetchpriority="low"
+></script>
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div
+  data-testid="recently-viewed-products"
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+    recently-viewed-products-section
+  "
+  style="
+    {% render 'spacing-style', settings: section.settings %}
+    {% render 'gap-style', value: section.settings.gap %}
+  "
+>
+  <div class="product-slider-header">
+    {% if section.settings.top_label != blank %}
+      <div class="product-slider-top-label">
+        <span class="product-slider-top-label-text">{{ section.settings.top_label }}</span>
+      </div>
+    {% endif %}
+    
+    {% if section.settings.section_title != blank %}
+      <div class="product-slider-section-title">
+        <span class="product-slider-section-title-label">{{ section.settings.section_title }}</span>
+      </div>
+    {% endif %}
+  </div>
+
+  <recently-viewed-products-component
+    id="recently-viewed-products-{{ section.id }}"
+    data-section-id="{{ section.id }}"
+    data-items-per-view="{{ section.settings.items_per_view | default: 4 }}"
+    data-columns-gap="{{ section.settings.columns_gap | default: 8 }}"
+    data-icons-style="{{ section.settings.icons_style | default: 'arrow' }}"
+    data-icons-shape="{{ section.settings.icons_shape | default: 'none' }}"
+    data-max-products="{{ section.settings.max_products | default: 10 }}"
+    data-quick-add="{{ section.settings.quick_add | default: true }}"
+    {{ section.shopify_attributes }}
+  >
+    <div class="recently-viewed-products-content">
+      <div class="recently-viewed-products-skeleton">
+        {% for i in (1..4) %}
+          <div class="recently-viewed-products-skeleton-item"></div>
+        {% endfor %}
+      </div>
+    </div>
+  </recently-viewed-products-component>
+</div>
+
+<style>
+  /* Use same styles as product-slider */
+  [data-testid="recently-viewed-products"] .product-slider-header {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  @media screen and (min-width: 750px) {
+    [data-testid="recently-viewed-products"] .product-slider-header {
+      margin-bottom: 24px;
+    }
+  }
+
+  .recently-viewed-products-skeleton {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .recently-viewed-products-skeleton-item {
+    aspect-ratio: 3 / 4;
+    background-color: var(--color-foreground);
+    opacity: 0.1;
+    border-radius: 4px;
+  }
+
+  @media (max-width: 767px) {
+    .recently-viewed-products-skeleton {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  recently-viewed-products-component:has([data-has-products='false']) {
+    display: none;
+  }
+
+  recently-viewed-products-component[data-loaded='true'] .recently-viewed-products-skeleton {
+    display: none;
+  }
+
+  /* Product card media sizing/background in slider */
+  [data-testid="recently-viewed-products-grid"] .card-gallery .product-media-container {
+    background: url("bg_removal [Background removed].png"), #F7F7F7;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+  }
+
+  [data-testid="recently-viewed-products-grid"] .card-gallery .product-media-container img,
+  [data-testid="recently-viewed-products-grid"] .card-gallery .product-media-container picture,
+  [data-testid="recently-viewed-products-grid"] .card-gallery .product-media-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Hide sale/sold-out badge on slider images */
+  [data-testid="recently-viewed-products-grid"] .product-badges {
+    display: none !important;
+  }
+
+  /* Product title styling */
+  [data-testid="recently-viewed-products-grid"] .text-block--product_title,
+  [data-testid="recently-viewed-products-grid"] .text-block--product_title *,
+  [data-testid="recently-viewed-products-grid"] .text-block--product_title p {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 140%;
+    letter-spacing: 0;
+    color: #1D425A;
+  }
+
+  /* Explicit class injected on product title block */
+  [data-testid="recently-viewed-products-grid"] .product-title-text,
+  [data-testid="recently-viewed-products-grid"] .product-title-text *,
+  [data-testid="recently-viewed-products-grid"] .product-title-text p {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 140%;
+    letter-spacing: 0;
+    color: #1D425A;
+  }
+
+  /* Product slider carousel container */
+  .recently-viewed-products-carousel {
+    position: relative;
+  }
+
+  /* Remove horizontal padding for max width */
+  [data-testid="recently-viewed-products"] .section--page-width {
+    padding-inline: 0 !important;
+  }
+
+  [data-testid="recently-viewed-products"] .section--page-width > * {
+    padding-inline: 0 !important;
+  }
+
+  [data-testid="recently-viewed-products-grid"] {
+    padding-inline: 0 !important;
+    --peek-next-slide-size: 0px;
+    --gutter-slide-width: 0px !important;
+    overflow: visible;
+  }
+
+  /* Use same carousel classes as product-slider */
+  [data-testid="recently-viewed-products"] .product-slider-wrapper {
+    position: relative;
+    padding: 0;
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-desktop .resource-list__carousel {
+    --column-count: var(--items-per-view, 4);
+    --resource-list-column-gap-desktop: var(--columns-gap, 8px);
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-slides {
+    gap: var(--columns-gap, 8px) !important;
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-container {
+    position: relative;
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-arrows {
+    position: absolute;
+    inset: 0;
+    left: auto;
+    right: auto;
+    width: calc(100% + 120px);
+    max-width: none;
+    pointer-events: none;
+    z-index: var(--layer-heightened);
+    margin-left: -60px;
+    margin-right: -60px;
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-arrows[position='center'] {
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-arrows .slideshow-control {
+    position: absolute;
+    margin: 0;
+    pointer-events: auto;
+    opacity: 1;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-arrows .slideshow-control--previous {
+    left: 0;
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-arrows .slideshow-control--next {
+    right: 0;
+  }
+
+  /* Hide default quick-add on hover for recently viewed products (same as product-slider) */
+  [data-testid="recently-viewed-products"] product-card[data-collection-page="true"]:is(:hover, :focus-within) .quick-add__button:not(.product-slider-quick-add-button) {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  @media (max-width: 1200px) {
+    [data-testid="recently-viewed-products"] .product-slider-wrapper {
+      padding: 0;
+    }
+
+    [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-arrows {
+      width: calc(100% + 100px);
+      margin-left: -50px;
+      margin-right: -50px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    [data-testid="recently-viewed-products"] .product-slider-wrapper {
+      padding: 0;
+    }
+
+    [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-arrows {
+      width: calc(100% + 40px);
+      margin-left: -20px;
+      margin-right: -20px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Recently Viewed Products",
+  "class": "ui-test-recently-viewed-products",
+  "blocks": [
+    {
+      "type": "@theme"
+    },
+    {
+      "type": "@app"
+    },
+    {
+      "type": "_divider"
+    }
+  ],
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "top_label",
+      "label": "Top Label",
+      "default": "shop",
+      "info": "Text displayed above the section title"
+    },
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section Title",
+      "default": "RECENTLY VIEWED",
+      "info": "Title displayed above the product slider"
+    },
+    {
+      "type": "header",
+      "content": "Slider Settings"
+    },
+    {
+      "type": "range",
+      "id": "items_per_view",
+      "label": "Items per view",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "default": 4,
+      "info": "Number of products to show at once in the slider"
+    },
+    {
+      "type": "range",
+      "id": "max_products",
+      "label": "Maximum products to track",
+      "min": 4,
+      "max": 50,
+      "step": 1,
+      "default": 10,
+      "info": "Maximum number of recently viewed products to store and display"
+    },
+    {
+      "type": "checkbox",
+      "id": "quick_add",
+      "label": "Enable quick add",
+      "default": true,
+      "info": "Show the quick add button (+) on product cards"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap",
+      "label": "Horizontal Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "select",
+      "id": "icons_style",
+      "label": "Arrow Style",
+      "options": [
+        {
+          "value": "arrow",
+          "label": "Arrows"
+        },
+        {
+          "value": "chevron",
+          "label": "Chevrons"
+        },
+        {
+          "value": "arrows_large",
+          "label": "Large Arrows"
+        },
+        {
+          "value": "chevron_large",
+          "label": "Large Chevrons"
+        },
+        {
+          "value": "blue_arrows",
+          "label": "Blue arrows"
+        },
+        {
+          "value": "none",
+          "label": "None"
+        }
+      ],
+      "default": "arrow"
+    },
+    {
+      "type": "select",
+      "id": "icons_shape",
+      "label": "Arrow Background",
+      "options": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "circle",
+          "label": "Circle"
+        },
+        {
+          "value": "square",
+          "label": "Square"
+        }
+      ],
+      "default": "none",
+      "visible_if": "{{ section.settings.icons_style != 'none' }}"
+    },
+    {
+      "type": "header",
+      "content": "Section Layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page"
+        },
+        {
+          "value": "full-width",
+          "label": "Full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color Scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Recently Viewed Products",
+      "category": "Products",
+      "settings": {
+        "top_label": "shop",
+        "section_title": "RECENTLY VIEWED",
+        "items_per_view": 4,
+        "max_products": 10,
+        "columns_gap": 8,
+        "icons_style": "arrow",
+        "icons_shape": "none",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    }
+  ]
+}
+{% endschema %}
