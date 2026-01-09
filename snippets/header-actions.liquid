@@ -48,6 +48,10 @@
     border-left: var(--style-border-drawer);
     box-shadow: var(--shadow-drawer);
     background-color: var(--color-background);
+
+    @media screen and (min-width: 750px) {
+      width: 380px;
+    }
   }
 
   /* Needed to ensure the drawer is full height */
@@ -121,21 +125,13 @@
   }
 
   .cart-drawer__summary {
-    --cart-drawer-summary-padding: var(--padding-lg);
 
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--gap-2xl);
-    padding: var(--cart-drawer-summary-padding) 15px;
     margin-top: auto;
-    background-color: var(--color-background);
-    /* stylelint-disable-next-line color-named */
-    mask-image: linear-gradient(to bottom, transparent, black var(--cart-drawer-summary-padding));
-
-    @media screen and (min-width: 750px) {
-      --cart-drawer-summary-padding: var(--padding-2xl);
-    }
+    background: linear-gradient(to bottom, #7295BB0D 0%, transparent 100%);
   }
 
   .cart-drawer__summary .cart__summary-totals:not(:has(.cart__original-total-container:empty)) {

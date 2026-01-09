@@ -1776,6 +1776,12 @@
       },
       {
         "type": "checkbox",
+        "id": "show_checkout_payment_icons",
+        "label": "Show payment icons in checkout button",
+        "default": true
+      },
+      {
+        "type": "checkbox",
         "id": "show_accelerated_checkout_buttons",
         "label": "t:settings.checkout_buttons",
         "info": "t:info.checkout_buttons",

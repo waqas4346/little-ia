@@ -117,7 +117,9 @@
             <div
               class="cart-drawer__summary"
             >
-              {% render 'cart-summary' %}
+              <div class="cart-drawer__summary-inner">
+                {% render 'cart-summary' %}
+              </div>
             </div>
           </div>
         {%- endif -%}
@@ -238,5 +240,9 @@
     position: sticky;
     bottom: 0;
     z-index: 1;
+  }
+  .cart-drawer__summary-inner {
+    width: 100%;
+    padding: 15px;
   }
 {% endstylesheet %}

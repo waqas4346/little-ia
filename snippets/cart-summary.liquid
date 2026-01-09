@@ -56,7 +56,60 @@
     else
       assign total_price = cart.total_price | money
     endif
+    
+    # Check if free shipping threshold is met
+    assign threshold_cents = settings.free_shipping_threshold | default: 45000
+    assign cart_total = cart.total_price
+    assign remaining = threshold_cents | minus: cart_total
+    assign has_free_shipping = false
+    if remaining <= 0 and settings.show_free_shipping_progress
+      assign has_free_shipping = true
+    endif
+
+    # Calculate total savings from compare-at-price (Option 3)
+    assign compare_at_price_savings = 0
+    for item in cart.items
+      assign compare_price = item.variant.compare_at_price
+      assign current_price = item.final_price
+      if item.original_price != item.final_price
+        assign current_price = item.final_price
+        if item.variant.compare_at_price > item.original_price
+          assign compare_price = item.variant.compare_at_price
+        else
+          assign compare_price = item.original_price
+        endif
+      else
+        assign current_price = item.original_price
+        if item.variant.compare_at_price > item.original_price
+          assign compare_price = item.variant.compare_at_price
+        endif
+      endif
+      
+      if compare_price > current_price and compare_price > 0
+        assign item_savings = compare_price | minus: current_price
+        assign item_savings_total = item_savings | times: item.quantity
+        assign compare_at_price_savings = compare_at_price_savings | plus: item_savings_total
+      endif
+    endfor
+
+    # Calculate total savings from cart-level discounts
+    assign cart_level_discount_savings = 0
+    if cart.cart_level_discount_applications.size > 0
+      for discount in cart.cart_level_discount_applications
+        assign cart_level_discount_savings = cart_level_discount_savings | plus: discount.total_allocated_amount
+      endfor
+    endif
+
+    # Total savings (Option 3: both combined)
+    assign total_savings = compare_at_price_savings | plus: cart_level_discount_savings
   -%}
+
+  {%- if has_free_shipping -%}
+    <span class="cart__summary-item cart__free-shipping">
+      <span class="cart__free-shipping-label cart-primary-typography">{{ 'content.shipping' | t }}</span>
+      <span class="cart__free-shipping-value cart-secondary-typography">{{ 'content.free' | t }}</span>
+    </span>
+  {%- endif -%}
 
   <div class="cart__total-container{% if settings.show_installments %} cart__total-container--has-installments{% endif %}">
     <span
@@ -81,10 +134,21 @@
         {% endform %}
       </span>
     {% endif %}
+    {% comment %}
     <div class="cart__summary-item tax-note cart-primary-typography">
       {% render 'tax-info', has_discounts_enabled: settings.show_add_discount_code %}
     </div>
+    {% endcomment %}
   </div>
+
+  {%- if total_savings > 0 -%}
+    {%- liquid
+      assign savings_formatted = total_savings | money | strip_html
+    -%}
+    <span class="cart__summary-item cart__savings">
+      {{ 'content.you_saved' | t: amount: savings_formatted }}
+    </span>
+  {%- endif -%}
 </div>
 
 <div class="cart__ctas">
@@ -98,7 +162,36 @@
     {% endif %}
     form="cart-form"
   >
-    {{ 'content.checkout' | t }}
+    <span class="cart__checkout-button-text">{{ 'content.checkout' | t }}</span>
+    {%- if settings.show_checkout_payment_icons -%}
+      <span class="cart__checkout-payment-icons">
+        {%- for type in shop.enabled_payment_types -%}
+          {%- liquid
+            assign payment_type_lower = type | downcase | strip
+            assign svg_file = ''
+            
+            if payment_type_lower == 'visa'
+              assign svg_file = 'payment-visa-circle.svg'
+            elsif payment_type_lower == 'master'
+              assign svg_file = 'payment-mastercard-circle.svg'
+            elsif payment_type_lower == 'google_pay'
+              assign svg_file = 'payment-google_pay-circle.svg'
+            elsif payment_type_lower == 'apple_pay'
+              assign svg_file = 'payment-apple_pay-circle.svg'
+            endif
+          -%}
+          {%- if svg_file != '' -%}
+            <span class="cart__checkout-payment-icon" data-payment-type="{{ payment_type_lower }}">
+              {{- svg_file | inline_asset_content -}}
+            </span>
+          {%  else %}
+            <span class="cart__checkout-payment-icon" data-payment-type="{{ payment_type_lower }}">
+              {{- payment_type_lower | payment_type_svg_tag: class: 'icon icon--full-color' -}}
+            </span>
+          {%- endif -%}
+        {%- endfor -%}
+      </span>
+    {%- endif -%}
   </button>
 
   {% if additional_checkout_buttons and settings.show_accelerated_checkout_buttons %}
@@ -127,13 +220,145 @@
     border-block-start: 1px solid var(--color-border);
   }
 
-  .cart__summary-totals:not(:has(.cart-actions)) {
-    margin-block-start: var(--margin-3xs);
-    border-block-start: 1px solid var(--color-border);
-    padding-block-start: var(--margin-xl);
-  }
-
   .cart__installments {
     color: var(--color-foreground);
+  }
+
+  .cart__free-shipping {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 0.5px solid #E7E7E7;
+  }
+
+  .cart__free-shipping-label {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+    color: #1D425A;
+  }
+
+  .cart__free-shipping-value {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+    color: #7295BB;
+  }
+
+  .cart__total-label {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 100%;
+    color: #1D425A;
+  }
+
+  .cart__total-value {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 100%;
+    color: #1D425A;
+  }
+
+  .cart__savings {
+    display: block;
+    text-align: center;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+    color: #1D425A;
+    background-color: #F0F7FF;
+    border-radius: 7px;
+    padding-top: 6.5px;
+    padding-bottom: 6.5px;
+    margin-bottom: 12px;
+  }
+
+  .cart__ctas .cart__checkout-button {
+    height: 46px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    flex-wrap: nowrap;
+  }
+
+  .cart__checkout-button-text {
+    white-space: nowrap;
+  }
+
+  .cart__checkout-payment-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    margin-left: var(--gap-xs);
+    flex-shrink: 0;
+    vertical-align: middle;
+  }
+
+  .cart__checkout-payment-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 25px;
+    height: 25px;
+    min-width: 25px;
+    min-height: 25px;
+    max-width: 25px;
+    max-height: 25px;
+    overflow: hidden;
+    vertical-align: middle;
+    margin-left: -4px;
+    position: relative;
+  }
+
+  .cart__checkout-payment-icon:first-child {
+    margin-left: 0;
+    z-index: 5;
+  }
+
+  .cart__checkout-payment-icon:nth-child(2) {
+    z-index: 4;
+  }
+
+  .cart__checkout-payment-icon:nth-child(3) {
+    z-index: 3;
+  }
+
+  .cart__checkout-payment-icon:nth-child(4) {
+    z-index: 2;
+  }
+
+  .cart__checkout-payment-icon:nth-child(5) {
+    z-index: 1;
+  }
+
+  .cart__checkout-payment-icon .icon,
+  .cart__checkout-payment-icon img {
+    width: 25px !important;
+    height: 25px !important;
+    max-width: 25px !important;
+    max-height: 25px !important;
+    display: block;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .cart__checkout-payment-icon svg {
+    width: 25px !important;
+    height: 25px !important;
+    max-width: 25px !important;
+    max-height: 25px !important;
+    min-width: 25px !important;
+    min-height: 25px !important;
+    display: block;
+    flex-shrink: 0;
+    vertical-align: top;
+    background: #fff;
+    padding: 2px;
+    border-radius: 100%;
+    border: 1px solid #7295BB;
   }
 {% endstylesheet %}
