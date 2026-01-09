@@ -333,6 +333,66 @@ class ProductFormComponent extends Component {
       }
     }
 
+    // Add personalisation fields to form before creating FormData
+    // This ensures personalisation data is included in the cart request
+    // Uses sessionStorage (current session only, clears on reload)
+    const productId = this.dataset.productId;
+    if (productId) {
+      const key = `personalisation_${String(productId)}`;
+      const saved = sessionStorage.getItem(key);
+      if (saved) {
+        try {
+          const personalisation = JSON.parse(saved);
+          
+          // Remove existing personalisation properties (but keep gift message and other non-personalisation properties)
+          const existingProps = form.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
+          existingProps.forEach(input => {
+            const name = input.name;
+            // Only remove personalisation-related properties, not gift message or other properties
+            if ((name === 'properties[Name]' || name.includes('[Name 1]') || name.includes('[Name 2]') || name.includes('[Name 3]') || name.includes('[Name 4]')) ||
+                name.includes('[Text Font]') || 
+                name.includes('[Text Color]') || 
+                (name.includes('[Date of Birth]') && !name.includes('[Gift Message]')) || 
+                name.includes('[School Year]') || 
+                name.includes('[Personalisation:]') || 
+                name.includes('[Personalise Date of Birth]') || 
+                name.includes('[Time]') || 
+                name.includes('[Weight]')) {
+              input.remove();
+            }
+          });
+          
+          // Add personalisation properties
+          const addProperty = (name, value) => {
+            if (value && value.toString().trim() !== '') {
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = name;
+              input.value = value.toString().trim();
+              form.appendChild(input);
+            }
+          };
+          
+          if (personalisation.name) addProperty('properties[Name]', personalisation.name);
+          if (personalisation.font) addProperty('properties[Text Font]', personalisation.font);
+          if (personalisation.color) addProperty('properties[Text Color]', personalisation.color);
+          if (personalisation.dob) addProperty('properties[Date of Birth]', personalisation.dob);
+          if (personalisation.schoolYear) addProperty('properties[School Year]', personalisation.schoolYear);
+          if (personalisation.name1) addProperty('properties[Name 1]', personalisation.name1);
+          if (personalisation.name2) addProperty('properties[Name 2]', personalisation.name2);
+          if (personalisation.name3) addProperty('properties[Name 3]', personalisation.name3);
+          if (personalisation.name4) addProperty('properties[Name 4]', personalisation.name4);
+          if (personalisation.textbox) addProperty('properties[Personalisation:]', personalisation.textbox);
+          if (personalisation.message) addProperty('properties[Message]', personalisation.message);
+          if (personalisation.optionalDob) addProperty('properties[Personalise Date of Birth]', personalisation.optionalDob);
+          if (personalisation.time) addProperty('properties[Time]', personalisation.time);
+          if (personalisation.weight) addProperty('properties[Weight]', personalisation.weight);
+        } catch (e) {
+          console.error('Error adding personalisation fields to form:', e);
+        }
+      }
+    }
+
     const formData = new FormData(form);
 
     const cartItemsComponents = document.querySelectorAll('cart-items-component');

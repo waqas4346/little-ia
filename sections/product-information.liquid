@@ -112,18 +112,7 @@
            </div>
           </button>
           
-          {%- comment -%} Personalisation Confirmation Checkbox {%- endcomment -%}
-          <div class="personalise-confirmation" data-personalise-confirmation style="display: none;">
-            <label class="personalise-confirmation__label">
-              <input 
-                type="checkbox" 
-                class="personalise-confirmation__checkbox"
-                data-personalise-confirm-checkbox
-              >
-              <span class="personalise-confirmation__text" data-personalise-confirm-text></span>
-            </label>
-          </div>
-
+          
           <button
             type="button"
             class="sticky-add-to-cart__button add-to-cart-button button button--primary"
@@ -255,17 +244,12 @@
           return;
         }
         
-        // Convert to string to match localStorage key format
+        // Convert to string to match sessionStorage key format
         productId = String(productId);
         const key = `personalisation_${productId}`;
         
-        // Check all localStorage keys that start with 'personalisation_' for debugging
-        const allKeys = Object.keys(localStorage).filter(k => k.startsWith('personalisation_'));
-        console.log('All personalisation keys in localStorage:', allKeys);
-        console.log('Looking for key:', key);
-        
-        const savedPersonalisation = localStorage.getItem(key);
-        console.log('Found personalisation:', savedPersonalisation ? 'YES' : 'NO', savedPersonalisation);
+        // Use sessionStorage (current session only, clears on reload)
+        const savedPersonalisation = sessionStorage.getItem(key);
         
         const buttons = document.querySelectorAll('[data-personalise-button]');
         console.log('Found buttons:', buttons.length);
@@ -424,33 +408,8 @@
     setupDialogListener.attempts = 0;
     setupDialogListener();
     
-    // Also listen for storage changes (in case localStorage is updated)
-    window.addEventListener('storage', function(e) {
-      if (e.key && e.key.startsWith('personalisation_')) {
-        if (window.updatePersonaliseButtonText) {
-          window.updatePersonaliseButtonText();
-        }
-      }
-    });
-    
-    // Update button text on page load
-    function initButtonText() {
-      try {
-        if (window.updatePersonaliseButtonText) {
-          window.updatePersonaliseButtonText();
-        }
-      } catch (error) {
-        console.error('Error initializing button text:', error);
-      }
-    }
-    
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(initButtonText, 500);
-      });
-    } else {
-      setTimeout(initButtonText, 500);
-    }
+    // Don't update button text on page load - everything is fresh on reload
+    // Button text will be updated when personalisation is saved during the current session
   } catch (error) {
     console.error('Error setting up personalise button listeners:', error);
   }
