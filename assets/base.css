@@ -1490,6 +1490,7 @@ summary {
   cursor: pointer;
   list-style: none;
   padding-block: var(--padding-sm);
+  position: relative;
 }
 
 summary:hover {
@@ -1503,8 +1504,14 @@ summary .svg-wrapper {
   transition: transform var(--animation-speed) var(--animation-easing);
 }
 
+/* Override for accordion icons to be 15px */
+summary .svg-wrapper.icon-plus,
+summary .svg-wrapper.icon-minus {
+  width: 15px;
+  height: 15px;
+}
+
 /* Shared plus/minus icon animations */
-summary .icon-plus :is(.horizontal, .vertical),
 .show-more__button .icon-plus :is(.horizontal, .vertical) {
   transition: transform var(--animation-speed) var(--animation-easing);
   transform: rotate(0deg);
@@ -1512,17 +1519,63 @@ summary .icon-plus :is(.horizontal, .vertical),
   opacity: 1;
 }
 
-details[open] > summary .icon-plus .horizontal,
-.details-open > summary .icon-plus .horizontal,
 .show-more:where([data-expanded='true']) .show-more__button .icon-plus .horizontal {
   transform: rotate(90deg);
 }
 
-details[open] > summary .icon-plus .vertical,
-.details-open > summary .icon-plus .vertical,
 .show-more:where([data-expanded='true']) .show-more__button .icon-plus .vertical {
   transform: rotate(90deg);
   opacity: 0;
+}
+
+/* Accordion plus/minus icons - show plus when closed, minus when open */
+summary .svg-wrapper.icon-plus,
+summary .svg-wrapper.icon-minus {
+  transition: opacity var(--animation-speed) var(--animation-easing);
+}
+
+summary .svg-wrapper.icon-plus svg,
+summary .svg-wrapper.icon-minus svg {
+  width: 15px;
+  height: 15px;
+}
+
+summary .svg-wrapper.icon-plus {
+  opacity: 1;
+  position: absolute;
+  inset-inline-end: 0;
+  margin-inline-start: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+summary .svg-wrapper.icon-minus {
+  opacity: 0;
+  position: absolute;
+  inset-inline-end: 0;
+  margin-inline-start: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+details[open] > summary .svg-wrapper.icon-plus {
+  opacity: 0;
+}
+
+details[open] > summary .svg-wrapper.icon-minus {
+  opacity: 1;
+}
+
+/* Ensure plus/minus icons are always visible in product details accordion */
+.product-details .accordion--caret .icon-plus,
+.product-details .accordion--caret .icon-minus {
+  display: flex !important;
+}
+
+.product-details .accordion .icon-caret {
+  display: none !important;
 }
 
 /* Product Media */
