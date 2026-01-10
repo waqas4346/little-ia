@@ -33,6 +33,9 @@
     {% endif %}
   >
     <form class="variant-picker__form">
+      {% comment %} Also Available In - rendered first as a variant option {% endcomment %}
+      {% render 'also-available-in', product: product_resource %}
+      
       {%- for product_option in product_resource.options_with_values -%}
         {%- liquid
           assign option_name_lower = product_option.name | downcase | strip

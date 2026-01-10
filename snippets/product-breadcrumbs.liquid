@@ -1,0 +1,79 @@
+
+{%- doc -%}
+  Renders breadcrumbs for product pages.
+
+  @param {object} [product] - The product object (optional, will use global product if not provided)
+  @param {object} [collection] - The collection object (optional)
+{%- enddoc -%}
+
+{%- liquid
+  # Product should be available from the template context or passed as parameter
+  # Use provided collection or get the first collection the product belongs to
+  assign breadcrumb_collection = collection
+  if breadcrumb_collection == blank and product != blank and product.collections.size > 0
+    assign breadcrumb_collection = product.collections.first
+  endif
+-%}
+
+<nav class="blog-breadcrumbs" aria-label="Breadcrumb">
+  <ol class="blog-breadcrumbs__list">
+    <li class="blog-breadcrumbs__item">
+      <a href="{{ routes.root_url }}" class="blog-breadcrumbs__link">Home</a>
+    </li>
+    {%- if breadcrumb_collection -%}
+      <li class="blog-breadcrumbs__item">
+        <span class="blog-breadcrumbs__separator" aria-hidden="true">/</span>
+        <a href="{{ breadcrumb_collection.url }}" class="blog-breadcrumbs__link">{{ breadcrumb_collection.title }}</a>
+      </li>
+    {%- endif -%}
+    {%- if product -%}
+      <li class="blog-breadcrumbs__item">
+        <span class="blog-breadcrumbs__separator" aria-hidden="true">/</span>
+        <span class="blog-breadcrumbs__current" aria-current="page">{{ product.title }}</span>
+      </li>
+    {%- endif -%}
+  </ol>
+</nav>
+
+{% stylesheet %}
+  .blog-breadcrumbs {
+    margin-bottom: var(--margin-md);
+  }
+
+  .blog-breadcrumbs__list {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--gap-xs);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 14px;
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+  }
+
+  .blog-breadcrumbs__item {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-xs);
+  }
+
+  .blog-breadcrumbs__link {
+    color: var(--color-foreground);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .blog-breadcrumbs__link:hover {
+    color: var(--color-primary-hover);
+    text-decoration: underline;
+  }
+
+  .blog-breadcrumbs__separator {
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-subdued-text));
+  }
+
+  .blog-breadcrumbs__current {
+    color: #898989;
+  }
+{% endstylesheet %}

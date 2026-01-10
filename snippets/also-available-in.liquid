@@ -1,0 +1,186 @@
+{%- doc -%}
+  Renders "also available in" products styled like variant swatches.
+  
+  @param {object} product - The current product
+  @example
+  {% render 'also-available-in', product: product %}
+{%- enddoc -%}
+
+{% liquid
+  # Check if product has the product_list metafield with products
+  assign has_product_list = false
+  assign product_list = blank
+  assign product_list_size = 0
+  assign other_products_count = 0
+  
+  if product.metafields.custom.product_list != blank and product.metafields.custom.product_list.value != blank
+    assign product_list = product.metafields.custom.product_list.value
+    
+    # Count total products in metafield
+    for item in product_list
+      assign product_list_size = forloop.length
+    endfor
+    
+    # Count products that are NOT the current product
+    for meta_product in product_list
+      if meta_product.id != product.id and meta_product.id != blank
+        assign other_products_count = other_products_count | plus: 1
+      endif
+    endfor
+    
+    # Only show if we have other products OR if current product is in the list
+    # This ensures we don't show on products without the metafield properly populated
+    if product_list_size > 0
+      assign has_product_list = true
+    endif
+  endif
+
+  # Get category color from first collection metaobject
+  assign category_color = blank
+  if product.collections.size > 0
+    assign first_collection = product.collections.first
+    if first_collection.metafields.custom.color != blank
+      assign color_metaobject_or_list = first_collection.metafields.custom.color.value
+      
+      # Check if it's a list (has count property) - list of metaobjects
+      if color_metaobject_or_list.count != blank and color_metaobject_or_list.count > 0
+        # Get first color from list of metaobjects
+        assign first_color = color_metaobject_or_list.first
+        
+        # Try different field names following the pattern: field.value | default: field
+        if first_color.color != blank
+          assign category_color = first_color.color.value | default: first_color.color
+        elsif first_color.name != blank
+          assign category_color = first_color.name.value | default: first_color.name
+        elsif first_color.title != blank
+          assign category_color = first_color.title.value | default: first_color.title
+        elsif first_color.label != blank
+          assign category_color = first_color.label.value | default: first_color.label
+        elsif first_color.value != blank
+          assign category_color = first_color.value
+        endif
+      else
+        # Single metaobject or direct value - try field.value | default: field pattern
+        if color_metaobject_or_list.color != blank
+          assign category_color = color_metaobject_or_list.color.value | default: color_metaobject_or_list.color
+        elsif color_metaobject_or_list.name != blank
+          assign category_color = color_metaobject_or_list.name.value | default: color_metaobject_or_list.name
+        elsif color_metaobject_or_list.title != blank
+          assign category_color = color_metaobject_or_list.title.value | default: color_metaobject_or_list.title
+        elsif color_metaobject_or_list.label != blank
+          assign category_color = color_metaobject_or_list.label.value | default: color_metaobject_or_list.label
+        elsif color_metaobject_or_list.value != blank
+          assign category_color = color_metaobject_or_list.value
+        else
+          # Try as direct string value
+          assign category_color = color_metaobject_or_list
+        endif
+      endif
+    endif
+  endif
+%}
+
+{% comment %} Check if we should render - product has metafield with products {% endcomment %}
+{% if has_product_list and product_list != blank and product_list_size > 0 %}
+  <fieldset class="variant-option variant-option--buttons variant-option--swatches variant-option--image-thumbnails" data-fieldset-index="also-available-in">
+    <legend class="variant-option__legend">
+      <span>
+        <span class="variant-option__label-text">
+          Select color: 
+          {% if category_color != blank %}
+            <span class="variant-option__selected-value">{{ category_color }}</span>
+          {% else %}
+            <span class="variant-option__selected-value">Color</span>
+          {% endif %}
+        </span>
+      </span>
+    </legend>
+    
+    {% comment %} Always show current product first with active style - use main product image {% endcomment %}
+    {% liquid
+      # Get the main product image (same as shown on left side)
+      assign main_product_image = product.selected_or_first_available_variant.featured_media
+      if main_product_image == blank
+        assign main_product_image = product.featured_media
+      endif
+      # Use preview_image if available, otherwise use the media itself
+      if main_product_image != blank
+        assign thumbnail_image = main_product_image.preview_image | default: main_product_image
+      endif
+    %}
+    <label
+      class="variant-option__button-label variant-option__button-label--has-swatch variant-option__button-label--image-thumbnail"
+      data-product-id="{{ product.id }}"
+      data-current-product="true"
+    >
+      <a
+        href="{{ product.url }}"
+        style="display: block; width: 100%; height: 100%; text-decoration: none;"
+      >
+        {% if thumbnail_image %}
+          <div class="variant-option__image-thumbnail">
+            {{
+              thumbnail_image
+              | image_url: width: 160
+              | image_tag:
+                loading: 'lazy',
+                alt: product.title | default: 'Product image',
+                class: 'variant-option__thumbnail-img',
+                widths: '80, 160'
+            }}
+          </div>
+        {% else %}
+          <div class="variant-option__thumbnail-placeholder"></div>
+        {% endif %}
+      </a>
+    </label>
+
+    {% comment %} Show other products from metafield (excluding current product) {% endcomment %}
+    {% for meta_product in product_list %}
+      {% if meta_product.id != product.id %}
+        <label
+          class="variant-option__button-label variant-option__button-label--has-swatch variant-option__button-label--image-thumbnail"
+          data-product-id="{{ meta_product.id }}"
+        >
+          <a
+            href="{{ meta_product.url }}"
+            style="display: block; width: 100%; height: 100%; text-decoration: none;"
+          >
+            {% if meta_product.featured_media %}
+              <div class="variant-option__image-thumbnail">
+                {% assign thumbnail_image = meta_product.featured_media.preview_image | default: meta_product.featured_media %}
+                {{
+                  thumbnail_image
+                  | image_url: width: 160
+                  | image_tag:
+                    loading: 'lazy',
+                    alt: meta_product.title | default: 'Product image',
+                    class: 'variant-option__thumbnail-img',
+                    widths: '80, 160'
+                }}
+              </div>
+            {% else %}
+              <div class="variant-option__thumbnail-placeholder"></div>
+            {% endif %}
+          </a>
+        </label>
+      {% endif %}
+    {% endfor %}
+  </fieldset>
+
+  <style>
+    /* Match exact styling from variant-main-picker for image thumbnails */
+    .variant-option--image-thumbnails[data-fieldset-index="also-available-in"] {
+      margin-top: 0;
+      margin-bottom: var(--padding-lg);
+    }
+
+    .variant-option--image-thumbnails[data-fieldset-index="also-available-in"] .variant-option__button-label--image-thumbnail[data-current-product="true"] {
+      border: 1px solid #7295BB;
+    }
+
+    .variant-option--image-thumbnails[data-fieldset-index="also-available-in"] .variant-option__button-label--image-thumbnail[data-current-product="true"]:hover {
+      border-color: #7295BB;
+    }
+  </style>
+{% endif %}

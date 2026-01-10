@@ -116,30 +116,34 @@
     display: none !important;
   }
 
-  /* Product title styling */
+  /* Product title styling - match product-slider exactly using same selectors as base.css */
+  /* Target product-card structure (from main-collection/search-results) */
+  [data-testid="recently-viewed-products-grid"] .product-card .product-title-text,
+  [data-testid="recently-viewed-products-grid"] .product-card .product-title-text *,
+  [data-testid="recently-viewed-products-grid"] .product-card .product-title-text :is(h1, h2, h3, h4, h5, h6, p, span, a),
+  [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block,
+  [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block *,
+  [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block :is(h1, h2, h3, h4, h5, h6, p, span, a),
+  [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text,
+  [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text *,
+  [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text :is(h1, h2, h3, h4, h5, h6, p, span, a),
+  [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type,
+  [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type *,
+  [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type :is(h1, h2, h3, h4, h5, h6, p, span, a),
   [data-testid="recently-viewed-products-grid"] .text-block--product_title,
   [data-testid="recently-viewed-products-grid"] .text-block--product_title *,
-  [data-testid="recently-viewed-products-grid"] .text-block--product_title p {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 500;
-    font-style: normal;
-    font-size: 20px;
-    line-height: 140%;
-    letter-spacing: 0;
-    color: #1D425A;
-  }
-
-  /* Explicit class injected on product title block */
-  [data-testid="recently-viewed-products-grid"] .product-title-text,
-  [data-testid="recently-viewed-products-grid"] .product-title-text *,
-  [data-testid="recently-viewed-products-grid"] .product-title-text p {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 500;
-    font-style: normal;
-    font-size: 20px;
-    line-height: 140%;
-    letter-spacing: 0;
-    color: #1D425A;
+  [data-testid="recently-viewed-products-grid"] .text-block--product_title :is(h1, h2, h3, h4, h5, h6, p, span, a),
+  /* Target resource-card structure (fallback from predictive-search) */
+  [data-testid="recently-viewed-products-grid"] .resource-card__title,
+  [data-testid="recently-viewed-products-grid"] .resource-card__title *,
+  [data-testid="recently-viewed-products-grid"] .resource-card .resource-card__title {
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 500 !important;
+    font-style: normal !important;
+    font-size: 20px !important;
+    line-height: 140% !important;
+    letter-spacing: 0 !important;
+    color: #1D425A !important;
   }
 
   /* Product slider carousel container */
@@ -245,6 +249,32 @@
       width: calc(100% + 40px);
       margin-left: -20px;
       margin-right: -20px;
+    }
+
+    /* Mobile: Product title styling - match product-slider */
+    [data-testid="recently-viewed-products-grid"] .product-card .product-title-text,
+    [data-testid="recently-viewed-products-grid"] .product-card .product-title-text *,
+    [data-testid="recently-viewed-products-grid"] .product-card .product-title-text :is(h1, h2, h3, h4, h5, h6, p, span, a),
+    [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block,
+    [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block *,
+    [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block :is(h1, h2, h3, h4, h5, h6, p, span, a),
+    [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text,
+    [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text *,
+    [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text :is(h1, h2, h3, h4, h5, h6, p, span, a),
+    [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type,
+    [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type *,
+    [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type :is(h1, h2, h3, h4, h5, h6, p, span, a),
+    [data-testid="recently-viewed-products-grid"] .text-block--product_title,
+    [data-testid="recently-viewed-products-grid"] .text-block--product_title *,
+    [data-testid="recently-viewed-products-grid"] .text-block--product_title :is(h1, h2, h3, h4, h5, h6, p, span, a),
+    /* Target resource-card structure (fallback) */
+    [data-testid="recently-viewed-products-grid"] .resource-card__title,
+    [data-testid="recently-viewed-products-grid"] .resource-card__title *,
+    [data-testid="recently-viewed-products-grid"] .resource-card .resource-card__title {
+      font-size: 16px !important;
+      line-height: 140% !important;
+      letter-spacing: 0 !important;
+      color: #1D425A !important;
     }
   }
 

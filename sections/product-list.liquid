@@ -379,8 +379,8 @@
       height: 0;
     }
 
-    /* Ensure slides are visible and can be scrolled */
-    [data-testid="product-list"] .card-gallery slideshow-slide {
+    /* Ensure slides are visible and can be scrolled - DESKTOP ONLY */
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slide {
       flex-shrink: 0;
       flex-basis: 100%;
       width: 100%;
@@ -440,6 +440,15 @@
 
   [data-testid="product-list"] .section--page-width > * {
     padding-inline: 0 !important;
+  }
+
+  /* Mobile: Ensure product list containers have no extra padding */
+  @media screen and (max-width: 749px) {
+    [data-testid="product-list"] .product-list-contents,
+    [data-testid="product-list"] .product-list-content-wrapper {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
   }
 
   [data-testid="product-list"] .resource-list__carousel {
@@ -696,27 +705,61 @@
       color: #1D425A !important;
     }
 
-    /* Set product cards to 175px x 175px with 2 products per row on mobile */
+    /* Set product cards to exactly 175px x 175px with 2 products per row on mobile */
+    [data-testid="product-list"] .resource-list {
+      --resource-list-column-gap-desktop: 5px !important;
+      --resource-list-row-gap-desktop: 5px !important;
+      --resource-list-column-gap: 5px !important;
+      --resource-list-row-gap: 5px !important;
+      --resource-list-mobile-gap-max: 5px !important;
+      width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+    }
+
     [data-testid="product-list"] .resource-list--grid {
       display: grid !important;
-      grid-template-columns: repeat(2, 175px) !important;
+      grid-template-columns: repeat(2, minmax(175px, 175px)) !important;
       gap: 5px !important;
+      row-gap: 5px !important;
+      column-gap: 5px !important;
       width: 100% !important;
       max-width: 100% !important;
       box-sizing: border-box !important;
       padding: 0 !important;
-      margin: 0 !important;
+      margin: 0 auto !important;
       justify-content: center !important;
+      justify-items: start !important;
+    }
+    
+    /* Ensure grid columns don't expand beyond 175px */
+    [data-testid="product-list"] .resource-list--grid > * {
+      max-width: 175px !important;
     }
 
-    [data-testid="product-list"] .resource-list--grid .resource-list__item {
+    /* Override any inline styles that might be setting padding on card-gallery */
+    /* Use attribute selector to override inline style attribute if present */
+    [data-testid="product-list"] .resource-list--grid .card-gallery[style*="padding"] {
+      padding: 0 !important;
+      padding-block: 0 !important;
+      padding-inline: 0 !important;
+    }
+
+    /* Set grid items to exactly 175px - ensure no padding/margin/border */
+    /* Also check if it's a product-grid__item and override border */
+    [data-testid="product-list"] .resource-list--grid .resource-list__item,
+    [data-testid="product-list"] .resource-list--grid .product-grid__item {
       width: 175px !important;
       max-width: 175px !important;
       min-width: 175px !important;
+      margin: 0 !important;
+      padding: 0 !important;
       box-sizing: border-box !important;
       overflow: hidden !important;
-      padding: 0 !important;
-      margin: 0 !important;
+      border: none !important;
+      border-width: 0 !important;
+      --product-card-border-width: 0px !important;
     }
 
     [data-testid="product-list"] .resource-list--grid product-card,
@@ -724,26 +767,90 @@
       width: 175px !important;
       max-width: 175px !important;
       min-width: 175px !important;
+      margin: 0 !important;
+      padding: 0 !important;
       box-sizing: border-box !important;
       display: block !important;
+      border: none !important;
     }
 
-    [data-testid="product-list"] .resource-list--grid .product-card__content {
+    [data-testid="product-list"] .resource-list--grid .product-card__content,
+    [data-testid="product-list"] .resource-list--grid product-card .product-card__content,
+    [data-testid="product-list"] .resource-list--grid product-card-link .product-card__content {
       width: 175px !important;
       max-width: 175px !important;
       min-width: 175px !important;
-      box-sizing: border-box !important;
+      margin: 0 !important;
       padding: 0 !important;
+      padding-block: 0 !important;
+      padding-inline: 0 !important;
+      box-sizing: border-box !important;
+      border: none !important;
+      --padding-block-start: 0px !important;
+      --padding-block-end: 0px !important;
+      --padding-inline-start: 0px !important;
+      --padding-inline-end: 0px !important;
     }
 
+    /* Card gallery and media container - exactly 175px x 175px - NO padding/margin/border */
+    /* CRITICAL: Override .spacing-style padding-inline that uses CSS variables - must override the actual padding property */
+    /* Use attribute selector to override even inline style attributes */
     [data-testid="product-list"] .resource-list--grid .card-gallery,
+    [data-testid="product-list"] .resource-list--grid .card-gallery.spacing-style,
+    [data-testid="product-list"] .resource-list--grid .card-gallery.inherit-spacing,
+    [data-testid="product-list"] .resource-list--grid .card-gallery[style] {
+      width: 175px !important;
+      max-width: 175px !important;
+      min-width: 175px !important;
+      height: 175px !important;
+      max-height: 175px !important;
+      margin: 0 !important;
+      margin-block: 0 !important;
+      margin-inline: 0 !important;
+      padding: 0 !important;
+      padding-block: 0 !important;
+      padding-inline: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      border: none !important;
+      border-width: 0 !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+      position: relative !important;
+      display: block !important;
+      --slide-width: 175px !important;
+      /* Override ALL spacing CSS variables that spacing-style uses */
+      --padding-block-start: 0px !important;
+      --padding-block-end: 0px !important;
+      --padding-inline-start: 0px !important;
+      --padding-inline-end: 0px !important;
+      --padding-block: 0px !important;
+      --padding-inline: 0px !important;
+      --margin-block: 0px !important;
+      --margin-inline: 0px !important;
+      --section-top-offset: 0px !important;
+    }
+
+    /* Override any inline styles that might be setting padding via style attribute */
+    [data-testid="product-list"] .resource-list--grid .card-gallery[style*="padding"] {
+      padding: 0 !important;
+      padding-block: 0 !important;
+      padding-inline: 0 !important;
+    }
+
     [data-testid="product-list"] .resource-list--grid .product-media-container {
       width: 175px !important;
       max-width: 175px !important;
       min-width: 175px !important;
       height: 175px !important;
+      max-height: 175px !important;
       box-sizing: border-box !important;
       overflow: hidden !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
     }
 
     [data-testid="product-list"] .resource-list--grid .card-gallery img,
@@ -753,22 +860,295 @@
     [data-testid="product-list"] .resource-list--grid .card-gallery .product-media-container video {
       width: 175px !important;
       max-width: 175px !important;
+      min-width: 175px !important;
       height: 175px !important;
+      max-height: 175px !important;
       object-fit: cover !important;
       box-sizing: border-box !important;
       display: block !important;
     }
 
+    /* Slideshow components - all constrained to 175px with CSS variable override */
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-component {
+      width: 175px !important;
+      max-width: 175px !important;
+      min-width: 175px !important;
+      height: 175px !important;
+      max-height: 175px !important;
+      display: block !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      --slide-width: 175px !important;
+    }
+
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-container {
+      width: 175px !important;
+      max-width: 175px !important;
+      min-width: 175px !important;
+      height: 175px !important;
+      max-height: 175px !important;
+      position: relative !important;
+      overflow: hidden !important;
+      --slide-width: 175px !important;
+    }
+
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slides {
+      width: 175px !important;
+      max-width: 175px !important;
+      min-width: 175px !important;
+      height: 175px !important;
+      max-height: 175px !important;
+      display: flex !important;
+      position: relative !important;
+      --slide-width: 175px !important;
+    }
+
+    /* CRITICAL: Override ALL possible width sources for slideshow-slide - must be exactly 175px */
+    /* Set CSS variable on all parent containers FIRST */
+    [data-testid="product-list"] .resource-list--grid .resource-list__item,
+    [data-testid="product-list"] .resource-list--grid product-card,
+    [data-testid="product-list"] .resource-list--grid product-card-link,
+    [data-testid="product-list"] .resource-list--grid .card-gallery,
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-component,
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-container,
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slides,
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slide {
+      --slide-width: 175px !important;
+    }
+
+    /* Force slideshow-slide to exactly 175px - override base.css width: var(--slide-width, 100%) */
+    /* Use maximum specificity to override any other rules */
+    [data-testid="product-list"] .resource-list--grid .resource-list__item product-card .card-gallery slideshow-component slideshow-container slideshow-slides slideshow-slide,
+    [data-testid="product-list"] .resource-list--grid .resource-list__item product-card-link .card-gallery slideshow-component slideshow-container slideshow-slides slideshow-slide,
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-component slideshow-container slideshow-slides slideshow-slide,
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slide,
+    [data-testid="product-list"] .resource-list--grid slideshow-slide,
+    [data-testid="product-list"] .resource-list--grid .resource-list__item slideshow-slide {
+      width: 175px !important;
+      max-width: 175px !important;
+      min-width: 175px !important;
+      height: 175px !important;
+      max-height: 175px !important;
+      flex: 0 0 175px !important;
+      flex-basis: 175px !important;
+      flex-shrink: 0 !important;
+      flex-grow: 0 !important;
+      scroll-snap-align: start !important;
+      position: relative !important;
+      box-sizing: border-box !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+    }
+
+    /* Ensure images inside slideshow-slide are also 175px */
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slide img,
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slide picture,
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slide video {
+      width: 175px !important;
+      max-width: 175px !important;
+      min-width: 175px !important;
+      height: 175px !important;
+      max-height: 175px !important;
+      object-fit: cover !important;
+      display: block !important;
+    }
+
+    /* ABSOLUTE FINAL OVERRIDE: Force slideshow-slide to be exactly 175px - this must override EVERYTHING */
+    /* Use universal selector to catch any slideshow-slide in product-list grids */
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slide,
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slide[style],
+    [data-testid="product-list"] .resource-list--grid .card-gallery[style] slideshow-slide,
+    [data-testid="product-list"] .resource-list--grid * slideshow-slide {
+      width: 175px !important;
+      max-width: 175px !important;
+      min-width: 175px !important;
+      flex: 0 0 175px !important;
+      flex-basis: 175px !important;
+    }
+  }
+
+  /* FINAL OVERRIDE - Place after all other rules to ensure it takes precedence */
+  @media screen and (max-width: 749px) {
+    /* Target slideshow-slide with maximum specificity */
+    [data-testid="product-list"] .resource-list--grid .resource-list__item product-card .card-gallery slideshow-component slideshow-container slideshow-slides slideshow-slide {
+      width: 175px !important;
+      max-width: 175px !important;
+      min-width: 175px !important;
+      flex: 0 0 175px !important;
+      flex-basis: 175px !important;
+      --slide-width: 175px !important;
+    }
+    
+    [data-testid="product-list"] .resource-list--grid .card-gallery {
+      width: 175px !important;
+      padding: 0 !important;
+      padding-inline: 0 !important;
+    }
+    
     [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slide {
       width: 175px !important;
       max-width: 175px !important;
-      height: 175px !important;
+      min-width: 175px !important;
+    }
+  }
+
+    /* Additional override using higher specificity - ensure this runs after all other styles */
+  @media screen and (max-width: 749px) {
+    /* Universal override for slideshow-slide in product-list - must be 175px */
+    [data-testid="product-list"] .resource-list--grid slideshow-slide,
+    [data-testid="product-list"] .resource-list--grid .card-gallery slideshow-slide,
+    [data-testid="product-list"] .resource-list--grid * slideshow-slide {
+      width: 175px !important;
+      max-width: 175px !important;
+      min-width: 175px !important;
+      flex-basis: 175px !important;
+      flex: 0 0 175px !important;
+      --slide-width: 175px !important;
+    }
+    
+    /* Ensure card-gallery and all its containers are exactly 175px */
+    [data-testid="product-list"] .resource-list--grid .card-gallery,
+    [data-testid="product-list"] .resource-list--grid .card-gallery * {
+      --slide-width: 175px !important;
     }
   }
 </style>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Fix mobile product card sizes - ensure everything is exactly 175px
+    function fixMobileCardSizes() {
+      if (window.innerWidth > 749) return; // Only on mobile
+      
+      const productListGrid = document.querySelector('[data-testid="product-list"] .resource-list--grid');
+      if (!productListGrid) return;
+      
+      // Fix grid items first - remove any borders or padding
+      const gridItems = productListGrid.querySelectorAll('.resource-list__item, .product-grid__item');
+      gridItems.forEach(item => {
+        item.style.width = '175px';
+        item.style.maxWidth = '175px';
+        item.style.minWidth = '175px';
+        item.style.padding = '0';
+        item.style.margin = '0';
+        item.style.border = 'none';
+        item.style.borderWidth = '0';
+        item.style.boxSizing = 'border-box';
+      });
+      
+      // Fix product cards and their content wrappers
+      const productCards = productListGrid.querySelectorAll('product-card, product-card-link');
+      productCards.forEach(card => {
+        card.style.width = '175px';
+        card.style.maxWidth = '175px';
+        card.style.minWidth = '175px';
+        
+        // Fix product-card__content wrapper
+        const cardContent = card.querySelector('.product-card__content');
+        if (cardContent) {
+          const contentStyle = cardContent.getAttribute('style') || '';
+          let newContentStyle = contentStyle
+            .replace(/--padding-[^:;]+:[^;]+;?/gi, '')
+            .replace(/padding[^:;]*:[^;]+;?/gi, '');
+          cardContent.setAttribute('style', newContentStyle);
+          cardContent.style.width = '175px';
+          cardContent.style.maxWidth = '175px';
+          cardContent.style.padding = '0';
+          cardContent.style.margin = '0';
+        }
+      });
+      
+      // Fix card galleries - CRITICAL: Remove ALL padding that might cause 205px width
+      const cardGalleries = productListGrid.querySelectorAll('.card-gallery');
+      cardGalleries.forEach(gallery => {
+        // Remove inline style attributes that might have padding
+        const currentStyle = gallery.getAttribute('style') || '';
+        // Remove padding-related CSS variables from inline style
+        let newStyle = currentStyle
+          .replace(/--padding-[^:;]+:[^;]+;?/gi, '')
+          .replace(/padding[^:;]*:[^;]+;?/gi, '');
+        gallery.setAttribute('style', newStyle);
+        
+        // Force exact dimensions - remove ALL padding that could cause 205px width
+        gallery.style.cssText += 'width: 175px !important; max-width: 175px !important; min-width: 175px !important; height: 175px !important; padding: 0 !important; margin: 0 !important; border: none !important;';
+        gallery.style.setProperty('--slide-width', '175px', 'important');
+        gallery.style.setProperty('--padding-inline-start', '0px', 'important');
+        gallery.style.setProperty('--padding-inline-end', '0px', 'important');
+        gallery.style.setProperty('--padding-block-start', '0px', 'important');
+        gallery.style.setProperty('--padding-block-end', '0px', 'important');
+        gallery.style.setProperty('padding-inline', '0', 'important');
+        gallery.style.setProperty('padding-block', '0', 'important');
+        
+        // Fix slideshow components
+        const slideshowComponents = gallery.querySelectorAll('slideshow-component, slideshow-container, slideshow-slides');
+        slideshowComponents.forEach(comp => {
+          comp.style.width = '175px';
+          comp.style.maxWidth = '175px';
+          comp.style.minWidth = '175px';
+          comp.style.setProperty('--slide-width', '175px', 'important');
+        });
+        
+        // Fix slideshow-slide - CRITICAL: must be exactly 175px
+        const slideshowSlides = gallery.querySelectorAll('slideshow-slide');
+        slideshowSlides.forEach(slide => {
+          // Remove any inline style padding or width settings
+          const slideStyle = slide.getAttribute('style') || '';
+          let newSlideStyle = slideStyle
+            .replace(/--padding-[^:;]+:[^;]+;?/gi, '')
+            .replace(/padding[^:;]*:[^;]+;?/gi, '')
+            .replace(/width[^:;]*:[^;]+;?/gi, '')
+            .replace(/--slide-width[^:;]+:[^;]+;?/gi, '');
+          slide.setAttribute('style', newSlideStyle);
+          
+          // Force slideshow-slide to exactly 175px - override everything with inline styles
+          slide.style.width = '175px';
+          slide.style.maxWidth = '175px';
+          slide.style.minWidth = '175px';
+          slide.style.height = '175px';
+          slide.style.flexBasis = '175px';
+          slide.style.flex = '0 0 175px';
+          slide.style.padding = '0';
+          slide.style.margin = '0';
+          slide.style.setProperty('--slide-width', '175px', 'important');
+          
+          // Log for debugging (remove in production)
+          // console.log('slideshow-slide width:', window.getComputedStyle(slide).width);
+        });
+        
+        // Also fix product-media-container to ensure it's 175px
+        const mediaContainers = gallery.querySelectorAll('.product-media-container');
+        mediaContainers.forEach(container => {
+          container.style.width = '175px';
+          container.style.maxWidth = '175px';
+          container.style.height = '175px';
+          container.style.padding = '0';
+          container.style.margin = '0';
+        });
+      });
+    }
+    
+    // Run on load with multiple delays to catch all style applications
+    fixMobileCardSizes();
+    setTimeout(fixMobileCardSizes, 100);
+    setTimeout(fixMobileCardSizes, 500);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(fixMobileCardSizes);
+    });
+    
+    window.addEventListener('resize', fixMobileCardSizes);
+    
+    // Use MutationObserver to fix sizes when DOM changes
+    const observer = new MutationObserver(function(mutations) {
+      setTimeout(fixMobileCardSizes, 50);
+    });
+    
+    const productListGrid = document.querySelector('[data-testid="product-list"] .resource-list--grid');
+    if (productListGrid) {
+      observer.observe(productListGrid, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+    }
+    
     const tabs = document.querySelectorAll('.product-list-tab');
     const contents = document.querySelectorAll('.product-list-content-wrapper');
     const shopAllBtn = document.querySelector('.product-list-shop-all-btn');
@@ -868,6 +1248,9 @@
              
              // Force images to load when tab becomes visible
              forceImageLoad(content);
+             
+             // Fix card sizes after tab switch
+             setTimeout(fixMobileCardSizes, 100);
           } else {
              content.style.display = 'none';
           }

@@ -12,7 +12,7 @@
   @param {string} additional_blocks - Captured HTML for additional section blocks
 
   @example
-  {% capture media_gallery %}
+  {% capture media_gallery %} 
     {% content_for 'block', type: '_product-media-gallery', id: 'media-gallery', closest.product: product %}
   {% endcapture %}
 
@@ -82,6 +82,11 @@
   style="{% render 'spacing-style', settings: settings %} --gap: {{ settings.gap }}px;"
   data-testid="product-information"
 >
+  {% if request.page_type == 'product' %}
+    <div class="product-breadcrumbs-wrapper">
+      {% render 'product-breadcrumbs', product: product %}
+    </div>
+  {% endif %}
   {% if settings.desktop_media_position == 'left' and product_has_media and request.page_type == 'product' %}
     {% assign product_href = '#ProductInformation-' | append: section_id %}
     {% render 'skip-to-content-link', href: product_href, text: 'accessibility.skip_to_product_info' %}
@@ -112,9 +117,27 @@
   {{ additional_blocks }}
 </div>
 
-{% stylesheet %}
+  {% stylesheet %}
   .product-information {
     gap: var(--gap) 0;
+  }
+
+  .product-breadcrumbs-wrapper {
+    margin-bottom: var(--margin-md);
+    width: 100%;
+  }
+
+  .section--page-width .product-breadcrumbs-wrapper {
+    padding-inline: var(--padding-lg);
+  }
+
+  @media screen and (min-width: 750px) {
+    .section--page-width .product-breadcrumbs-wrapper {
+      max-width: var(--page-content-width);
+      margin-left: auto;
+      margin-right: auto;
+      padding-inline: var(--padding-lg);
+    }
   }
 
   /* Base grid layout */
