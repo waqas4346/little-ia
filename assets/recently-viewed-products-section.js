@@ -304,20 +304,28 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     searchUrl.searchParams.set('q', productIds.map(id => `id:${id}`).join(' OR '));
     searchUrl.searchParams.set('resources[type]', 'product');
     
-    console.log('Fetching products from main-collection via search:', searchUrl.toString());
+    console.log('Fetching products from search-results section (which uses full product card structure):', searchUrl.toString());
     
     try {
-      // Use cache: false to ensure we get fresh results
+      // Try fetching from search-results section first, which should render products with full card-gallery structure
       // Add timestamp to URL to bust any caching
       searchUrl.searchParams.set('_t', Date.now().toString());
-      const sectionHTML = await sectionRenderer.getSectionHTML('main-collection', false, searchUrl);
+      let sectionHTML = await sectionRenderer.getSectionHTML('search-results', false, searchUrl);
+      let sectionName = 'search-results';
+      
+      // If search-results didn't work, try main-collection
+      if (!sectionHTML || sectionHTML.trim().length === 0) {
+        console.log('search-results returned empty, trying main-collection...');
+        sectionHTML = await sectionRenderer.getSectionHTML('main-collection', false, searchUrl);
+        sectionName = 'main-collection';
+      }
       
       if (sectionHTML) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(sectionHTML, 'text/html');
         const productItems = Array.from(doc.querySelectorAll('.product-grid__item[data-product-id]'));
         
-        console.log(`Found ${productItems.length} product items in main-collection`);
+        console.log(`Found ${productItems.length} product items in ${sectionName}`);
         
         if (productItems.length > 0) {
           const orderedProducts = productIds
@@ -331,33 +339,105 @@ class RecentlyViewedProductsComponent extends HTMLElement {
             .filter(Boolean);
 
           if (orderedProducts.length > 0) {
-            // Map in the exact order from localStorage
-            productCardsHTML = productIds
-              .map((productId) => {
-                // Find the item that matches this product ID
-                const item = orderedProducts.find((p) => {
-                  const itemId = p.dataset.productId || p.getAttribute('data-product-id');
-                  return String(itemId) === String(productId);
-                });
+            // Map in the exact order from localStorage - need to use async map for fallback fetching
+            const productCardsPromises = productIds.map(async (productId) => {
+              // Find the item that matches this product ID
+              const item = orderedProducts.find((p) => {
+                const itemId = p.dataset.productId || p.getAttribute('data-product-id');
+                return String(itemId) === String(productId);
+              });
+              
+              if (!item) {
+                console.warn(`Product ${productId} not found in ordered products`);
+                return null;
+              }
+              
+              const productCardHTML = item.innerHTML;
+              
+              // Check if product card has content and card-gallery with slideshow-component
+              const tempDiv = document.createElement('div');
+              tempDiv.innerHTML = productCardHTML;
+              const productCard = tempDiv.querySelector('product-card');
+              const cardContent = productCard?.querySelector('.product-card__content');
+              const hasContent = cardContent && cardContent.innerHTML.trim().length > 0;
+              
+              // Check if card-gallery and slideshow-component are present
+              const cardGallery = tempDiv.querySelector('.card-gallery');
+              const slideshowComponent = tempDiv.querySelector('.card-gallery slideshow-component');
+              
+              console.log(`Product ${productId} from ${sectionName}:`, {
+                hasContent,
+                hasCardGallery: !!cardGallery,
+                hasSlideshowComponent: !!slideshowComponent,
+                cardGalleryHTML: cardGallery ? cardGallery.outerHTML.substring(0, 300) : 'NONE',
+                slideshowHTML: slideshowComponent ? slideshowComponent.outerHTML.substring(0, 200) : 'NONE',
+                anchorTag: tempDiv.querySelector('a[ref="cardGalleryLink"], .card-gallery a'),
+                anchorHasSlideshow: tempDiv.querySelector('a[ref="cardGalleryLink"] slideshow-component, .card-gallery a slideshow-component') ? 'YES' : 'NO',
+                fullCardHTML: productCardHTML.substring(0, 1000)
+              });
+              
+              // CRITICAL: If card-gallery or slideshow-component is missing, the product card structure is incomplete
+              // This means products are being rendered with resource-card instead of full product-card with card-gallery
+              if (!cardGallery || !slideshowComponent) {
+                console.error(`Product ${productId} is MISSING card-gallery or slideshow-component!`);
+                console.error(`hasCardGallery: ${!!cardGallery}, hasSlideshowComponent: ${!!slideshowComponent}`);
+                console.error('This is why the slider is not showing - the slideshow-component is not in the HTML at all.');
+                console.error('Full product card HTML:', productCardHTML);
                 
-                if (!item) {
-                  console.warn(`Product ${productId} not found in ordered products`);
-                  return null;
+                // Product is rendered with resource-card or simple structure without card-gallery
+                // We need to inject card-gallery with slideshow-component structure
+                // But first, try fetching from a different section that might have full structure
+                const fallbackCard = await this.#fetchIndividualProductCard(productId, productData);
+                if (fallbackCard && fallbackCard.html) {
+                  const fallbackDiv = document.createElement('div');
+                  fallbackDiv.innerHTML = fallbackCard.html;
+                  const fallbackCardGallery = fallbackDiv.querySelector('.card-gallery');
+                  const fallbackSlideshow = fallbackDiv.querySelector('.card-gallery slideshow-component');
+                  
+                  if (fallbackCardGallery && fallbackSlideshow) {
+                    console.log(`Successfully fetched product ${productId} with full structure from fallback method`);
+                    return fallbackCard;
+                  }
                 }
                 
-                const productCardHTML = item.innerHTML;
+                // If fallback didn't work, try fetching from collections.all collection
+                // This should render products with full product card structure
+                const collectionCard = await this.#fetchProductFromCollection(productId, productData);
+                if (collectionCard && collectionCard.html) {
+                  const collectionDiv = document.createElement('div');
+                  collectionDiv.innerHTML = collectionCard.html;
+                  const collectionCardGallery = collectionDiv.querySelector('.card-gallery');
+                  const collectionSlideshow = collectionDiv.querySelector('.card-gallery slideshow-component');
+                  
+                  if (collectionCardGallery && collectionSlideshow) {
+                    console.log(`Successfully fetched product ${productId} with full structure from collection page`);
+                    return collectionCard;
+                  }
+                }
                 
-                // Check if product card has content
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = productCardHTML;
-                const productCard = tempDiv.querySelector('product-card');
-                const cardContent = productCard?.querySelector('.product-card__content');
-                const hasContent = cardContent && cardContent.innerHTML.trim().length > 0;
-                
-                console.log(`Product ${productId} from main-collection, has content: ${hasContent}`);
-                
-                return { id: productId, html: productCardHTML };
-              })
+                // If all methods fail, log error and skip this product for now
+                // Products without card-gallery won't have slider functionality
+                console.error(`Cannot fetch product ${productId} with full card-gallery structure using any method. Skipping slider for this product.`);
+                return null;
+              }
+              
+              // Verify slideshow-component is inside the anchor tag (as expected per card-gallery.liquid structure)
+              const anchorTag = tempDiv.querySelector('a[ref="cardGalleryLink"], .card-gallery a');
+              const slideshowInAnchor = anchorTag?.querySelector('slideshow-component');
+              
+              if (!slideshowInAnchor && slideshowComponent) {
+                console.warn(`Product ${productId}: slideshow-component exists but NOT inside anchor tag! Structure might be different.`);
+                console.warn('Anchor tag:', anchorTag?.outerHTML.substring(0, 200));
+                console.warn('Slideshow location:', slideshowComponent.parentElement?.tagName);
+              } else if (slideshowInAnchor) {
+                console.log(`Product ${productId}: slideshow-component is correctly inside anchor tag ✓`);
+              }
+              
+              return { id: productId, html: productCardHTML };
+            });
+            
+            // Wait for all promises to resolve
+            productCardsHTML = (await Promise.all(productCardsPromises))
               .filter(card => {
                 if (!card) return false;
                 const tempDiv = document.createElement('div');
@@ -536,6 +616,7 @@ class RecentlyViewedProductsComponent extends HTMLElement {
                       
                       // Setup product cards and actions like product-slider does
                       this.#setupProductCards();
+                      this.#enableProductCardImageSliders();
                       this.#addProductActions();
                       
                       // The slideshow component should auto-initialize, but we need to set up arrow handlers
@@ -712,6 +793,275 @@ class RecentlyViewedProductsComponent extends HTMLElement {
   }
 
   /**
+   * Enable product card image sliders for recently viewed products
+   * This ensures the carousel works even when product_card_carousel is disabled globally
+   * The slider should work like it does in product-list section
+   */
+  async #enableProductCardImageSliders() {
+    const carousel = this.querySelector('[data-testid="recently-viewed-products-grid"]');
+    if (!carousel) {
+      console.log('Carousel not found for enabling product card sliders');
+      return;
+    }
+
+    // Wait a bit for DOM to be fully ready and for product cards to be rendered
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Find all card-gallery elements in the recently viewed section
+    const cardGalleries = carousel.querySelectorAll('.card-gallery');
+    
+    console.log(`Found ${cardGalleries.length} card-gallery elements in recently viewed section`);
+    
+    if (cardGalleries.length === 0) {
+      console.warn('No card-gallery elements found! Product cards might not be rendering with gallery.');
+      // Check if product cards are rendered at all
+      const productCards = carousel.querySelectorAll('product-card');
+      console.log(`Found ${productCards.length} product-card elements`);
+      
+      if (productCards.length > 0) {
+        // Product cards exist but no card-gallery - this means cards aren't using card-gallery block
+        // They might be using resource-card instead which doesn't have slider
+        console.warn('Product cards found but no card-gallery - products might be using resource-card instead of full product card structure');
+      }
+      return;
+    }
+    
+    for (const cardGallery of cardGalleries) {
+      const slideshowComponent = cardGallery.querySelector('slideshow-component');
+      if (!slideshowComponent) {
+        console.log('No slideshow-component found in card-gallery');
+        continue;
+      }
+
+      const slides = slideshowComponent.querySelectorAll('slideshow-slide');
+      const slidesContainer = slideshowComponent.querySelector('slideshow-slides');
+      
+      if (!slidesContainer) {
+        console.log('No slideshow-slides container found');
+        continue;
+      }
+
+      // Check if carousel is disabled
+      const isDisabled = slideshowComponent.hasAttribute('disabled') || slideshowComponent.getAttribute('disabled') === 'true';
+      
+      // Get product ID
+      const productId = cardGallery.getAttribute('data-product-id');
+      console.log(`Processing product ${productId}, disabled: ${isDisabled}, slides: ${slides.length}`);
+
+      // If disabled, remove disabled attribute to enable scrolling
+      if (isDisabled) {
+        slideshowComponent.removeAttribute('disabled');
+        console.log(`Removed disabled attribute from product ${productId}`);
+      }
+
+      // Check visible slides count
+      const visibleSlides = Array.from(slides).filter(slide => {
+        const isHidden = slide.hasAttribute('hidden') || 
+                        slide.getAttribute('aria-hidden') === 'true' ||
+                        window.getComputedStyle(slide).display === 'none';
+        return !isHidden;
+      });
+
+      console.log(`Product ${productId}: ${visibleSlides.length} visible slides out of ${slides.length} total`);
+
+      // If only 1 visible slide, try to make all slides visible or fetch additional images
+      if (visibleSlides.length <= 1 && slides.length > 1) {
+        // Make all hidden slides visible for scrolling
+        slides.forEach((slide, index) => {
+          if (index > 0 && (slide.hasAttribute('hidden') || slide.getAttribute('aria-hidden') === 'true')) {
+            slide.removeAttribute('hidden');
+            slide.setAttribute('aria-hidden', 'false');
+            slide.style.display = '';
+            console.log(`Made slide ${index} visible for product ${productId}`);
+          }
+        });
+      } else if (visibleSlides.length === 1 && slides.length === 1 && productId) {
+        // Only 1 slide exists - fetch product media and add more slides
+        // This happens when product_card_carousel is disabled globally and only 1 image is rendered
+        console.log(`Only 1 slide for product ${productId}, fetching additional images...`);
+        await this.#fetchAndAddProductImages(cardGallery, slideshowComponent, productId);
+      }
+
+      // Ensure scrolling is enabled on slides container (CSS should handle this, but enforce it)
+      slidesContainer.style.overflowX = 'auto';
+      slidesContainer.style.scrollSnapType = 'x mandatory';
+      slidesContainer.style.webkitOverflowScrolling = 'touch';
+      slidesContainer.style.scrollBehavior = 'smooth';
+      
+      // Ensure all slides have proper width for scrolling
+      const allSlides = slideshowComponent.querySelectorAll('slideshow-slide');
+      allSlides.forEach((slide) => {
+        slide.style.flexShrink = '0';
+        slide.style.flexBasis = '100%';
+        slide.style.width = '100%';
+        slide.style.minWidth = '100%';
+        slide.style.scrollSnapAlign = 'start';
+        
+        // Make sure hidden slides are visible for scrolling
+        if (slide.hasAttribute('hidden')) {
+          slide.removeAttribute('hidden');
+        }
+        if (slide.getAttribute('aria-hidden') === 'true') {
+          slide.setAttribute('aria-hidden', 'false');
+        }
+      });
+
+      const finalVisibleCount = Array.from(allSlides).filter(s => 
+        window.getComputedStyle(s).display !== 'none' && 
+        s.getAttribute('aria-hidden') !== 'true'
+      ).length;
+
+      console.log(`Enabled slider for product ${productId || 'unknown'}, total slides: ${allSlides.length}, visible: ${finalVisibleCount}`);
+    }
+  }
+
+  /**
+   * Fetch product media and add additional slides to card gallery
+   * This is needed when product_card_carousel is disabled globally, so only 1 image is rendered
+   */
+  async #fetchAndAddProductImages(cardGallery, slideshowComponent, productId) {
+    try {
+      // Get product handle from stored data
+      const productData = this.#productDataMap?.get(productId);
+      if (!productData || !productData.handle) {
+        console.log(`No product data or handle found for product ${productId}`);
+        return;
+      }
+
+      const handle = productData.handle;
+      
+      // Fetch product JSON data
+      const productUrl = `/products/${handle}`;
+      const response = await fetch(`${productUrl}?view=json`);
+      if (!response.ok) {
+        console.log(`Failed to fetch product data for ${handle}`);
+        return;
+      }
+
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Try to find product JSON data
+      const jsonScript = doc.querySelector('script[type="application/json"][data-product-json]');
+      if (!jsonScript) {
+        console.log(`No product JSON found for ${handle}`);
+        return;
+      }
+
+        const product = JSON.parse(jsonScript.textContent);
+        
+        // Handle different product JSON structures - try multiple ways to get media
+        let productMedia = product.media || product.images || [];
+        
+        // If media is not in the JSON, try to extract from product HTML
+        if (!productMedia || productMedia.length === 0) {
+          // Try to find media in the product page HTML
+          const productGallery = doc.querySelector('media-gallery, .product-media-gallery, .card-gallery');
+          if (productGallery) {
+            const galleryImages = productGallery.querySelectorAll('img[src*="shopify"], img[data-src*="shopify"]');
+            if (galleryImages.length > 0) {
+              productMedia = Array.from(galleryImages).map(img => ({
+                src: img.src || img.dataset.src,
+                id: img.dataset.mediaId || Math.random().toString()
+              }));
+            }
+          }
+        }
+        
+        if (!productMedia || productMedia.length <= 1) {
+          console.log(`Product ${productId} has only ${productMedia?.length || 0} images - cannot add slider`);
+          return;
+        }
+
+        const slidesContainer = slideshowComponent.querySelector('slideshow-slides');
+        if (!slidesContainer) return;
+
+        // Get existing slide as template
+        const firstSlide = slidesContainer.querySelector('slideshow-slide');
+        if (!firstSlide) return;
+
+        // Get existing media IDs to avoid duplicates
+        const existingMediaIds = new Set();
+        Array.from(slidesContainer.querySelectorAll('slideshow-slide')).forEach(slide => {
+          const mediaId = slide.getAttribute('slide-id');
+          if (mediaId) existingMediaIds.add(mediaId);
+        });
+
+        // Get the first slide's image container structure
+        const firstMediaContainer = firstSlide.querySelector('.product-media-container');
+        if (!firstMediaContainer) return;
+
+        // Add slides for remaining media (up to 5 total including the first one)
+        const maxSlides = 5;
+        let addedCount = 0;
+
+      for (let i = 1; i < Math.min(productMedia.length, maxSlides); i++) {
+        const media = productMedia[i];
+        const mediaId = String(media.id || media.media_id || i);
+
+        if (existingMediaIds.has(mediaId)) continue;
+
+        // Try different ways to get the media URL
+        let mediaUrl = null;
+        if (media.preview_image && media.preview_image.src) {
+          mediaUrl = media.preview_image.src;
+        } else if (media.src) {
+          mediaUrl = media.src;
+        } else if (media.url) {
+          mediaUrl = media.url;
+        } else if (typeof media === 'string') {
+          mediaUrl = media;
+        }
+        
+        if (!mediaUrl) continue;
+
+        // Clone the first slide structure
+        const newSlide = firstSlide.cloneNode(true);
+        newSlide.setAttribute('slide-id', mediaId);
+        newSlide.setAttribute('index', i);
+        newSlide.setAttribute('aria-hidden', 'false');
+        newSlide.removeAttribute('hidden');
+        newSlide.style.display = '';
+
+        // Update image src
+        const img = newSlide.querySelector('img');
+        const picture = newSlide.querySelector('picture');
+        
+        if (img) {
+          img.src = mediaUrl;
+          img.srcset = '';
+          img.alt = product.title || '';
+        } else if (picture) {
+          const pictureImg = picture.querySelector('img');
+          if (pictureImg) {
+            pictureImg.src = mediaUrl;
+            pictureImg.srcset = '';
+            pictureImg.alt = product.title || '';
+          }
+        }
+
+        slidesContainer.appendChild(newSlide);
+        existingMediaIds.add(mediaId);
+        addedCount++;
+
+        console.log(`Added slide ${i + 1} for product ${productId}`);
+      }
+
+      if (addedCount > 0) {
+        console.log(`Added ${addedCount} additional slides for product ${productId}`);
+        
+        // Re-enable scrolling now that we have multiple slides
+        slidesContainer.style.overflowX = 'auto';
+        slidesContainer.style.scrollSnapType = 'x mandatory';
+        slidesContainer.style.webkitOverflowScrolling = 'touch';
+      }
+    } catch (error) {
+      console.error(`Error fetching and adding images for product ${productId}:`, error);
+    }
+  }
+
+  /**
    * Add product-card-actions to each product card
    * Fetches product data from product pages and extracts/generates actions
    */
@@ -882,6 +1232,90 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /**
+   * Fetch individual product card from collection page to ensure full structure with card-gallery
+   * This is a fallback when Section Rendering API with search doesn't render full structure
+   */
+  async #fetchIndividualProductCard(productId, productDataArray) {
+    try {
+      const productData = productDataArray.find(p => p.id === productId);
+      if (!productData || !productData.handle) {
+        return null;
+      }
+
+      // Try fetching from search-results with a different search approach
+      const searchUrl = new URL('/search', location.origin);
+      searchUrl.searchParams.set('q', `id:${productId}`);
+      searchUrl.searchParams.set('resources[type]', 'product');
+      
+      console.log(`Attempting to fetch product ${productId} from search-results with different approach...`);
+      
+      const sectionHTML = await sectionRenderer.getSectionHTML('search-results', false, searchUrl);
+      
+      if (sectionHTML) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(sectionHTML, 'text/html');
+        const productItem = doc.querySelector(`.product-grid__item[data-product-id="${productId}"]`);
+        
+        if (productItem) {
+          const productCardHTML = productItem.innerHTML;
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = productCardHTML;
+          const cardGallery = tempDiv.querySelector('.card-gallery');
+          const slideshowComponent = tempDiv.querySelector('.card-gallery slideshow-component');
+          
+          if (cardGallery && slideshowComponent) {
+            console.log(`Successfully fetched product ${productId} with full card-gallery structure from search-results fallback`);
+            return { id: productId, html: productCardHTML };
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching individual product card for ${productId}:`, error);
+    }
+    
+    return null;
+  }
+
+  /**
+   * Fetch product from collections.all collection page to ensure full structure
+   */
+  async #fetchProductFromCollection(productId, productDataArray) {
+    try {
+      // Try fetching from collections/all which should render products with full structure
+      const collectionUrl = new URL('/collections/all', location.origin);
+      
+      console.log(`Attempting to fetch product ${productId} from collections/all...`);
+      
+      // Use a filter or search parameter that includes this product
+      // Note: This might not work perfectly, but it's worth trying
+      const sectionHTML = await sectionRenderer.getSectionHTML('main-collection', false, collectionUrl);
+      
+      if (sectionHTML) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(sectionHTML, 'text/html');
+        const productItem = doc.querySelector(`.product-grid__item[data-product-id="${productId}"]`);
+        
+        if (productItem) {
+          const productCardHTML = productItem.innerHTML;
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = productCardHTML;
+          const cardGallery = tempDiv.querySelector('.card-gallery');
+          const slideshowComponent = tempDiv.querySelector('.card-gallery slideshow-component');
+          
+          if (cardGallery && slideshowComponent) {
+            console.log(`Successfully fetched product ${productId} with full structure from collections/all`);
+            return { id: productId, html: productCardHTML };
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching product from collection for ${productId}:`, error);
+    }
+    
+    return null;
   }
 }
 

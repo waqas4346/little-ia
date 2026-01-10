@@ -123,8 +123,16 @@
   }
 
   /* Ensure all direct children are visible */
-  .quick-add-modal__content .product-information__grid > * {
+  /* BUT: Exception for skeleton loading elements which need flex layout */
+  .quick-add-modal__content .product-information__grid > *:not(.quick-add-modal__skeleton-media):not(.quick-add-modal__skeleton-details) {
     display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Skeleton media and details should use flex layout */
+  .quick-add-modal__content .product-information__grid > .quick-add-modal__skeleton-media,
+  .quick-add-modal__content .product-information__grid > .quick-add-modal__skeleton-details {
+    display: flex !important;
     visibility: visible !important;
   }
 
@@ -773,10 +781,22 @@
 
   /* Always show skeleton loading elements - override any hiding rules */
   /* This rule has high specificity to ensure skeleton elements are visible */
-  .quick-add-modal__content [class*="quick-add-modal__skeleton"],
-  .quick-add-modal__content [class*="quick-add-modal__skeleton"] *,
-  .quick-add-modal__loading-skeleton *,
-  .quick-add-modal__loading-skeleton [class*="quick-add-modal__skeleton"] {
+  /* But don't override display for skeleton-media (needs flex) and skeleton-image (needs proper positioning) */
+  .quick-add-modal__content [class*="quick-add-modal__skeleton"]:not(.quick-add-modal__skeleton-media):not(.quick-add-modal__skeleton-image),
+  .quick-add-modal__content [class*="quick-add-modal__skeleton"] *:not(.quick-add-modal__skeleton-image),
+  .quick-add-modal__loading-skeleton *:not(.quick-add-modal__skeleton-image):not(.quick-add-modal__skeleton-media),
+  .quick-add-modal__loading-skeleton [class*="quick-add-modal__skeleton"]:not(.quick-add-modal__skeleton-media):not(.quick-add-modal__skeleton-image) {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Skeleton media should be flex */
+  .quick-add-modal__skeleton-media {
+    display: flex !important;
+  }
+
+  /* Skeleton image should be block for proper centering within flex container */
+  .quick-add-modal__skeleton-image {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -841,14 +861,22 @@
   .quick-add-modal__skeleton-media {
     flex: 0 0 45.65% !important;
     display: flex !important;
-    align-items: center;
-    justify-content: center;
+    align-items: center !important;
+    justify-content: center !important;
     background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
     position: relative;
     overflow: hidden;
     width: 45.65% !important;
     max-width: 45.65% !important;
     min-width: 0 !important;
+    height: 100% !important;
+    min-height: 500px;
+    /* Override any block display rules */
+    visibility: visible !important;
+    opacity: 1 !important;
+    /* Ensure proper flex behavior */
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
 
     @media screen and (min-width: 1400px) {
       flex: 0 0 525px !important;
@@ -864,11 +892,54 @@
     }
   }
 
+  /* Also apply to product-information__media when it's a skeleton - ensure proper centering */
+  .quick-add-modal__skeleton-media.product-information__media,
+  .quick-add-modal__loading-skeleton .product-information__media.quick-add-modal__skeleton-media {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: row !important;
+  }
+
+  /* Ensure skeleton image is properly centered within skeleton media container */
+  /* The parent has flex with center alignment, so the child should center automatically */
+  .quick-add-modal__skeleton-media .quick-add-modal__skeleton-image,
+  .quick-add-modal__skeleton-media.product-information__media .quick-add-modal__skeleton-image {
+    display: block !important;
+    position: relative !important;
+    margin: 0 !important;
+    /* Remove any transforms or positioning that might move it */
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    float: none !important;
+    /* Ensure it's visible */
+    visibility: visible !important;
+    opacity: 1 !important;
+    /* Flexbox will center it automatically when parent has align-items: center and justify-content: center */
+    align-self: center;
+  }
+
+  /* Ensure skeleton media container properly centers its children */
+  .quick-add-modal__skeleton-media,
+  .quick-add-modal__skeleton-media.product-information__media {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: row !important;
+  }
+
   .quick-add-modal__skeleton-image {
-    width: 80%;
-    height: 80%;
-    max-width: 500px;
-    max-height: 500px;
+    /* Use fixed dimensions that work well and center properly */
+    width: 400px;
+    height: 400px;
+    max-width: calc(100% - 40px);
+    max-height: calc(100% - 40px);
+    min-width: 250px;
+    min-height: 250px;
+    aspect-ratio: 1 / 1;
     background: linear-gradient(
       90deg,
       rgb(var(--color-foreground-rgb) / 0.05) 0%,
@@ -878,6 +949,33 @@
     background-size: 200% 100%;
     border-radius: 4px;
     animation: skeleton-loading 1.5s ease-in-out infinite;
+    /* Ensure proper positioning - flexbox will center this automatically */
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-self: center !important;
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
+    position: relative !important;
+    /* Reset any positioning that might interfere */
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    float: none !important;
+    /* Ensure it's visible */
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  @media screen and (max-width: 749px) {
+    .quick-add-modal__skeleton-image {
+      width: 300px;
+      height: 300px;
+      max-width: calc(100% - 20px);
+      max-height: calc(100% - 20px);
+    }
   }
 
   .quick-add-modal__skeleton-details {

@@ -165,56 +165,96 @@
 {%- comment -%} Personalise Modal {%- endcomment -%}
 {% render 'personalise-modal', product: product, variant: product.selected_or_first_available_variant %}
 
-<script
-  src="{{ 'personalise-modal.js' | asset_url }}"
-  type="module"
-></script>
+<script src="{{ 'personalise-modal.js' | asset_url }}" type="module"></script>
 <script>
-  // Handle personalise button clicks for sticky bar
+  // Handle personalise button clicks for sticky bar - completely silent error handling
   (function() {
-    function openPersonaliseModal(e) {
-      const button = e.target.closest('[data-personalise-button]');
-      if (!button) return;
-      
-      e.preventDefault();
-      e.stopPropagation();
-      
-      let attempts = 0;
-      const maxAttempts = 20;
-      
-      function tryOpenDialog() {
-        attempts++;
-        const dialog = document.querySelector('personalise-dialog');
+    'use strict';
+    
+    // Simple function to safely open the dialog when button is clicked
+    function handlePersonaliseClick(e) {
+      try {
+        const button = e.target.closest('[data-personalise-button]');
+        if (!button) return;
         
-        if (dialog) {
-          if (customElements.get('personalise-dialog') && typeof dialog.showDialog === 'function') {
-            dialog.showDialog();
-            return;
-          }
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Try to find and open the dialog with retries
+        function tryOpenDialog(attempts) {
+          attempts = attempts || 0;
+          const maxAttempts = 40; // Increased for slower mobile devices
           
-          const dialogElement = dialog.querySelector('dialog');
-          if (dialogElement) {
-            dialogElement.showModal();
-            return;
+          try {
+            // Check if dialog element exists in DOM
+            const dialog = document.getElementById('personalise-dialog') || 
+                          document.querySelector('personalise-dialog');
+            
+            if (dialog) {
+              // Check if custom element class is defined
+              const isCustomElementDefined = customElements.get('personalise-dialog');
+              
+              if (isCustomElementDefined) {
+                // Try using the showDialog method
+                if (typeof dialog.showDialog === 'function') {
+                  try {
+                    dialog.showDialog();
+                    return; // Success!
+                  } catch (err) {
+                    // Continue to fallback
+                  }
+                }
+              }
+              
+              // Fallback: try opening the inner dialog element directly
+              const innerDialog = dialog.querySelector && dialog.querySelector('dialog');
+              if (innerDialog && typeof innerDialog.showModal === 'function') {
+                try {
+                  innerDialog.showModal();
+                  return; // Success!
+                } catch (err) {
+                  // Continue to retry
+                }
+              }
+            }
+            
+            // If not found and we haven't exceeded attempts, try again
+            if (attempts < maxAttempts) {
+              setTimeout(function() {
+                tryOpenDialog(attempts + 1);
+              }, 100);
+            }
+            // Silently fail after max attempts - no errors logged
+          } catch (err) {
+            // Silently catch any errors - absolutely no logging
           }
         }
         
-        if (attempts < maxAttempts) {
-          setTimeout(tryOpenDialog, 50);
-        }
+        tryOpenDialog(0);
+      } catch (err) {
+        // Silently handle any outer errors
       }
-      
-      tryOpenDialog();
     }
     
+    // Initialize event listener when DOM is ready
+    function init() {
+      try {
+        // Check if personalise button exists before adding listener
+        const hasButton = document.querySelector('[data-personalise-button]');
+        if (hasButton) {
+          document.addEventListener('click', handlePersonaliseClick, true);
+        }
+      } catch (err) {
+        // Silently handle initialization errors
+      }
+    }
+    
+    // Wait for DOM to be ready
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() {
-        document.addEventListener('click', openPersonaliseModal, true);
-      });
+      document.addEventListener('DOMContentLoaded', init);
     } else {
-      setTimeout(function() {
-        document.addEventListener('click', openPersonaliseModal, true);
-      }, 200);
+      // DOM already ready, wait a bit to ensure custom elements are loaded
+      setTimeout(init, 100);
     }
   })();
 </script>
@@ -695,46 +735,57 @@
     }
 
     .sticky-add-to-cart__content {
-      flex-direction: column;
-      align-items: stretch;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
       gap: var(--gap-sm);
+    }
+
+    /* Hide product info (image, title, price) on mobile */
+    .sticky-add-to-cart__product-info {
+      display: none;
     }
 
     .sticky-add-to-cart__actions {
       width: 100%;
-      min-width: auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: row;
+      gap: var(--gap-sm);
+      align-items: stretch;
     }
 
     .sticky-add-to-cart__personalise-button {
-      flex: 0 0 auto;
+      flex: 0 1 auto;
+      min-width: 0;
+      max-width: 160px;
+      width: auto;
+      overflow: hidden;
     }
 
-    .sticky-add-to-cart__button {
+    .sticky-add-to-cart__personalise-button .icon-tex-container {
+      overflow: hidden;
+      min-width: 0;
       flex: 1 1 auto;
     }
 
+    .sticky-add-to-cart__personalise-button .personalise-button__text,
+    .sticky-add-to-cart__personalise-button .personalise-button__summary {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .sticky-add-to-cart__button {
+      flex: 1 1 0;
+      min-width: 0;
+      width: auto;
+    }
+
     .add-to-cart-text__content {
-      display: none;
-    }
-
-    .sticky-add-to-cart__info[data-has-image='false'] {
-      padding-left: 0;
-    }
-
-    .sticky-add-to-cart__title {
-      font-size: var(--font-paragraph--size);
-    }
-
-    .sticky-add-to-cart__button {
-      padding: var(--padding-lg);
-    }
-
-    .sticky-add-to-cart__price {
-      font-size: var(--font-paragraph-small--size);
-    }
-
-    .sticky-add-to-cart__button {
-      width: var(--height-buy-buttons);
+      display: block;
     }
 
     sticky-add-to-cart:not([data-variant-available='true']) .add-to-cart-text__content {
