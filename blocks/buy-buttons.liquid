@@ -145,6 +145,30 @@
             %}
           </div>
 
+          {%- comment -%} Free Shipping and Delivery Messages {%- endcomment -%}
+          {%- liquid
+            assign threshold_cents = settings.free_shipping_threshold | default: 45000
+            assign threshold_money = threshold_cents | money
+          -%}
+          <div class="product-shipping-messages">
+            <div class="shipping-message">
+              <span class="shipping-message__icon">
+                {{- 'truck-duotone.svg' | inline_asset_content -}}
+              </span>
+              <span class="shipping-message__text">
+                Free shipping over {{ threshold_money }}
+              </span>
+            </div>
+            <div class="shipping-message">
+              <span class="shipping-message__icon">
+                <img src="{{ 'rectangle.svg' | asset_url }}" alt="" width="18" height="18" loading="lazy">
+              </span>
+              <span class="shipping-message__text">
+                Same day delivery, order before 11 AM
+              </span>
+            </div>
+          </div>
+
           {%- if has_quantity_rules -%}
             <div
               class="quantity-rules"
@@ -288,76 +312,106 @@
       </button>
     </div>
   {%- endif -%}
-</span>
-
-{%- comment -%} Personalise Modal {%- endcomment -%}
-{% render 'personalise-modal', product: product, variant: variant %}
-
-<script
-  src="{{ 'personalise-modal.js' | asset_url }}"
-  type="module"
-></script>
-<script>
-  // Handle personalise button clicks
-  (function() {
-    function openPersonaliseModal(e) {
-      const button = e.target.closest('[data-personalise-button]');
-      if (!button) return;
+  
+  {%- comment -%} Personalise Modal {%- endcomment -%}
+  {% render 'personalise-modal', product: product, variant: variant %}
+  
+  <script src="{{ 'personalise-modal.js' | asset_url }}" type="module"></script>
+  <script>
+    // Handle personalise button clicks - completely silent error handling
+    (function() {
+      'use strict';
       
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // Try multiple times to find the dialog (in case custom elements aren't ready)
-      let attempts = 0;
-      const maxAttempts = 20;
-      
-      function tryOpenDialog() {
-        attempts++;
-        const dialog = document.querySelector('personalise-dialog');
-        
-        if (dialog) {
-          // Check if custom element is defined
-          if (customElements.get('personalise-dialog')) {
-            if (typeof dialog.showDialog === 'function') {
-              dialog.showDialog();
-              return;
+      // Simple function to safely open the dialog when button is clicked
+      function handlePersonaliseClick(e) {
+        try {
+          const button = e.target.closest('[data-personalise-button]');
+          if (!button) return;
+          
+          e.preventDefault();
+          e.stopPropagation();
+          
+          // Try to find and open the dialog with retries
+          function tryOpenDialog(attempts) {
+            attempts = attempts || 0;
+            const maxAttempts = 40; // Increased for slower mobile devices
+            
+            try {
+              // Check if dialog element exists in DOM
+              const dialog = document.getElementById('personalise-dialog') || 
+                            document.querySelector('personalise-dialog');
+              
+              if (dialog) {
+                // Check if custom element class is defined
+                const isCustomElementDefined = customElements.get('personalise-dialog');
+                
+                if (isCustomElementDefined) {
+                  // Try using the showDialog method
+                  if (typeof dialog.showDialog === 'function') {
+                    try {
+                      dialog.showDialog();
+                      return; // Success!
+                    } catch (err) {
+                      // Continue to fallback
+                    }
+                  }
+                }
+                
+                // Fallback: try opening the inner dialog element directly
+                const innerDialog = dialog.querySelector && dialog.querySelector('dialog');
+                if (innerDialog && typeof innerDialog.showModal === 'function') {
+                  try {
+                    innerDialog.showModal();
+                    return; // Success!
+                  } catch (err) {
+                    // Continue to retry
+                  }
+                }
+              }
+              
+              // If not found and we haven't exceeded attempts, try again
+              if (attempts < maxAttempts) {
+                setTimeout(function() {
+                  tryOpenDialog(attempts + 1);
+                }, 100);
+              }
+              // Silently fail after max attempts - no errors logged
+            } catch (err) {
+              // Silently catch any errors - absolutely no logging
             }
           }
           
-          // Fallback: try to open the dialog directly
-          const dialogElement = dialog.querySelector('dialog');
-          if (dialogElement) {
-            dialogElement.showModal();
-            return;
-          }
-        }
-        
-        if (attempts < maxAttempts) {
-          setTimeout(tryOpenDialog, 50);
-        } else {
-          console.error('Personalise dialog not found. Make sure personalise-modal.js is loaded.');
+          tryOpenDialog(0);
+        } catch (err) {
+          // Silently handle any outer errors
         }
       }
       
-      tryOpenDialog();
-    }
-    
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() {
-        document.addEventListener('click', openPersonaliseModal, true);
-      });
-    } else {
-      // DOM already ready, but wait a bit for custom elements
-      setTimeout(function() {
-        document.addEventListener('click', openPersonaliseModal, true);
-      }, 200);
-    }
-  })();
-</script>
-
-<script>
-  // Function to update button text - only define if not already defined (to avoid conflicts)
+      // Initialize event listener when DOM is ready
+      function init() {
+        try {
+          // Check if personalise button exists before adding listener
+          const hasButton = document.querySelector('[data-personalise-button]');
+          if (hasButton) {
+            document.addEventListener('click', handlePersonaliseClick, true);
+          }
+        } catch (err) {
+          // Silently handle initialization errors
+        }
+      }
+      
+      // Wait for DOM to be ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        // DOM already ready, wait a bit to ensure custom elements are loaded
+        setTimeout(init, 100);
+      }
+    })();
+  </script>
+  
+  <script>
+    // Function to update button text - only define if not already defined (to avoid conflicts)
   if (!window.updatePersonaliseButtonText) {
     window.updatePersonaliseButtonText = function() {
       try {
@@ -549,7 +603,8 @@
   } catch (error) {
     console.error('Error setting up personalise button listeners:', error);
   }
-</script>
+  </script>
+</span>
 
 {% if block_settings.show_pickup_availability %}
   <script
@@ -1159,6 +1214,57 @@
     font-size: 14px;
     line-height: 140%;
     color: #1D425A;
+  }
+
+  /* Shipping Messages */
+  .product-shipping-messages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-md);
+    width: 100%;
+  }
+  @media screen and (min-width: 1400px) {
+    .product-shipping-messages {
+      justify-content: center;
+    }
+  }
+
+  .shipping-message {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-xs);
+  }
+
+  .shipping-message__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+  }
+
+  .shipping-message__icon svg,
+  .shipping-message__icon img {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .shipping-message__text {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 18px;
+    text-align: center;
+    color: #1D425A;
+  }
+
+  @media screen and (max-width: 749px) {
+    .shipping-message {
+      min-width: 100%;
+    }
   }
 {% endstylesheet %}
 

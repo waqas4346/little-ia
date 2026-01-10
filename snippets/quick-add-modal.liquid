@@ -89,6 +89,7 @@
   }
 
   .quick-add-modal__content {
+    width: 100%;
     display: flex;
     height: 100%;
     min-height: 500px;
@@ -305,6 +306,19 @@
     flex: 1 1 100%;
   }
 
+  /* Ensure skeleton details are visible when loading */
+  .quick-add-modal__content:has(.quick-add-modal__loading-skeleton) .product-details,
+  .quick-add-modal__content:has(.quick-add-modal__loading-skeleton) .quick-add-modal__skeleton-details {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .quick-add-modal__content:has(.quick-add-modal__loading-skeleton) .product-details * {
+    display: block !important;
+    visibility: visible !important;
+  }
+
   .quick-add-modal__content .view-product-title {
     display: flex;
     padding-block: 0;
@@ -352,16 +366,25 @@
   }
 
   /* Hide extra content in product-details on desktop in quick add modal */
+  /* BUT: Don't hide skeleton loading elements */
+  .quick-add-modal__content:not(:has(.quick-add-modal__loading-skeleton)) .product-details .text-block:has(h1),
+  .quick-add-modal__content:not(:has(.quick-add-modal__loading-skeleton)) .product-details .text-block:has(h2),
+  .quick-add-modal__content:not(:has(.quick-add-modal__loading-skeleton)) .product-details .text-block:has(h3) {
+    display: none !important;
+  }
+
   @media screen and (min-width: 750px) {
     /* Hide text blocks that contain product title (h1, h2, h3) - we only want .view-product-title */
-    .quick-add-modal__content .product-details .text-block:has(h1),
-    .quick-add-modal__content .product-details .text-block:has(h2),
-    .quick-add-modal__content .product-details .text-block:has(h3) {
+    /* BUT: Don't apply when showing skeleton */
+    .quick-add-modal__content:not(:has(.quick-add-modal__loading-skeleton)) .product-details .text-block:has(h1),
+    .quick-add-modal__content:not(:has(.quick-add-modal__loading-skeleton)) .product-details .text-block:has(h2),
+    .quick-add-modal__content:not(:has(.quick-add-modal__loading-skeleton)) .product-details .text-block:has(h3) {
       display: none !important;
     }
 
     /* Keep showing essential elements */
-    .quick-add-modal__content
+    /* BUT: Don't apply hiding rules when showing skeleton loader */
+    .quick-add-modal__content:not(:has(.quick-add-modal__loading-skeleton))
       .product-details
       *:not(
         .group-block,
@@ -444,7 +467,8 @@
     background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
     position: relative;
     overflow: hidden;
-    animation: fadeIn 0.4s var(--animation-timing-fade-in) both;
+    /* Remove animation to match personalize modal - no fade in */
+    animation: none !important;
     width: 45.65% !important;
     max-width: 45.65% !important;
     min-width: 0 !important;
@@ -464,6 +488,29 @@
     }
   }
 
+  /* Disable all transitions and animations in media gallery within quick add modal */
+  .quick-add-modal__content .product-information__media * {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* No transitions on images - instant update like personalize modal */
+  .quick-add-modal__content .product-information__media img {
+    transition: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Ensure media gallery replacement is instant (no flicker) */
+  .quick-add-modal__content media-gallery[data-quick-add-modal="true"] {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* When media gallery is replaced, ensure smooth transition */
+  .quick-add-modal__content .product-information__media media-gallery {
+    will-change: auto !important;
+  }
+
   .quick-add-modal__content .product-information__media media-gallery {
     pointer-events: none;
     width: 100% !important;
@@ -476,13 +523,15 @@
     opacity: 1 !important;
   }
 
-  /* Ensure slideshow-component is visible */
+  /* Ensure slideshow-component is visible but disable interactions */
   .quick-add-modal__content .product-information__media slideshow-component {
     width: 100% !important;
     height: 100% !important;
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    /* Disable slideshow functionality - just show static first image */
+    pointer-events: none;
   }
 
   .quick-add-modal media-gallery {
@@ -508,6 +557,9 @@
     width: 100% !important;
     height: 100% !important;
     position: relative;
+    /* Disable scrolling and animations */
+    scroll-behavior: auto !important;
+    transform: none !important;
   }
 
   .quick-add-modal__content .product-information__media slideshow-slide {
@@ -516,16 +568,18 @@
     scroll-snap-align: unset;
     position: relative;
     transform: none;
-    transition: opacity 0.3s var(--animation-easing);
+    /* Remove transition to prevent flickering */
+    transition: none !important;
   }
 
   /* Hide all slides except the first one - show only one image like personalisation modal */
   .quick-add-modal__content .product-information__media slideshow-slide:not(:first-child) {
     display: none !important;
     visibility: hidden !important;
+    opacity: 0 !important;
   }
 
-  /* Force first slide to be visible regardless of aria-hidden */
+  /* Force first slide to be visible regardless of aria-hidden - static display like personalize modal */
   .quick-add-modal__content .product-information__media slideshow-slide:first-child {
     width: 100% !important;
     height: 100% !important;
@@ -535,6 +589,9 @@
     position: relative;
     opacity: 1 !important;
     visibility: visible !important;
+    /* Disable any transforms or animations */
+    transform: none !important;
+    animation: none !important;
   }
 
   /* Override aria-hidden for first slide */
@@ -544,7 +601,7 @@
     opacity: 1 !important;
   }
 
-  /* Ensure all image/media elements are visible in first slide */
+  /* Ensure all image/media elements are visible in first slide - no transitions to prevent flickering */
   .quick-add-modal__content .product-information__media slideshow-slide:first-child .product-media,
   .quick-add-modal__content .product-information__media slideshow-slide:first-child .product-media > *,
   .quick-add-modal__content .product-information__media slideshow-slide:first-child img,
@@ -564,6 +621,10 @@
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
+    /* Disable transitions and transforms to prevent flickering */
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
   }
 
   /* Ensure product-media-container in first slide is visible */
@@ -684,18 +745,9 @@
     display: none !important;
   }
 
-  .quick-add-modal__content .product-information__media slideshow-slide:nth-child(1) {
-    animation: fadeSlideIn 0.3s var(--animation-timing-fade-in) both;
-  }
-
-  .quick-add-modal__content .product-information__media slideshow-slide:nth-child(2) {
-    animation: fadeSlideIn 0.3s var(--animation-timing-fade-in) both;
-    animation-delay: 0.05s;
-  }
-
-  .quick-add-modal__content .product-information__media slideshow-slide:nth-child(3) {
-    animation: fadeSlideIn 0.3s var(--animation-timing-fade-in) both;
-    animation-delay: 0.1s;
+  /* Remove animations to prevent flickering - show static image like personalize modal */
+  .quick-add-modal__content .product-information__media slideshow-slide {
+    animation: none !important;
   }
 
   .quick-add-modal__content .product-information__media slideshow-controls {
@@ -712,6 +764,36 @@
     display: none;
   }
 
+  /* Hide free shipping and delivery messages in quick add modal */
+  .quick-add-modal__content .product-shipping-messages,
+  .quick-add-modal__content .shipping-message {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Always show skeleton loading elements - override any hiding rules */
+  /* This rule has high specificity to ensure skeleton elements are visible */
+  .quick-add-modal__content [class*="quick-add-modal__skeleton"],
+  .quick-add-modal__content [class*="quick-add-modal__skeleton"] *,
+  .quick-add-modal__loading-skeleton *,
+  .quick-add-modal__loading-skeleton [class*="quick-add-modal__skeleton"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Skeleton details and variants container should be flex */
+  .quick-add-modal__skeleton-details,
+  .product-details.quick-add-modal__skeleton-details,
+  .quick-add-modal__skeleton-variants {
+    display: flex !important;
+  }
+
+  /* Skeleton line elements should be block */
+  .quick-add-modal__skeleton-line {
+    display: block !important;
+  }
+
   @keyframes fadeSlideIn {
     from {
       opacity: 0;
@@ -721,6 +803,261 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  /* Loading Skeleton Styles */
+  .quick-add-modal__loading-skeleton {
+    display: flex !important;
+    flex-direction: row;
+    width: 100% !important;
+    height: 100% !important;
+    gap: 0;
+    min-height: 500px;
+    animation: fadeIn 0.3s var(--animation-timing-fade-in) both;
+  }
+
+  /* Ensure skeleton elements are always visible and not hidden by product-details rules */
+  /* This needs to have higher specificity than the hiding rules */
+  .quick-add-modal__loading-skeleton .product-details,
+  .quick-add-modal__loading-skeleton .quick-add-modal__skeleton-details,
+  .quick-add-modal__content .quick-add-modal__loading-skeleton .product-details,
+  .quick-add-modal__content .quick-add-modal__loading-skeleton .quick-add-modal__skeleton-details {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Show all skeleton child elements when inside loading skeleton */
+  .quick-add-modal__loading-skeleton .product-details > *,
+  .quick-add-modal__loading-skeleton .quick-add-modal__skeleton-details > *,
+  .quick-add-modal__content .quick-add-modal__loading-skeleton .product-details > *,
+  .quick-add-modal__content .quick-add-modal__loading-skeleton .quick-add-modal__skeleton-details > * {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .quick-add-modal__skeleton-media {
+    flex: 0 0 45.65% !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
+    position: relative;
+    overflow: hidden;
+    width: 45.65% !important;
+    max-width: 45.65% !important;
+    min-width: 0 !important;
+
+    @media screen and (min-width: 1400px) {
+      flex: 0 0 525px !important;
+      width: 525px !important;
+      max-width: 525px !important;
+    }
+
+    @media screen and (max-width: 750px) {
+      flex: 0 0 40% !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-height: 200px;
+    }
+  }
+
+  .quick-add-modal__skeleton-image {
+    width: 80%;
+    height: 80%;
+    max-width: 500px;
+    max-height: 500px;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--color-foreground-rgb) / 0.05) 0%,
+      rgb(var(--color-foreground-rgb) / 0.12) 50%,
+      rgb(var(--color-foreground-rgb) / 0.05) 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+  }
+
+  .quick-add-modal__skeleton-details {
+    flex: 0 0 46.09% !important;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 100%;
+    min-height: 0;
+    padding: var(--padding-2xl);
+    width: 46.09% !important;
+    max-width: 46.09% !important;
+    gap: var(--gap-lg);
+    /* Ensure skeleton details are always visible */
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    @media screen and (min-width: 1400px) {
+      flex: 0 0 530px !important;
+      width: 530px !important;
+      max-width: 530px !important;
+    }
+
+    @media screen and (max-width: 750px) {
+      flex: 1 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: var(--padding-xl);
+    }
+  }
+
+  /* Ensure all skeleton elements inside details are visible - override any hiding rules */
+  .quick-add-modal__skeleton-details,
+  .quick-add-modal__skeleton-details .quick-add-modal__skeleton-line,
+  .quick-add-modal__skeleton-details .quick-add-modal__skeleton-title,
+  .quick-add-modal__skeleton-details .quick-add-modal__skeleton-price,
+  .quick-add-modal__skeleton-details .quick-add-modal__skeleton-line--medium,
+  .quick-add-modal__skeleton-details .quick-add-modal__skeleton-line--small,
+  .quick-add-modal__skeleton-details .quick-add-modal__skeleton-variants,
+  .quick-add-modal__skeleton-details .quick-add-modal__skeleton-variant,
+  .quick-add-modal__skeleton-details .quick-add-modal__skeleton-button,
+  /* Also target when skeleton-details has product-details class */
+  .product-details.quick-add-modal__skeleton-details,
+  .product-details.quick-add-modal__skeleton-details .quick-add-modal__skeleton-line,
+  .product-details.quick-add-modal__skeleton-details .quick-add-modal__skeleton-title,
+  .product-details.quick-add-modal__skeleton-details .quick-add-modal__skeleton-price,
+  .product-details.quick-add-modal__skeleton-details .quick-add-modal__skeleton-line--medium,
+  .product-details.quick-add-modal__skeleton-details .quick-add-modal__skeleton-line--small,
+  .product-details.quick-add-modal__skeleton-details .quick-add-modal__skeleton-variants,
+  .product-details.quick-add-modal__skeleton-details .quick-add-modal__skeleton-variant,
+  .product-details.quick-add-modal__skeleton-details .quick-add-modal__skeleton-button {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Skeleton details should be flex when it has product-details class */
+  .product-details.quick-add-modal__skeleton-details,
+  .quick-add-modal__skeleton-details {
+    display: flex !important;
+  }
+
+  /* Ensure skeleton variants container is flex */
+  .quick-add-modal__skeleton-variants {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .quick-add-modal__skeleton-line {
+    height: 20px;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--color-foreground-rgb) / 0.05) 0%,
+      rgb(var(--color-foreground-rgb) / 0.12) 50%,
+      rgb(var(--color-foreground-rgb) / 0.05) 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+  }
+
+  .quick-add-modal__skeleton-title {
+    width: 80%;
+    height: 28px;
+    margin-bottom: var(--gap-xs);
+    animation-delay: 0.1s;
+  }
+
+  .quick-add-modal__skeleton-price {
+    width: 40%;
+    height: 24px;
+    margin-bottom: var(--gap-md);
+    animation-delay: 0.2s;
+  }
+
+  .quick-add-modal__skeleton-line--medium {
+    width: 90%;
+    height: 16px;
+    margin-bottom: var(--gap-xs);
+    animation-delay: 0.3s;
+  }
+
+  .quick-add-modal__skeleton-line--small {
+    width: 70%;
+    height: 16px;
+    margin-bottom: var(--gap-xl);
+    animation-delay: 0.4s;
+  }
+
+  .quick-add-modal__skeleton-variants {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-md);
+    margin-bottom: var(--gap-xl);
+  }
+
+  .quick-add-modal__skeleton-variant {
+    height: 50px;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--color-foreground-rgb) / 0.05) 0%,
+      rgb(var(--color-foreground-rgb) / 0.12) 50%,
+      rgb(var(--color-foreground-rgb) / 0.05) 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 4px;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+  }
+
+  .quick-add-modal__skeleton-variant:nth-child(1) {
+    animation-delay: 0.5s;
+  }
+
+  .quick-add-modal__skeleton-variant:nth-child(2) {
+    animation-delay: 0.6s;
+  }
+
+  .quick-add-modal__skeleton-variant:nth-child(3) {
+    animation-delay: 0.7s;
+  }
+
+  .quick-add-modal__skeleton-button {
+    width: 100%;
+    height: 50px;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--color-foreground-rgb) / 0.05) 0%,
+      rgb(var(--color-foreground-rgb) / 0.12) 50%,
+      rgb(var(--color-foreground-rgb) / 0.05) 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 4px;
+    margin-top: auto;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+    animation-delay: 0.8s;
+  }
+
+  @keyframes skeleton-loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  @media screen and (max-width: 750px) {
+    .quick-add-modal__loading-skeleton {
+      flex-direction: column;
+      min-height: unset;
+    }
+
+    .quick-add-modal__skeleton-media {
+      order: 0;
+    }
+
+    .quick-add-modal__skeleton-details {
+      order: 1;
+      padding-inline: var(--padding-xl);
+      padding-block: var(--padding-xl);
     }
   }
 {% endstylesheet %}

@@ -66,6 +66,38 @@
     text-transform: var(--summary-font-case);
     min-height: var(--minimum-touch-target);
   }
+
+  /* Product page accordion heading styles */
+  .product-details .accordion .details__header,
+  main[data-template="product"] .accordion .details__header {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 17px;
+    display: flex;
+    align-items: center;
+    color: #1D425A;
+  }
+
+  /* Product page accordion content styles */
+  .product-details .accordion .details-content,
+  main[data-template="product"] .accordion .details-content {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 130%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    color: #1D425A;
+  }
+
+  .product-details .accordion .details-content > *,
+  main[data-template="product"] .accordion .details-content > * {
+    width: 100%;
+  }
 {% endstylesheet %}
 
 {% schema %}

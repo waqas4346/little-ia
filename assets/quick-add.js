@@ -88,24 +88,67 @@ export class QuickAddComponent extends Component {
       return;
     }
 
+    // Abort any previous fetch requests
+    this.#abortController?.abort();
+    this.#abortController = new AbortController();
+
+    // Check if we have cached content first
+    const modalContent = document.getElementById('quick-add-modal-content');
+    let productGrid = this.#cachedContent.get(currentUrl);
+
+    // If we have cached content, use it immediately (no loader needed)
+    if (productGrid && modalContent) {
+      // Open modal first
+      this.#openQuickAddModal();
+      // Update with cached content immediately (no loader)
+      const freshContent = /** @type {Element} */ (productGrid.cloneNode(true));
+      requestAnimationFrame(async () => {
+        if (!this.#abortController?.signal.aborted) {
+          await this.updateQuickAddModal(freshContent);
+        }
+      });
+      return;
+    }
+
+    // No cached content - show loading skeleton
+    if (modalContent) {
+      modalContent.innerHTML = this.#createLoadingSkeleton();
+    }
+
     // Open the modal immediately, then load content asynchronously
     this.#openQuickAddModal();
 
     // Load content asynchronously
     (async () => {
       try {
-        // Check if we have cached content for this URL
-        let productGrid = this.#cachedContent.get(currentUrl);
-
+        // Check if we have cached content for this URL (double check after fetch)
         if (!productGrid) {
+          let timeoutId;
           try {
+            // Create a timeout promise that can be cancelled
+            const timeoutPromise = new Promise((_, reject) => {
+              timeoutId = setTimeout(() => {
+                if (!this.#abortController?.signal.aborted) {
+                  reject(new Error('Fetch timeout'));
+                }
+              }, 10000);
+            });
+
             // Fetch and cache the content with timeout
             const html = await Promise.race([
               this.fetchProductPage(currentUrl),
-              new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Fetch timeout')), 10000)
-              )
+              timeoutPromise
             ]);
+            
+            // Clear timeout since one of the promises resolved
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
+            
+            // Check if aborted before processing
+            if (this.#abortController?.signal.aborted) {
+              return;
+            }
             
             if (html) {
               const gridElement = html.querySelector('[data-product-grid-content]');
@@ -116,9 +159,20 @@ export class QuickAddComponent extends Component {
               }
             }
           } catch (error) {
-            console.error('Quick Add: Error fetching product page', error);
+            // Clear timeout on error
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+            }
+            if (error.name !== 'AbortError' && error.message !== 'Fetch timeout') {
+              console.error('Quick Add: Error fetching product page', error);
+            }
             return;
           }
+        }
+
+        // Check if this request was aborted (user clicked another product)
+        if (this.#abortController?.signal.aborted) {
+          return;
         }
 
         if (productGrid) {
@@ -126,12 +180,24 @@ export class QuickAddComponent extends Component {
             // Use a fresh clone from the cache
             const freshContent = /** @type {Element} */ (productGrid.cloneNode(true));
             await this.updateQuickAddModal(freshContent);
+            // Clear abort controller after successful update (ready for next operation)
+            if (this.#abortController) {
+              this.#abortController = null;
+            }
           } catch (error) {
-            console.error('Quick Add: Error updating modal content', error);
+            if (error.name !== 'AbortError') {
+              console.error('Quick Add: Error updating modal content', error);
+            }
+            // Clear abort controller even on error (unless it was aborted)
+            if (this.#abortController && !this.#abortController.signal.aborted) {
+              this.#abortController = null;
+            }
           }
         }
       } catch (error) {
-        console.error('Quick Add: Unexpected error loading content', error);
+        if (error.name !== 'AbortError') {
+          console.error('Quick Add: Unexpected error loading content', error);
+        }
       }
     })();
   };
@@ -211,9 +277,10 @@ export class QuickAddComponent extends Component {
   async fetchProductPage(productPageUrl) {
     if (!productPageUrl) return null;
 
-    // We use this to abort the previous fetch request if it's still pending.
-    this.#abortController?.abort();
-    this.#abortController = new AbortController();
+    // Use the existing abort controller (should be set by handleClick)
+    if (!this.#abortController) {
+      this.#abortController = new AbortController();
+    }
 
     try {
       const response = await fetch(productPageUrl, {
@@ -234,9 +301,33 @@ export class QuickAddComponent extends Component {
       } else {
         throw error;
       }
-    } finally {
-      this.#abortController = null;
     }
+  }
+
+  /**
+   * Creates a loading skeleton that matches the modal design
+   * @returns {string} HTML string for the loading skeleton
+   */
+  #createLoadingSkeleton() {
+    return `
+      <div class="quick-add-modal__loading-skeleton product-information__grid">
+        <div class="quick-add-modal__skeleton-media product-information__media">
+          <div class="quick-add-modal__skeleton-image"></div>
+        </div>
+        <div class="quick-add-modal__skeleton-details product-details">
+          <div class="quick-add-modal__skeleton-line quick-add-modal__skeleton-title"></div>
+          <div class="quick-add-modal__skeleton-line quick-add-modal__skeleton-price"></div>
+          <div class="quick-add-modal__skeleton-line quick-add-modal__skeleton-line--medium"></div>
+          <div class="quick-add-modal__skeleton-line quick-add-modal__skeleton-line--small"></div>
+          <div class="quick-add-modal__skeleton-variants">
+            <div class="quick-add-modal__skeleton-variant"></div>
+            <div class="quick-add-modal__skeleton-variant"></div>
+            <div class="quick-add-modal__skeleton-variant"></div>
+          </div>
+          <div class="quick-add-modal__skeleton-button"></div>
+        </div>
+      </div>
+    `;
   }
 
   /**
@@ -247,6 +338,11 @@ export class QuickAddComponent extends Component {
     const modalContent = document.getElementById('quick-add-modal-content');
 
     if (!productGrid || !modalContent) return;
+
+    // Check if the request was aborted before updating
+    if (this.#abortController?.signal.aborted) {
+      return;
+    }
 
     if (isMobileBreakpoint()) {
       const productDetails = productGrid.querySelector('.product-details');
@@ -305,6 +401,98 @@ export class QuickAddComponent extends Component {
     // Ensure personalise button event listeners work with dynamically loaded content
     requestAnimationFrame(() => {
       this.#ensurePersonaliseButtonHandlers(modalContent);
+    });
+
+    // Prevent media gallery flickering on variant update - update image smoothly
+    requestAnimationFrame(() => {
+      this.#preventMediaGalleryFlicker(modalContent);
+    });
+  }
+
+  /**
+   * Prevents media gallery flickering by ensuring smooth image updates
+   * Similar to personalize modal - shows single static image without flicker
+   * @param {Element} modalContent - The modal content element
+   */
+  #preventMediaGalleryFlicker(modalContent) {
+    if (!modalContent) return;
+
+    // Add data attribute to mark this as a quick-add modal media gallery
+    const mediaGallery = modalContent.querySelector('media-gallery');
+    if (mediaGallery) {
+      mediaGallery.setAttribute('data-quick-add-modal', 'true');
+    }
+
+    // Find the first image element (the one that should be displayed)
+    const findFirstImage = () => {
+      return modalContent.querySelector(
+        '.product-information__media slideshow-slide:first-child img, .product-information__media .product-media img, .product-information__media img'
+      );
+    };
+
+    let firstImage = findFirstImage();
+    
+    // Disable any transitions/animations on images to prevent flicker
+    if (firstImage) {
+      firstImage.style.transition = 'none';
+      firstImage.style.animation = 'none';
+      firstImage.style.opacity = '1';
+    }
+
+    // Listen for variant updates within the modal to update image smoothly
+    const dialog = modalContent.closest('dialog');
+    if (!dialog) return;
+
+    const handleVariantUpdate = (event) => {
+      // Only handle variant updates within this quick add modal
+      if (!modalContent.contains(event.target)) return;
+
+      const newHtml = event.detail?.data?.html;
+      if (!newHtml) return;
+
+      // Find the new first image from the updated content
+      const newMediaGallery = newHtml.querySelector('media-gallery');
+      if (!newMediaGallery) return;
+
+      const newFirstImage = newMediaGallery.querySelector(
+        'slideshow-slide:first-child img, .product-media img, img'
+      );
+      
+      if (!newFirstImage) return;
+
+      // Get current first image (might have changed due to DOM updates)
+      firstImage = findFirstImage();
+      if (!firstImage) return;
+
+      // Get the new image src
+      const newImageSrc = newFirstImage.src || newFirstImage.getAttribute('src') || 
+                         newFirstImage.getAttribute('srcset')?.split(' ')[0];
+      
+      if (!newImageSrc || firstImage.src === newImageSrc) return;
+
+      // Update image instantly without fade (like personalize modal)
+      // Remove any existing transition
+      firstImage.style.transition = 'none';
+      firstImage.style.opacity = '1';
+      
+      // Update image source immediately
+      firstImage.src = newImageSrc;
+      
+      if (newFirstImage.srcset) {
+        firstImage.srcset = newFirstImage.srcset;
+      }
+      if (newFirstImage.sizes) {
+        firstImage.sizes = newFirstImage.sizes;
+      }
+      if (newFirstImage.alt) {
+        firstImage.alt = newFirstImage.alt;
+      }
+    };
+
+    // Listen for variant update events on the dialog (capture phase to run before media-gallery handler)
+    dialog.addEventListener(ThemeEvents.variantUpdate, handleVariantUpdate, { 
+      capture: true,
+      passive: true
     });
   }
 
