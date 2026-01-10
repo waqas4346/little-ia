@@ -375,6 +375,26 @@
       margin-left: -20px;
       margin-right: -20px;
     }
+
+    /* Mobile: Product slider carousel items - ensure proper sizing */
+    [data-testid="product-slider-grid"] .resource-list__item product-card .card-gallery .product-media-container,
+    [data-testid="product-slider-grid"] .resource-list__item product-card-link .card-gallery .product-media-container {
+      width: 175px !important;
+      height: 175px !important;
+      max-width: 175px !important;
+    }
+
+    [data-testid="product-slider-grid"] .resource-list__item product-card .card-gallery .product-media-container img,
+    [data-testid="product-slider-grid"] .resource-list__item product-card .card-gallery .product-media-container picture,
+    [data-testid="product-slider-grid"] .resource-list__item product-card .card-gallery .product-media-container video,
+    [data-testid="product-slider-grid"] .resource-list__item product-card-link .card-gallery .product-media-container img,
+    [data-testid="product-slider-grid"] .resource-list__item product-card-link .card-gallery .product-media-container picture,
+    [data-testid="product-slider-grid"] .resource-list__item product-card-link .card-gallery .product-media-container video {
+      width: 175px !important;
+      height: 175px !important;
+      max-width: 175px !important;
+      object-fit: cover !important;
+    }
   }
 </style>
 

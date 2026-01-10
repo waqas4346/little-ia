@@ -1075,6 +1075,33 @@ ul[product-grid-view='zoom-out'] .card-gallery > img {
   display: none;
 }
 
+/* Mobile: Set product card images to 175px x 175px in all grid layouts */
+@media screen and (max-width: 749px) {
+  /* Product cards in resource-list grids - target all product card containers */
+  .resource-list--grid .resource-list__item product-card .card-gallery .product-media-container,
+  .resource-list--grid .resource-list__item product-card-link .card-gallery .product-media-container,
+  .resource-list--grid .resource-list__item .product-card .card-gallery .product-media-container {
+    width: 175px !important;
+    height: 175px !important;
+    max-width: 175px !important;
+  }
+
+  .resource-list--grid .resource-list__item product-card .card-gallery .product-media-container img,
+  .resource-list--grid .resource-list__item product-card .card-gallery .product-media-container picture,
+  .resource-list--grid .resource-list__item product-card .card-gallery .product-media-container video,
+  .resource-list--grid .resource-list__item product-card-link .card-gallery .product-media-container img,
+  .resource-list--grid .resource-list__item product-card-link .card-gallery .product-media-container picture,
+  .resource-list--grid .resource-list__item product-card-link .card-gallery .product-media-container video,
+  .resource-list--grid .resource-list__item .product-card .card-gallery .product-media-container img,
+  .resource-list--grid .resource-list__item .product-card .card-gallery .product-media-container picture,
+  .resource-list--grid .resource-list__item .product-card .card-gallery .product-media-container video {
+    width: 175px !important;
+    height: 175px !important;
+    max-width: 175px !important;
+    object-fit: cover !important;
+  }
+}
+
 .product-grid-view-zoom-out--details .h4,
 .product-grid-view-zoom-out--details span,
 .product-grid-view-zoom-out--details s {
@@ -3824,6 +3851,18 @@ slideshow-arrows .slideshow-control.slideshow-control--style-none {
   gap: var(--resource-list-row-gap) var(--resource-list-column-gap);
   grid-template-columns: var(--resource-list-columns-mobile);
 
+  /* Mobile: Set product cards to 175px x 175px with 2 per row */
+  @media screen and (max-width: 749px) {
+    /* Override for product cards specifically - ensure 2 columns with 175px each */
+    &:has(.resource-list__item product-card),
+    &:has(.resource-list__item product-card-link),
+    &:has(.resource-list__item .product-card) {
+      grid-template-columns: repeat(2, 175px) !important;
+      justify-content: center !important;
+      gap: 5px !important;
+    }
+  }
+
   @media screen and (min-width: 750px) {
     grid-template-columns: var(--resource-list-columns);
   }
@@ -3880,6 +3919,16 @@ slideshow-arrows .slideshow-control.slideshow-control--style-none {
   height: 100%;
   color: var(--color-foreground);
   text-decoration: none;
+
+  /* Mobile: Set product card items to 175px on mobile */
+  @media screen and (max-width: 749px) {
+    &:has(product-card),
+    &:has(product-card-link),
+    &:has(.product-card) {
+      width: 175px !important;
+      max-width: 175px !important;
+    }
+  }
 }
 
 .resource-list__carousel {

@@ -275,6 +275,26 @@
       width: 0;
       height: 0;
     }
+
+    /* Mobile: Set product card images to 175px x 175px */
+    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card .card-gallery .product-media-container,
+    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container {
+      width: 175px !important;
+      height: 175px !important;
+      max-width: 175px !important;
+    }
+
+    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card .card-gallery .product-media-container img,
+    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card .card-gallery .product-media-container picture,
+    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card .card-gallery .product-media-container video,
+    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container img,
+    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container picture,
+    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container video {
+      width: 175px !important;
+      height: 175px !important;
+      max-width: 175px !important;
+      object-fit: cover !important;
+    }
   }
 
   /* Enable product card image slider on desktop */
