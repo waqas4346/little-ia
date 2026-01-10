@@ -35,46 +35,20 @@
     endif
   endif
 
-  # Get category color from first collection metaobject
+  # Get category color from first collection - it's a list of color names, get first one
   assign category_color = blank
   if product.collections.size > 0
     assign first_collection = product.collections.first
     if first_collection.metafields.custom.color != blank
-      assign color_metaobject_or_list = first_collection.metafields.custom.color.value
+      assign color_list = first_collection.metafields.custom.color.value
       
-      # Check if it's a list (has count property) - list of metaobjects
-      if color_metaobject_or_list.count != blank and color_metaobject_or_list.count > 0
-        # Get first color from list of metaobjects
-        assign first_color = color_metaobject_or_list.first
-        
-        # Try different field names following the pattern: field.value | default: field
-        if first_color.color != blank
-          assign category_color = first_color.color.value | default: first_color.color
-        elsif first_color.name != blank
-          assign category_color = first_color.name.value | default: first_color.name
-        elsif first_color.title != blank
-          assign category_color = first_color.title.value | default: first_color.title
-        elsif first_color.label != blank
-          assign category_color = first_color.label.value | default: first_color.label
-        elsif first_color.value != blank
-          assign category_color = first_color.value
-        endif
+      # Check if it's a list (has count property) - list of color names
+      if color_list.count != blank and color_list.count > 0
+        # Get first color from list
+        assign category_color = color_list.first
       else
-        # Single metaobject or direct value - try field.value | default: field pattern
-        if color_metaobject_or_list.color != blank
-          assign category_color = color_metaobject_or_list.color.value | default: color_metaobject_or_list.color
-        elsif color_metaobject_or_list.name != blank
-          assign category_color = color_metaobject_or_list.name.value | default: color_metaobject_or_list.name
-        elsif color_metaobject_or_list.title != blank
-          assign category_color = color_metaobject_or_list.title.value | default: color_metaobject_or_list.title
-        elsif color_metaobject_or_list.label != blank
-          assign category_color = color_metaobject_or_list.label.value | default: color_metaobject_or_list.label
-        elsif color_metaobject_or_list.value != blank
-          assign category_color = color_metaobject_or_list.value
-        else
-          # Try as direct string value
-          assign category_color = color_metaobject_or_list
-        endif
+        # Single color value (not a list)
+        assign category_color = color_list
       endif
     endif
   endif
@@ -86,12 +60,7 @@
     <legend class="variant-option__legend">
       <span>
         <span class="variant-option__label-text">
-          Select color: 
-          {% if category_color != blank %}
-            <span class="variant-option__selected-value">{{ category_color }}</span>
-          {% else %}
-            <span class="variant-option__selected-value">Color</span>
-          {% endif %}
+          Select color{% if category_color != blank %}: <span class="variant-option__selected-value">{{ category_color }}</span>{% endif %}
         </span>
       </span>
     </legend>

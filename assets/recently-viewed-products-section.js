@@ -219,10 +219,15 @@ class RecentlyViewedProductsComponent extends HTMLElement {
       await this.#renderProductsFromHandles(productData, viewedProducts);
       
       // Store product data for later use in adding actions
-      this.#productDataMap = new Map();
+      if (!this.#productDataMap) {
+        this.#productDataMap = new Map();
+      }
       productData.forEach(({ id, handle, url }) => {
-        this.#productDataMap.set(id, { id, handle, url });
+        if (id && handle) {
+          this.#productDataMap.set(String(id), { id: String(id), handle, url });
+        }
       });
+      console.log(`[Recently Viewed] Stored ${this.#productDataMap.size} products in productDataMap`);
       
       this.dataset.loaded = 'true';
     } catch (error) {
@@ -471,6 +476,25 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     // Create list items - the html from search-results is the content of .product-grid__item
     // which includes the full product card with all blocks (gallery, title, price, etc.)
     const listItems = productCardsHTML.map(({ id, html }) => {
+      // Extract handle from rendered HTML if not already in map
+      if (!this.#productDataMap) {
+        this.#productDataMap = new Map();
+      }
+      if (!this.#productDataMap.has(String(id))) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const handle = this.#extractHandleFromCard(tempDiv);
+        if (handle) {
+          // Extract URL from product card link
+          const link = tempDiv.querySelector('a[href*="/products/"]');
+          const url = link ? link.getAttribute('href') : null;
+          this.#productDataMap.set(String(id), { id: String(id), handle, url });
+          console.log(`[Recently Viewed] Extracted and stored handle "${handle}" for product ${id}`);
+        } else {
+          console.warn(`[Recently Viewed] Could not extract handle from rendered HTML for product ${id}`);
+        }
+      }
+      
       // The html already contains the product card with all blocks
       // Just wrap it in resource-list__item structure like product-slider does
       return `
@@ -616,14 +640,18 @@ class RecentlyViewedProductsComponent extends HTMLElement {
                       
                       // Setup product cards and actions like product-slider does
                       this.#setupProductCards();
-                      this.#enableProductCardImageSliders();
-                      this.#addProductActions();
                       
-                      // The slideshow component should auto-initialize, but we need to set up arrow handlers
-                      // Wait a bit longer to ensure slideshow is fully initialized
-                      setTimeout(() => {
-                        this.#initializeSlideshow();
-                      }, 100);
+                      // Wait for products to be fully rendered before adding actions
+                      setTimeout(async () => {
+                        await this.#enableProductCardImageSliders();
+                        await this.#addProductActions();
+                        
+                        // The slideshow component should auto-initialize, but we need to set up arrow handlers
+                        // Wait a bit longer to ensure slideshow is fully initialized
+                        setTimeout(() => {
+                          this.#initializeSlideshow();
+                        }, 100);
+                      }, 200);
                     }, 300);
     } else {
       console.error('Content element not found!');
@@ -1063,166 +1091,455 @@ class RecentlyViewedProductsComponent extends HTMLElement {
 
   /**
    * Add product-card-actions to each product card
-   * Fetches product data from product pages and extracts/generates actions
+   * Fetches product data efficiently using product handles and JSON endpoints
    */
   async #addProductActions() {
+    console.log('[Recently Viewed] Starting #addProductActions()');
+    
     const carousel = this.querySelector('[data-testid="recently-viewed-products-grid"]');
-    if (!carousel) return;
-
-    const quickAddEnabled = this.dataset.quickAdd !== 'false';
-    if (!quickAddEnabled) {
-      console.log('Quick add is disabled, skipping product actions');
+    if (!carousel) {
+      console.error('[Recently Viewed] Carousel not found!');
       return;
     }
 
-    const productItems = carousel.querySelectorAll('[data-product-slider-item="true"]');
-    const sectionId = this.dataset.sectionId;
+    const quickAddEnabled = this.dataset.quickAdd !== 'false';
+    if (!quickAddEnabled) {
+      console.log('[Recently Viewed] Quick add is disabled in section settings, skipping product actions');
+      return;
+    }
+
+    // Wait a bit for products to be fully rendered
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const productItems = Array.from(carousel.querySelectorAll('[data-product-slider-item="true"]'));
+    console.log(`[Recently Viewed] Found ${productItems.length} product items`);
     
-    // Add actions to each product card
-    for (const item of productItems) {
+    if (productItems.length === 0) {
+      console.warn('[Recently Viewed] No product items found!');
+      return;
+    }
+
+    const sectionId = this.dataset.sectionId;
+    console.log(`[Recently Viewed] Section ID: ${sectionId}`);
+    
+    // Fetch product data for all products in parallel using product handles
+    const productPromises = productItems.map(async (item) => {
       const productId = item.getAttribute('data-product-id');
-      if (!productId) continue;
+      if (!productId) {
+        console.warn('[Recently Viewed] Product item missing data-product-id attribute');
+        return null;
+      }
 
       // Check if actions already exist
-      if (item.querySelector('.product-card-actions')) {
-        continue;
+      const existingActions = item.querySelector('.product-card-actions');
+      if (existingActions) {
+        console.log(`[Recently Viewed] Product ${productId} already has actions`);
+        return null;
       }
 
-      const productCard = item.querySelector('product-card');
-      if (!productCard) continue;
+      // Check for both product-card and resource-card structures
+      let productCard = item.querySelector('product-card');
+      let cardContent = productCard?.querySelector('.product-card__content');
+      
+      // If no product-card element but content exists directly, look for content in item
+      if (!cardContent) {
+        cardContent = item.querySelector('.product-card__content');
+      }
+      
+      // Fallback: try resource-card structure
+      if (!cardContent) {
+        const resourceCard = item.querySelector('.resource-card');
+        if (resourceCard) {
+          cardContent = resourceCard.querySelector('.resource-card__content');
+          console.log(`[Recently Viewed] Product ${productId} using resource-card structure`);
+        }
+      }
 
-      const cardContent = productCard.querySelector('.product-card__content');
-      if (!cardContent) continue;
+      // Also check if item itself is the content container
+      if (!cardContent && item.classList.contains('product-card__content')) {
+        cardContent = item;
+        console.log(`[Recently Viewed] Product ${productId}: Item itself is the card content`);
+      }
 
+      if (!cardContent) {
+        console.warn(`[Recently Viewed] Product ${productId}: No card content found`, {
+          hasProductCard: !!productCard,
+          hasResourceCard: !!item.querySelector('.resource-card'),
+          itemClasses: item.className,
+          itemHTML: item.outerHTML.substring(0, 300)
+        });
+        return null;
+      }
+      
+      // If we found cardContent but no productCard, try to find parent product-card
+      if (!productCard && cardContent) {
+        productCard = cardContent.closest('product-card');
+      }
+      
+      console.log(`[Recently Viewed] Product ${productId}: Found card structure`, {
+        hasProductCard: !!productCard,
+        hasCardContent: !!cardContent,
+        cardContentClasses: cardContent.className
+      });
+
+      // Ensure productDataMap is initialized
+      if (!this.#productDataMap) {
+        this.#productDataMap = new Map();
+      }
+      
       // Get product handle from stored data or extract from URL
-      const productData = this.#productDataMap.get(productId);
-      const handle = productData?.handle || this.#extractHandleFromCard(productCard);
+      const productData = this.#productDataMap.get(String(productId));
+      let handle = productData?.handle;
+      
+      // If handle not in map, try to extract from card or item
+      if (!handle) {
+        console.log(`[Recently Viewed] Product ${productId}: Handle not in map, extracting from card...`);
+        handle = this.#extractHandleFromCard(productCard || item);
+        if (handle) {
+          // Store it in the map for future use
+          const link = (productCard || item).querySelector('a[href*="/products/"]');
+          const url = link ? link.getAttribute('href') : null;
+          this.#productDataMap.set(String(productId), { id: String(productId), handle, url });
+          console.log(`[Recently Viewed] Product ${productId}: Extracted and stored handle "${handle}"`);
+        }
+      }
       
       if (!handle) {
-        console.log(`No handle found for product ${productId}`);
-        continue;
+        console.warn(`[Recently Viewed] Product ${productId}: No handle found`, {
+          hasProductDataMap: !!this.#productDataMap,
+          mapSize: this.#productDataMap?.size || 0,
+          mapKeys: Array.from(this.#productDataMap?.keys() || []),
+          productData: productData,
+          hasProductCard: !!productCard,
+          hasItem: !!item,
+          cardHtml: (productCard || item)?.outerHTML?.substring(0, 500)
+        });
+        return { productId, item, cardContent, product: null, productCard };
       }
+      
+      console.log(`[Recently Viewed] Product ${productId}: Using handle "${handle}"`);
 
-      // Fetch product page to get product data
+      console.log(`[Recently Viewed] Fetching product data for ${handle} (ID: ${productId})`);
+
+      // Fetch product JSON data efficiently
       try {
-        const productUrl = `/products/${handle}`;
-        const response = await fetch(`${productUrl}?view=json`);
-        if (!response.ok) continue;
-
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        // Try to find product JSON data
-        const jsonScript = doc.querySelector('script[type="application/json"][data-product-json]');
-        if (!jsonScript) continue;
-
-        const product = JSON.parse(jsonScript.textContent);
-        
-        // Generate product-card-actions HTML
-        const actionsHTML = this.#generateProductCardActions(product, sectionId);
-        
-        if (actionsHTML) {
-          // Parse and insert actions
-          const actionsDoc = parser.parseFromString(actionsHTML, 'text/html');
-          const actions = actionsDoc.querySelector('.product-card-actions');
-          
-          if (actions) {
-            // Find price block and insert after it
-            const priceBlock = cardContent.querySelector('product-price');
-            if (priceBlock) {
-              if (priceBlock.nextSibling) {
-                cardContent.insertBefore(actions, priceBlock.nextSibling);
-              } else {
-                cardContent.appendChild(actions);
-              }
-            } else {
-              cardContent.appendChild(actions);
-            }
-          }
+        const productUrl = `/products/${handle}.js`;
+        const response = await fetch(productUrl);
+        if (!response.ok) {
+          console.error(`[Recently Viewed] Failed to fetch product data for ${handle}: ${response.status}`);
+          return { productId, item, cardContent, product: null, productCard };
         }
+
+        const product = await response.json();
+        console.log(`[Recently Viewed] Successfully fetched product ${handle}:`, {
+          id: product.id,
+          title: product.title,
+          available: product.available,
+          variantsCount: product.variants?.length || 0
+        });
+        return { productId, item, cardContent, product, productCard };
       } catch (error) {
-        console.error(`Error adding actions for product ${productId}:`, error);
+        console.error(`[Recently Viewed] Error fetching product data for ${handle}:`, error);
+        return { productId, item, cardContent, product: null, productCard };
       }
+    });
+
+    const productResults = await Promise.all(productPromises);
+    console.log(`[Recently Viewed] Processed ${productResults.length} products`);
+    
+    let actionsAdded = 0;
+    
+    // Add actions to each product card (use for-await to handle async properly)
+    for (const { productId, item, cardContent, product, productCard } of productResults) {
+      if (!productId || !item || !cardContent) {
+        return;
+      }
+
+      if (!product) {
+        console.warn(`[Recently Viewed] Product ${productId}: No product data available`);
+        return;
+      }
+      
+      // Check if product is available - actions only show for available products
+      if (!product.available) {
+        console.log(`[Recently Viewed] Product ${productId} is not available, skipping actions`);
+        return;
+      }
+
+      if (!product.variants || product.variants.length === 0) {
+        console.log(`[Recently Viewed] Product ${productId} has no variants, skipping actions`);
+        return;
+      }
+
+      // Ensure product-card has the data-view-product-button-setting attribute
+      // Also check if cardContent's parent is a product-card
+      if (!productCard && cardContent) {
+        productCard = cardContent.closest('product-card');
+      }
+      
+      if (productCard) {
+        productCard.setAttribute('data-view-product-button-setting', 'true');
+        productCard.setAttribute('data-view-product-button-enabled', 'true');
+        console.log(`[Recently Viewed] Set data-view-product-button-setting on product card ${productId}`);
+      } else {
+        // If no product-card element, set attribute on the item itself for CSS targeting
+        item.setAttribute('data-view-product-button-setting', 'true');
+        item.setAttribute('data-view-product-button-enabled', 'true');
+        console.log(`[Recently Viewed] No product-card found, set data-view-product-button-setting on item ${productId}`);
+      }
+
+      // Generate product-card-actions element (returns DOM element directly)
+      const actions = this.#generateProductCardActions(product, sectionId);
+      
+      if (!actions) {
+        console.warn(`[Recently Viewed] Product ${productId}: Failed to generate actions element`);
+        return;
+      }
+      
+      console.log(`[Recently Viewed] Product ${productId}: Generated actions element`, {
+        hasViewButton: !!actions.querySelector('.product-card-actions__view-product-button'),
+        hasQuickAdd: !!actions.querySelector('quick-add-component'),
+        hasForm: !!actions.querySelector('product-form-component')
+      });
+      
+      // Find price block and insert after it (same as product-slider structure)
+      const priceBlock = cardContent.querySelector('product-price') || cardContent.querySelector('.price-snippet');
+      
+      // Insert the actual element (removes it from tempContainer) so custom elements initialize
+      if (priceBlock) {
+        // Insert after price block
+        if (priceBlock.nextSibling) {
+          cardContent.insertBefore(actions, priceBlock.nextSibling);
+        } else {
+          cardContent.appendChild(actions);
+        }
+        console.log(`[Recently Viewed] Product ${productId}: Inserted actions after price block`);
+      } else {
+        // If no price block, append to end of content
+        cardContent.appendChild(actions);
+        console.warn(`[Recently Viewed] Product ${productId}: No price block found, appended actions to end of content`);
+      }
+      
+      // Wait a bit for custom elements to initialize after DOM insertion
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Verify actions were actually inserted
+      const verifyActions = cardContent.querySelector('.product-card-actions');
+      if (verifyActions) {
+        // Check if custom elements are initialized
+        const quickAddComponent = verifyActions.querySelector('quick-add-component');
+        const productFormComponent = verifyActions.querySelector('product-form-component');
+        const addButton = verifyActions.querySelector('.product-card-actions__quick-add-button');
+        
+        console.log(`[Recently Viewed] Product ${productId}: Elements found:`, {
+          actionsDiv: !!verifyActions,
+          quickAddComponent: !!quickAddComponent,
+          productFormComponent: !!productFormComponent,
+          addButton: !!addButton,
+          viewButton: !!verifyActions.querySelector('.product-card-actions__view-product-button')
+        });
+        
+        // Add click event listener to + button for quick add (since on:click might not work)
+        if (addButton && !addButton.hasAttribute('data-event-listener-added')) {
+          addButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Trigger quick-add component's handleClick method
+            if (quickAddComponent && typeof quickAddComponent.handleClick === 'function') {
+              quickAddComponent.handleClick(e);
+            } else if (quickAddComponent && quickAddComponent.onclick) {
+              quickAddComponent.onclick(e);
+            } else {
+              // Fallback: dispatch custom event
+              const clickEvent = new CustomEvent('quick-add-click', { bubbles: true, detail: { productId, variantId } });
+              quickAddComponent.dispatchEvent(clickEvent);
+            }
+          });
+          addButton.setAttribute('data-event-listener-added', 'true');
+        }
+        
+        actionsAdded++;
+        console.log(`[Recently Viewed] ✓ Successfully added product-card-actions to product ${productId}`);
+        
+        // Force visibility with inline styles as final fallback
+        verifyActions.style.display = 'flex';
+        verifyActions.style.visibility = 'visible';
+        verifyActions.style.opacity = '1';
+      } else {
+        console.error(`[Recently Viewed] ✗ Failed to add actions to product ${productId} - actions not found in DOM after insertion`);
+        console.error('Card content HTML:', cardContent.innerHTML.substring(0, 500));
+      }
+    }
+    
+    console.log(`[Recently Viewed] Completed: Added actions to ${actionsAdded} out of ${productResults.filter(r => r && r.product).length} products`);
+    
+    // Final verification - check if any actions are visible in the DOM
+    const allActions = carousel.querySelectorAll('.product-card-actions');
+    console.log(`[Recently Viewed] Final check: Found ${allActions.length} product-card-actions elements in carousel`);
+    
+    if (allActions.length === 0 && productItems.length > 0) {
+      console.error('[Recently Viewed] ⚠️ WARNING: No product-card-actions found in DOM despite processing products!');
+      console.error('Possible issues:');
+      console.error('1. Products might not have product-card structure');
+      console.error('2. Actions HTML generation might be failing');
+      console.error('3. DOM insertion might be failing');
     }
   }
 
   /**
-   * Extract product handle from product card link
+   * Extract product handle from product card link or any element with product URL
    */
-  #extractHandleFromCard(productCard) {
-    const link = productCard.querySelector('a[href*="/products/"]');
-    if (!link) return null;
+  #extractHandleFromCard(productCardOrElement) {
+    if (!productCardOrElement) return null;
     
-    const href = link.getAttribute('href');
-    const match = href.match(/\/products\/([^\/\?]+)/);
-    return match ? match[1] : null;
+    // Try multiple selectors to find product links
+    const selectors = [
+      'a[href*="/products/"]',
+      '.product-card__link[href*="/products/"]',
+      'a.product-card__link',
+      '[href*="/products/"]'
+    ];
+    
+    for (const selector of selectors) {
+      const link = productCardOrElement.querySelector(selector);
+      if (link) {
+        const href = link.getAttribute('href');
+        if (href) {
+          const match = href.match(/\/products\/([^\/\?]+)/);
+          if (match && match[1]) {
+            return match[1];
+          }
+        }
+      }
+    }
+    
+    // Also check the element itself if it's a link
+    if (productCardOrElement.tagName === 'A' || productCardOrElement.tagName === 'a') {
+      const href = productCardOrElement.getAttribute('href');
+      if (href) {
+        const match = href.match(/\/products\/([^\/\?]+)/);
+        if (match && match[1]) {
+          return match[1];
+        }
+      }
+    }
+    
+    return null;
   }
 
   /**
-   * Generate product-card-actions HTML based on product data
+   * Generate product-card-actions element based on product data
+   * Creates DOM elements directly to ensure custom elements initialize properly
+   * Matches the structure from snippets/product-card-actions.liquid
    */
   #generateProductCardActions(product, sectionId) {
-    if (!product) return '';
+    if (!product) return null;
 
-    // Handle different product data structures
-    const productId = product.id || product.product_id;
+    // Handle Shopify product JSON structure (from .js endpoint)
+    const productId = product.id;
     const productTitle = product.title || '';
     const productAvailable = product.available !== false;
     const variants = product.variants || [];
     const options = product.options || [];
+    const handle = product.handle || '';
     
-    if (!productAvailable || variants.length === 0) return '';
+    if (!productAvailable || variants.length === 0) return null;
 
+    // Get first available variant or first variant
     const variant = variants.find(v => v.available) || variants[0];
-    if (!variant) return '';
+    if (!variant) return null;
 
+    // Get variant URL - Shopify JSON provides variant.url
+    const variantUrl = variant.url || product.url || `/products/${handle}`;
     const productFormId = `ProductCardActions-ProductForm-${productId}-${sectionId}`;
-    const variantUrl = variant.url || product.url || `/products/${product.handle || ''}`;
+    const variantId = variant.id;
+    const variantAvailable = variant.available !== false;
+    const quantityMin = variant.quantity_rule?.min || 1;
 
-    return `
-      <div class="product-card-actions" onclick="event.stopPropagation();">
-        <a 
-          href="${variantUrl}" 
-          class="product-card-actions__view-product-button"
-          onclick="event.stopPropagation();"
-        >
-          VIEW PRODUCT
-        </a>
-        <div onclick="event.stopPropagation();" class="product-card-actions__quick-add-wrapper">
-          <quick-add-component
-            class="quick-add product-card-actions__quick-add"
-            ref="quickAdd"
-            data-product-title="${this.#escapeHtml(productTitle)}"
-            data-quick-add-button="choose"
-            data-product-options-count="${options.length}"
-          >
-            <product-form-component
-              data-section-id="${sectionId}"
-              data-product-id="${productId}"
-              on:submit="/handleSubmit"
-              class="quick-add__product-form-component"
-            >
-              <form id="${productFormId}" novalidate="novalidate" data-type="add-to-cart-form">
-                <input type="hidden" name="id" ref="variantId" value="${variant.id}" ${!variant.available ? 'disabled' : ''}>
-                <input type="hidden" name="quantity" value="${variant.quantity_rule?.min || 1}">
-                <button
-                  class="button product-card-actions__quick-add-button"
-                  type="button"
-                  name="add"
-                  on:click="quick-add-component/handleClick"
-                  onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();"
-                  data-quick-add-trigger="true"
-                  data-no-navigation="true"
-                >
-                  <span class="product-card-actions__quick-add-plus">+</span>
-                </button>
-              </form>
-            </product-form-component>
-          </quick-add-component>
-        </div>
-      </div>
-    `;
+    // Create container div
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'product-card-actions';
+    actionsDiv.setAttribute('onclick', 'event.stopPropagation();');
+    // Force visibility with inline styles to override any CSS
+    actionsDiv.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; align-items: center; gap: 5px; margin-top: 12px; position: relative; z-index: 10; width: 100%;';
+
+    // Create View Product button
+    const viewProductLink = document.createElement('a');
+    viewProductLink.href = variantUrl;
+    viewProductLink.className = 'product-card-actions__view-product-button';
+    viewProductLink.textContent = 'VIEW PRODUCT';
+    viewProductLink.setAttribute('onclick', 'event.stopPropagation();');
+    actionsDiv.appendChild(viewProductLink);
+
+    // Create quick-add wrapper
+    const quickAddWrapper = document.createElement('div');
+    quickAddWrapper.className = 'product-card-actions__quick-add-wrapper';
+    quickAddWrapper.setAttribute('onclick', 'event.stopPropagation();');
+
+    // Create quick-add-component custom element
+    const quickAddComponent = document.createElement('quick-add-component');
+    quickAddComponent.className = 'quick-add product-card-actions__quick-add';
+    quickAddComponent.setAttribute('ref', 'quickAdd');
+    quickAddComponent.setAttribute('data-product-title', productTitle);
+    quickAddComponent.setAttribute('data-quick-add-button', 'choose');
+    quickAddComponent.setAttribute('data-product-options-count', options.length);
+
+    // Create product-form-component custom element
+    const productFormComponent = document.createElement('product-form-component');
+    productFormComponent.setAttribute('data-section-id', sectionId);
+    productFormComponent.setAttribute('data-product-id', productId);
+    productFormComponent.setAttribute('on:submit', '/handleSubmit');
+    productFormComponent.className = 'quick-add__product-form-component';
+
+    // Create form
+    const form = document.createElement('form');
+    form.id = productFormId;
+    form.setAttribute('novalidate', 'novalidate');
+    form.setAttribute('data-type', 'add-to-cart-form');
+
+    // Create hidden variant ID input
+    const variantIdInput = document.createElement('input');
+    variantIdInput.type = 'hidden';
+    variantIdInput.name = 'id';
+    variantIdInput.setAttribute('ref', 'variantId');
+    variantIdInput.value = variantId;
+    if (!variantAvailable) {
+      variantIdInput.disabled = true;
+    }
+    form.appendChild(variantIdInput);
+
+    // Create hidden quantity input
+    const quantityInput = document.createElement('input');
+    quantityInput.type = 'hidden';
+    quantityInput.name = 'quantity';
+    quantityInput.value = quantityMin;
+    form.appendChild(quantityInput);
+
+    // Create + button
+    const addButton = document.createElement('button');
+    addButton.className = 'button product-card-actions__quick-add-button';
+    addButton.type = 'button';
+    addButton.name = 'add';
+    addButton.setAttribute('on:click', 'quick-add-component/handleClick');
+    addButton.setAttribute('onclick', 'event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();');
+    addButton.setAttribute('data-quick-add-trigger', 'true');
+    addButton.setAttribute('data-no-navigation', 'true');
+
+    // Create + span
+    const plusSpan = document.createElement('span');
+    plusSpan.className = 'product-card-actions__quick-add-plus';
+    plusSpan.textContent = '+';
+    addButton.appendChild(plusSpan);
+
+    form.appendChild(addButton);
+    productFormComponent.appendChild(form);
+    quickAddComponent.appendChild(productFormComponent);
+    quickAddWrapper.appendChild(quickAddComponent);
+    actionsDiv.appendChild(quickAddWrapper);
+
+    return actionsDiv;
   }
 
   /**
