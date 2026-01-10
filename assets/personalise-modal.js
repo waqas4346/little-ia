@@ -156,7 +156,29 @@ export class PersonaliseDialogComponent extends DialogComponent {
    */
   #populateFieldsFromSavedData() {
     // Only populate if we have data (from current session)
-    if (!this.personalisationData || (!this.personalisationData.name && !this.personalisationData.font && !this.personalisationData.color)) {
+    // Check if ANY personalization field has data, not just name/font/color
+    if (!this.personalisationData) {
+      return; // No data to populate
+    }
+    
+    // Check if any personalization field has data
+    const hasAnyData = 
+      this.personalisationData.name ||
+      this.personalisationData.font ||
+      this.personalisationData.color ||
+      this.personalisationData.dob ||
+      this.personalisationData.optionalDob ||
+      this.personalisationData.schoolYear ||
+      this.personalisationData.name1 ||
+      this.personalisationData.name2 ||
+      this.personalisationData.name3 ||
+      this.personalisationData.name4 ||
+      this.personalisationData.textbox ||
+      this.personalisationData.message ||
+      this.personalisationData.time ||
+      this.personalisationData.weight;
+    
+    if (!hasAnyData) {
       return; // No data to populate
     }
     

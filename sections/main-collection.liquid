@@ -856,6 +856,38 @@
     }
   }
 
+  /* Set product card and image to 175px on mobile with 2 products per row */
+  @media screen and (max-width: 749px) {
+    /* Ensure product grid shows 2 columns on mobile with 175px each */
+    .product-grid:not(.product-grid-mobile--large) {
+      grid-template-columns: repeat(2, 175px) !important;
+      justify-content: center !important;
+      gap: 5px !important;
+    }
+
+    /* Set product grid items to 175px on mobile */
+    .product-grid__item {
+      width: 175px;
+      max-width: 175px;
+    }
+
+    /* Set product image container to 175px x 175px on mobile */
+    .product-grid .card-gallery .product-media-container {
+      width: 175px !important;
+      height: 175px !important;
+      max-width: 175px !important;
+    }
+
+    .product-grid .card-gallery .product-media-container img,
+    .product-grid .card-gallery .product-media-container picture,
+    .product-grid .card-gallery .product-media-container video {
+      width: 175px !important;
+      height: 175px !important;
+      max-width: 175px !important;
+      object-fit: cover !important;
+    }
+  }
+
   /* Mobile sticky bottom bar */
   .collection-mobile-sticky-bar {
     display: none;

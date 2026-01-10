@@ -325,12 +325,31 @@
                 const personalisation = JSON.parse(savedPersonalisation);
                 
                 // Format the summary: "Personalised: {name} | {date} ({color})"
+                // Include all active personalization fields
                 const parts = [];
                 if (personalisation.name) {
                   parts.push(personalisation.name);
                 }
+                if (personalisation.name1) {
+                  parts.push(personalisation.name1);
+                }
+                if (personalisation.name2) {
+                  parts.push(personalisation.name2);
+                }
+                if (personalisation.name3) {
+                  parts.push(personalisation.name3);
+                }
+                if (personalisation.name4) {
+                  parts.push(personalisation.name4);
+                }
+                if (personalisation.dob) {
+                  parts.push(personalisation.dob);
+                }
                 if (personalisation.optionalDob) {
                   parts.push(personalisation.optionalDob);
+                }
+                if (personalisation.schoolYear) {
+                  parts.push(personalisation.schoolYear);
                 }
                 const colorText = personalisation.color || '';
                 
@@ -354,16 +373,46 @@
                 if (confirmationContainer) {
                   const confirmTextSpan = confirmationContainer.querySelector('[data-personalise-confirm-text]');
                   if (confirmTextSpan) {
-                    // Build dynamic label based on available fields
+                    // Build dynamic label based on ALL available fields
                     const fields = [];
                     if (personalisation.name) {
                       fields.push('name');
+                    }
+                    if (personalisation.name1) {
+                      fields.push('name1');
+                    }
+                    if (personalisation.name2) {
+                      fields.push('name2');
+                    }
+                    if (personalisation.name3) {
+                      fields.push('name3');
+                    }
+                    if (personalisation.name4) {
+                      fields.push('name4');
+                    }
+                    if (personalisation.dob || personalisation.optionalDob) {
+                      fields.push('date');
                     }
                     if (personalisation.color) {
                       fields.push('colour');
                     }
                     if (personalisation.font) {
                       fields.push('font');
+                    }
+                    if (personalisation.schoolYear) {
+                      fields.push('school year');
+                    }
+                    if (personalisation.textbox) {
+                      fields.push('text');
+                    }
+                    if (personalisation.message) {
+                      fields.push('message');
+                    }
+                    if (personalisation.time) {
+                      fields.push('time');
+                    }
+                    if (personalisation.weight) {
+                      fields.push('weight');
                     }
                     
                     let labelText = 'I confirm that the personalisation';
