@@ -166,6 +166,11 @@
 {% render 'personalise-modal', product: product, variant: product.selected_or_first_available_variant %}
 
 <script src="{{ 'personalise-modal.js' | asset_url }}" type="module"></script>
+
+{%- comment -%} Size Guide Modal {%- endcomment -%}
+{% render 'size-guide-modal', product: product %}
+
+<script src="{{ 'size-guide-modal.js' | asset_url }}" type="module"></script>
 <script>
   // Handle personalise button clicks for sticky bar - completely silent error handling
   (function() {

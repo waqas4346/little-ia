@@ -88,12 +88,23 @@ export class QuickAddComponent extends Component {
       return;
     }
 
-    // Abort any previous fetch requests
+    // Abort any previous fetch requests and reset state
     this.#abortController?.abort();
     this.#abortController = new AbortController();
 
     // Check if we have cached content first
     const modalContent = document.getElementById('quick-add-modal-content');
+    
+    // Clear any stuck loader state from previous errors
+    if (modalContent) {
+      // Check if content is stuck showing loader (skeleton)
+      const hasSkeleton = modalContent.querySelector('.quick-add-modal__loading-skeleton');
+      if (hasSkeleton && modalContent.innerHTML.trim() === this.#createLoadingSkeleton().trim()) {
+        // Content is stuck on loader, clear it
+        modalContent.innerHTML = '';
+      }
+    }
+    
     let productGrid = this.#cachedContent.get(currentUrl);
 
     // If we have cached content, use it immediately (no loader needed)
@@ -104,7 +115,21 @@ export class QuickAddComponent extends Component {
       const freshContent = /** @type {Element} */ (productGrid.cloneNode(true));
       requestAnimationFrame(async () => {
         if (!this.#abortController?.signal.aborted) {
-          await this.updateQuickAddModal(freshContent);
+          try {
+            await this.updateQuickAddModal(freshContent);
+            // Clear abort controller after successful update (ready for next operation)
+            if (this.#abortController) {
+              this.#abortController = null;
+            }
+          } catch (error) {
+            if (error.name !== 'AbortError') {
+              console.error('Quick Add: Error updating modal with cached content', error);
+            }
+            // Clear abort controller even on error (unless it was aborted)
+            if (this.#abortController && !this.#abortController.signal.aborted) {
+              this.#abortController = null;
+            }
+          }
         }
       });
       return;
@@ -187,16 +212,40 @@ export class QuickAddComponent extends Component {
           } catch (error) {
             if (error.name !== 'AbortError') {
               console.error('Quick Add: Error updating modal content', error);
+              // Clear loader if there was an error
+              const modalContent = document.getElementById('quick-add-modal-content');
+              if (modalContent && modalContent.querySelector('.quick-add-modal__loading-skeleton')) {
+                modalContent.innerHTML = '<div style="padding: 2rem; text-align: center;">Error loading product. Please try again.</div>';
+              }
             }
             // Clear abort controller even on error (unless it was aborted)
             if (this.#abortController && !this.#abortController.signal.aborted) {
               this.#abortController = null;
             }
           }
+        } else {
+          // No product grid found - clear loader and show error
+          const modalContent = document.getElementById('quick-add-modal-content');
+          if (modalContent && modalContent.querySelector('.quick-add-modal__loading-skeleton')) {
+            modalContent.innerHTML = '<div style="padding: 2rem; text-align: center;">Product not found. Please try again.</div>';
+          }
+          // Clear abort controller
+          if (this.#abortController && !this.#abortController.signal.aborted) {
+            this.#abortController = null;
+          }
         }
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error('Quick Add: Unexpected error loading content', error);
+          // Clear loader on unexpected error
+          const modalContent = document.getElementById('quick-add-modal-content');
+          if (modalContent && modalContent.querySelector('.quick-add-modal__loading-skeleton')) {
+            modalContent.innerHTML = '<div style="padding: 2rem; text-align: center;">Error loading product. Please try again.</div>';
+          }
+          // Clear abort controller
+          if (this.#abortController && !this.#abortController.signal.aborted) {
+            this.#abortController = null;
+          }
         }
       }
     })();
@@ -206,9 +255,30 @@ export class QuickAddComponent extends Component {
   #stayVisibleUntilDialogCloses(dialogComponent) {
     this.toggleAttribute('stay-visible', true);
 
-    dialogComponent.addEventListener(DialogCloseEvent.eventName, () => this.toggleAttribute('stay-visible', false), {
+    const handleClose = () => {
+      this.toggleAttribute('stay-visible', false);
+      // Clean up state when dialog closes
+      this.#cleanupOnDialogClose();
+    };
+
+    dialogComponent.addEventListener(DialogCloseEvent.eventName, handleClose, {
       once: true,
     });
+  }
+
+  /**
+   * Cleans up state when dialog closes (abort requests, reset content if needed)
+   */
+  #cleanupOnDialogClose() {
+    // Abort any pending fetch requests
+    if (this.#abortController && !this.#abortController.signal.aborted) {
+      this.#abortController.abort();
+    }
+    // Reset abort controller so it can be reused
+    this.#abortController = null;
+    
+    // Note: We don't clear the modal content here because the user might want to see
+    // the last product they viewed when reopening. Only clear on new product selection.
   }
 
   #openQuickAddModal = () => {
@@ -344,35 +414,8 @@ export class QuickAddComponent extends Component {
       return;
     }
 
-    if (isMobileBreakpoint()) {
-      const productDetails = productGrid.querySelector('.product-details');
-      const productFormComponent = productGrid.querySelector('product-form-component');
-      const variantPicker = productGrid.querySelector('variant-picker');
-      const productPrice = productGrid.querySelector('product-price');
-      const productTitle = document.createElement('a');
-      productTitle.textContent = this.dataset.productTitle || '';
-
-      // Make product title as a link to the product page
-      productTitle.href = this.productPageUrl;
-
-      const productHeader = document.createElement('div');
-      productHeader.classList.add('product-header');
-
-      productHeader.appendChild(productTitle);
-      if (productPrice) {
-        productHeader.appendChild(productPrice);
-      }
-      productGrid.appendChild(productHeader);
-
-      if (variantPicker) {
-        productGrid.appendChild(variantPicker);
-      }
-      if (productFormComponent) {
-        productGrid.appendChild(productFormComponent);
-      }
-
-      productDetails?.remove();
-    }
+    // Keep content same as desktop - no mobile-specific restructuring
+    // The CSS will handle the layout differences
 
     morph(modalContent, productGrid);
 
@@ -791,6 +834,7 @@ class QuickAddDialog extends DialogComponent {
 
   /**
    * Override closeDialog to ensure we're closing the correct dialog
+   * Since parent's closeDialog is an arrow function (instance property), we implement it directly
    */
   closeDialog = async () => {
     // Get the correct dialog - the quick-add-modal, not personalise-modal
@@ -806,6 +850,10 @@ class QuickAddDialog extends DialogComponent {
     
     if (!dialog) {
       console.warn('QuickAddDialog: No dialog found to close');
+      // Still reset body styles in case they're stuck
+      document.body.style.width = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
       return;
     }
     
@@ -815,6 +863,10 @@ class QuickAddDialog extends DialogComponent {
       const quickAddDialog = this.querySelector('dialog.quick-add-modal');
       if (!quickAddDialog) {
         console.error('QuickAddDialog: Cannot find quick-add-modal dialog');
+        // Reset styles anyway
+        document.body.style.width = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
         return;
       }
       // Update refs to point to correct dialog
@@ -825,41 +877,47 @@ class QuickAddDialog extends DialogComponent {
     }
 
     if (!dialog.open) {
-      console.warn('QuickAddDialog: Dialog is not open, but resetting styles anyway');
-      // Still reset body styles in case they're stuck
+      // Still reset body styles in case they're stuck (even if dialog appears closed)
       document.body.style.width = '';
       document.body.style.position = '';
       document.body.style.top = '';
       return;
     }
 
-    // Call parent's closeDialog which handles event listeners and animations
-    // But first ensure refs point to correct dialog
+    // Store original refs and ensure dialog ref is correct
     const originalRefsDialog = this.refs?.dialog;
     if (this.refs) {
       this.refs.dialog = dialog;
     }
     
+    // Implement parent's closeDialog logic directly (since it's an arrow function instance property)
+    // Remove event listeners (parent does this but we can't access their private methods)
+    // The parent's #handleClick and #handleKeyDown are private, but removing listeners won't hurt even if they don't exist
+    
+    dialog.classList.add('dialog-closing');
+
     try {
-      // Call parent implementation
-      await super.closeDialog();
-    } catch (error) {
-      console.error('QuickAddDialog: Error in parent closeDialog, closing directly:', error);
-      // Fallback: close directly
-      dialog.classList.add('dialog-closing');
       await onAnimationEnd(dialog, undefined, { subtree: false });
-      document.body.style.width = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      window.scrollTo({ top: this.#previousScrollY || 0, behavior: 'instant' });
-      dialog.close();
-      dialog.classList.remove('dialog-closing');
-      this.dispatchEvent(new DialogCloseEvent());
-    } finally {
-      // Restore original refs if needed
-      if (originalRefsDialog && this.refs) {
-        this.refs.dialog = originalRefsDialog;
-      }
+    } catch (error) {
+      // Ignore animation errors - continue with closing
+      console.warn('QuickAddDialog: Animation end error (ignored):', error);
+    }
+
+    document.body.style.width = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    window.scrollTo({ top: this.#previousScrollY || 0, behavior: 'instant' });
+
+    dialog.close();
+    dialog.classList.remove('dialog-closing');
+
+    this.dispatchEvent(new DialogCloseEvent());
+    
+    // Restore original refs if it was different (though we want to keep the correct one)
+    // Actually, keep the correct dialog ref instead of restoring potentially wrong one
+    if (this.refs && originalRefsDialog && originalRefsDialog !== dialog && originalRefsDialog.classList?.contains('quick-add-modal')) {
+      // Only restore if the original was also a valid quick-add-modal
+      this.refs.dialog = originalRefsDialog;
     }
   };
 

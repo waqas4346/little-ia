@@ -65,15 +65,9 @@
           # Force image display for Color and Set options (highest priority)
           if is_color_or_set
             assign variant_style = 'image-thumbnail'
-          # Force tile display for Size options
-          elsif is_size
+          # For all other variants (size, gold, etc.), use tile style like size
+          else
             assign variant_style = 'tile'
-          elsif swatch_count > 0 and block_settings.show_swatches
-            if block_settings.variant_style == 'dropdown'
-              assign variant_style = 'swatch_dropdown'
-            else
-              assign variant_style = 'swatch'
-            endif
           endif
 
           if variant_style == 'buttons' and settings.variant_button_width == 'equal-width-buttons'
@@ -93,13 +87,54 @@
           >
             <legend class="variant-option__legend">
               <span>
-                <span class="variant-option__label-text">Select {{ product_option.name | escape }}:</span>
+                {%- liquid
+                  assign display_option_name = product_option.name
+                  
+                  # Replace "colour" with "color" (case-insensitive)
+                  if display_option_name contains 'colour' or display_option_name contains 'Colour' or display_option_name contains 'COLOUR'
+                    assign display_option_name = display_option_name | replace: 'COLOUR', 'COLOR' | replace: 'Colour', 'Color' | replace: 'colour', 'color'
+                  endif
+                  
+                  # Check for "Text " prefix (case-insensitive) and remove it (for "Text colour" -> "color")
+                  assign display_option_name_lower = display_option_name | downcase
+                  if display_option_name_lower contains 'text '
+                    if display_option_name contains 'Text '
+                      assign display_option_name = display_option_name | replace: 'Text ', ''
+                    elsif display_option_name contains 'TEXT '
+                      assign display_option_name = display_option_name | replace: 'TEXT ', ''
+                    else
+                      assign display_option_name = display_option_name | replace: 'text ', ''
+                    endif
+                  endif
+                  
+                  # Check for "Choose " prefix (case-insensitive) and remove it (for "Choose the set" -> "the set")
+                  assign display_option_name_lower = display_option_name | downcase
+                  if display_option_name_lower contains 'choose '
+                    if display_option_name contains 'Choose '
+                      assign display_option_name = display_option_name | replace: 'Choose ', ''
+                    elsif display_option_name contains 'CHOOSE '
+                      assign display_option_name = display_option_name | replace: 'CHOOSE ', ''
+                    else
+                      assign display_option_name = display_option_name | replace: 'choose ', ''
+                    endif
+                  endif
+                  
+                  # Trim any extra spaces
+                  assign display_option_name = display_option_name | strip
+                -%}
+                <span class="variant-option__label-text">Select {{ display_option_name | escape }}:</span>
                 {%- if variant_style == 'swatch' or variant_style == 'image-thumbnail' or variant_style == 'tile' -%}
                   <span class="variant-option__selected-value">{{ product_option.selected_value }}</span>
                 {%- endif %}
               </span>
               {%- if variant_style == 'tile' -%}
-                {% comment %} <a href="#size-guide" class="variant-option__size-guide-link">
+                {%- if product_resource.metafields.custom.size_guide != blank -%}
+                  <button 
+                    type="button"
+                    class="variant-option__size-guide-link"
+                    data-size-guide-button
+                    aria-label="Size Guide"
+                  >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                     <rect width="16" height="16" fill="url(#pattern0_860_37881)"/>
                     <defs>
@@ -110,8 +145,9 @@
                     </defs>
                     </svg>
 
-                  <span>Size Guide</span>
-                </a> {% endcomment %}
+                    <span>Size Guide</span>
+                  </button>
+                {%- endif -%}
               {%- endif %}
             </legend>
             {%- for product_option_value in product_option.values -%}
@@ -274,10 +310,45 @@
               # (original width / original height) x new height (20px at the moment) = new width
               assign new_width = settings.variant_swatch_width | times: 1.0 | divided_by: settings.variant_swatch_height | times: 20
             endif
+            
+            # Clean option name for display
+            assign display_option_name = product_option.name
+            
+            # Replace "colour" with "color" (case-insensitive)
+            if display_option_name contains 'colour' or display_option_name contains 'Colour' or display_option_name contains 'COLOUR'
+              assign display_option_name = display_option_name | replace: 'COLOUR', 'COLOR' | replace: 'Colour', 'Color' | replace: 'colour', 'color'
+            endif
+            
+            # Check for "Text " prefix (case-insensitive) and remove it (for "Text colour" -> "color")
+            assign display_option_name_lower = display_option_name | downcase
+            if display_option_name_lower contains 'text '
+              if display_option_name contains 'Text '
+                assign display_option_name = display_option_name | replace: 'Text ', ''
+              elsif display_option_name contains 'TEXT '
+                assign display_option_name = display_option_name | replace: 'TEXT ', ''
+              else
+                assign display_option_name = display_option_name | replace: 'text ', ''
+              endif
+            endif
+            
+            # Check for "Choose " prefix (case-insensitive) and remove it (for "Choose the set" -> "the set")
+            assign display_option_name_lower = display_option_name | downcase
+            if display_option_name_lower contains 'choose '
+              if display_option_name contains 'Choose '
+                assign display_option_name = display_option_name | replace: 'Choose ', ''
+              elsif display_option_name contains 'CHOOSE '
+                assign display_option_name = display_option_name | replace: 'CHOOSE ', ''
+              else
+                assign display_option_name = display_option_name | replace: 'choose ', ''
+              endif
+            endif
+            
+            # Trim any extra spaces
+            assign display_option_name = display_option_name | strip
           %}
 
           <div class="variant-option variant-option--dropdowns">
-            <label for="Option-{{ block.id }}-{{ forloop.index0 }}">{{ product_option.name | escape }}</label>
+            <label for="Option-{{ block.id }}-{{ forloop.index0 }}">{{ display_option_name | escape }}</label>
             <div
               class="variant-option__select-wrapper"
               style="
@@ -402,6 +473,12 @@
     text-decoration: none;
     font-size: 0.875rem;
     transition: color 0.2s ease;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: inherit;
   }
 
   .variant-option__size-guide-link:hover {
@@ -426,7 +503,7 @@
   .variant-option__selected-value {
     padding-inline-start: var(--padding-xs);
     font-weight: 400;
-    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    color: rgb(var(--color-foreground-rgb));
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -981,8 +1058,6 @@
     background-color: #F3F3F3;
     color: inherit;
     min-height: 36px;
-    min-width: 84px;
-    width: 84px;
     height: 36px;
     display: flex;
     align-items: center;

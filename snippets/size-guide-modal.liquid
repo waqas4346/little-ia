@@ -1,0 +1,136 @@
+{%- doc -%}
+  Renders a size guide modal for displaying size guide images.
+
+  @param {object} product - The product object
+{%- enddoc -%}
+
+{% liquid
+  assign product = product | default: closest.product
+%}
+
+{%- if product.metafields.custom.size_guide != blank -%}
+  <size-guide-dialog id="size-guide-dialog">
+    <dialog
+      class="size-guide-modal dialog-modal color-{{ settings.popover_color_scheme }}"
+      ref="dialog"
+      scroll-lock
+      aria-labelledby="size-guide-dialog-heading"
+    >
+      <button
+        ref="closeButton"
+        on:click="/closeDialog"
+        class="button button-unstyled close-button size-guide-modal__close"
+        aria-label="{{ 'accessibility.close_dialog' | t }}"
+      >
+        {{- 'icon-close.svg' | inline_asset_content -}}
+      </button>
+
+      <h2
+        id="size-guide-dialog-heading"
+        class="visually-hidden"
+      >
+        Size Guide
+      </h2>
+
+      <div class="size-guide-modal__content">
+        <img 
+          src="{{ product.metafields.custom.size_guide | file_url }}"
+          alt="Size Guide"
+          class="size-guide-modal__image"
+          loading="lazy"
+          width="1000"
+          height="1000"
+        />
+      </div>
+    </dialog>
+  </size-guide-dialog>
+{%- endif -%}
+
+{% stylesheet %}
+  .size-guide-modal {
+    padding: 20px;
+    border: var(--style-border-popover);
+    max-width: 90vw;
+    width: 79.86vw; /* 1150px at 1440px screen size */
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 5px 30px rgb(0 0 0 / var(--opacity-15));
+    background-color: var(--color-background);
+  }
+
+  /* At 1440px screen size, modal should be exactly 1150px */
+  @media screen and (min-width: 1440px) {
+    .size-guide-modal {
+      width: 1150px;
+    }
+  }
+
+  /* Scale down proportionally for smaller screens */
+  @media screen and (max-width: 1439px) {
+    .size-guide-modal {
+      width: 79.86vw;
+    }
+  }
+
+  .size-guide-modal[open] {
+    display: flex;
+    flex-direction: column;
+    animation: modalSlideInTop var(--animation-speed) var(--animation-easing) forwards;
+  }
+
+  .size-guide-modal.dialog-closing {
+    animation: modalSlideOutTop var(--animation-speed) var(--animation-easing) forwards;
+  }
+
+  .size-guide-modal__close {
+    position: absolute;
+    top: var(--margin-md);
+    right: var(--margin-md);
+    z-index: var(--layer-raised);
+    transition: transform 0.15s var(--animation-timing-bounce);
+  }
+
+  .size-guide-modal__close:active {
+    transform: scale(0.8);
+  }
+
+  .size-guide-modal__content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    padding: var(--padding-xl);
+    overflow-y: auto;
+  }
+
+  .size-guide-modal__image {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  @media screen and (max-width: 749px) {
+    .size-guide-modal {
+      width: 100%;
+      max-width: 100vw;
+      max-height: 100vh;
+      border-radius: 0;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: 0;
+    }
+
+    .size-guide-modal__content {
+      padding: var(--padding-md);
+      min-height: unset;
+    }
+  }
+{% endstylesheet %}
