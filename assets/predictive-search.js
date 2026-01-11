@@ -326,13 +326,40 @@ class PredictiveSearchComponent extends Component {
   }
 
   /**
+   * Get the current product ID if we're on a product page
+   * @returns {string | null} The current product ID or null if not on a product page
+   */
+  #getCurrentProductId() {
+    // Try to get from sticky-add-to-cart
+    const stickyAddToCart = document.querySelector('sticky-add-to-cart');
+    if (stickyAddToCart?.dataset?.productId) {
+      return String(stickyAddToCart.dataset.productId);
+    }
+
+    // Try to get from product-form-component
+    const productForm = document.querySelector('product-form-component');
+    if (productForm?.dataset?.productId) {
+      return String(productForm.dataset.productId);
+    }
+
+    return null;
+  }
+
+  /**
    * Fetch the markup for the recently viewed products.
    * @returns {Promise<string | null>} The markup for the recently viewed products.
    */
   async #getRecentlyViewedProductsMarkup() {
     if (!this.dataset.sectionId) return null;
 
-    const viewedProducts = RecentlyViewed.getProducts();
+    let viewedProducts = RecentlyViewed.getProducts();
+    
+    // Get current product ID and filter it out if we're on a product page
+    const currentProductId = this.#getCurrentProductId();
+    if (currentProductId) {
+      viewedProducts = viewedProducts.filter(id => String(id) !== String(currentProductId));
+    }
+    
     if (viewedProducts.length === 0) return null;
 
     const url = new URL(Theme.routes.search_url, location.origin);

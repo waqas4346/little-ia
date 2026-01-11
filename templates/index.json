@@ -2168,6 +2168,78 @@
         "padding-block-end": 48
       }
     },
+    "product_video_slick_slider_yNNgT3": {
+      "type": "product-video-slick-slider",
+      "blocks": {
+        "video_item_P6DtAq": {
+          "type": "video_item",
+          "settings": {
+            "video": "shopify://files/videos/7a465b497c5e4b49a8cd32d54c130212(1)_89a7fcfd-c540-4234-9341-b8222e360314.mp4",
+            "product": "little-sister-sweatshirt"
+          }
+        },
+        "video_item_Y4p9VF": {
+          "type": "video_item",
+          "settings": {
+            "video": "shopify://files/videos/UnicornMediumBackpack.mp4",
+            "product": "mamas-mini-embroidered-knit-sweater"
+          }
+        },
+        "video_item_EkTHKJ": {
+          "type": "video_item",
+          "settings": {
+            "video": "shopify://files/videos/Football_b7d10772-e7d1-4870-8493-a396775858d9.MOV",
+            "product": "future-ceo-embroidered-knit-sweater"
+          }
+        },
+        "video_item_zWK89D": {
+          "type": "video_item",
+          "settings": {
+            "video": "shopify://files/videos/StuffPouch.MOV",
+            "product": "daddys-mini-sweatshirt"
+          }
+        },
+        "video_item_KfyLgt": {
+          "type": "video_item",
+          "settings": {
+            "video": "shopify://files/videos/TravelSnackkit_0972924c-5e21-49cb-8143-74b67478ce00.mp4",
+            "product": "cousin-club-sweatshirt"
+          }
+        },
+        "video_item_c4UHRB": {
+          "type": "video_item",
+          "settings": {
+            "video": "shopify://files/videos/Plainstainlesssteelbento.mp4",
+            "product": "big-sister-sweatshirt"
+          }
+        },
+        "video_item_8wgLWg": {
+          "type": "video_item",
+          "settings": {
+            "video": "shopify://files/videos/DoubledeckerLunchbag.mp4",
+            "product": "big-sister-embroidered-knit-sweater"
+          }
+        }
+      },
+      "block_order": [
+        "video_item_P6DtAq",
+        "video_item_Y4p9VF",
+        "video_item_EkTHKJ",
+        "video_item_zWK89D",
+        "video_item_KfyLgt",
+        "video_item_c4UHRB",
+        "video_item_8wgLWg"
+      ],
+      "name": "Video Slick Slider",
+      "settings": {
+        "heading": "kids and babies",
+        "subheading": " In Little IA",
+        "section_width": "full-width",
+        "color_scheme": "scheme-6",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
     "collection_list_7UkYMU": {
       "type": "collection-list",
       "blocks": {
@@ -2643,6 +2715,7 @@
     "theme_swatches_KYBFfi",
     "section_EfcYck",
     "product_video_slider_x7cpXz",
+    "product_video_slick_slider_yNNgT3",
     "collection_list_7UkYMU",
     "brands_dHtWbx",
     "featured_blog_posts_my8KTm",

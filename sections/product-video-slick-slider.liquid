@@ -1,8 +1,6 @@
 {% liquid
   assign heading = section.settings.heading
   assign subheading = section.settings.subheading
-  assign gap = section.settings.gap | default: 16
-  assign slides_to_show = section.settings.slides_to_show | default: 3
 %}
 
 <div class="section-background color-{{ section.settings.color_scheme }}"></div>
@@ -105,14 +103,16 @@
                       assign product_form_id = 'QuickAdd-ProductForm-' | append: block_product.id | append: '-' | append: block.id
                       assign variant = block_product.selected_or_first_available_variant
                     %}
-                    <a href="{{ block_product.url }}" class="product-video-slick-slider__product-url" ref="productCardLink" style="display: none;"></a>
                     <quick-add-component
                       class="quick-add color-{{ section.settings.color_scheme }}"
                       ref="quickAdd"
                       data-product-title="{{ block_product.title }}"
+                      data-product-url="{{ block_product.url }}"
+                      data-product-handle="{{ block_product.handle }}"
                       data-quick-add-button="choose"
                       data-product-options-count="{{ block_product.options.size }}"
                     >
+                      <a href="{{ block_product.url }}" class="product-video-slick-slider__product-url" ref="productCardLink" style="display: none;"></a>
                       <product-form-component
                         data-section-id="{{ section.id }}"
                         data-product-id="{{ block_product.id }}"
@@ -210,6 +210,8 @@
     transform: translate3d(0, 0, 0);
   }
 
+
+
   .product-video-slick-slider-section .slick-track {
     position: relative;
     top: 0;
@@ -256,6 +258,20 @@
     display: block;
   }
 
+  /* Ensure consistent spacing between slides and fixed width */
+  .product-video-slick-slider-section .slick-slide {
+    width: 280px !important;
+    margin-right: 24px !important;
+    box-sizing: border-box;
+  }
+
+  @media screen and (max-width: 749px) {
+    .product-video-slick-slider-section .slick-slide {
+      width: auto !important;
+      margin-right: 12px !important;
+    }
+  }
+
   .product-video-slick-slider-section .slick-loading .slick-slide {
     visibility: hidden;
   }
@@ -270,72 +286,31 @@
     display: none;
   }
 
-  /* Custom Slick Arrow Styles */
+  /* Hide arrows */
   .product-video-slick-slider-section .slick-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 10;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-size: 0;
-    line-height: 0;
-    padding: 0;
-    width: 40px;
-    height: 40px;
-    opacity: 1;
-    transition: opacity 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .product-video-slick-slider-section .slick-arrow:hover {
-    opacity: 0.8;
-  }
-
-  .product-video-slick-slider-section .slick-arrow.slick-disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  .product-video-slick-slider-section .slick-prev {
-    left: -60px;
-  }
-
-  .product-video-slick-slider-section .slick-next {
-    right: -60px;
-  }
-
-  .product-video-slick-slider-section .slick-arrow svg {
-    width: 24px;
-    height: 24px;
-    fill: #1D425A;
-    stroke: #1D425A;
-  }
-
-  @media screen and (max-width: 749px) {
-    .product-video-slick-slider-section .slick-prev {
-      left: 10px;
-    }
-
-    .product-video-slick-slider-section .slick-next {
-      right: 10px;
-    }
+    display: none !important;
   }
 
   /* Center Mode Styles - Center item is larger */
   .product-video-slick-slider-section .slick-center .product-video-slick-slider__item {
-    transform: scale(1.2);
+    transform: scale(1.02);
     opacity: 1;
     z-index: 2;
   }
+  .product-video-slick-slider-section .slick-center .slick-slide > div {
+    max-width: 328px !important;
+        width: 100% !important;
+  }
+
+  .product-video-slick-slider-section .slick-center {
+        max-width: 328px !important;
+        width: 100% !important;
+  }
 
   .product-video-slick-slider-section .slick-slide:not(.slick-center) .product-video-slick-slider__item {
-    opacity: 0.6;
-    transform: scale(0.9);
-    transition: transform 0.4s ease, opacity 0.4s ease;
+    opacity: 1;
+    transform: scale(1, 0.9);
+    transition: transform 0.4s ease;
   }
 
   /* Header Styles - Matching video slider */
@@ -391,24 +366,24 @@
 
   /* Item Styles */
   .product-video-slick-slider__item {
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 0 8px;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
     transition: transform 0.3s ease, opacity 0.3s ease;
   }
 
-  /* Center item gets more height and width */
-  .product-video-slick-slider-section .slick-center .product-video-slick-slider__item {
-    padding: 0 12px;
-  }
-
   .product-video-slick-slider__image-wrapper {
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
     aspect-ratio: 204 / 321;
     overflow: hidden;
     border-radius: 4px;
+    box-sizing: border-box;
   }
 
   @media screen and (min-width: 750px) {
@@ -630,11 +605,13 @@
 
   .product-video-slick-slider__video-wrapper {
     position: relative;
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
     aspect-ratio: 204 / 321;
     overflow: hidden;
     border-radius: 4px;
     cursor: pointer;
+    box-sizing: border-box;
   }
 
   @media screen and (min-width: 750px) {
@@ -645,6 +622,7 @@
     /* Center item has larger aspect ratio */
     .product-video-slick-slider-section .slick-center .product-video-slick-slider__video-wrapper {
       aspect-ratio: 281 / 520;
+      max-height: 450px;
     }
   }
 
@@ -826,18 +804,52 @@
       initializeSlick();
     }
     
+    function calculateSlidesToShow() {
+      const container = document.getElementById(carouselId);
+      if (!container) return 3;
+      
+      // On mobile, show 1 slide
+      if (window.innerWidth <= 750) {
+        return 1;
+      }
+      
+      const containerWidth = container.offsetWidth;
+      const slideWidth = 280; // Fixed width for each slide
+      const gap = 24; // 24px gap on desktop
+      const centerPadding = 120; // Total padding (60px each side on desktop)
+      const availableWidth = containerWidth - centerPadding;
+      
+      // Calculate how many slides can fit: (availableWidth + gap) / (slideWidth + gap)
+      // We add gap to availableWidth because the last slide doesn't need margin-right
+      let slidesToShow = Math.floor((availableWidth + gap) / (slideWidth + gap));
+      
+      // Ensure at least 1 slide
+      slidesToShow = Math.max(1, slidesToShow);
+      
+      return slidesToShow;
+    }
+    
+    function applyGap() {
+      // Gap is handled by CSS with !important, this function ensures slides are updated
+      // Force a reflow to ensure CSS is applied
+      const slides = jQuery('#' + carouselId).find('.slick-slide');
+      if (slides.length > 0) {
+        slides[0].offsetHeight; // Force reflow
+      }
+    }
+    
     function initializeSlick() {
-      const gap = {{ gap }};
+      const slidesToShow = calculateSlidesToShow();
+      
       jQuery('#' + carouselId).slick({
         centerMode: true,
-        centerPadding: '60px',
-        slidesToShow: {{ slides_to_show }},
+        centerPadding: window.innerWidth > 750 ? '60px' : '40px',
+        slidesToShow: slidesToShow,
         slidesToScroll: 1,
         infinite: true,
         speed: 500,
-        arrows: {{ section.settings.show_arrows | default: true }},
-        prevArrow: '<button type="button" class="slick-prev" aria-label="Previous"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>',
-        nextArrow: '<button type="button" class="slick-next" aria-label="Next"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>',
+        arrows: false,
+        variableWidth: false, // Use fixed width
         responsive: [
           {
             breakpoint: 750,
@@ -846,17 +858,44 @@
               centerPadding: '40px',
               slidesToShow: 1,
               slidesToScroll: 1,
-              arrows: {{ section.settings.show_arrows | default: true }}
+              arrows: false,
+              variableWidth: false
             }
           }
         ]
       });
       
-      // Apply gap between slides
-      if (gap > 0) {
-        jQuery('#' + carouselId).find('.slick-slide').css('padding-left', gap / 2 + 'px');
-        jQuery('#' + carouselId).find('.slick-slide').css('padding-right', gap / 2 + 'px');
-      }
+      // Force slide widths after initialization
+      setTimeout(function() {
+        if (window.innerWidth > 750) {
+          jQuery('#' + carouselId).find('.slick-slide').each(function() {
+            jQuery(this).css({
+              'width': '280px',
+              'max-width': '280px',
+              'min-width': '280px'
+            });
+          });
+        }
+        applyGap();
+      }, 100);
+      
+      // Recalculate on resize
+      let resizeTimeout;
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+          const newSlidesToShow = calculateSlidesToShow();
+          const currentSlidesToShow = jQuery('#' + carouselId).slick('slickGetOption', 'slidesToShow');
+          
+          if (newSlidesToShow !== currentSlidesToShow) {
+            jQuery('#' + carouselId).slick('slickSetOption', 'slidesToShow', newSlidesToShow, true);
+            jQuery('#' + carouselId).slick('slickSetOption', 'centerPadding', window.innerWidth > 750 ? '60px' : '40px', true);
+          }
+          
+          // Reapply gap on resize
+          applyGap();
+        }, 250);
+      });
     }
     
     // Make video wrappers clickable to toggle play/pause
@@ -992,31 +1031,6 @@
       "id": "subheading",
       "label": "Subheading",
       "default": "Watch Our Products"
-    },
-    {
-      "type": "range",
-      "id": "slides_to_show",
-      "label": "Slides to show (Desktop)",
-      "min": 1,
-      "max": 5,
-      "step": 1,
-      "default": 3
-    },
-    {
-      "type": "checkbox",
-      "id": "show_arrows",
-      "label": "Show navigation arrows",
-      "default": true
-    },
-    {
-      "type": "range",
-      "id": "gap",
-      "label": "Gap between products",
-      "min": 0,
-      "max": 50,
-      "step": 1,
-      "unit": "px",
-      "default": 16
     },
     {
       "type": "select",

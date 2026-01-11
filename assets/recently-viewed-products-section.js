@@ -68,11 +68,46 @@ class RecentlyViewedProductsComponent extends HTMLElement {
   };
 
   /**
+   * Get the current product ID if we're on a product page
+   * @returns {string | null} The current product ID or null if not on a product page
+   */
+  #getCurrentProductId() {
+    // Try to get from sticky-add-to-cart
+    const stickyAddToCart = document.querySelector('sticky-add-to-cart');
+    if (stickyAddToCart?.dataset?.productId) {
+      return String(stickyAddToCart.dataset.productId);
+    }
+
+    // Try to get from product-form-component
+    const productForm = document.querySelector('product-form-component');
+    if (productForm?.dataset?.productId) {
+      return String(productForm.dataset.productId);
+    }
+
+    // Try to get from URL (if on /products/[handle] page)
+    const urlMatch = window.location.pathname.match(/\/products\/([^\/]+)/);
+    if (urlMatch) {
+      // We can't easily get the product ID from handle without fetching, but we can check if the handle matches
+      // For now, we'll rely on the data attributes above
+      // If those fail, we can try to match by handle later
+    }
+
+    return null;
+  }
+
+  /**
    * Load and render recently viewed products
    */
   async #loadProducts() {
-    const viewedProducts = RecentlyViewed.getProducts();
+    let viewedProducts = RecentlyViewed.getProducts();
     const maxProducts = RecentlyViewed.getMaxProducts();
+    
+    // Get current product ID and filter it out if we're on a product page
+    const currentProductId = this.#getCurrentProductId();
+    if (currentProductId) {
+      viewedProducts = viewedProducts.filter(id => String(id) !== String(currentProductId));
+      console.log('Filtered out current product from recently viewed:', currentProductId);
+    }
     
     console.log('Recently viewed products IDs from localStorage:', viewedProducts);
     console.log('Number of products in localStorage:', viewedProducts.length);
