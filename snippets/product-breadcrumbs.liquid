@@ -8,11 +8,8 @@
 
 {%- liquid
   # Product should be available from the template context or passed as parameter
-  # Use provided collection or get the first collection the product belongs to
+  # Only use collection if it's in the URL (available in template context when accessed via collection URL)
   assign breadcrumb_collection = collection
-  if breadcrumb_collection == blank and product != blank and product.collections.size > 0
-    assign breadcrumb_collection = product.collections.first
-  endif
 -%}
 
 <nav class="blog-breadcrumbs" aria-label="Breadcrumb">

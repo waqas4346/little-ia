@@ -560,7 +560,7 @@ class RecentlyViewedProductsComponent extends HTMLElement {
                 <slideshow-arrows position="center" data-icon-style="${iconsStyle}" data-icon-shape="${iconShape}">
                   <button
                     type="button"
-                    class="slideshow-control slideshow-control--previous slideshow-control--style-${iconsStyle}${iconShape !== 'none' ? ` slideshow-control--shape-${iconShape}` : ''} button button-unstyled button-unstyled--transparent flip-x"
+                    class="slideshow-control slideshow-control--previous slideshow-control--style-${iconsStyle}${iconShape !== 'none' ? ` slideshow-control--shape-${iconShape}` : ''} button button-unstyled button-unstyled--transparent${iconsStyle === 'blue_arrows' ? '' : ' flip-x'}"
                     aria-label="Previous slide"
                     ref="previous"
                   >
@@ -568,6 +568,11 @@ class RecentlyViewedProductsComponent extends HTMLElement {
                       ${iconsStyle.includes('chevron') ? `
                         <svg width="11" height="19" viewBox="0 0 11 19" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M9.36328 2.31563L1.26025 9.83979L9.36328 17.364" stroke="#7295BB" stroke-width="2.31515" stroke-linecap="square" stroke-linejoin="round"/>
+                        </svg>
+                      ` : iconsStyle === 'blue_arrows' ? `
+                        <svg width="35" height="35" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="-0.5" y="0.5" width="33.6973" height="33.6973" rx="16.8487" transform="matrix(-1 0 0 1 33.6973 0)" stroke="#7295BB"/>
+                          <path d="M20.8486 23.8486L13.8486 17.3486L20.8486 10.8486" stroke="#7295BB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                       ` : `
                         <svg width="39" height="39" viewBox="0 0 39 39" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -579,7 +584,7 @@ class RecentlyViewedProductsComponent extends HTMLElement {
                   </button>
                   <button
                     type="button"
-                    class="slideshow-control slideshow-control--next slideshow-control--style-${iconsStyle}${iconShape !== 'none' ? ` slideshow-control--shape-${iconShape}` : ''} button button-unstyled button-unstyled--transparent"
+                    class="slideshow-control slideshow-control--next slideshow-control--style-${iconsStyle}${iconShape !== 'none' ? ` slideshow-control--shape-${iconShape}` : ''} button button-unstyled button-unstyled--transparent${iconsStyle === 'blue_arrows' ? ' flip-x' : ''}"
                     aria-label="Next slide"
                     ref="next"
                   >
@@ -587,6 +592,11 @@ class RecentlyViewedProductsComponent extends HTMLElement {
                       ${iconsStyle.includes('chevron') ? `
                         <svg width="11" height="19" viewBox="0 0 11 19" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M1.63672 16.6844L9.73975 9.16021L1.63672 1.63596" stroke="#7295BB" stroke-width="2.31515" stroke-linecap="square" stroke-linejoin="round"/>
+                        </svg>
+                      ` : iconsStyle === 'blue_arrows' ? `
+                        <svg width="35" height="35" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="-0.5" y="0.5" width="33.6973" height="33.6973" rx="16.8487" transform="matrix(-1 0 0 1 33.6973 0)" stroke="#7295BB"/>
+                          <path d="M20.8486 23.8486L13.8486 17.3486L20.8486 10.8486" stroke="#7295BB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                       ` : `
                         <svg width="39" height="39" viewBox="0 0 39 39" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -638,20 +648,28 @@ class RecentlyViewedProductsComponent extends HTMLElement {
                         console.log('Full HTML:', contentEl.innerHTML.substring(0, 1000));
                       }
                       
-                      // Setup product cards and actions like product-slider does
+                      // Setup product cards first
                       this.#setupProductCards();
                       
                       // Wait for products to be fully rendered before adding actions
                       setTimeout(async () => {
+                        // Run setup again to catch any dynamically added cards
+                        this.#setupProductCards();
+                        
                         await this.#enableProductCardImageSliders();
                         await this.#addProductActions();
+                        
+                        // Run setup one more time after adding actions to ensure attributes are set
+                        setTimeout(() => {
+                          this.#setupProductCards();
+                        }, 100);
                         
                         // The slideshow component should auto-initialize, but we need to set up arrow handlers
                         // Wait a bit longer to ensure slideshow is fully initialized
                         setTimeout(() => {
                           this.#initializeSlideshow();
-                        }, 100);
-                      }, 200);
+                        }, 200);
+                      }, 300);
                     }, 300);
     } else {
       console.error('Content element not found!');
@@ -809,15 +827,31 @@ class RecentlyViewedProductsComponent extends HTMLElement {
    */
   #setupProductCards() {
     const carousel = this.querySelector('[data-testid="recently-viewed-products-grid"]');
-    if (!carousel) return;
+    if (!carousel) {
+      console.warn('[Recently Viewed] Carousel not found in #setupProductCards()');
+      return;
+    }
 
-    const productCards = carousel.querySelectorAll('product-card');
-    productCards.forEach((card) => {
-      card.setAttribute('data-collection-page', 'true');
-      // Enable view product button
-      card.setAttribute('data-view-product-button-enabled', 'true');
-      card.setAttribute('data-view-product-button-setting', 'true');
-    });
+    // Wait a bit for product cards to be rendered
+    setTimeout(() => {
+      const productCards = carousel.querySelectorAll('product-card');
+      console.log(`[Recently Viewed] #setupProductCards: Found ${productCards.length} product cards`);
+      
+      productCards.forEach((card) => {
+        card.setAttribute('data-collection-page', 'true');
+        // Enable view product button
+        card.setAttribute('data-view-product-button-enabled', 'true');
+        card.setAttribute('data-view-product-button-setting', 'true');
+        console.log(`[Recently Viewed] Set data-view-product-button-setting on product card ${card.getAttribute('data-product-id') || 'unknown'}`);
+      });
+      
+      // Also set attribute on items themselves as fallback
+      const productItems = carousel.querySelectorAll('[data-product-slider-item="true"]');
+      productItems.forEach((item) => {
+        item.setAttribute('data-view-product-button-setting', 'true');
+        item.setAttribute('data-view-product-button-enabled', 'true');
+      });
+    }, 50);
   }
 
   /**
@@ -1271,15 +1305,63 @@ class RecentlyViewedProductsComponent extends HTMLElement {
         return;
       }
 
-      // Ensure product-card has the data-view-product-button-setting attribute
+      // CRITICAL: Ensure product-card has the data-view-product-button-setting attribute BEFORE inserting actions
+      // This is required for CSS to show the buttons
       // Also check if cardContent's parent is a product-card
       if (!productCard && cardContent) {
         productCard = cardContent.closest('product-card');
       }
       
       if (productCard) {
+        // Set attribute BEFORE inserting actions so CSS can match
         productCard.setAttribute('data-view-product-button-setting', 'true');
         productCard.setAttribute('data-view-product-button-enabled', 'true');
+        productCard.setAttribute('data-collection-page', 'true');
+        
+        // CRITICAL: Ensure product-card has a link with ref="productCardLink" for quick-add to work
+        // The quick-add component needs this to get the product URL
+        // Extract handle from product or find it from the card
+        const productHandle = product.handle || this.#extractHandleFromCard(productCard) || '';
+        const productUrl = product.url || (productHandle ? `/products/${productHandle}` : '');
+        
+        let productCardLink = productCard.querySelector('a[ref="productCardLink"]') || 
+                              productCard.querySelector('a.product-card__link') ||
+                              productCard.querySelector('a[href*="/products/"]');
+        
+        if (!productCardLink && productUrl) {
+          // If no link exists, create one
+          productCardLink = document.createElement('a');
+          productCardLink.href = productUrl;
+          productCardLink.className = 'product-card__link';
+          productCardLink.setAttribute('ref', 'productCardLink');
+          productCardLink.innerHTML = '<span class="visually-hidden">' + (product.title || 'Product') + '</span>';
+          
+          // Insert at the beginning of the product-card (before cardContent)
+          if (cardContent && cardContent.parentElement === productCard) {
+            productCard.insertBefore(productCardLink, cardContent);
+          } else if (productCard.firstChild) {
+            productCard.insertBefore(productCardLink, productCard.firstChild);
+          } else {
+            productCard.appendChild(productCardLink);
+          }
+          
+          console.log(`[Recently Viewed] Created product-card__link for product ${productId}: ${productUrl}`);
+        } else if (productCardLink) {
+          // Ensure the link has the ref attribute if it doesn't
+          if (!productCardLink.hasAttribute('ref')) {
+            productCardLink.setAttribute('ref', 'productCardLink');
+          }
+          // Update href if it's empty or incorrect
+          if (productUrl && (!productCardLink.href || productCardLink.href === window.location.href)) {
+            productCardLink.href = productUrl;
+            console.log(`[Recently Viewed] Updated product-card__link href for product ${productId}: ${productUrl}`);
+          } else {
+            console.log(`[Recently Viewed] Found product-card__link for product ${productId}: ${productCardLink.href}`);
+          }
+        } else {
+          console.warn(`[Recently Viewed] Product ${productId}: No product URL or handle found, quick-add modal may not work`);
+        }
+        
         console.log(`[Recently Viewed] Set data-view-product-button-setting on product card ${productId}`);
       } else {
         // If no product-card element, set attribute on the item itself for CSS targeting
@@ -1321,54 +1403,123 @@ class RecentlyViewedProductsComponent extends HTMLElement {
       }
       
       // Wait a bit for custom elements to initialize after DOM insertion
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 150));
       
       // Verify actions were actually inserted
       const verifyActions = cardContent.querySelector('.product-card-actions');
       if (verifyActions) {
+        // Verify product-card has the attribute set (required for CSS visibility)
+        if (productCard) {
+          const hasAttribute = productCard.hasAttribute('data-view-product-button-setting') && 
+                               productCard.getAttribute('data-view-product-button-setting') === 'true';
+          if (!hasAttribute) {
+            productCard.setAttribute('data-view-product-button-setting', 'true');
+            productCard.setAttribute('data-view-product-button-enabled', 'true');
+            console.warn(`[Recently Viewed] Product ${productId}: Had to re-set data-view-product-button-setting attribute`);
+          }
+        }
+        
         // Check if custom elements are initialized
         const quickAddComponent = verifyActions.querySelector('quick-add-component');
         const productFormComponent = verifyActions.querySelector('product-form-component');
         const addButton = verifyActions.querySelector('.product-card-actions__quick-add-button');
+        const viewButton = verifyActions.querySelector('.product-card-actions__view-product-button');
         
         console.log(`[Recently Viewed] Product ${productId}: Elements found:`, {
           actionsDiv: !!verifyActions,
-          quickAddComponent: !!quickAddComponent,
-          productFormComponent: !!productFormComponent,
-          addButton: !!addButton,
-          viewButton: !!verifyActions.querySelector('.product-card-actions__view-product-button')
+          hasViewButton: !!viewButton,
+          hasQuickAddComponent: !!quickAddComponent,
+          hasProductFormComponent: !!productFormComponent,
+          hasAddButton: !!addButton,
+          productCardHasAttribute: productCard ? productCard.getAttribute('data-view-product-button-setting') : 'no product-card',
+          actionsDisplay: window.getComputedStyle(verifyActions).display,
+          actionsVisibility: window.getComputedStyle(verifyActions).visibility,
+          actionsOpacity: window.getComputedStyle(verifyActions).opacity
         });
         
-        // Add click event listener to + button for quick add (since on:click might not work)
-        if (addButton && !addButton.hasAttribute('data-event-listener-added')) {
-          addButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            
-            // Trigger quick-add component's handleClick method
-            if (quickAddComponent && typeof quickAddComponent.handleClick === 'function') {
-              quickAddComponent.handleClick(e);
-            } else if (quickAddComponent && quickAddComponent.onclick) {
-              quickAddComponent.onclick(e);
-            } else {
-              // Fallback: dispatch custom event
-              const clickEvent = new CustomEvent('quick-add-click', { bubbles: true, detail: { productId, variantId } });
-              quickAddComponent.dispatchEvent(clickEvent);
+        // Ensure quick-add component has the product URL before adding event listeners
+        // This is critical for the modal to work
+        if (quickAddComponent && !quickAddComponent.getAttribute('data-product-url')) {
+          const productUrl = product.url || `/products/${product.handle || handle}`;
+          quickAddComponent.setAttribute('data-product-url', productUrl);
+          console.log(`[Recently Viewed] Set data-product-url="${productUrl}" on quick-add component for product ${productId}`);
+        }
+        
+        // Verify the product URL can be found
+        if (quickAddComponent) {
+          const testUrl = quickAddComponent.productPageUrl || quickAddComponent.getAttribute('data-product-url');
+          console.log(`[Recently Viewed] Product ${productId}: Quick-add productPageUrl:`, testUrl);
+          if (!testUrl) {
+            console.warn(`[Recently Viewed] Product ${productId}: Quick-add component has no product URL!`);
+            // Try to find and set the URL from the product card link
+            const productCard = quickAddComponent.closest('product-card');
+            if (productCard) {
+              const cardLink = productCard.querySelector('a.product-card__link, a[ref="productCardLink"], a[href*="/products/"]');
+              if (cardLink) {
+                quickAddComponent.setAttribute('data-product-url', cardLink.href);
+                console.log(`[Recently Viewed] Product ${productId}: Found product URL from card link:`, cardLink.href);
+              }
             }
-          });
+          }
+        }
+        
+        // Add click event listener to + button for quick add
+        // The on:click attribute should work with Shopify's declarative event system,
+        // but we'll also add a standard event listener as fallback
+        if (addButton && !addButton.hasAttribute('data-event-listener-added')) {
+          // Wait a bit more for custom element to be fully connected
+          setTimeout(() => {
+            addButton.addEventListener('click', async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.stopImmediatePropagation();
+              
+              console.log(`[Recently Viewed] Quick add button clicked for product ${productId}`);
+              
+              // Verify product URL before opening modal
+              if (quickAddComponent) {
+                const productUrl = quickAddComponent.productPageUrl || quickAddComponent.getAttribute('data-product-url');
+                if (!productUrl) {
+                  console.error(`[Recently Viewed] Product ${productId}: Cannot open quick-add modal - no product URL found!`);
+                  return;
+                }
+                console.log(`[Recently Viewed] Product ${productId}: Opening quick-add modal with URL:`, productUrl);
+              }
+              
+              // Try to trigger quick-add component's handleClick method
+              if (quickAddComponent && typeof quickAddComponent.handleClick === 'function') {
+                await quickAddComponent.handleClick(e);
+              } else {
+                // Component might not be fully initialized yet, try again in a moment
+                setTimeout(async () => {
+                  if (quickAddComponent && typeof quickAddComponent.handleClick === 'function') {
+                    await quickAddComponent.handleClick(e);
+                  } else {
+                    console.warn(`[Recently Viewed] Quick-add component not fully initialized for product ${productId}`);
+                  }
+                }, 100);
+              }
+            }, { once: false, passive: false });
+          }, 200);
           addButton.setAttribute('data-event-listener-added', 'true');
         }
         
-        actionsAdded++;
-        console.log(`[Recently Viewed] ✓ Successfully added product-card-actions to product ${productId}`);
+        // Force visibility with inline styles as final fallback (override any CSS)
+        verifyActions.style.cssText += 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
         
-        // Force visibility with inline styles as final fallback
-        verifyActions.style.display = 'flex';
-        verifyActions.style.visibility = 'visible';
-        verifyActions.style.opacity = '1';
+        // Also ensure buttons are visible
+        if (viewButton) {
+          viewButton.style.cssText += 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
+        }
+        if (addButton) {
+          addButton.style.cssText += 'display: flex !important; visibility: visible !important; opacity: 1 !important;';
+        }
+        
+        actionsAdded++;
+        console.log(`[Recently Viewed] ✓ Successfully added and made visible product-card-actions to product ${productId}`);
       } else {
         console.error(`[Recently Viewed] ✗ Failed to add actions to product ${productId} - actions not found in DOM after insertion`);
+        console.error('Product card:', productCard?.outerHTML?.substring(0, 300));
         console.error('Card content HTML:', cardContent.innerHTML.substring(0, 500));
       }
     }
@@ -1451,17 +1602,22 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     const variant = variants.find(v => v.available) || variants[0];
     if (!variant) return null;
 
-    // Get variant URL - Shopify JSON provides variant.url
-    const variantUrl = variant.url || product.url || `/products/${handle}`;
-    const productFormId = `ProductCardActions-ProductForm-${productId}-${sectionId}`;
-    const variantId = variant.id;
-    const variantAvailable = variant.available !== false;
-    const quantityMin = variant.quantity_rule?.min || 1;
+      // Get variant URL - Shopify JSON provides variant.url
+      // Use product.url if available, otherwise construct from handle
+      const productUrl = product.url || (handle ? `/products/${handle}` : '');
+      const variantUrl = variant.url || productUrl;
+      const productFormId = `ProductCardActions-ProductForm-${productId}-${sectionId}`;
+      const variantId = variant.id;
+      const variantAvailable = variant.available !== false;
+      const quantityMin = variant.quantity_rule?.min || 1;
 
     // Create container div
     const actionsDiv = document.createElement('div');
     actionsDiv.className = 'product-card-actions';
-    actionsDiv.setAttribute('onclick', 'event.stopPropagation();');
+    // Stop propagation on the container to prevent product card navigation
+    actionsDiv.addEventListener('click', (e) => {
+      e.stopPropagation();
+    }, { passive: false });
     // Force visibility with inline styles to override any CSS
     actionsDiv.style.cssText = 'display: flex !important; visibility: visible !important; opacity: 1 !important; align-items: center; gap: 5px; margin-top: 12px; position: relative; z-index: 10; width: 100%;';
 
@@ -1470,13 +1626,27 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     viewProductLink.href = variantUrl;
     viewProductLink.className = 'product-card-actions__view-product-button';
     viewProductLink.textContent = 'VIEW PRODUCT';
-    viewProductLink.setAttribute('onclick', 'event.stopPropagation();');
+    // Stop propagation to prevent product card click handler from firing
+    // But allow normal link navigation
+    viewProductLink.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent bubbling to product card
+      // Don't prevent default - allow normal link navigation
+      // The link will navigate normally unless modifier keys are pressed
+    }, { passive: false });
+    // Also handle mouseenter to ensure hover state works
+    viewProductLink.addEventListener('mouseenter', (e) => {
+      e.stopPropagation();
+    }, { passive: true });
+    // Force visibility with inline styles - but don't use !important on background/border/color to allow hover CSS to work
+    viewProductLink.style.cssText = 'background: #7295BB; border: 1px solid #7295BB; flex: 1; padding: 10px 6px; margin: 0; font-family: "Outfit", sans-serif; font-style: normal; font-weight: 500; font-size: 12px; line-height: 20px; text-transform: uppercase; color: #FFFFFF; text-decoration: none !important; display: flex !important; align-items: center !important; justify-content: center !important; transition: background-color 0.2s ease, color 0.2s ease, border 0.2s ease !important; cursor: pointer !important; pointer-events: auto !important; z-index: 100; position: relative;';
     actionsDiv.appendChild(viewProductLink);
 
     // Create quick-add wrapper
     const quickAddWrapper = document.createElement('div');
     quickAddWrapper.className = 'product-card-actions__quick-add-wrapper';
-    quickAddWrapper.setAttribute('onclick', 'event.stopPropagation();');
+    quickAddWrapper.addEventListener('click', (e) => {
+      e.stopPropagation();
+    }, { passive: false });
 
     // Create quick-add-component custom element
     const quickAddComponent = document.createElement('quick-add-component');
@@ -1485,6 +1655,15 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     quickAddComponent.setAttribute('data-product-title', productTitle);
     quickAddComponent.setAttribute('data-quick-add-button', 'choose');
     quickAddComponent.setAttribute('data-product-options-count', options.length);
+    // CRITICAL: Set product URL so quick-add can fetch the product form
+    // The quick-add component looks for productCard.getProductCardLink().href
+    // So we'll store the URL here as a fallback
+    if (productUrl) {
+      quickAddComponent.setAttribute('data-product-url', productUrl);
+    }
+    if (handle) {
+      quickAddComponent.setAttribute('data-product-handle', handle);
+    }
 
     // Create product-form-component custom element
     const productFormComponent = document.createElement('product-form-component');
@@ -1526,11 +1705,14 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     addButton.setAttribute('onclick', 'event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();');
     addButton.setAttribute('data-quick-add-trigger', 'true');
     addButton.setAttribute('data-no-navigation', 'true');
+    // Force visibility with inline styles
+    addButton.style.cssText = 'width: 32px !important; height: 32px !important; min-width: 32px !important; min-height: 32px !important; max-width: 32px !important; max-height: 32px !important; padding: 0 !important; margin: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; opacity: 1 !important; visibility: visible !important; border-radius: 50% !important; border: 1px solid #1D425A !important; background: transparent !important; cursor: pointer !important; position: relative !important; z-index: 1 !important; pointer-events: auto !important;';
 
     // Create + span
     const plusSpan = document.createElement('span');
     plusSpan.className = 'product-card-actions__quick-add-plus';
     plusSpan.textContent = '+';
+    plusSpan.style.cssText = 'font-family: "Geologica", sans-serif; font-style: normal; font-weight: 100; font-size: 19.5279px; line-height: 24px; display: flex; align-items: center; justify-content: center; text-align: center; color: #1D425A; margin: 0; padding: 0; height: 100%; width: 100%; position: relative; top: -1px;';
     addButton.appendChild(plusSpan);
 
     form.appendChild(addButton);

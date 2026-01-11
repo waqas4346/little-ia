@@ -31,6 +31,7 @@
   endif
 %}
 
+{% if all_collections != blank and max_items > 0 %}
 <div class="section-background color-{{ section.settings.color_scheme }}"></div>
 <div
   data-testid="other-collections-slider"
@@ -208,6 +209,7 @@
     </div>
   </div>
 </div>
+{% endif %}
 
 <style>
   .collection-slider-header {

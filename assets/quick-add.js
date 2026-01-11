@@ -19,9 +19,32 @@ export class QuickAddComponent extends Component {
     );
     const productLink = productCard?.getProductCardLink() || hotspotProduct?.getHotspotProductLink();
 
-    if (!productLink?.href) return '';
+    // Fallback: Try to find product link manually if getProductCardLink doesn't work
+    let productUrl = productLink?.href || '';
+    
+    if (!productUrl) {
+      // Try to find link with ref="productCardLink" or class="product-card__link"
+      const cardElement = this.closest('product-card');
+      if (cardElement) {
+        const linkWithRef = cardElement.querySelector('a[ref="productCardLink"]');
+        const linkWithClass = cardElement.querySelector('a.product-card__link');
+        const anyProductLink = cardElement.querySelector('a[href*="/products/"]');
+        productUrl = linkWithRef?.href || linkWithClass?.href || anyProductLink?.href || '';
+      }
+    }
+    
+    // Final fallback: Check data attributes on the quick-add component itself
+    if (!productUrl) {
+      productUrl = this.getAttribute('data-product-url') || '';
+      if (!productUrl && this.getAttribute('data-product-handle')) {
+        const handle = this.getAttribute('data-product-handle');
+        productUrl = `/products/${handle}`;
+      }
+    }
 
-    const url = new URL(productLink.href);
+    if (!productUrl) return '';
+
+    const url = new URL(productUrl, window.location.origin);
 
     if (url.searchParams.has('variant')) {
       return url.toString();

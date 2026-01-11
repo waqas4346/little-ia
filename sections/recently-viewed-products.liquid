@@ -56,6 +56,10 @@
 </div>
 
 <style>
+
+  .recently-viewed-products-content .resource-card__content {
+      margin-top: auto;
+  }
   /* Use same styles as product-slider */
   [data-testid="recently-viewed-products"] .product-slider-header {
     text-align: center;
@@ -65,6 +69,46 @@
   @media screen and (min-width: 750px) {
     [data-testid="recently-viewed-products"] .product-slider-header {
       margin-bottom: 24px;
+    }
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-top-label {
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-top-label-text {
+    margin: 0;
+    font-family: 'Sacramento', cursive, sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 150%;
+    color: #7295BB;
+    text-align: center;
+    text-transform: lowercase;
+    display: block;
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-section-title {
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  [data-testid="recently-viewed-products"] .product-slider-section-title-label {
+    margin: 0;
+    font-family: 'FuturaPT-Demi', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
+    text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
+    display: block;
+  }
+
+  @media screen and (min-width: 750px) {
+    [data-testid="recently-viewed-products"] .product-slider-top-label-text {
+      font-size: 38px;
     }
   }
 
@@ -228,6 +272,36 @@
     pointer-events: none !important;
   }
 
+  /* Ensure slideshow slides stretch to same height */
+  [data-testid="recently-viewed-products-grid"] slideshow-slides {
+    align-items: stretch !important;
+  }
+
+  /* Ensure all product cards have the same height (stretch) */
+  [data-testid="recently-viewed-products-grid"] .resource-list__item,
+  [data-testid="recently-viewed-products-grid"] [data-product-slider-item] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    align-self: stretch !important;
+  }
+
+  /* Ensure product-card takes full height */
+  [data-testid="recently-viewed-products-grid"] product-card {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    flex: 1 1 auto !important;
+  }
+
+  /* Ensure product-card__content uses flexbox and fills available space */
+  [data-testid="recently-viewed-products-grid"] .product-card__content {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+
   /* Product card actions styling for recently viewed section - match product-slider */
   /* Force visibility with high specificity */
   [data-testid="recently-viewed-products"] .product-card-actions,
@@ -237,12 +311,13 @@
     display: flex !important;
     align-items: center !important;
     gap: 5px !important;
-    margin-top: 12px !important;
+    margin-top: auto !important; /* Push to bottom using auto margin */
     position: relative !important;
     z-index: 10 !important;
     width: 100% !important;
     visibility: visible !important;
     opacity: 1 !important;
+    flex-shrink: 0 !important; /* Don't shrink the buttons */
   }
 
   /* Ensure product-card-actions are visible when data-view-product-button-setting is true */
@@ -261,6 +336,7 @@
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
+    margin-top: 12px !important; 
   }
 
   [data-testid="recently-viewed-products"] .product-card-actions__view-product-button {
@@ -269,6 +345,7 @@
     flex: 1 !important;
     padding: 10px 6px !important;
     margin: 0 !important;
+    margin-t
     font-family: 'Outfit', sans-serif !important;
     font-style: normal !important;
     font-weight: 500 !important;
@@ -281,12 +358,26 @@
     align-items: center !important;
     justify-content: center !important;
     transition: background-color 0.2s ease, color 0.2s ease, border 0.2s ease !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 100 !important;
   }
 
   [data-testid="recently-viewed-products"] .product-card-actions__view-product-button:hover {
     background: white !important;
     border: 1px solid #7295BB !important;
     color: #7295BB !important;
+  }
+  
+  /* Ensure View Product button is clickable and not blocked by product card */
+  [data-testid="recently-viewed-products"] .product-card-actions__view-product-button,
+  [data-testid="recently-viewed-products"] .product-card-actions__view-product-button * {
+    pointer-events: auto !important;
+  }
+  
+  [data-testid="recently-viewed-products"] product-card:hover .product-card-actions__view-product-button {
+    pointer-events: auto !important;
   }
 
   [data-testid="recently-viewed-products"] .product-card-actions__quick-add-wrapper {
@@ -298,6 +389,10 @@
     width: 32px !important;
     height: 32px !important;
   }
+  .recently-viewed-products-content .resource-card__image {
+    aspect-ratio: 1;
+  }
+
 
   [data-testid="recently-viewed-products"] .product-card-actions__quick-add-button {
     width: 32px !important;

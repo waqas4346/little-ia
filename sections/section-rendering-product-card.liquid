@@ -54,6 +54,12 @@
       {% render 'price', product_resource: product, show_unit_price: true, show_sale_price_first: true %}
     </product-price>
 
+    {% comment %} Add product-card-actions (View Product and + buttons) like product-slider {% endcomment %}
+    {% render 'product-card-actions', 
+      product: product, 
+      section_id: section.id
+    %}
+
     <product-sku-component
       data-product-id="{{ product.id }}"
       style="{% if sku == blank %}display: none;{% else %}display: block;{% endif %}"

@@ -1,7 +1,7 @@
 {%- doc -%}
   Product Bullet Points Block
   
-  Displays the product bullet points from the CB - Bullet metafield.
+  Displays the product bullet points from the custom.cb_product_features metafield (list).
   This block can be added to the product information section after the price block.
 {%- enddoc -%}
 
@@ -9,26 +9,15 @@
   assign product_resource = closest.product
   assign block_settings = block.settings
   
-  # Get bullet points from CB - Bullet metafield
+  # Get bullet points from custom.cb_product_features metafield (list)
   assign bullet_points = blank
   if product_resource != blank
-    # Access metafield: custom.bullet (metaobject: CB - Product bullets, field: Bullet Points)
-    assign bullet_metafield = product_resource.metafields.custom.bullet
+    # Access metafield: custom.cb_product_features (list metafield)
+    assign bullet_metafield = product_resource.metafields.custom.cb_product_features
     
-    if bullet_metafield != blank
-      # Get the metaobject value (CB - Product bullets)
-      assign bullet_metaobject = bullet_metafield.value
-      
-      if bullet_metaobject != blank
-        # Get the Bullet Points list from the metaobject
-        # Field name is "Bullet Points" - try different access methods
-        assign bullet_points = bullet_metaobject.bullet_points.value | default: bullet_metaobject.bullet_points
-        
-        # If still blank, try with brackets
-        if bullet_points == blank
-          assign bullet_points = bullet_metaobject['Bullet Points'].value | default: bullet_metaobject['Bullet Points']
-        endif
-      endif
+    if bullet_metafield != blank and bullet_metafield.value != blank
+      # Get the list value directly
+      assign bullet_points = bullet_metafield.value
     endif
   endif
 %}
