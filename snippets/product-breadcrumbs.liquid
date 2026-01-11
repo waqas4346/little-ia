@@ -19,13 +19,21 @@
     </li>
     {%- if breadcrumb_collection -%}
       <li class="blog-breadcrumbs__item">
-        <span class="blog-breadcrumbs__separator" aria-hidden="true">/</span>
+        <span class="blog-breadcrumbs__separator" aria-hidden="true">
+          <svg width="5" height="9" viewBox="0 0 5 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0.5 8.5L4.5 4.5L0.5 0.5" stroke="#1D425A" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
         <a href="{{ breadcrumb_collection.url }}" class="blog-breadcrumbs__link">{{ breadcrumb_collection.title }}</a>
       </li>
     {%- endif -%}
     {%- if product -%}
       <li class="blog-breadcrumbs__item">
-        <span class="blog-breadcrumbs__separator" aria-hidden="true">/</span>
+        <span class="blog-breadcrumbs__separator" aria-hidden="true">
+          <svg width="5" height="9" viewBox="0 0 5 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0.5 8.5L4.5 4.5L0.5 0.5" stroke="#1D425A" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
         <span class="blog-breadcrumbs__current" aria-current="page">{{ product.title }}</span>
       </li>
     {%- endif -%}

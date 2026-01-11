@@ -380,6 +380,34 @@
     pointer-events: auto !important;
   }
 
+  /* Disable product card hover effects (image zoom/scale) when hovering anywhere on card */
+  /* Override base.css hover effects - prevent image zoom when hovering over card content */
+  [data-testid="recently-viewed-products"] .card-hover-effect-subtle-zoom product-card:hover .card-gallery,
+  [data-testid="recently-viewed-products"] .card-hover-effect-subtle-zoom product-card:hover .product-card__image,
+  [data-testid="recently-viewed-products-grid"] .card-hover-effect-subtle-zoom product-card:hover .card-gallery,
+  [data-testid="recently-viewed-products-grid"] .card-hover-effect-subtle-zoom product-card:hover .product-card__image {
+    transform: none !important;
+  }
+
+  [data-testid="recently-viewed-products"] .card-hover-effect-lift product-card:hover,
+  [data-testid="recently-viewed-products"] .card-hover-effect-scale product-card:hover,
+  [data-testid="recently-viewed-products-grid"] .card-hover-effect-lift product-card:hover,
+  [data-testid="recently-viewed-products-grid"] .card-hover-effect-scale product-card:hover {
+    transform: none !important;
+  }
+
+  /* Only apply image hover effect when hovering directly over the card-gallery itself */
+  [data-testid="recently-viewed-products"] .card-gallery,
+  [data-testid="recently-viewed-products-grid"] .card-gallery {
+    overflow: hidden;
+    transition: transform var(--hover-transition-duration, 0.25s) var(--hover-transition-timing, ease-out);
+  }
+
+  [data-testid="recently-viewed-products"] .card-gallery:hover,
+  [data-testid="recently-viewed-products-grid"] .card-gallery:hover {
+    transform: scale(var(--hover-subtle-zoom-amount, 1.015)) !important;
+  }
+
   [data-testid="recently-viewed-products"] .product-card-actions__quick-add-wrapper {
     display: flex !important;
     align-items: center !important;

@@ -1,0 +1,1071 @@
+{% liquid
+  assign heading = section.settings.heading
+  assign subheading = section.settings.subheading
+  assign gap = section.settings.gap | default: 16
+  assign slides_to_show = section.settings.slides_to_show | default: 3
+%}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    product-video-slick-slider-section
+  "
+  style="
+    {% render 'spacing-style', settings: section.settings %}
+  "
+>
+  <div class="product-video-slick-slider__header">
+    {% if heading != blank %}
+      <h2 class="product-video-slick-slider__heading">{{ heading }}</h2>
+    {% endif %}
+    {% if subheading != blank %}
+      <h3 class="product-video-slick-slider__subheading">{{ subheading }}</h3>
+    {% endif %}
+  </div>
+
+  {% if section.blocks.size > 0 %}
+    <div class="product-video-slick-slider__wrapper">
+      <div class="product-video-slick-slider__carousel" id="product-video-slick-slider-{{ section.id }}">
+        {% for block in section.blocks %}
+          {% liquid
+            assign block_video = block.settings.video
+            assign block_image = block.settings.image
+            assign block_product = block.settings.product
+            assign video_to_show = null
+            assign preview_image = null
+
+            if block_video != blank
+              assign video_to_show = block_video
+              assign preview_image = block_video.preview_image
+            elsif block_image != blank
+              assign video_to_show = block_image
+              assign preview_image = block_image
+            else
+              assign preview_image = block_product.featured_image
+            endif
+          %}
+          
+          <div class="product-video-slick-slider__item" {{ block.shopify_attributes }}>
+            <div class="product-video-slick-slider__video-wrapper">
+              {% if video_to_show != blank %}
+                {% render 'video',
+                  video: video_to_show,
+                  video_loop: true,
+                  video_autoplay: false,
+                  disable_controls: true,
+                  section_id: section.id,
+                  video_class: 'product-video-slick-slider__video',
+                  video_preview_image: preview_image
+                %}
+              {% elsif block_image != blank %}
+                <div class="product-video-slick-slider__image-wrapper">
+                  {{
+                    block_image
+                    | image_url: width: 3840
+                    | image_tag: widths: '240, 352, 832, 1200, 1600, 1920, 2560, 3840', sizes: '100vw', loading: 'lazy', class: 'product-video-slick-slider__image', alt: block_image.alt
+                  }}
+                </div>
+              {% else %}
+                <div class="product-video-slick-slider__placeholder-video">
+                  {{ 'hero-apparel-3' | placeholder_svg_tag: 'product-video-slick-slider__placeholder-svg' }}
+                </div>
+              {% endif %}
+            </div>
+            
+            {% if block_product != blank %}
+              <div class="product-video-slick-slider__product-info">
+                {% if block_product.featured_image != blank %}
+                  <div class="product-video-slick-slider__product-image-wrapper">
+                    <a href="{{ block_product.url }}" class="product-video-slick-slider__product-image-link">
+                      {{
+                        block_product.featured_image
+                        | image_url: width: 200
+                        | image_tag: widths: '100, 200', sizes: '100px', loading: 'lazy', class: 'product-video-slick-slider__product-image', alt: block_product.featured_image.alt
+                      }}
+                    </a>
+                  </div>
+                {% endif %}
+                <div class="product-video-slick-slider__product-details">
+                  <h4 class="product-video-slick-slider__product-title">
+                    <a href="{{ block_product.url }}" class="product-video-slick-slider__product-link">
+                      {{ block_product.title }}
+                    </a>
+                  </h4>
+                  <div class="product-video-slick-slider__product-price">
+                    {% render 'price', product_resource: block_product, show_sale_price_first: true %}
+                  </div>
+                </div>
+                {% if settings.quick_add and block_product.available %}
+                  <div class="product-video-slick-slider__quick-add-wrapper">
+                    {% liquid
+                      assign product_form_id = 'QuickAdd-ProductForm-' | append: block_product.id | append: '-' | append: block.id
+                      assign variant = block_product.selected_or_first_available_variant
+                    %}
+                    <a href="{{ block_product.url }}" class="product-video-slick-slider__product-url" ref="productCardLink" style="display: none;"></a>
+                    <quick-add-component
+                      class="quick-add color-{{ section.settings.color_scheme }}"
+                      ref="quickAdd"
+                      data-product-title="{{ block_product.title }}"
+                      data-quick-add-button="choose"
+                      data-product-options-count="{{ block_product.options.size }}"
+                    >
+                      <product-form-component
+                        data-section-id="{{ section.id }}"
+                        data-product-id="{{ block_product.id }}"
+                        on:submit="/handleSubmit"
+                        class="quick-add__product-form-component"
+                      >
+                        <div
+                          class="visually-hidden"
+                          aria-live="assertive"
+                          role="status"
+                          aria-atomic="true"
+                          ref="liveRegion"
+                        ></div>
+                        {%- form 'product', block_product, id: product_form_id, novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+                          <input
+                            type="hidden"
+                            name="id"
+                            ref="variantId"
+                            value="{{ variant.id }}"
+                            {% if variant.available == false %}
+                              disabled
+                            {% endif %}
+                          >
+                          <input
+                            type="hidden"
+                            name="quantity"
+                            value="{% if variant.quantity_rule.min %}{{ variant.quantity_rule.min }}{% else %}1{% endif %}"
+                          >
+                          <button
+                            class="button quick-add__button quick-add__button--choose add-to-cart-button product-video-slick-slider__plus-button"
+                            type="button"
+                            name="add"
+                            on:click="quick-add-component/handleClick"
+                          >
+                            <span class="product-video-slick-slider__plus-text">+</span>
+                          </button>
+                        {%- endform -%}
+                      </product-form-component>
+                    </quick-add-component>
+                  </div>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div class="product-video-slick-slider__placeholder">
+      <p>Please add video items to display.</p>
+    </div>
+  {% endif %}
+</div>
+
+{% stylesheet %}
+  /* Slick Slider Styles - Only for this section */
+  .product-video-slick-slider-section .slick-slider {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -khtml-user-select: none;
+    -ms-touch-action: pan-y;
+    touch-action: pan-y;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .product-video-slick-slider-section .slick-list {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  .product-video-slick-slider-section .slick-list:focus {
+    outline: none;
+  }
+
+  .product-video-slick-slider-section .slick-list.dragging {
+    cursor: pointer;
+    cursor: hand;
+  }
+
+  .product-video-slick-slider-section .slick-slider .slick-track,
+  .product-video-slick-slider-section .slick-slider .slick-list {
+    -webkit-transform: translate3d(0, 0, 0);
+    -moz-transform: translate3d(0, 0, 0);
+    -ms-transform: translate3d(0, 0, 0);
+    -o-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+
+  .product-video-slick-slider-section .slick-track {
+    position: relative;
+    top: 0;
+    left: 0;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .product-video-slick-slider-section .slick-track:before,
+  .product-video-slick-slider-section .slick-track:after {
+    display: table;
+    content: '';
+  }
+
+  .product-video-slick-slider-section .slick-track:after {
+    clear: both;
+  }
+
+  .product-video-slick-slider-section .slick-loading .slick-track {
+    visibility: hidden;
+  }
+
+  .product-video-slick-slider-section .slick-slide {
+    display: none;
+    float: left;
+    height: 100%;
+    min-height: 1px;
+  }
+
+  .product-video-slick-slider-section .slick-slide img {
+    display: block;
+  }
+
+  .product-video-slick-slider-section .slick-slide.slick-loading img {
+    display: none;
+  }
+
+  .product-video-slick-slider-section .slick-slide.dragging img {
+    pointer-events: none;
+  }
+
+  .product-video-slick-slider-section .slick-initialized .slick-slide {
+    display: block;
+  }
+
+  .product-video-slick-slider-section .slick-loading .slick-slide {
+    visibility: hidden;
+  }
+
+  .product-video-slick-slider-section .slick-vertical .slick-slide {
+    display: block;
+    height: auto;
+    border: 1px solid transparent;
+  }
+
+  .product-video-slick-slider-section .slick-arrow.slick-hidden {
+    display: none;
+  }
+
+  /* Custom Slick Arrow Styles */
+  .product-video-slick-slider-section .slick-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0;
+    line-height: 0;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .product-video-slick-slider-section .slick-arrow:hover {
+    opacity: 0.8;
+  }
+
+  .product-video-slick-slider-section .slick-arrow.slick-disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .product-video-slick-slider-section .slick-prev {
+    left: -60px;
+  }
+
+  .product-video-slick-slider-section .slick-next {
+    right: -60px;
+  }
+
+  .product-video-slick-slider-section .slick-arrow svg {
+    width: 24px;
+    height: 24px;
+    fill: #1D425A;
+    stroke: #1D425A;
+  }
+
+  @media screen and (max-width: 749px) {
+    .product-video-slick-slider-section .slick-prev {
+      left: 10px;
+    }
+
+    .product-video-slick-slider-section .slick-next {
+      right: 10px;
+    }
+  }
+
+  /* Center Mode Styles - Center item is larger */
+  .product-video-slick-slider-section .slick-center .product-video-slick-slider__item {
+    transform: scale(1.2);
+    opacity: 1;
+    z-index: 2;
+  }
+
+  .product-video-slick-slider-section .slick-slide:not(.slick-center) .product-video-slick-slider__item {
+    opacity: 0.6;
+    transform: scale(0.9);
+    transition: transform 0.4s ease, opacity 0.4s ease;
+  }
+
+  /* Header Styles - Matching video slider */
+  .product-video-slick-slider__header {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .product-video-slick-slider__heading {
+    margin: 0;
+    font-family: 'Sacramento', cursive, sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 150%;
+    color: #7295BB;
+    text-align: center;
+    text-transform: lowercase;
+  }
+
+  .product-video-slick-slider__subheading {
+    margin: 0;
+    font-family: 'FuturaPT-Demi', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
+    text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-video-slick-slider__header {
+      margin-bottom: 24px;
+    }
+
+    .product-video-slick-slider__heading {
+      font-size: 38px;
+    }
+  }
+
+  /* Wrapper Styles */
+  .product-video-slick-slider__wrapper {
+    width: 100%;
+    position: relative;
+    padding: 0 60px;
+  }
+
+  @media screen and (max-width: 749px) {
+    .product-video-slick-slider__wrapper {
+      padding: 0 40px;
+    }
+  }
+
+  /* Item Styles */
+  .product-video-slick-slider__item {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 8px;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  /* Center item gets more height and width */
+  .product-video-slick-slider-section .slick-center .product-video-slick-slider__item {
+    padding: 0 12px;
+  }
+
+  .product-video-slick-slider__image-wrapper {
+    width: 100%;
+    aspect-ratio: 204 / 321;
+    overflow: hidden;
+    border-radius: 4px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-video-slick-slider__image-wrapper {
+      aspect-ratio: 281 / 442;
+    }
+
+    /* Center item has larger aspect ratio */
+    .product-video-slick-slider-section .slick-center .product-video-slick-slider__image-wrapper {
+      aspect-ratio: 281 / 520;
+    }
+  }
+
+  .product-video-slick-slider__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .product-video-slick-slider__product-info {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+    background-color: #FFFFFF;
+    border-radius: 4px;
+    box-sizing: border-box;
+    position: relative;
+    width: 100%;
+  }
+
+  .product-video-slick-slider__product-image-wrapper {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    overflow: visible;
+    border-radius: 4px;
+    background-color: #F7F7F7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-video-slick-slider__product-image-wrapper {
+      width: 53px;
+      height: 53px;
+    }
+  }
+
+  .product-video-slick-slider__product-image-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+  }
+
+  .product-video-slick-slider__product-image {
+    object-fit: cover;
+    display: block;
+    background-color: transparent;
+    margin: auto;
+  }
+
+  .product-video-slick-slider__product-image-wrapper img.product-video-slick-slider__product-image,
+  .product-video-slick-slider__product-image-wrapper img {
+    background-color: #F7F7F7 !important;
+  }
+
+  .product-video-slick-slider__product-details {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .product-video-slick-slider__product-title {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 16px;
+    color: #1D425A;
+    display: flex;
+    align-items: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-video-slick-slider__product-title {
+      font-size: 14px;
+      line-height: 18px;
+    }
+  }
+
+  .product-video-slick-slider__product-link {
+    color: inherit;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .product-video-slick-slider__product-link:hover {
+    opacity: 0.8;
+  }
+
+  .product-video-slick-slider__product-price {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 160%;
+    color: #1D425A;
+  }
+
+  .product-video-slick-slider__product-price .price {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 160%;
+    color: #1D425A;
+  }
+
+  .product-video-slick-slider__product-price .compare-at-price,
+  .product-video-slick-slider__product-price .price-discount-badge,
+  .product-video-slick-slider__product-price .price-snippet .compare-at-price {
+    display: none !important;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-video-slick-slider__product-price {
+      font-size: 14px;
+      line-height: 160%;
+    }
+    
+    .product-video-slick-slider__product-price .price {
+      font-size: 14px;
+      line-height: 160%;
+    }
+  }
+
+  .product-video-slick-slider__quick-add-wrapper {
+    position: relative;
+    width: 20.99px;
+    height: 20.99px;
+    pointer-events: all;
+    flex-shrink: 0;
+  }
+
+  .product-video-slick-slider__quick-add-wrapper .quick-add {
+    position: relative;
+    inset: auto;
+    pointer-events: all;
+  }
+
+  .product-video-slick-slider__quick-add-wrapper .quick-add__button--add {
+    display: none !important;
+  }
+
+  .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: 20.99px;
+    height: 20.99px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    border-radius: 50%;
+    border: 1px solid #1D425A;
+    background: transparent;
+    min-width: 20.99px;
+  }
+
+  .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose:hover {
+    opacity: 0.8;
+  }
+
+  .product-video-slick-slider__plus-text {
+    font-family: 'Geologica', sans-serif;
+    font-style: normal;
+    font-weight: 100;
+    font-size: 19.5279px;
+    line-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #1D425A;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    top: -1px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose {
+      width: 31.61px;
+      height: 31.61px;
+      border: 0.735105px solid #7295BB;
+      min-width: 31.61px;
+    }
+    
+    .product-video-slick-slider__plus-text {
+      font-size: 29.4042px;
+      line-height: 37px;
+      color: #7295BB;
+      top: -2px;
+    }
+  }
+
+  .product-video-slick-slider__video-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 204 / 321;
+    overflow: hidden;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-video-slick-slider__video-wrapper {
+      aspect-ratio: 281 / 442;
+    }
+
+    /* Center item has larger aspect ratio */
+    .product-video-slick-slider-section .slick-center .product-video-slick-slider__video-wrapper {
+      aspect-ratio: 281 / 520;
+    }
+  }
+
+  .product-video-slick-slider__video {
+    width: 100%;
+    height: 100%;
+  }
+
+  .product-video-slick-slider__video-wrapper deferred-media {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .product-video-slick-slider__video-wrapper deferred-media video,
+  .product-video-slick-slider__video-wrapper deferred-media iframe {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .product-video-slick-slider__video-wrapper .deferred-media__poster-button {
+    cursor: pointer;
+    pointer-events: auto !important;
+    z-index: var(--layer-raised);
+    position: relative;
+  }
+
+  .product-video-slick-slider__video-wrapper deferred-media:not([data-media-loaded]) .deferred-media__poster-button {
+    z-index: var(--layer-raised);
+  }
+
+  .product-video-slick-slider__video-wrapper deferred-media[data-media-loaded] .video-interaction-hint {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    z-index: var(--layer-raised) !important;
+  }
+
+  .product-video-slick-slider__video-wrapper deferred-media[data-media-loaded] .video-interaction-hint.deferred-media__poster-button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: var(--layer-raised);
+  }
+
+  .product-video-slick-slider__video-wrapper deferred-media[data-media-loaded] {
+    cursor: pointer;
+  }
+
+  .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play svg {
+    display: none !important;
+  }
+
+  .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play.hidden {
+    display: none !important;
+  }
+
+  .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden) {
+    width: 49px !important;
+    height: 49px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden)::after {
+    content: '';
+    display: block;
+    width: 49px;
+    height: 49px;
+    background-image: url("data:image/svg+xml,%3Csvg width='49' height='49' viewBox='0 0 49 49' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-2.28349' y='-2.28349' width='53.0909' height='53.0909'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.14px);clip-path:url(%23bgblur_0_860_8379_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='2.28349' cx='24.2621' cy='24.2621' r='24.2621' fill='%23222222' fill-opacity='0.36'/%3E%3Cpath d='M19 15L19 33L31 24L19 15Z' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_8379_clip_path' transform='translate(2.28349 2.28349)'%3E%3Ccircle cx='24.2621' cy='24.2621' r='24.2621'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause svg {
+    display: none !important;
+  }
+
+  .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause.hidden {
+    display: none !important;
+  }
+
+  .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden) {
+    width: 49px !important;
+    height: 49px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden)::after {
+    content: '';
+    display: block;
+    width: 49px;
+    height: 49px;
+    background-image: url("data:image/svg+xml,%3Csvg width='49' height='49' viewBox='0 0 49 49' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-2.28349' y='-2.28349' width='53.0909' height='53.0909'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.14px);clip-path:url(%23bgblur_0_860_8379_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='2.28349' cx='24.2621' cy='24.2621' r='24.2621' fill='%23222222' fill-opacity='0.36'/%3E%3Crect x='18' y='14' width='4' height='20' fill='white'/%3E%3Crect x='27' y='14' width='4' height='20' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_8379_clip_path' transform='translate(2.28349 2.28349)'%3E%3Ccircle cx='24.2621' cy='24.2621' r='24.2621'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden) {
+      width: 70px !important;
+      height: 70px !important;
+    }
+    
+    .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden)::after {
+      width: 70px;
+      height: 70px;
+      background-image: url("data:image/svg+xml,%3Csvg width='70' height='70' viewBox='0 0 70 70' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-3.2696' y='-3.2696' width='76.0182' height='76.0182'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.63px);clip-path:url(%23bgblur_0_860_7705_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='3.2696' cx='34.7395' cy='34.7395' r='34.7395' fill='%23222222' fill-opacity='0.36'/%3E%3Cpath d='M27 21L27 48L43 34.5L27 21Z' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_7705_clip_path' transform='translate(3.2696 3.2696)'%3E%3Ccircle cx='34.7395' cy='34.7395' r='34.7395'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+    }
+    
+    .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden) {
+      width: 70px !important;
+      height: 70px !important;
+    }
+    
+    .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden)::after {
+      width: 70px;
+      height: 70px;
+      background-image: url("data:image/svg+xml,%3Csvg width='70' height='70' viewBox='0 0 70 70' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-3.2696' y='-3.2696' width='76.0182' height='76.0182'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.63px);clip-path:url(%23bgblur_0_860_7705_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='3.2696' cx='34.7395' cy='34.7395' r='34.7395' fill='%23222222' fill-opacity='0.36'/%3E%3Crect x='25' y='20' width='6' height='30' fill='white'/%3E%3Crect x='39' y='20' width='6' height='30' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_7705_clip_path' transform='translate(3.2696 3.2696)'%3E%3Ccircle cx='34.7395' cy='34.7395' r='34.7395'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+    }
+  }
+
+  .product-video-slick-slider__placeholder {
+    text-align: center;
+    padding: 40px 20px;
+  }
+{% endstylesheet %}
+
+<!-- jQuery - Required for Slick Slider (only for this section) -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+<!-- Slick Slider CSS - Only for this section -->
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick.css"/>
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick-theme.css"/>
+
+<!-- Slick Slider JS - Only for this section -->
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.9.0/slick.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const carouselId = 'product-video-slick-slider-{{ section.id }}';
+    const carousel = document.getElementById(carouselId);
+    
+    if (!carousel) return;
+    
+    // Check if jQuery and Slick are loaded
+    if (typeof jQuery === 'undefined' || typeof jQuery.fn.slick === 'undefined') {
+      // Wait for libraries to load
+      const checkLibraries = setInterval(function() {
+        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.slick !== 'undefined') {
+          clearInterval(checkLibraries);
+          initializeSlick();
+        }
+      }, 100);
+      
+      // Timeout after 5 seconds
+      setTimeout(function() {
+        clearInterval(checkLibraries);
+        if (typeof jQuery !== 'undefined' && typeof jQuery.fn.slick !== 'undefined') {
+          initializeSlick();
+        }
+      }, 5000);
+    } else {
+      initializeSlick();
+    }
+    
+    function initializeSlick() {
+      const gap = {{ gap }};
+      jQuery('#' + carouselId).slick({
+        centerMode: true,
+        centerPadding: '60px',
+        slidesToShow: {{ slides_to_show }},
+        slidesToScroll: 1,
+        infinite: true,
+        speed: 500,
+        arrows: {{ section.settings.show_arrows | default: true }},
+        prevArrow: '<button type="button" class="slick-prev" aria-label="Previous"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>',
+        nextArrow: '<button type="button" class="slick-next" aria-label="Next"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>',
+        responsive: [
+          {
+            breakpoint: 750,
+            settings: {
+              centerMode: true,
+              centerPadding: '40px',
+              slidesToShow: 1,
+              slidesToScroll: 1,
+              arrows: {{ section.settings.show_arrows | default: true }}
+            }
+          }
+        ]
+      });
+      
+      // Apply gap between slides
+      if (gap > 0) {
+        jQuery('#' + carouselId).find('.slick-slide').css('padding-left', gap / 2 + 'px');
+        jQuery('#' + carouselId).find('.slick-slide').css('padding-right', gap / 2 + 'px');
+      }
+    }
+    
+    // Make video wrappers clickable to toggle play/pause
+    const videoWrappers = carousel.querySelectorAll('.product-video-slick-slider__video-wrapper');
+    videoWrappers.forEach(function(wrapper) {
+      const deferredMedia = wrapper.querySelector('deferred-media');
+      if (!deferredMedia) return;
+      
+      let clickHandlerAdded = false;
+      
+      function handleVideoClick(e) {
+        if (e.target.closest('button, a, .quick-add')) {
+          return;
+        }
+        
+        if (!deferredMedia.hasAttribute('data-media-loaded')) {
+          return;
+        }
+        
+        if (deferredMedia.toggleMedia && typeof deferredMedia.toggleMedia === 'function') {
+          deferredMedia.toggleMedia();
+        }
+      }
+      
+      function setupVideoClickHandler() {
+        if (clickHandlerAdded) return;
+        clickHandlerAdded = true;
+        wrapper.addEventListener('click', handleVideoClick, true);
+        wrapper.style.cursor = 'pointer';
+      }
+      
+      function playVideoAfterLoad() {
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        function tryPlay() {
+          attempts++;
+          
+          if (deferredMedia.playMedia && typeof deferredMedia.playMedia === 'function') {
+            try {
+              deferredMedia.playMedia();
+              return;
+            } catch (err) {
+              console.log('playMedia method failed:', err);
+            }
+          }
+          
+          const videoElement = deferredMedia.querySelector('video');
+          const iframe = deferredMedia.querySelector('iframe[data-video-type]');
+          
+          if (videoElement) {
+            videoElement.play().catch(function(err) {
+              if (attempts < maxAttempts) {
+                setTimeout(tryPlay, 50);
+              }
+            });
+          } else if (iframe) {
+            const videoType = iframe.dataset.videoType;
+            if (videoType === 'youtube') {
+              iframe.contentWindow?.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+            } else if (videoType === 'vimeo') {
+              iframe.contentWindow?.postMessage('{"method":"play"}', '*');
+            }
+          } else if (attempts < maxAttempts) {
+            setTimeout(tryPlay, 50);
+          }
+        }
+        
+        setTimeout(tryPlay, 50);
+      }
+      
+      const mediaObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'data-media-loaded') {
+            setupVideoClickHandler();
+            playVideoAfterLoad();
+          }
+        });
+      });
+      
+      mediaObserver.observe(deferredMedia, {
+        attributes: true,
+        attributeFilter: ['data-media-loaded']
+      });
+      
+      if (deferredMedia.hasAttribute('data-media-loaded')) {
+        setupVideoClickHandler();
+      }
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Video Slick Slider",
+  "tag": "section",
+  "class": "section-wrapper",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "blocks": [
+    {
+      "type": "video_item",
+      "name": "Video Item",
+      "settings": [
+        {
+          "type": "video",
+          "id": "video",
+          "label": "Video"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image (fallback if no video)"
+        },
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Associated Product"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Featured Products"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Watch Our Products"
+    },
+    {
+      "type": "range",
+      "id": "slides_to_show",
+      "label": "Slides to show (Desktop)",
+      "min": 1,
+      "max": 5,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "checkbox",
+      "id": "show_arrows",
+      "label": "Show navigation arrows",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap between products",
+      "min": 0,
+      "max": 50,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "default": "page-width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page width"
+        },
+        {
+          "value": "full-width",
+          "label": "Full width"
+        }
+      ]
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Video Slick Slider",
+      "category": "Products"
+    }
+  ]
+}
+{% endschema %}
