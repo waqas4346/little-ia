@@ -2699,6 +2699,88 @@
         "padding-block-start": 48,
         "padding-block-end": 48
       }
+    },
+    "passion_mission_slider_V4Q89H": {
+      "type": "passion-mission-slider",
+      "blocks": {
+        "slider_block_t7D7rT": {
+          "type": "slider_block",
+          "settings": {
+            "image": "shopify://shop_images/image_3108.png",
+            "heading": "Block Heading",
+            "description": "Block description text goes here.",
+            "background_color": "#fffbf4"
+          }
+        },
+        "slider_block_NekrcG": {
+          "type": "slider_block",
+          "settings": {
+            "image": "shopify://shop_images/image_3106.png",
+            "heading": "Why We Care",
+            "description": "When I became a mother, it deeply struck me how many children could not thrive simply because of the circumstances they were born into. This painful realisation that children aren't born equal became the foundation of our mission.",
+            "background_color": "#fffbf4"
+          }
+        }
+      },
+      "block_order": [
+        "slider_block_t7D7rT",
+        "slider_block_NekrcG"
+      ],
+      "disabled": true,
+      "name": "Passion Mission Slider",
+      "settings": {
+        "heading": "Our Passion and Mission",
+        "subheading": "The feeling of pure joy I see when children and family members open their items, is what ignites this passion, and drives me to keep building this beautiful community we have created. Join us in celebrating the magic of personalised moments, we are only just getting started!",
+        "section_width": "page-width",
+        "color_scheme": "",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
+    "content_blocks_QdixKV": {
+      "type": "content-blocks",
+      "blocks": {
+        "content_block_PCKDfi": {
+          "type": "content_block",
+          "settings": {
+            "image": "shopify://shop_images/3b5a973ab1c2b42265259e78ce6f61bccc9261c3.png",
+            "heading": "Emirates Red Crescent",
+            "description": "<p>Supporting children and families through humanitarian aid, ERC provides essential relief during times of crisis, ensuring safety, nourishment, and care where it’s needed most.</p>",
+            "background_color": "#fffbf4"
+          }
+        },
+        "content_block_ha4PUp": {
+          "type": "content_block",
+          "settings": {
+            "image": "shopify://shop_images/98412edc4046062d5b9e69e1f7471ae033f21206.png",
+            "heading": "Sharjah Social Empowerment Foundation",
+            "description": "<p>A charity dedicated to uplifting orphans, their families by providing emotional, educational, and</p>",
+            "background_color": "#fffbf4"
+          }
+        },
+        "content_block_nkfnCm": {
+          "type": "content_block",
+          "settings": {
+            "image": "shopify://shop_images/Frame_1437255282.png",
+            "heading": "PILA Global",
+            "description": "<p>A US-based nonprofit creating joyful learning spaces for young refugee children, giving them access to education, play, and hope for a </p>",
+            "background_color": "#fffbf4"
+          }
+        }
+      },
+      "block_order": [
+        "content_block_PCKDfi",
+        "content_block_ha4PUp",
+        "content_block_nkfnCm"
+      ],
+      "disabled": true,
+      "name": "Content with Image",
+      "settings": {
+        "section_width": "page-width",
+        "color_scheme": "",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
     }
   },
   "order": [
@@ -2720,6 +2802,8 @@
     "brands_dHtWbx",
     "featured_blog_posts_my8KTm",
     "our_story_jzVD6A",
-    "section_iaYWpi"
+    "section_iaYWpi",
+    "passion_mission_slider_V4Q89H",
+    "content_blocks_QdixKV"
   ]
 }
