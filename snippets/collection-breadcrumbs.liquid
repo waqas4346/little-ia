@@ -1,0 +1,75 @@
+
+{%- doc -%}
+  Renders breadcrumbs for collection pages.
+
+  @param {object} [collection] - The collection object (optional, will use global collection if not provided)
+{%- enddoc -%}
+
+{%- liquid
+  assign breadcrumb_collection = collection
+  if breadcrumb_collection == blank
+    assign breadcrumb_collection = collections.all
+  endif
+-%}
+
+<nav class="collection-breadcrumbs" aria-label="Breadcrumb">
+  <ol class="collection-breadcrumbs__list">
+    <li class="collection-breadcrumbs__item">
+      <a href="{{ routes.root_url }}" class="collection-breadcrumbs__link">Home</a>
+    </li>
+    {%- if breadcrumb_collection -%}
+      <li class="collection-breadcrumbs__item">
+        <span class="collection-breadcrumbs__separator" aria-hidden="true">
+          <svg width="5" height="9" viewBox="0 0 5 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0.5 8.5L4.5 4.5L0.5 0.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="collection-breadcrumbs__current" aria-current="page">{{ breadcrumb_collection.title }}</span>
+      </li>
+    {%- endif -%}
+  </ol>
+</nav>
+
+{% stylesheet %}
+  .collection-breadcrumbs {
+    margin-bottom: 6px;
+  }
+
+  .collection-breadcrumbs__list {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--gap-xs, 4px);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .collection-breadcrumbs__item {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-xs, 4px);
+  }
+
+  .collection-breadcrumbs__link {
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .collection-breadcrumbs__link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+  }
+
+  .collection-breadcrumbs__separator {
+    display: flex;
+    align-items: center;
+    opacity: 0.6;
+  }
+
+  .collection-breadcrumbs__separator svg {
+    width: 5px;
+    height: 9px;
+  }
+{% endstylesheet %}

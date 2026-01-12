@@ -1,0 +1,381 @@
+
+{% liquid
+  assign collection_object = collection
+  if collection_object == blank
+    assign collection_object = collections.all
+  endif
+%}
+
+<div class="section section--{{ section.settings.section_width }} collection-banner{% if collection_object.featured_image %} collection-banner--has-image{% endif %}"
+  data-testid="collection-banner"
+>
+  {% if collection_object.featured_image %}
+    <div class="collection-banner__background">
+      {% liquid
+        assign media_width_desktop = '100vw'
+        assign media_width_mobile = '100vw'
+        assign sizes = '(min-width: 750px) ' | append: media_width_desktop | append: ', ' | append: media_width_mobile
+        assign widths = '832, 1200, 1600, 1920, 2560, 3840'
+      %}
+      {{
+        collection_object.featured_image
+        | image_url: width: 3840
+        | image_tag:
+          loading: 'eager',
+          class: 'collection-banner__image',
+          widths: widths,
+          sizes: sizes,
+          fetchpriority: 'high'
+      }}
+      <div class="collection-banner__overlay"></div>
+    </div>
+  {% endif %}
+
+  <div class="collection-banner__content-wrapper">
+    <div class="collection-banner__content">
+      {% render 'collection-breadcrumbs', collection: collection_object %}
+      
+      {% if collection_object.title != blank %}
+        <h1 class="collection-banner__title">
+          {{ collection_object.title }}
+        </h1>
+      {% endif %}
+
+      {% if collection_object.description != blank %}
+        <div class="collection-banner__description">
+          {{ collection_object.description }}
+        </div>
+      {% endif %}
+
+      {% if collection_object.metafields.custom.cb_collection_features != blank %}
+        {% assign collection_features = collection_object.metafields.custom.cb_collection_features.value %}
+        {% if collection_features != blank and collection_features.size > 0 %}
+          <div class="collection-banner__features">
+            {% for feature in collection_features %}
+              {% if feature.text != blank or feature.icon != blank %}
+                <div class="collection-banner__feature">
+                  {% if feature.icon != blank %}
+                    <div class="collection-banner__feature-icon">
+                      {% liquid
+                        # Try to get icon value - could be direct or need .value for file references
+                        assign icon_value = feature.icon
+                        if feature.icon.value != blank
+                          assign icon_value = feature.icon.value
+                        endif
+                        
+                        assign icon_is_image = false
+                        
+                        # Check if icon is an image/file reference
+                        if icon_value.width != blank or icon_value.height != blank
+                          assign icon_is_image = true
+                        endif
+                      %}
+                      
+                      {% if icon_is_image %}
+                        {{
+                          icon_value
+                          | image_url: width: 54
+                          | image_tag: class: 'collection-banner__feature-icon-image', alt: feature.text | default: ''
+                        }}
+                      {% elsif icon_value != blank and icon_value != 'none' %}
+                        {% render 'icon-or-image',
+                          icon: icon_value,
+                          image_upload: null,
+                          width: 27,
+                          class_name: 'collection-banner__feature-icon-svg'
+                        %}
+                      {% endif %}
+                    </div>
+                  {% endif %}
+                  {% if feature.text != blank %}
+                    <span class="collection-banner__feature-text">{{ feature.text }}</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .collection-banner {
+    position: relative;
+    min-height: 50svh;
+    overflow: hidden;
+  }
+
+  @media screen and (min-width: 750px) {
+    .collection-banner {
+      height: 336px;
+      min-height: 336px;
+      max-height: 336px;
+    }
+  }
+
+  .collection-banner__background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  @media screen and (min-width: 750px) {
+    .collection-banner__background {
+      height: 336px;
+    }
+  }
+
+  .collection-banner__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-banner__image {
+      max-height: 382px;
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .collection-banner__image {
+      height: 336px;
+      max-height: 336px;
+    }
+  }
+
+  .collection-banner__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(89.97deg, #000000 -12.75%, rgba(0, 0, 0, 0.810876) -3.35%, rgba(0, 0, 0, 0.648265) 29.36%, rgba(0, 0, 0, 0) 67.56%);
+    pointer-events: none;
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-banner__overlay {
+      background: linear-gradient(202.37deg, rgba(0, 0, 0, 0) 23.99%, rgba(0, 0, 0, 0.485081) 38.69%, rgba(0, 0, 0, 0.821329) 102.45%, #000000 127.08%);
+    }
+  }
+
+  .collection-banner__content-wrapper {
+    grid-column: 2;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    align-self: center;
+    min-height: inherit;
+    display: flex;
+    align-items: center;
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-banner__content-wrapper {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+  }
+
+  .collection-banner__content {
+    width: 100%;
+    padding-block: var(--padding-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    text-align: left;
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-banner__content {
+      justify-content: flex-end;
+    }
+  }
+
+  .collection-banner__content > .collection-breadcrumbs + .collection-banner__title {
+    margin-top: 0;
+  }
+
+  .collection-breadcrumbs__list {
+    color: inherit;
+  }
+
+  .collection-breadcrumbs__link {
+    color: inherit;
+  }
+
+  .collection-breadcrumbs__separator {
+    color: inherit;
+  }
+
+  .collection-banner--has-image .collection-breadcrumbs__list,
+  .collection-banner--has-image .collection-breadcrumbs__link,
+  .collection-banner--has-image .collection-breadcrumbs__separator {
+    color: #ffffff;
+  }
+
+  .collection-banner:not(.collection-banner--has-image) .collection-breadcrumbs__list,
+  .collection-banner:not(.collection-banner--has-image) .collection-breadcrumbs__link,
+  .collection-banner:not(.collection-banner--has-image) .collection-breadcrumbs__separator {
+    color: #1D425A;
+  }
+
+  .collection-banner__title {
+    margin: 0;
+    font-weight: 500;
+    font-size: 36px;
+    line-height: 62.4px;
+    margin-bottom: 12px;
+  }
+
+  .collection-banner--has-image .collection-banner__title {
+    color: #ffffff;
+  }
+
+  .collection-banner:not(.collection-banner--has-image) .collection-banner__title {
+    color: #1D425A;
+  }
+
+  .collection-banner__description {
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 160%;
+    max-width: 600px;
+  }
+
+  .collection-banner--has-image .collection-banner__description {
+    color: #ffffff;
+  }
+
+  .collection-banner:not(.collection-banner--has-image) .collection-banner__description {
+    color: #1D425A;
+  }
+
+  .collection-banner__features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    margin-top: 20px;
+  }
+
+  .collection-banner__feature {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .collection-banner__feature-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .collection-banner__feature-icon-svg {
+    width: 27px;
+    height: 27px;
+  }
+
+  .collection-banner__feature-icon-image {
+    width: 27px;
+    height: 27px;
+    object-fit: contain;
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-banner__features {
+      gap: 6px;
+    }
+    .collection-banner__feature-icon-svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .collection-banner__feature-icon-image {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .collection-banner__feature-text {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 160%;
+  }
+
+  .collection-banner--has-image .collection-banner__feature-text {
+    color: #ffffff;
+  }
+
+  .collection-banner:not(.collection-banner--has-image) .collection-banner__feature-text {
+    color: #1D425A;
+  }
+
+  .collection-banner--has-image .collection-banner__feature-icon {
+    color: #ffffff;
+  }
+
+  .collection-banner:not(.collection-banner--has-image) .collection-banner__feature-icon {
+    color: #1D425A;
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-banner {
+      height: 382px;
+      min-height: 382px;
+      max-height: 382px;
+    }
+
+    .collection-banner__background {
+      height: 382px;
+      max-height: 382px;
+    }
+
+    .collection-banner__image {
+      height: 382px;
+    }
+
+    .collection-banner__content {
+      padding-block: var(--padding-md, 24px);
+      padding-block-end: 25px;
+    }
+
+    .collection-banner__title {
+      font-size: 28px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Collection banner",
+  "tag": "section",
+  "class": "section-wrapper",
+  "settings": [
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page width"
+        },
+        {
+          "value": "full-width",
+          "label": "Full width"
+        }
+      ],
+      "default": "full-width"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collection banner"
+    }
+  ]
+}
+{% endschema %}

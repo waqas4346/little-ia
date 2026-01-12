@@ -1,5 +1,28 @@
 {
   "sections": {
+    "collection_banner_xgMNMz": {
+      "type": "collection-banner",
+      "name": "Collection banner",
+      "settings": {
+        "section_width": "full-width",
+        "banner_height": "small",
+        "banner_height_custom": 50,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "center",
+        "toggle_overlay": true,
+        "overlay_color": "#000000",
+        "overlay_opacity": 30,
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "color_scheme": "scheme-1",
+        "padding-block-start": 0,
+        "padding-block-end": 0,
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_radius": 0
+      }
+    },
     "section": {
       "type": "section",
       "blocks": {
@@ -60,6 +83,7 @@
         "text_tqQTNE",
         "text_twGGkJ"
       ],
+      "disabled": true,
       "name": "Collection heading",
       "settings": {
         "content_direction": "column",
@@ -390,6 +414,7 @@
     }
   },
   "order": [
+    "collection_banner_xgMNMz",
     "section",
     "main",
     "usps_Fk8nmk",
