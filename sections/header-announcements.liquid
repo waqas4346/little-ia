@@ -44,38 +44,62 @@
   }
 
   .announcement-bar__slider {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
     position: relative;
-
-    @media screen and (max-width: 749px) {
-      grid-column: 1 / -1;
-    }
+    width: 100%;
   }
 
   .announcement-bar__slides {
-    display: grid;
-    grid: [stack] auto / [stack] auto;
-    width: calc(100% - var(--button-size) * 2);
-    max-width: 680px;
-    margin-inline: auto;
-  }
+    display: flex;
+    width: 100%;
+    overflow-x: scroll;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-color: transparent transparent;
+    scrollbar-width: none;
+    gap: 0;
 
-  .announcement-bar__slides > * {
-    grid-area: stack;
-  }
-
-  .announcement-bar__slide {
-    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
-
-    &[aria-hidden='true'] {
-      opacity: 0;
-      visibility: hidden;
+    @media (prefers-reduced-motion) {
+      scroll-behavior: auto;
     }
   }
 
+  .announcement-bar__slides::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  .announcement-bar__slides::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .announcement-bar__slides::-webkit-scrollbar-thumb {
+    background: transparent;
+    border: none;
+  }
+
+  .announcement-bar__slides > * {
+    flex: 0 0 100%;
+    min-width: 0;
+  }
+
+  .announcement-bar__slide {
+    scroll-snap-align: center;
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .announcement-bar__slide[data-clone] {
+    /* Clones for infinite scroll should behave the same as regular slides */
+  }
+
   .announcement-bar__slider slideshow-arrows {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 1;
     padding: 0;
     mix-blend-mode: normal;
   }
@@ -93,14 +117,7 @@
     justify-content: center;
     opacity: 1;
     animation: none;
-
-    @media screen and (min-width: 750px) {
-      --slideshow-control-offset: calc((var(--button-size) - var(--icon-size-xs)) / 2);
-
-      .section--page-width &.slideshow-control--previous {
-        transform: translateX(var(--slideshow-control-offset));
-      }
-    }
+    pointer-events: auto;
   }
 
   .announcement-bar__slider .slideshow-control .svg-wrapper {

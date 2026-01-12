@@ -10,15 +10,17 @@
   {%- render 'slideshow-arrow', action: 'previous' -%}
 {%- enddoc -%}
 
-{%- liquid
+  {%- liquid
   assign icon_name = 'arrow'
   assign style = icon_style | default: 'arrow'
   assign shape = icon_shape | default: 'none'
   assign arrow_file = 'arrow.svg'
   assign use_blue_arrow = false
+  assign is_chevron = false
 
   if icon_style contains 'chevron'
     assign icon_name = 'caret'
+    assign is_chevron = true
   endif
 
   if icon_style == 'blue_arrows'
@@ -39,6 +41,8 @@
     slideshow-control--style-{{ style }}
     button button-unstyled button-unstyled--transparent
     {% if use_blue_arrow %}
+      {% if action == 'next' %} flip-x{% endif %}
+    {% elsif is_chevron %}
       {% if action == 'next' %} flip-x{% endif %}
     {% else %}
       {% if action == 'previous' %} flip-x{% endif %}
