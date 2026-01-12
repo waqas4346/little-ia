@@ -31,14 +31,27 @@
         {% for block in section.blocks %}
           <div class="passion-mission-slider__block" {{ block.shopify_attributes }} data-slide-index="{{ forloop.index0 }}">
             <div class="passion-mission-slider__block-inner" style="background-color: {{ block.settings.background_color | default: '#FFFFFF' }};">
+              {% if block.settings.image != blank %}
+                <div class="passion-mission-slider__pagination passion-mission-slider__pagination--desktop">
+                  <span class="passion-mission-slider__current-slide">1</span>/<span class="passion-mission-slider__total-slides">{{ section.blocks.size }}</span>
+                </div>
+              {% endif %}
+              
               <div class="passion-mission-slider__block-content">
                 {% if block.settings.image != blank %}
-                  <div class="passion-mission-slider__image-wrapper">
-                    {{
-                      block.settings.image
-                      | image_url: width: 1046
-                      | image_tag: widths: '333, 523, 666, 1046', sizes: '(max-width: 749px) 333px, 523px', loading: 'lazy', class: 'passion-mission-slider__image', alt: block.settings.image.alt
-                    }}
+                  <div class="passion-mission-slider__image-container">
+                    <div class="passion-mission-slider__image-wrapper">
+                      {{
+                        block.settings.image
+                        | image_url: width: 1046
+                        | image_tag: widths: '333, 523, 666, 1046', sizes: '(max-width: 749px) 333px, 523px', loading: 'lazy', class: 'passion-mission-slider__image', alt: block.settings.image.alt
+                      }}
+                    </div>
+                    {% if block.settings.image != blank %}
+                      <div class="passion-mission-slider__pagination passion-mission-slider__pagination--mobile">
+                        <span class="passion-mission-slider__current-slide">1</span>/<span class="passion-mission-slider__total-slides">{{ section.blocks.size }}</span>
+                      </div>
+                    {% endif %}
                   </div>
                 {% endif %}
                 
@@ -51,12 +64,6 @@
                   {% endif %}
                 </div>
               </div>
-              
-              {% if block.settings.image != blank %}
-                <div class="passion-mission-slider__pagination passion-mission-slider__pagination--image">
-                  <span class="passion-mission-slider__current-slide">1</span>/<span class="passion-mission-slider__total-slides">{{ section.blocks.size }}</span>
-                </div>
-              {% endif %}
               
               <div class="passion-mission-slider__controls">
                 {% if block.settings.image == blank %}
@@ -71,9 +78,9 @@
                     aria-label="Previous slide"
                     {% if forloop.first %}disabled{% endif %}
                   >
-                    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M15.1201 18.8999L8.82012 12.5999L15.1201 6.2999" stroke="currentColor" stroke-width="1.638" stroke-linecap="square" stroke-linejoin="round"/>
-                      <rect x="-0.63" y="0.63" width="23.94" height="23.94" rx="11.97" transform="matrix(-1 0 0 1 23.9402 0)" stroke="currentColor" stroke-width="1.26"/>
+                    <svg class="passion-mission-slider__arrow-svg" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle class="passion-mission-slider__arrow-circle" cx="20" cy="20" r="20" transform="matrix(0 -1 -1 0 40 40)" fill="#1D425A"/>
+                      <path d="M23 28L15.2829 19.7267L23.5562 12.0097" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
                   <button 
@@ -82,9 +89,9 @@
                     aria-label="Next slide"
                     {% if forloop.last %}disabled{% endif %}
                   >
-                    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M10.8799 18.8999L17.1799 12.5999L10.8799 6.2999" stroke="currentColor" stroke-width="1.638" stroke-linecap="square" stroke-linejoin="round"/>
-                      <rect x="0.63" y="0.63" width="23.94" height="23.94" rx="11.97" transform="matrix(1 0 0 1 0 0)" stroke="currentColor" stroke-width="1.26"/>
+                    <svg class="passion-mission-slider__arrow-svg" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle class="passion-mission-slider__arrow-circle" cx="20" cy="20" r="20" transform="rotate(-90 20 20)" fill="#1D425A"/>
+                      <path d="M17 28L24.7171 19.7267L16.4438 12.0097" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </button>
                 </div>
@@ -110,6 +117,9 @@
   .passion-mission-slider__header {
     text-align: center;
     margin-bottom: 40px;
+    max-width: 715px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .passion-mission-slider__heading {
@@ -131,7 +141,10 @@
     font-size: 14px;
     line-height: 160%;
     text-align: center;
-    color: #1D425A;
+    color: #1D425A;;
+  }
+  .passion-mission-slider__current-slide {
+    font-size: 26px;
   }
 
   @media screen and (min-width: 750px) {
@@ -202,6 +215,12 @@
   }
 
   /* Image Styles */
+  .passion-mission-slider__image-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
   .passion-mission-slider__image-wrapper {
     width: 100%;
     flex-shrink: 0;
@@ -212,14 +231,19 @@
     width: 100%;
     height: auto;
     display: block;
-    border-radius: 4px;
     object-fit: cover;
   }
 
   @media screen and (max-width: 749px) {
+    .passion-mission-slider__image-container {
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 8px;
+    }
+    
     .passion-mission-slider__image-wrapper {
-      width: 333px;
-      margin: 0 auto;
+      flex-shrink: 0;
     }
     
     .passion-mission-slider__image {
@@ -227,17 +251,23 @@
       height: 240px;
     }
     
-    .passion-mission-slider__pagination {
-      position: absolute;
-      bottom: 12px;
-      right: 12px;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 4px 8px;
-      border-radius: 4px;
+    .passion-mission-slider__pagination--image {
+      position: static;
+      display: block;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+      flex-shrink: 0;
     }
   }
 
   @media screen and (min-width: 750px) {
+    .passion-mission-slider__image-container {
+      flex-direction: row;
+      align-items: center;
+      gap: 60px;
+    }
+    
     .passion-mission-slider__image-wrapper {
       width: 523px;
       flex-shrink: 0;
@@ -288,7 +318,7 @@
   /* Controls Styles */
   .passion-mission-slider__controls {
     display: flex;
-    justify-content: center;
+    justify-content: right;
     align-items: center;
     margin-top: 24px;
     gap: 12px;
@@ -305,42 +335,71 @@
   }
 
   .passion-mission-slider__pagination {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Outfit';
     font-style: normal;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 1;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 120%;
+    /* or 24px */
+
     color: #1D425A;
+
   }
   
-  .passion-mission-slider__pagination--image {
+  .passion-mission-slider__pagination--desktop {
     display: none;
   }
   
-  .passion-mission-slider__block.active .passion-mission-slider__pagination--image {
+  .passion-mission-slider__pagination--mobile {
+    display: block;
+  }
+  
+  .passion-mission-slider__block:not(.active) .passion-mission-slider__pagination--desktop,
+  .passion-mission-slider__block:not(.active) .passion-mission-slider__pagination--mobile {
+    display: none;
+  }
+  
+  .passion-mission-slider__block.active .passion-mission-slider__pagination--desktop,
+  .passion-mission-slider__block.active .passion-mission-slider__pagination--mobile {
     display: block;
   }
   
   @media screen and (max-width: 749px) {
-    .passion-mission-slider__pagination--image {
-      position: absolute;
-      bottom: 12px;
-      right: 12px;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 4px 8px;
-      border-radius: 4px;
+    .passion-mission-slider__pagination--desktop {
+      display: none !important;
+    }
+    
+    .passion-mission-slider__pagination--mobile {
+      display: block;
     }
     
     .passion-mission-slider__controls .passion-mission-slider__pagination {
       display: none;
     }
+    .passion-mission-slider__block-inner {
+      padding: 8px;
+    }
+    .passion-mission-slider__block-content {
+      gap: 12px;
+    }
   }
   
   @media screen and (min-width: 750px) {
-    .passion-mission-slider__pagination--image {
+    .passion-mission-slider__pagination--desktop {
+      display: block;
       position: absolute;
       top: 24px;
       right: 24px;
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 400;
+      font-size: 20px;
+      line-height: 120%;
+      color: #1D425A;
+    }
+    
+    .passion-mission-slider__pagination--mobile {
+      display: none !important;
     }
     
     .passion-mission-slider__controls {
@@ -359,8 +418,8 @@
   }
 
   .passion-mission-slider__arrow {
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
     padding: 0;
     border: none;
     background: transparent;
@@ -368,22 +427,37 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #1D425A;
     transition: opacity 0.3s ease;
   }
 
+  @media screen and (min-width: 750px) {
+    .passion-mission-slider__arrow {
+      width: 40px;
+      height: 40px;
+    }
+  }
+
   .passion-mission-slider__arrow:hover:not(:disabled) {
-    opacity: 0.7;
+    opacity: 0.8;
   }
 
   .passion-mission-slider__arrow:disabled {
-    opacity: 0.3;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 
-  .passion-mission-slider__arrow svg {
+  .passion-mission-slider__arrow-svg {
     width: 100%;
     height: 100%;
+    display: block;
+  }
+  
+  .passion-mission-slider__arrow--prev:disabled .passion-mission-slider__arrow-circle {
+    fill-opacity: 0.2;
+  }
+  
+  .passion-mission-slider__arrow--next:disabled .passion-mission-slider__arrow-circle {
+    fill-opacity: 0.4;
   }
 
   .passion-mission-slider__placeholder {
@@ -510,7 +584,7 @@
           "type": "color",
           "id": "background_color",
           "label": "Background Color",
-          "default": "#FFFFFF"
+          "default": "#FFFBF4"
         }
       ]
     }
