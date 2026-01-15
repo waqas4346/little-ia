@@ -530,6 +530,14 @@
     }
   }
 
+  /* Hide thumbnail arrows on mobile */
+  @media screen and (max-width: 749px) {
+    /* Target all thumbnail controls on mobile - utility classes will handle visibility */
+    media-gallery slideshow-controls[thumbnails] .slideshow-controls__thumbnail-arrow {
+      display: none !important;
+    }
+  }
+
   .slideshow-controls__thumbnails {
     display: inline-flex;
     padding-inline: var(--slideshow-thumbnails-padding-inline, var(--padding-sm));
@@ -570,6 +578,18 @@
         border-color: #7295BB !important;
         background-color: transparent !important;
       }
+    }
+  }
+
+  /* Mobile thumbnail sizing */
+  @media screen and (max-width: 749px) {
+    /* Target all thumbnail controls on mobile - utility classes will handle visibility */
+    media-gallery slideshow-controls[thumbnails] .slideshow-controls__thumbnails .slideshow-control,
+    media-gallery slideshow-controls[thumbnails] .slideshow-controls__thumbnails button.slideshow-control {
+      width: 60px !important;
+      height: 60px !important;
+      min-width: 60px !important;
+      min-height: 60px !important;
     }
   }
 

@@ -271,9 +271,49 @@
   }
 
   @media screen and (max-width: 749px) {
+    /* On mobile, each slide should be full viewport width */
     .product-video-slick-slider-section .slick-slide {
-      width: calc(100vw - 80px) !important;
-      margin-right: 12px !important;
+      width: 100vw !important;
+      margin-right: 0 !important;
+    }
+    
+    /* Hide non-active slides on mobile - only show the centered one */
+    .product-video-slick-slider-section .slick-slide:not(.slick-center) {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    
+    /* Show only the centered/active slide */
+    .product-video-slick-slider-section .slick-slide.slick-center {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+    }
+    
+    /* Ensure center mode properly centers the active slide on mobile */
+    .product-video-slick-slider-section .slick-list {
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+    
+    /* Ensure the carousel container doesn't add extra spacing */
+    .product-video-slick-slider-section .slick-slider {
+      overflow: hidden;
+    }
+    
+    /* Ensure the item inside takes full width with padding */
+    .product-video-slick-slider-section .slick-slide.slick-center .product-video-slick-slider__item {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 0 20px;
+      box-sizing: border-box;
+    }
+    
+    /* Make sure the track centers properly */
+    .product-video-slick-slider-section .slick-track {
+      display: flex !important;
+      align-items: center;
     }
   }
 
@@ -365,7 +405,8 @@
 
   @media screen and (max-width: 749px) {
     .product-video-slick-slider__wrapper {
-      padding: 0 40px;
+      padding: 0;
+      overflow: visible;
     }
   }
 
@@ -848,36 +889,39 @@
       
       jQuery('#' + carouselId).slick({
         centerMode: true,
-        centerPadding: window.innerWidth > 750 ? '60px' : '40px',
+        centerPadding: window.innerWidth > 750 ? '60px' : '0px',
         slidesToShow: slidesToShow,
         slidesToScroll: 1,
         infinite: true,
         speed: 500,
         arrows: false,
-        variableWidth: false, // Use fixed width
+        variableWidth: false,
         swipe: true,
         touchMove: true,
         draggable: true,
+        focusOnSelect: window.innerWidth <= 750,
         responsive: [
           {
             breakpoint: 750,
             settings: {
               centerMode: true,
-              centerPadding: '40px',
+              centerPadding: '0px',
               slidesToShow: 1,
               slidesToScroll: 1,
               arrows: false,
               variableWidth: false,
               swipe: true,
               touchMove: true,
-              draggable: true
+              draggable: true,
+              infinite: true,
+              focusOnSelect: true
             }
           }
         ]
       });
       
       // Force slide widths after initialization
-      setTimeout(function() {
+      function updateSlideWidths() {
         if (window.innerWidth > 750) {
           jQuery('#' + carouselId).find('.slick-slide').each(function() {
             jQuery(this).css({
@@ -886,9 +930,27 @@
               'min-width': '280px'
             });
           });
+        } else {
+          // On mobile, set each slide to full viewport width
+          jQuery('#' + carouselId).find('.slick-slide').each(function() {
+            jQuery(this).css({
+              'width': '100vw',
+              'max-width': '100vw',
+              'min-width': '100vw'
+            });
+          });
         }
         applyGap();
-      }, 100);
+      }
+      
+      setTimeout(updateSlideWidths, 100);
+      
+      // Update slide widths when slide changes (for mobile)
+      if (window.innerWidth <= 750) {
+        jQuery('#' + carouselId).on('afterChange', function(event, slick, currentSlide) {
+          updateSlideWidths();
+        });
+      }
       
       // Recalculate on resize
       let resizeTimeout;
@@ -900,7 +962,19 @@
           
           if (newSlidesToShow !== currentSlidesToShow) {
             jQuery('#' + carouselId).slick('slickSetOption', 'slidesToShow', newSlidesToShow, true);
-            jQuery('#' + carouselId).slick('slickSetOption', 'centerPadding', window.innerWidth > 750 ? '60px' : '40px', true);
+            jQuery('#' + carouselId).slick('slickSetOption', 'centerPadding', window.innerWidth > 750 ? '60px' : '0px', true);
+            jQuery('#' + carouselId).slick('slickSetOption', 'focusOnSelect', window.innerWidth <= 750, true);
+          }
+          
+          // On mobile resize, update slide widths
+          if (window.innerWidth <= 750) {
+            jQuery('#' + carouselId).find('.slick-slide').each(function() {
+              jQuery(this).css({
+                'width': '100vw',
+                'max-width': '100vw',
+                'min-width': '100vw'
+              });
+            });
           }
           
           // Reapply gap on resize

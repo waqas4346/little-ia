@@ -706,13 +706,24 @@
 
   /* Mobile thumbnails styling */
   @media screen and (max-width: 749px) {
-    .media-gallery__mobile-controls[thumbnails] {
-      --thumbnail-width: 44px;
+    /* Target all thumbnail controls on mobile - utility classes will handle visibility */
+    media-gallery slideshow-controls[thumbnails] .slideshow-controls__thumbnails .slideshow-control,
+    media-gallery slideshow-controls[thumbnails] .slideshow-controls__thumbnails button.slideshow-control,
+    media-gallery slideshow-controls[thumbnails] .slideshow-controls__thumbnail,
+    media-gallery slideshow-controls[thumbnails] button.slideshow-controls__thumbnail {
+      width: 60px !important;
+      height: 60px !important;
+      min-width: 60px !important;
+      min-height: 60px !important;
     }
 
-    .media-gallery__mobile-controls[thumbnails] .slideshow-controls__thumbnail {
-      width: var(--thumbnail-width);
-      height: auto;
+    /* Hide thumbnail arrows on mobile */
+    media-gallery slideshow-controls[thumbnails] .slideshow-controls__thumbnail-arrow,
+    media-gallery slideshow-controls[thumbnails] button.slideshow-controls__thumbnail-arrow {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
   }
 
