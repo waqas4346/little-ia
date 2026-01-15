@@ -16,7 +16,7 @@
 {% assign product_card_size = product_card_size | strip %}
 
 {% style %}
-  @media (min-width: 750px) {
+  @media (min-width: 1024px) {
     {% case section.settings.layout_type %}
       {% when 'grid' %}
         .product-grid--{{ section.id }}:is(.product-grid--grid) {
@@ -167,7 +167,7 @@
               // No need to read the window width if no custom layouts were saved.
               if (storedLayoutMobile === 'default' && storedLayoutDesktop === 'default') return;
 
-              const storedLayout = window.innerWidth >= 750 ? storedLayoutDesktop : storedLayoutMobile;
+              const storedLayout = window.innerWidth >= 1024 ? storedLayoutDesktop : storedLayoutMobile;
               if (storedLayout === 'default') return;
 
               grid.setAttribute('product-grid-view', storedLayout);
@@ -200,7 +200,7 @@
 
     isolation: isolate;
 
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       --product-grid-gap: var(--product-grid-gap-desktop);
     }
   }
@@ -208,7 +208,7 @@
   .product-grid slideshow-arrows .slideshow-control {
     display: none;
 
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       display: grid;
     }
   }
@@ -225,7 +225,7 @@
   .main-collection-grid {
     padding: var(--grid--margin--mobile);
 
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       padding: var(--padding-block-start) var(--padding-inline-end) var(--padding-block-end) var(--padding-inline-start);
     }
   }
@@ -249,7 +249,7 @@
   }
 
   .collection-wrapper--full-width-on-mobile .main-collection-grid__title {
-    @media screen and (max-width: 749px) {
+    @media screen and (max-width: 1023px) {
       margin-left: var(--page-margin);
     }
   }
@@ -355,7 +355,7 @@
     }
   }
 
-  @media screen and (max-width: 749px) {
+  @media screen and (max-width: 1023px) {
     .product-card .product-title-text,
     .product-card .product-title-text p,
     .product-card .text-block.product-title-text,

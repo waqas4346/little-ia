@@ -54,8 +54,8 @@
     const resultsList = document.querySelector('results-list');
     if (!resultsList) return;
     
-    // Only show filters on desktop (screen width >= 750px)
-    const isDesktop = window.innerWidth >= 750;
+    // Only show filters on desktop (screen width >= 1024px)
+    const isDesktop = window.innerWidth >= 1024;
     
     // If there are active filters and they haven't been manually hidden, show the filters component (desktop only)
     if (hasActiveFilters() && !areFiltersManuallyHidden() && isDesktop) {
@@ -336,7 +336,7 @@
       const observer = new MutationObserver((mutations) => {
         if (isRestoring) return;
         
-        const isDesktop = window.innerWidth >= 750;
+        const isDesktop = window.innerWidth >= 1024;
         
         mutations.forEach((mutation) => {
           if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
@@ -347,7 +347,7 @@
                 isRestoring = true;
                 // Use requestAnimationFrame to avoid conflicts with morph
                 requestAnimationFrame(() => {
-                  if (hasActiveFilters() && !areFiltersManuallyHidden() && window.innerWidth >= 750 && !target.classList.contains('filters-visible')) {
+                  if (hasActiveFilters() && !areFiltersManuallyHidden() && window.innerWidth >= 1024 && !target.classList.contains('filters-visible')) {
                     target.classList.add('filters-visible');
                   }
                   isRestoring = false;
@@ -378,7 +378,7 @@
     
     // Mark that we should keep filters visible immediately (desktop only)
     const resultsList = document.querySelector('results-list');
-    const isDesktop = window.innerWidth >= 750;
+    const isDesktop = window.innerWidth >= 1024;
     if (resultsList && hasActiveFilters() && isDesktop) {
       resultsList.classList.add('filters-visible');
     } else if (resultsList && !isDesktop) {
@@ -668,12 +668,12 @@
 
   /* Hide button when filters sidebar is open */
   .filters-visible .collection-filters-button-wrapper {
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       display: none;
     }
   }
 
-  @media screen and (max-width: 749px) {
+  @media screen and (max-width: 1023px) {
     .collection-filters-button-wrapper {
       display: none;
     }
@@ -707,13 +707,13 @@
   .main-collection-grid {
     grid-column: var(--grid-column--mobile);
 
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       grid-column: var(--grid-column--desktop);
     }
   }
 
   .collection-wrapper {
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       grid-template-columns:
         1fr repeat(
           var(--centered-column-number),
@@ -725,7 +725,7 @@
 
   .collection-wrapper:has(.facets-block-wrapper--full-width),
   .collection-wrapper:has(.collection-wrapper--full-width) {
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       grid-column: 1 / -1;
       grid-template-columns:
         minmax(var(--page-margin), 1fr) repeat(
@@ -737,13 +737,13 @@
   }
 
   .collection-wrapper:has(.facets--vertical) .facets-block-wrapper--vertical:not(.hidden) ~ .main-collection-grid {
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       grid-column: var(--facets-vertical-col-width) / var(--full-width-column-number);
     }
   }
 
   .collection-wrapper:has(.facets-block-wrapper--vertical:not(#filters-drawer)):has(.collection-wrapper--full-width) {
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       grid-column: 1 / -1;
       grid-template-columns: 0fr repeat(var(--centered-column-number), minmax(0, 1fr)) 0fr;
     }
@@ -752,7 +752,7 @@
   :is(.collection-wrapper--full-width, .collection-wrapper--full-width-on-mobile)
     [product-grid-view='default']
     .product-grid__card {
-    @media screen and (max-width: 749px) {
+    @media screen and (max-width: 1023px) {
       padding-inline-start: max(var(--padding-xs), var(--padding-inline-start));
       padding-inline-end: max(var(--padding-xs), var(--padding-inline-end));
     }
@@ -761,7 +761,7 @@
   :is(.collection-wrapper--full-width, .collection-wrapper--full-width-on-mobile)
     [product-grid-view='mobile-single']
     .product-grid__card {
-    @media screen and (max-width: 749px) {
+    @media screen and (max-width: 1023px) {
       padding-inline-start: max(var(--padding-xs), var(--padding-inline-start));
       padding-inline-end: max(var(--padding-xs), var(--padding-inline-end));
     }
@@ -770,7 +770,7 @@
   /* Make product media go edge-to-edge by using negative margins */
   :is(.collection-wrapper--full-width) .card-gallery,
   :is(.collection-wrapper--full-width-on-mobile) .card-gallery {
-    @media screen and (max-width: 749px) {
+    @media screen and (max-width: 1023px) {
       margin-inline-start: calc(-1 * max(var(--padding-xs), var(--padding-inline-start)));
       margin-inline-end: calc(-1 * max(var(--padding-xs), var(--padding-inline-end)));
     }
@@ -784,19 +784,19 @@
 
   /* Show filter component when filters-visible class is added (desktop only) */
   .filters-visible .facets-block-wrapper:not(#filters-drawer) {
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       display: block !important;
     }
   }
 
   .filters-visible .facets-controls-wrapper {
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       display: flex !important;
     }
   }
 
   /* Keep filters hidden on mobile even when filters-visible class is present */
-  @media screen and (max-width: 749px) {
+  @media screen and (max-width: 1023px) {
     .filters-visible .facets-block-wrapper:not(#filters-drawer),
     .filters-visible .facets-controls-wrapper {
       display: none !important;
@@ -805,20 +805,20 @@
 
   /* Make main-collection-grid full width when filters are hidden */
   .collection-wrapper .main-collection-grid {
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       grid-column: 1 / -1 !important;
     }
   }
 
   /* When filters are visible, ensure they use the existing grid layout */
   .filters-visible .collection-wrapper .facets-controls-wrapper {
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       grid-column: 1 / -1;
     }
   }
 
   .filters-visible .collection-wrapper .facets-block-wrapper--vertical:not(#filters-drawer) {
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       display: block !important;
       grid-column: 2 / var(--facets-vertical-col-width);
       width: 282px;
@@ -829,13 +829,13 @@
 
   /* Position main-collection-grid next to filters when filters are visible */
   .filters-visible .collection-wrapper .main-collection-grid {
-    @media screen and (min-width: 750px) {
+    @media screen and (min-width: 1024px) {
       grid-column: var(--facets-vertical-col-width) / -1 !important;
     }
   }
 
   /* Set product card and image to 324px on desktop */
-  @media screen and (min-width: 750px) {
+  @media screen and (min-width: 1024px) {
     /* Ensure product grid items are exactly 324px */
     .product-grid__item {
       width: 324px;
@@ -857,7 +857,7 @@
   }
 
   /* Set product card and image to 175px on mobile with 2 products per row */
-  @media screen and (max-width: 749px) {
+  @media screen and (max-width: 767px) {
     /* Ensure product grid shows 2 columns on mobile with 175px each */
     .product-grid:not(.product-grid-mobile--large) {
       grid-template-columns: repeat(2, 175px) !important;
@@ -888,6 +888,37 @@
     }
   }
 
+  /* Set product card and image for iPad mini/tablet with 3 products per row */
+  @media screen and (min-width: 768px) and (max-width: 1023px) {
+    /* Ensure product grid shows 3 columns on tablet */
+    .product-grid:not(.product-grid-mobile--large) {
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 8px !important;
+    }
+
+    /* Set product grid items to flexible width for 3 columns */
+    .product-grid__item {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    /* Set product image container to match column width on tablet */
+    .product-grid .card-gallery .product-media-container {
+      width: 100% !important;
+      aspect-ratio: 1 !important;
+      max-width: 100% !important;
+    }
+
+    .product-grid .card-gallery .product-media-container img,
+    .product-grid .card-gallery .product-media-container picture,
+    .product-grid .card-gallery .product-media-container video {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      object-fit: cover !important;
+    }
+  }
+
   /* Mobile sticky bottom bar */
   .collection-mobile-sticky-bar {
     display: none;
@@ -900,7 +931,7 @@
     border-top: 0.5px solid #D4D4D4;
   }
 
-  @media screen and (max-width: 749px) {
+  @media screen and (max-width: 1023px) {
     .collection-mobile-sticky-bar {
       display: flex;
       align-items: center;
@@ -1001,7 +1032,7 @@
     left: auto;
   }
 
-  @media screen and (min-width: 750px) {
+  @media screen and (min-width: 1024px) {
     .mobile-sort-modal__dialog {
       display: none;
     }
@@ -1150,7 +1181,7 @@
     opacity: 0.7;
   }
 
-  @media screen and (min-width: 750px) {
+  @media screen and (min-width: 1024px) {
     .mobile-sort-modal__dialog {
       display: none;
     }
