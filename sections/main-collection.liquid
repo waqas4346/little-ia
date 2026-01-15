@@ -835,8 +835,8 @@
   }
 
   /* Set product card and image to 324px on desktop */
-  @media screen and (min-width: 1024px) {
-    /* Ensure product grid items are exactly 324px */
+  @media screen and (min-width: 1367px) {
+    /* Ensure product grid items are exactly 324px on large desktop */
     .product-grid__item {
       width: 324px;
     }
@@ -853,6 +853,54 @@
       width: 324px;
       height: 324px;
       object-fit: cover;
+    }
+  }
+
+  /* iPad Pro: Use flexible widths to prevent horizontal scroll */
+  @media screen and (min-width: 1024px) and (max-width: 1366px) {
+    /* Prevent horizontal overflow on results-list and collection-wrapper */
+    results-list {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    .collection-wrapper {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    .main-collection-grid {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    .product-grid__item {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Set product image container to match column width with aspect ratio */
+    .product-grid .card-gallery .product-media-container {
+      width: 100% !important;
+      aspect-ratio: 1 !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    .product-grid .card-gallery .product-media-container img,
+    .product-grid .card-gallery .product-media-container picture,
+    .product-grid .card-gallery .product-media-container video {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      object-fit: cover !important;
+    }
+
+    /* Ensure product grid itself doesn't overflow */
+    .product-grid {
+      max-width: 100%;
+      overflow-x: hidden;
     }
   }
 

@@ -19,11 +19,11 @@
   @media (min-width: 1024px) {
     {% case section.settings.layout_type %}
       {% when 'grid' %}
+        /* Keep existing fallback for older browsers */
         .product-grid--{{ section.id }}:is(.product-grid--grid) {
           --product-grid-columns-desktop: repeat(4, 324px);
         }
         
-        /* When filters are visible, show 3 products per row */
         .filters-visible .product-grid--{{ section.id }}:is(.product-grid--grid) {
           --product-grid-columns-desktop: repeat(3, 324px);
         }
@@ -84,6 +84,21 @@
       padding-block-start: var(--zoom-out-padding-block-start, 0);
       padding-block-end: var(--zoom-out-padding-block-end, 0);
     }
+  }
+
+  /* iPad Pro: 3 columns default, 2 columns when filters are visible */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    {% case section.settings.layout_type %}
+      {% when 'grid' %}
+        .product-grid--{{ section.id }}:is(.product-grid--grid) {
+          --product-grid-columns-desktop: repeat(3, 1fr) !important;
+        }
+        
+        /* When filters are visible, show 2 products per row on iPad Pro */
+        .filters-visible .product-grid--{{ section.id }}:is(.product-grid--grid) {
+          --product-grid-columns-desktop: repeat(2, 1fr) !important;
+        }
+    {% endcase %}
   }
 {% endstyle %}
 <div
