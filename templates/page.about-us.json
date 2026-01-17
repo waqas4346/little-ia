@@ -1,0 +1,255 @@
+{
+  "sections": {
+    "page_banner_QQzccJ": {
+      "type": "page-banner",
+      "blocks": {
+        "feature_b43x3c": {
+          "type": "feature",
+          "settings": {
+            "text": "GOTS Certified Organic Cotton",
+            "icon": "",
+            "image_upload": "shopify:\/\/shop_images\/GOTS_certified_icon_5fa23041-96d7-44cc-94df-8626b33fa3fa.png"
+          }
+        },
+        "feature_yTMkKd": {
+          "type": "feature",
+          "settings": {
+            "text": "Free Pesonalisation",
+            "icon": "",
+            "image_upload": "shopify:\/\/shop_images\/Free_personalization_icon_1aac30f4-4f2e-4e22-8853-f1da553a5041.png"
+          }
+        }
+      },
+      "block_order": [
+        "feature_b43x3c",
+        "feature_yTMkKd"
+      ],
+      "name": "Page banner",
+      "settings": {
+        "section_width": "full-width",
+        "image": "shopify:\/\/shop_images\/Untitled_design_3_a2ba8c11-6493-4baf-9e00-4d7dd851b177.png",
+        "title": "Welcome to Little IA",
+        "description": "Created with love, each piece is personal, thoughtfully designed, and made to cherish childhood’s magical moments."
+      }
+    },
+    "image_with_text_HHVcHY": {
+      "type": "image-with-text",
+      "name": "Image with Text",
+      "settings": {
+        "section_heading": "",
+        "section_subheading": "",
+        "image": "shopify:\/\/shop_images\/our-story.png",
+        "heading": "About us",
+        "body": "<p>Welcome to our world of thoughtfully crafted and high quality personalised items for children and families. Born from a heartfelt desire to bring joy and long lasting memories to your loved ones. I am Roshni, mum of three and Founder of Little IA. Many people ask me what spurred the desire to create Little IA. And it's actually a funny story. <br\/><br\/>Shortly after my daughter was born, I received the same personalised blanket from four well-meaning friends. But within a few weeks, the blanket was in tatters once it had been washed several times, owing to its poor composition.<br\/><br\/>Determined to create something more enduring, more gentle for delicate newborn skin and more unique, I embarked on a journey to design and create items that parents and children could treasure for many years to come. And our very first collection was released the same week my third child was born. <\/p>",
+        "image_overlay_text": "<p>Roshni Khemlani Mehta<\/p>",
+        "image_position": "left",
+        "mobile_image_position": "below",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-6",
+        "padding-block-start": 38,
+        "padding-block-end": 30
+      }
+    },
+    "image_with_text_kD93fj": {
+      "type": "image-with-text",
+      "name": "Image with Text",
+      "settings": {
+        "section_heading": "",
+        "section_subheading": "",
+        "image": "shopify:\/\/shop_images\/kid-with-bag.png",
+        "heading": "Thoughtful Design",
+        "body": "<p>With a commitment to attention to detail, we design items that are highly functional as well as beautiful in design. We work with materials, that are eco-friendly, organic and non-toxic <br\/>wherever possible. And over time, we have perfected the art of Personalisation, using different methods to ensure the look and permanence are considered. <br\/><br\/>What started as a quest for thoughtful gifting items has now expanded to include everyday essentials, whether it is to prevent loss at nursery or school, or generate a sense of pride, ownership and independence in a child when they see their name on their very own item. <br\/><br\/>Our focus on functionality and beauty of design has taken our items into retail stores <br\/>all over the world.<\/p>",
+        "image_overlay_text": "",
+        "image_position": "right",
+        "mobile_image_position": "below",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "",
+        "padding-block-start": 30,
+        "padding-block-end": 60
+      }
+    },
+    "passion_mission_slider_NP3NJw": {
+      "type": "passion-mission-slider",
+      "blocks": {
+        "slider_block_E9HNfq": {
+          "type": "slider_block",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/our-passion-1.png",
+            "heading": "Why We Care",
+            "description": "When I became a mother, it deeply struck me how many children could not thrive simply because of the circumstances they were born into. This painful realisation that children aren't born equal became the foundation of our mission.",
+            "background_color": "#fffbf4"
+          }
+        },
+        "slider_block_wQ47Rc": {
+          "type": "slider_block",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/our-passion-2.png",
+            "heading": "What Drives Us",
+            "description": "At Little IA, we believe every child deserves an equal chance to flourish. Our goal is to improve the quality of life for children everywhere by donating a portion of our sales to children’s charities worldwide and supporting their ongoing initiatives.",
+            "background_color": "#fffbf4"
+          }
+        },
+        "slider_block_mKD4xQ": {
+          "type": "slider_block",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/our-passion-3.png",
+            "heading": "How We Give Back",
+            "description": "We currently collaborate with several children’s charities and continue to seek out underrepresented causes that need support. If you know a cause close to your heart, we would love to hear from you.",
+            "background_color": "#fffbf4"
+          }
+        }
+      },
+      "block_order": [
+        "slider_block_E9HNfq",
+        "slider_block_wQ47Rc",
+        "slider_block_mKD4xQ"
+      ],
+      "name": "Passion Mission Slider",
+      "settings": {
+        "heading": "Our Passion and Mission",
+        "subheading": "The feeling of pure joy I see when children and family members open their items, is what ignites this passion, and drives me to keep building this beautiful community we have created. Join us in celebrating the magic of personalised moments, we are only just getting started!",
+        "section_width": "page-width",
+        "color_scheme": "",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
+    "divider_gDCfpU": {
+      "type": "divider",
+      "name": "t:names.divider_section",
+      "settings": {
+        "color_scheme": "scheme-6",
+        "section_width": "full-width",
+        "thickness": 0,
+        "corner_radius": "square",
+        "width_percent": 100,
+        "alignment_horizontal": "center",
+        "padding-block-start": 20,
+        "padding-block-end": 20
+      }
+    },
+    "image_with_text_1_UykCiJ": {
+      "type": "image-with-text-1",
+      "name": "Image with Text 1",
+      "settings": {
+        "section_heading": "Shaping Brighter Futures Together",
+        "section_subheading": "<p>Our initiatives that bring care, hope, and opportunity to children around the world<\/p>",
+        "image": "shopify:\/\/shop_images\/ongoing-mission.png",
+        "heading": "Our Ongoing Mission",
+        "body": "<p>At Little IA, we believe every child deserves to thrive. Through our partnerships and a portion of every purchase, we continue to support children’s charities worldwide empowering lives, one personalised piece at a time.<\/p>",
+        "image_overlay_text": "",
+        "image_position": "left",
+        "mobile_image_position": "below",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-e61ffaea-b125-47f9-97f4-7f39823bb857",
+        "padding-block-start": 32,
+        "padding-block-end": 17
+      }
+    },
+    "content_blocks_ceaeRd": {
+      "type": "content-blocks",
+      "blocks": {
+        "content_block_n8hJbk": {
+          "type": "content_block",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/3b5a973ab1c2b42265259e78ce6f61bccc9261c3.png",
+            "heading": "Emirates Red Crescent",
+            "description": "<p>Supporting children and families through humanitarian aid, ERC provides essential relief during times of crisis, ensuring safety, nourishment, and care where it’s needed most.<\/p>",
+            "background_color": "#fffbf4"
+          }
+        },
+        "content_block_RPCUkm": {
+          "type": "content_block",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/98412edc4046062d5b9e69e1f7471ae033f21206.png",
+            "heading": "Sharjah Social Empowerment Foundation",
+            "description": "<p>A charity dedicated to uplifting orphans, their families by providing emotional, educational, and financial support that a child feel valued and secure.<\/p>",
+            "background_color": "#fffbf4"
+          }
+        },
+        "content_block_wFz7jk": {
+          "type": "content_block",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/Frame_1437255282.png",
+            "heading": "PILA Global",
+            "description": "<p>A US-based nonprofit creating joyful learning spaces for young refugee children, giving them access to education, play, and hope for a brighter future.<\/p>",
+            "background_color": "#fffbf4"
+          }
+        }
+      },
+      "block_order": [
+        "content_block_n8hJbk",
+        "content_block_RPCUkm",
+        "content_block_wFz7jk"
+      ],
+      "name": "Content with Image",
+      "settings": {
+        "section_width": "page-width",
+        "color_scheme": "",
+        "padding-block-start": 17,
+        "padding-block-end": 48
+      }
+    },
+    "main": {
+      "type": "main-page",
+      "blocks": {
+        "heading": {
+          "type": "text",
+          "name": "Title",
+          "settings": {
+            "text": "<h1>{{ closest.page.title }}<\/h1>",
+            "width": "100%",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "h2",
+            "font": "var(--font-primary--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "page-content": {
+          "type": "page-content",
+          "settings": {},
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "heading",
+        "page-content"
+      ],
+      "disabled": true,
+      "settings": {
+        "content_direction": "column",
+        "gap": 32,
+        "color_scheme": "",
+        "padding-block-start": 40,
+        "padding-block-end": 80
+      }
+    }
+  },
+  "order": [
+    "page_banner_QQzccJ",
+    "image_with_text_HHVcHY",
+    "image_with_text_kD93fj",
+    "passion_mission_slider_NP3NJw",
+    "divider_gDCfpU",
+    "image_with_text_1_UykCiJ",
+    "content_blocks_ceaeRd",
+    "main"
+  ]
+}

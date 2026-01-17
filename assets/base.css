@@ -351,7 +351,7 @@ p:empty {
 }
 
 .page-width-content {
-  --page-content-width: var(--normal-content-width);
+  --page-content-width: var(--narrow-page-width);
   --page-width: calc(var(--page-content-width) + (var(--page-margin) * 2));
 }
 
@@ -1331,8 +1331,9 @@ button.shopify-payment-button__button--unbranded {
   border: none;
   font-family: var(--font-paragraph--family);
   font-style: var(--font-paragraph--style);
-  font-size: var(--font-paragraph--size);
-  line-height: var(--font-paragraph--line-height);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 125%;
   margin-block: 0;
   transition: color var(--animation-speed) var(--animation-easing),
     box-shadow var(--animation-speed) var(--animation-easing),
