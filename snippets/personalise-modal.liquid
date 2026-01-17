@@ -59,6 +59,29 @@
       break
     endif
   endfor
+  
+  # Check for baby_name, kid_name, mum_name tags
+  assign has_baby_name = false
+  assign has_kid_name = false
+  assign has_mum_name = false
+  
+  for tag in product.tags
+    assign tag_lowercase = tag | downcase
+    if tag_lowercase == 'baby_name'
+      assign has_baby_name = true
+    endif
+    if tag_lowercase == 'kid_name'
+      assign has_kid_name = true
+    endif
+    if tag_lowercase == 'mum_name'
+      assign has_mum_name = true
+    endif
+  endfor
+  
+  assign show_name_tabs = false
+  if has_baby_name or has_kid_name or has_mum_name
+    assign show_name_tabs = true
+  endif
 %}
 
 <personalise-dialog id="personalise-dialog">
@@ -112,6 +135,160 @@
           </span>
           <span>Personalise Your Product</span>
         </h2>
+
+        {% if show_name_tabs %}
+          <!-- Baby/Kid/Mum Name Tabs -->
+          <p class="personalise-modal__instructions">
+            Maximum 9 characters. No special characters.
+          </p>
+          <div class="personalise-name-tabs" data-name-tabs>
+            <div class="personalise-name-tabs__tablist" role="tablist">
+              {% assign first_tab_active = true %}
+              {% if has_baby_name %}
+                <button
+                  type="button"
+                  role="tab"
+                  class="personalise-name-tabs__tab {% if first_tab_active %}is-active{% endif %}"
+                  aria-selected="{% if first_tab_active %}true{% else %}false{% endif %}"
+                  aria-controls="tab-panel-baby"
+                  id="tab-baby"
+                  data-tab="baby"
+                  on:click="/switchNameTab"
+                >
+                  <span class="personalise-name-tabs__tab-text">Baby</span>
+                  <span class="personalise-name-tabs__tab-icon personalise-name-tabs__tab-icon--check" data-tab-icon="baby" style="display: none;">
+                    <img src="{{ 'icon-tick.svg' | asset_url }}" alt="" width="16" height="16">
+                  </span>
+                </button>
+                {% assign first_tab_active = false %}
+              {% endif %}
+              {% if has_kid_name %}
+                <button
+                  type="button"
+                  role="tab"
+                  class="personalise-name-tabs__tab {% if first_tab_active %}is-active{% endif %}"
+                  aria-selected="{% if first_tab_active %}true{% else %}false{% endif %}"
+                  aria-controls="tab-panel-kid"
+                  id="tab-kid"
+                  data-tab="kid"
+                  on:click="/switchNameTab"
+                >
+                  <span class="personalise-name-tabs__tab-text">Kid</span>
+                  <span class="personalise-name-tabs__tab-icon personalise-name-tabs__tab-icon--check" data-tab-icon="kid" style="display: none;">
+                    <img src="{{ 'icon-tick.svg' | asset_url }}" alt="" width="16" height="16">
+                  </span>
+                </button>
+                {% assign first_tab_active = false %}
+              {% endif %}
+              {% if has_mum_name %}
+                <button
+                  type="button"
+                  role="tab"
+                  class="personalise-name-tabs__tab {% if first_tab_active %}is-active{% endif %}"
+                  aria-selected="{% if first_tab_active %}true{% else %}false{% endif %}"
+                  aria-controls="tab-panel-mum"
+                  id="tab-mum"
+                  data-tab="mum"
+                  on:click="/switchNameTab"
+                >
+                  <span class="personalise-name-tabs__tab-text">Mum</span>
+                  <span class="personalise-name-tabs__tab-icon personalise-name-tabs__tab-icon--check" data-tab-icon="mum" style="display: none;">
+                    <img src="{{ 'icon-tick.svg' | asset_url }}" alt="" width="16" height="16">
+                  </span>
+                </button>
+                {% assign first_tab_active = false %}
+              {% endif %}
+            </div>
+
+            <div class="personalise-name-tabs__panels">
+              {% assign first_panel_active = true %}
+              {% if has_baby_name %}
+                <div
+                  role="tabpanel"
+                  id="tab-panel-baby"
+                  class="personalise-name-tabs__panel {% if first_panel_active %}is-active{% endif %}"
+                  aria-labelledby="tab-baby"
+                  data-panel="baby"
+                >
+                  <h3 class="personalise-name-tabs__panel-title">Baby's Name (Free Personalisation)</h3>
+                  <div class="personalise-name-tabs__input-wrapper">
+                    <input
+                      type="text"
+                      class="personalise-name-tabs__input"
+                      name="properties[Baby's Name]"
+                      placeholder="Enter the Name or Initials"
+                      maxlength="9"
+                      data-name-input="baby"
+                      ref="babyNameInput"
+                      on:input="/handleNameTabInput"
+                      data-form-id
+                    />
+                    <span class="personalise-name-tabs__counter" ref="babyCharCounter">
+                      <span ref="babyCharCount">0</span>/9
+                    </span>
+                  </div>
+                </div>
+                {% assign first_panel_active = false %}
+              {% endif %}
+              {% if has_kid_name %}
+                <div
+                  role="tabpanel"
+                  id="tab-panel-kid"
+                  class="personalise-name-tabs__panel {% if first_panel_active %}is-active{% endif %}"
+                  aria-labelledby="tab-kid"
+                  data-panel="kid"
+                >
+                  <h3 class="personalise-name-tabs__panel-title">Kid's Name (Free Personalisation)</h3>
+                  <div class="personalise-name-tabs__input-wrapper">
+                    <input
+                      type="text"
+                      class="personalise-name-tabs__input"
+                      name="properties[Kid's Name]"
+                      placeholder="Enter the Name or Initials"
+                      maxlength="9"
+                      data-name-input="kid"
+                      ref="kidNameInput"
+                      on:input="/handleNameTabInput"
+                      data-form-id
+                    />
+                    <span class="personalise-name-tabs__counter" ref="kidCharCounter">
+                      <span ref="kidCharCount">0</span>/9
+                    </span>
+                  </div>
+                </div>
+                {% assign first_panel_active = false %}
+              {% endif %}
+              {% if has_mum_name %}
+                <div
+                  role="tabpanel"
+                  id="tab-panel-mum"
+                  class="personalise-name-tabs__panel {% if first_panel_active %}is-active{% endif %}"
+                  aria-labelledby="tab-mum"
+                  data-panel="mum"
+                >
+                  <h3 class="personalise-name-tabs__panel-title">Mum's Name (Free Personalisation)</h3>
+                  <div class="personalise-name-tabs__input-wrapper">
+                    <input
+                      type="text"
+                      class="personalise-name-tabs__input"
+                      name="properties[Mum's Name]"
+                      placeholder="Enter the Name or Initials"
+                      maxlength="9"
+                      data-name-input="mum"
+                      ref="mumNameInput"
+                      on:input="/handleNameTabInput"
+                      data-form-id
+                    />
+                    <span class="personalise-name-tabs__counter" ref="mumCharCounter">
+                      <span ref="mumCharCount">0</span>/9
+                    </span>
+                  </div>
+                </div>
+                {% assign first_panel_active = false %}
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
 
         {% if show_personalized or personalized_name or personalized_textbox %}
           {% if personalized_name %}
@@ -854,6 +1031,139 @@
     .personalise-modal__save-button,
     .personalise-modal__cancel-button {
       width: 100%;
+    }
+  }
+
+  /* Name Tabs Styles */
+  .personalise-name-tabs {
+    margin-bottom: var(--margin-lg);
+  }
+
+  .personalise-name-tabs__tablist {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #D0D0D0;
+    margin-bottom: var(--margin-lg);
+    justify-content: space-between;
+  }
+
+  .personalise-name-tabs__tab {
+    position: relative;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 6px 20px;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    color: #999999;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--padding-xs);
+    transition: all 0.2s ease;
+  }
+
+  .personalise-name-tabs__tab:hover {
+    color: #333333;
+  }
+
+  .personalise-name-tabs__tab.is-active {
+    color: #001D4A;
+    border-bottom-color: #001D4A;
+    font-weight: 500;
+  }
+
+  .personalise-name-tabs__tab-text {
+    line-height: 1.5;
+  }
+
+  .personalise-name-tabs__tab-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .personalise-name-tabs__tab-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .personalise-name-tabs__tab-icon--check {
+    color: #001D4A;
+  }
+
+  .personalise-name-tabs__panels {
+    position: relative;
+  }
+
+  .personalise-name-tabs__panel {
+    display: none;
+  }
+
+  .personalise-name-tabs__panel.is-active {
+    display: block;
+  }
+
+  .personalise-name-tabs__panel-title {
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    color: #001D4A;
+    margin-bottom: var(--margin-md);
+    line-height: 1.5;
+  }
+
+  .personalise-name-tabs__input-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .personalise-name-tabs__input {
+    width: 100%;
+    padding: var(--padding-md);
+    border: 1px solid #D0D0D0;
+    border-radius: 0;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    background-color: #FFFFFF;
+    color: var(--color-foreground);
+    transition: border-color 0.2s ease;
+    line-height: 156%;
+  }
+
+  .personalise-name-tabs__input:focus {
+    outline: none;
+    border-color: #7295BB;
+  }
+
+  .personalise-name-tabs__input::placeholder {
+    color: #999999;
+  }
+
+  .personalise-name-tabs__counter {
+    margin-top: var(--padding-xs);
+    text-align: right;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 156%;
+    color: #7295BB;
+  }
+
+  @media screen and (max-width: 749px) {
+    .personalise-name-tabs__tab {
+      padding: var(--padding-sm) var(--padding-md);
+      font-size: 13px;
+    }
+
+    .personalise-name-tabs__panel-title {
+      font-size: 13px;
     }
   }
 {% endstylesheet %}

@@ -357,7 +357,10 @@ class ProductFormComponent extends Component {
                 name.includes('[Personalisation:]') || 
                 name.includes('[Personalise Date of Birth]') || 
                 name.includes('[Time]') || 
-                name.includes('[Weight]')) {
+                name.includes('[Weight]') ||
+                name.includes('[Baby\'s Name]') ||
+                name.includes('[Kid\'s Name]') ||
+                name.includes('[Mum\'s Name]')) {
               input.remove();
             }
           });
@@ -387,6 +390,9 @@ class ProductFormComponent extends Component {
           if (personalisation.optionalDob) addProperty('properties[Personalise Date of Birth]', personalisation.optionalDob);
           if (personalisation.time) addProperty('properties[Time]', personalisation.time);
           if (personalisation.weight) addProperty('properties[Weight]', personalisation.weight);
+          if (personalisation.babyName) addProperty('properties[Baby\'s Name]', personalisation.babyName);
+          if (personalisation.kidName) addProperty('properties[Kid\'s Name]', personalisation.kidName);
+          if (personalisation.mumName) addProperty('properties[Mum\'s Name]', personalisation.mumName);
         } catch (e) {
           console.error('Error adding personalisation fields to form:', e);
         }
