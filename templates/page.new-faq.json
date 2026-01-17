@@ -1,0 +1,241 @@
+{
+  "sections": {
+    "page_banner_QQzccJ": {
+      "type": "page-banner",
+      "blocks": {
+        "feature_b43x3c": {
+          "type": "feature",
+          "settings": {
+            "text": "GOTS Certified Organic Cotton",
+            "icon": "",
+            "image_upload": "shopify:\/\/shop_images\/GOTS_certified_icon_5fa23041-96d7-44cc-94df-8626b33fa3fa.png"
+          }
+        },
+        "feature_yTMkKd": {
+          "type": "feature",
+          "settings": {
+            "text": "Free Pesonalisation",
+            "icon": "",
+            "image_upload": "shopify:\/\/shop_images\/Free_personalization_icon_1aac30f4-4f2e-4e22-8853-f1da553a5041.png"
+          }
+        }
+      },
+      "block_order": [
+        "feature_b43x3c",
+        "feature_yTMkKd"
+      ],
+      "name": "Page banner",
+      "settings": {
+        "section_width": "full-width",
+        "image": "shopify:\/\/shop_images\/01_8292b928-3602-43bb-9651-a8004e31d04d.jpg",
+        "title": "{{ page.title }}",
+        "description": "Created with love, each piece is personal, thoughtfully designed, and made to cherish childhood’s magical moments."
+      }
+    },
+    "main": {
+      "type": "main-page",
+      "blocks": {
+        "heading": {
+          "type": "text",
+          "name": "Title",
+          "settings": {
+            "text": "<h1>{{ closest.page.title }}<\/h1>",
+            "width": "100%",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "h2",
+            "font": "var(--font-primary--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "page-content": {
+          "type": "page-content",
+          "settings": {},
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "heading",
+        "page-content"
+      ],
+      "disabled": true,
+      "settings": {
+        "content_direction": "column",
+        "gap": 32,
+        "color_scheme": "",
+        "padding-block-start": 40,
+        "padding-block-end": 80
+      }
+    },
+    "faqs_section_BLmmkG": {
+      "type": "faqs-section",
+      "blocks": {
+        "faq_item_3KQwaB": {
+          "type": "faq_item",
+          "settings": {
+            "question": "How will my item be personalised?",
+            "answer": "<p>Your item will be personalised using high-quality embroidery for garments, ensuring a durable and stylish finish. For water bottles and lunch boxes, we utilise advanced UV printing technology, which provides vibrant and long-lasting designs. <\/p><p>Each personalisation method is carefully selected to enhance the look and feel of your items while ensuring they stand up to everyday use.<\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_CFBPMY": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Can I change the personalisation?",
+            "answer": "<p>Unfortunately, we do not accept changes to an order once it has been confirmed. This policy helps us ensure the timely processing and delivery of your items.<\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_xatFUx": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Can I see a personalised item in person?",
+            "answer": "<p>Certainly! Our showroom is open from Monday to Saturday, 10 am – 4 pm GST. Our Showroom Address is:<\/p><p>Office 3402-3403, Cluster X2, Jumeirah Lake Towers, Dubai, United Arab Emirates. <\/p><p>All our items are housed here, and you are able to take a look at our full showroom.<\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_FgKG7i": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Can I use multiple discount codes on my order?",
+            "answer": "<p>Please note that you can only apply one discount or promotion code per order. If you enter multiple discount codes, the last one entered will be applied and any prior codes will be disregarded. <\/p><p>Additionally, discount coupons are not applicable to Sale items, Party Favours, and Little IA Loves collections.<\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_G6efAb": {
+          "type": "faq_item",
+          "settings": {
+            "question": "My order is confirmed but I forgot to apply my discount code, what do I do?",
+            "answer": "<p>Once the order is confirmed, we can no longer apply any discount code. <\/p><p>If any case you were unable to apply the discount code, or the code does not work, please contact our support team at <span style=\"text-decoration:underline\">support@little-ia.com<\/span>. We will do our best to offer you an alternative solution.<\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_fpiFt9": {
+          "type": "faq_item",
+          "settings": {
+            "question": "What are your different shipping options?",
+            "answer": "<p><strong>Local - Dubai<\/strong><\/p><p><span style=\"text-decoration:underline\">Same working day delivery:<\/span><\/p><ul><li>Order cut-off is at 12 PM (Monday to Saturday)<\/li><li>Order cut-off during Ramadan is at 11 AM (Monday to Saturday)<\/li><li>Delivery window is between 2pm to 8pm.<\/li><\/ul><p><\/p><p><span style=\"text-decoration:underline\">2 to 3 working days delivery:<\/span><\/p><ul><li>Delivery window is between 9 AM to 8 PM<\/li><\/ul><p><\/p><p><strong>Local - Other Emirates<\/strong><\/p><p>3 to 4 working days delivery:<\/p><ul><li>Delivery window is between 9 AM to 8 PM<\/li><\/ul><p><\/p><p><strong>GCC<\/strong><\/p><ul><li>Transit time is 3 to 5 working days<\/li><\/ul><p><\/p><p><strong>Rest of the World<\/strong><\/p><ul><li>Transit time is 5 to 7 working days<\/li><\/ul>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_N3rp4n": {
+          "type": "faq_item",
+          "settings": {
+            "question": "How can I track my order?",
+            "answer": "<p>Full tracking information will be provided as soon as it is available from the courier. This will be sent to you via email once your item has left our warehouse. <\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_f4dqVB": {
+          "type": "faq_item",
+          "settings": {
+            "question": "What do I do if I realise I put the wrong address\/contact details?",
+            "answer": "<p>Please email us at <a href=\"mailto:support@little-ia.com\" target=\"_blank\"><span style=\"text-decoration:underline\">support@little-ia.com<\/span><\/a> with the order number and correct details as soon as you can so we can amend these with our courier. In some cases, it may be too late, and the item may be at a depot, in which case you will have to organise a collection or a re-delivery. We will always work as hard and as fast as we can to ensure you get your order as quickly as possible.<\/p><p>You may also send a message on our WhatsApp at +971 50 579 5125.<\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_BigtA4": {
+          "type": "faq_item",
+          "settings": {
+            "question": "What happens if I am not satisfied with my order?",
+            "answer": "<p>We endeavor to keep all our customers happy and to provide the utmost best service. If you are unhappy with your purchase, please send an email to <a href=\"mailto:support@little-ia.com\" target=\"_blank\"><span style=\"text-decoration:underline\">support@little-ia.com<\/span><\/a> with as much information as possible. We will be able to offer you a refund as per our <a href=\"https:\/\/www.little-ia.com\/pages\/terms-conditions#title_6\" target=\"_blank\">Refund Policy <\/a>stated here. Due to the nature of personalised items, they are not eligible for refund or exchange, unless the personalisation has been done incorrectly. <\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_d6yhLL": {
+          "type": "faq_item",
+          "settings": {
+            "question": "What if my items are damaged or incorrect?",
+            "answer": "<p>If you have received a damaged or incorrect item, please contact our support team at <a href=\"mailto:support@little-ia.com\" target=\"_blank\"><span style=\"text-decoration:underline\">support@little-ia.com <\/span><\/a>with a photo of the damaged, or incorrectly shipped item, along with the order number.<\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_BiTCGP": {
+          "type": "faq_item",
+          "settings": {
+            "question": "I want to send a gift to somebody; how will this be packaged?",
+            "answer": "<p>We do not send any paperwork in our packages; everything will be sent to you over email. We also do not include any retail prices on our tags. If your order is a gift and requires a special Gift Card, we include these complimentary – please select Gift Card at checkout and add your message, and we will make sure this is included in your order.<\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_dYMmwn": {
+          "type": "faq_item",
+          "settings": {
+            "question": "How does the Charity Donation work?",
+            "answer": "<p>For every order that comes into Little IA, we pledge to give a donation to charity. These charities have been selected by our management team and will change on a rotational basis. The donation value is at our company’s discretion. If you have a charity you would like us to take a look at, we’re always looking for beautiful causes around the world. To read more about this, head to <a href=\"https:\/\/www.little-ia.com\/pages\/our-mission\" target=\"_blank\"><span style=\"text-decoration:underline\">Our Mission<\/span><\/a> page. <\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_jAUdrJ": {
+          "type": "faq_item",
+          "settings": {
+            "question": "E-Gift Cards",
+            "answer": "<p>We offer E-gift cards for the value of AED 100, AED 200, AED 300, AED 400, AED 500, and AED1000.<\/p><p>The gift card details are sent directly to the email address captured during the checkout process and contain information on how to redeem it. If you experience any issues, please contact our support team at <a href=\"mailto:support@little-ia.com\" target=\"_blank\"><span style=\"text-decoration:underline\">support@little-ia.com<\/span><\/a>.<\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_rU683e": {
+          "type": "faq_item",
+          "settings": {
+            "question": "What is the validity of e-gift cards?",
+            "answer": "<p>Our Little IA E-Gift Cards are valid for 12 months from the time of purchase.<\/p>",
+            "open_by_default": false
+          }
+        },
+        "faq_item_Efmij7": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Can I return a partially redeemed gift card?",
+            "answer": "<p>No. Gift cards are not returnable or exchangeable.<\/p>",
+            "open_by_default": false
+          }
+        }
+      },
+      "block_order": [
+        "faq_item_3KQwaB",
+        "faq_item_CFBPMY",
+        "faq_item_xatFUx",
+        "faq_item_FgKG7i",
+        "faq_item_G6efAb",
+        "faq_item_fpiFt9",
+        "faq_item_N3rp4n",
+        "faq_item_f4dqVB",
+        "faq_item_BigtA4",
+        "faq_item_d6yhLL",
+        "faq_item_BiTCGP",
+        "faq_item_dYMmwn",
+        "faq_item_jAUdrJ",
+        "faq_item_rU683e",
+        "faq_item_Efmij7"
+      ],
+      "name": "FAQs Section",
+      "settings": {
+        "heading": "",
+        "subheading": "",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    }
+  },
+  "order": [
+    "page_banner_QQzccJ",
+    "main",
+    "faqs_section_BLmmkG"
+  ]
+}

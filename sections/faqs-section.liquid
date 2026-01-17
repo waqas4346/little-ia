@@ -1,0 +1,368 @@
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+
+<div
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+    faqs-section-block
+  "
+  style="
+    {%- render 'spacing-style', settings: section.settings -%}
+    {%- render 'gap-style', value: section.settings.gap -%}
+  "
+>
+    {% if section.settings.heading != blank or section.settings.subheading != blank %}
+      <div class="faqs-header">
+        {% if section.settings.heading != blank %}
+          <h2 class="faqs-heading">{{ section.settings.heading }}</h2>
+        {% endif %}
+        {% if section.settings.subheading != blank %}
+          <p class="faqs-subheading">{{ section.settings.subheading }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+    <div class="faqs-content">
+      <div class="faqs-list">
+        {% for block in section.blocks %}
+          {% if block.type == 'faq_item' %}
+            <div class="faqs-list__item" {{ block.shopify_attributes }}>
+              <accordion-custom
+                {% if block.settings.open_by_default %}
+                  open-by-default-on-desktop
+                  open-by-default-on-mobile
+                {% endif %}
+              >
+                <details
+                  class="details"
+                  data-testid="faq-details"
+                  {% if block.settings.open_by_default %}
+                    open
+                  {% endif %}
+                >
+                  <summary class="details__header">
+                    {{ block.settings.question | default: 'FAQ Question' }}
+                    <span class="svg-wrapper icon-plus">
+                      {{- 'icon-plus.svg' | inline_asset_content -}}
+                    </span>
+                    <span class="svg-wrapper icon-minus">
+                      {{- 'icon-minus.svg' | inline_asset_content -}}
+                    </span>
+                  </summary>
+
+                  <div class="details-content">
+                    <div class="faq-row__answer">
+                      {{ block.settings.answer }}
+                    </div>
+                  </div>
+                </details>
+              </accordion-custom>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      {% if section.settings.image != blank %}
+        <div class="faqs-image">
+          {{
+            section.settings.image
+            | image_url: width: 1200
+            | image_tag:
+              class: 'faqs-image__img',
+              loading: 'lazy',
+              sizes: '(min-width: 750px) 50vw, 100vw',
+              widths: '240, 352, 832, 1200'
+          }}
+        </div>
+      {% endif %}
+    </div>
+</div>
+
+{% stylesheet %}
+  .faqs-section-block {
+    width: 100%;
+  }
+
+  .faqs-header {
+    margin-bottom: 32px;
+    text-align: center;
+  }
+
+  .faqs-heading {
+    margin: 0;
+    font-family: 'Sacramento', cursive, sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 150%;
+    color: #7295BB;
+    text-align: center;
+    text-transform: lowercase;
+  }
+
+  .faqs-subheading {
+    margin: 0;
+    font-family: 'FuturaPT-Demi', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
+    text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
+  }
+
+  .faqs-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .faqs-image {
+    display: none;
+  }
+
+  .faqs-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .faqs-list__item {
+    width: 100%;
+    border-bottom: 0.5px solid #00000030;
+  }
+
+  .faqs-section-block .details__header {
+    padding: 16px 10px !important;
+    font-weight: 500;
+    font-size: 18px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .faqs-section-block .details__header {
+      padding: 25px 14px 25px 10px !important;
+      padding-block: 25px !important;
+      padding-inline: 10px 14px !important;
+    }
+  }
+
+  .faqs-section-block .details__header .icon-plus {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .faqs-section-block .details__header .icon-plus svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .faqs-section-block .details__header .icon-plus {
+      width: 19px;
+      height: 19px;
+    }
+
+  .faqs-section-block .details__header .icon-plus svg {
+    width: 19px;
+    height: 19px;
+  }
+  }
+
+  .faq-row__answer {
+    width: 100%;
+    /* max-width: 571px; */
+    padding-left: 10px;
+    padding-bottom: 20px;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 154%;
+  }
+
+  .faq-row__answer p:first-child {
+    margin-top: 0;
+  }
+
+  .faq-row__answer p:last-child {
+    margin-bottom: 0;
+  }
+
+  @media screen and (min-width: 750px) {
+    .faq-row__answer {
+      font-size: 16px;
+      padding-bottom: 23px;
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .faqs-header {
+      margin-bottom: 48px;
+    }
+
+    .faqs-heading {
+      font-size: 38px;
+    }
+
+    .faqs-content {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 89px;
+    }
+
+    .faqs-list {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .faqs-image {
+      display: block;
+      flex: 0 0 auto;
+      width: 40%;
+      max-width: 443px;
+    }
+
+    .faqs-image__img {
+      width: 100%;
+      height: auto;
+      max-width: 443px;
+      max-height: 503px;
+      display: block;
+      border-radius: var(--border-radius, 0);
+      object-fit: contain;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "FAQs Section",
+  "tag": "section",
+  "class": "faqs",
+  "blocks": [
+    {
+      "type": "faq_item",
+      "name": "FAQ Item",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "FAQ Question"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer"
+        },
+        {
+          "type": "checkbox",
+          "id": "open_by_default",
+          "label": "Open by default",
+          "default": false
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading"
+    },
+    {
+      "type": "header",
+      "content": "Image"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "header",
+      "content": "t:content.section_layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:settings.width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:options.page"
+        },
+        {
+          "value": "full-width",
+          "label": "t:options.full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "t:settings.gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:settings.color_scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 32
+    }
+  ],
+  "presets": [
+    {
+      "name": "FAQs Section",
+      "category": "Custom",
+      "settings": {
+        "heading": "Frequently Asked Questions",
+        "gap": 12,
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    }
+  ]
+}
+{% endschema %}
