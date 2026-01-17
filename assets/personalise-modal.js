@@ -29,13 +29,42 @@ export class PersonaliseDialogComponent extends DialogComponent {
       message: null,
       optionalDob: null,
       time: null,
-      weight: null
+      weight: null,
+      babyName: null,
+      kidName: null,
+      mumName: null
     };
     
     // Set up form submit listener
     setTimeout(() => {
       this.#setupFormSubmitListenerForCurrentSession();
     }, 100);
+    
+    // Set form attribute on Baby/Kid/Mum inputs
+    this.#setFormAttributeOnInputs();
+  }
+  
+  /**
+   * Sets the form attribute on Baby/Kid/Mum name inputs
+   */
+  #setFormAttributeOnInputs() {
+    // Find the product form
+    let productForm = null;
+    const productFormComponent = this.closest('product-form-component');
+    if (productFormComponent) {
+      productForm = productFormComponent.querySelector('form[data-type="add-to-cart-form"]');
+    }
+    if (!productForm) {
+      productForm = document.querySelector('form[data-type="add-to-cart-form"]');
+    }
+    
+    if (productForm && productForm.id) {
+      // Set form attribute on all inputs with data-form-id
+      const inputs = this.querySelectorAll('[data-form-id]');
+      inputs.forEach(input => {
+        input.setAttribute('form', productForm.id);
+      });
+    }
   }
   
   /**
@@ -60,7 +89,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
    * Loads saved personalisation from sessionStorage (current session only)
    */
   loadSavedPersonalisation() {
-    const productId = this.closest('product-form-component')?.dataset?.productId;
+    let productId = this.closest('product-form-component')?.dataset?.productId;
     
     // If not found, try to get from sticky-add-to-cart
     if (!productId) {
@@ -176,7 +205,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
       this.personalisationData.textbox ||
       this.personalisationData.message ||
       this.personalisationData.time ||
-      this.personalisationData.weight;
+      this.personalisationData.weight ||
+      this.personalisationData.babyName ||
+      this.personalisationData.kidName ||
+      this.personalisationData.mumName;
     
     if (!hasAnyData) {
       return; // No data to populate
@@ -247,6 +279,70 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const weightInput = this.refs.weightInput || this.querySelector('input[name="properties[Weight]"]');
     if (weightInput && this.personalisationData.weight) weightInput.value = this.personalisationData.weight;
     
+    // Populate Baby/Kid/Mum name inputs
+    const babyNameInput = this.refs.babyNameInput || this.querySelector('[data-name-input="baby"]');
+    if (babyNameInput && this.personalisationData.babyName) {
+      babyNameInput.value = this.personalisationData.babyName;
+      // Update character counter
+      this.updateNameTabCharCounter('baby', babyNameInput.value.length);
+      // Update icon after DOM is ready - retry up to 5 times
+      let attempts = 0;
+      const maxAttempts = 5;
+      const updateBabyIcon = () => {
+        attempts++;
+        const hasValue = babyNameInput.value.trim().length > 0;
+        const icon = this.querySelector(`[data-tab-icon="baby"]`);
+        if (icon) {
+          this.updateNameTabIcon('baby', hasValue);
+        } else if (attempts < maxAttempts) {
+          setTimeout(updateBabyIcon, 100);
+        }
+      };
+      setTimeout(updateBabyIcon, 100);
+    }
+    
+    const kidNameInput = this.refs.kidNameInput || this.querySelector('[data-name-input="kid"]');
+    if (kidNameInput && this.personalisationData.kidName) {
+      kidNameInput.value = this.personalisationData.kidName;
+      // Update character counter
+      this.updateNameTabCharCounter('kid', kidNameInput.value.length);
+      // Update icon after DOM is ready - retry up to 5 times
+      let attempts = 0;
+      const maxAttempts = 5;
+      const updateKidIcon = () => {
+        attempts++;
+        const hasValue = kidNameInput.value.trim().length > 0;
+        const icon = this.querySelector(`[data-tab-icon="kid"]`);
+        if (icon) {
+          this.updateNameTabIcon('kid', hasValue);
+        } else if (attempts < maxAttempts) {
+          setTimeout(updateKidIcon, 100);
+        }
+      };
+      setTimeout(updateKidIcon, 100);
+    }
+    
+    const mumNameInput = this.refs.mumNameInput || this.querySelector('[data-name-input="mum"]');
+    if (mumNameInput && this.personalisationData.mumName) {
+      mumNameInput.value = this.personalisationData.mumName;
+      // Update character counter
+      this.updateNameTabCharCounter('mum', mumNameInput.value.length);
+      // Update icon after DOM is ready - retry up to 5 times
+      let attempts = 0;
+      const maxAttempts = 5;
+      const updateMumIcon = () => {
+        attempts++;
+        const hasValue = mumNameInput.value.trim().length > 0;
+        const icon = this.querySelector(`[data-tab-icon="mum"]`);
+        if (icon) {
+          this.updateNameTabIcon('mum', hasValue);
+        } else if (attempts < maxAttempts) {
+          setTimeout(updateMumIcon, 100);
+        }
+      };
+      setTimeout(updateMumIcon, 100);
+    }
+    
     this.updateSaveButton();
   }
 
@@ -270,6 +366,117 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Update save button state
     this.updateSaveButton();
+  };
+
+  /**
+   * Handles name tab input changes (Baby/Kid/Mum)
+   * @param {Event} event - The input event
+   */
+  handleNameTabInput = (event) => {
+    const input = event.target;
+    const tabType = input.dataset.nameInput; // 'baby', 'kid', or 'mum'
+    
+    // Remove special characters (only allow letters, numbers, and spaces)
+    const sanitized = input.value.replace(/[^a-zA-Z0-9\s]/g, '');
+    if (sanitized !== input.value) {
+      input.value = sanitized;
+    }
+    
+    const value = sanitized.trim();
+    const length = sanitized.length;
+    
+    // Update character counter
+    this.updateNameTabCharCounter(tabType, length);
+    
+    // Update personalisation data
+    if (tabType === 'baby') {
+      this.personalisationData.babyName = value;
+    } else if (tabType === 'kid') {
+      this.personalisationData.kidName = value;
+    } else if (tabType === 'mum') {
+      this.personalisationData.mumName = value;
+    }
+    
+    // Show/hide tick icon based on whether value exists
+    this.updateNameTabIcon(tabType, value.length > 0);
+    
+    // Update save button state
+    this.updateSaveButton();
+  };
+  
+  /**
+   * Updates the character counter for name tab inputs
+   * @param {string} tabType - The tab type ('baby', 'kid', or 'mum')
+   * @param {number} count - The current character count
+   */
+  updateNameTabCharCounter(tabType, count) {
+    let charCounter = null;
+    if (tabType === 'baby') {
+      charCounter = this.refs.babyCharCounter?.querySelector('[ref="babyCharCount"]') || this.refs.babyCharCount;
+    } else if (tabType === 'kid') {
+      charCounter = this.refs.kidCharCounter?.querySelector('[ref="kidCharCount"]') || this.refs.kidCharCount;
+    } else if (tabType === 'mum') {
+      charCounter = this.refs.mumCharCounter?.querySelector('[ref="mumCharCount"]') || this.refs.mumCharCount;
+    }
+    
+    if (charCounter) {
+      charCounter.textContent = count;
+    }
+  }
+
+  /**
+   * Switches between name tabs (Baby/Kid/Mum)
+   * @param {Event} event - The click event
+   */
+  switchNameTab = (event) => {
+    const button = event.target.closest('.personalise-name-tabs__tab');
+    if (!button) return;
+    
+    const tabType = button.dataset.tab; // 'baby', 'kid', or 'mum'
+    
+    // Get all tabs and panels
+    const tabsContainer = this.querySelector('.personalise-name-tabs__tablist');
+    const panelsContainer = this.querySelector('.personalise-name-tabs__panels');
+    
+    if (!tabsContainer || !panelsContainer) return;
+    
+    // Remove active class from all tabs
+    const allTabs = tabsContainer.querySelectorAll('.personalise-name-tabs__tab');
+    allTabs.forEach(tab => {
+      tab.classList.remove('is-active');
+      tab.setAttribute('aria-selected', 'false');
+    });
+    
+    // Add active class to clicked tab
+    button.classList.add('is-active');
+    button.setAttribute('aria-selected', 'true');
+    
+    // Hide all panels
+    const allPanels = panelsContainer.querySelectorAll('.personalise-name-tabs__panel');
+    allPanels.forEach(panel => {
+      panel.classList.remove('is-active');
+    });
+    
+    // Show corresponding panel
+    const activePanel = panelsContainer.querySelector(`[data-panel="${tabType}"]`);
+    if (activePanel) {
+      activePanel.classList.add('is-active');
+    }
+  };
+
+  /**
+   * Updates the tick icon visibility for a name tab
+   * @param {string} tabType - The tab type ('baby', 'kid', or 'mum')
+   * @param {boolean} show - Whether to show the icon
+   */
+  updateNameTabIcon(tabType, show) {
+    const icon = this.querySelector(`[data-tab-icon="${tabType}"]`);
+    if (icon) {
+      icon.style.display = show ? 'inline-flex' : 'none';
+      console.log(`Updated ${tabType} tab icon:`, show, icon);
+    } else {
+      console.warn(`Tab icon not found for type: ${tabType}`, this.querySelectorAll('[data-tab-icon]'));
+    }
   };
 
   /**
@@ -368,11 +575,29 @@ export class PersonaliseDialogComponent extends DialogComponent {
       const nameInput = this.refs.nameInput || this.querySelector('#personalise-name');
       const hasName = nameInput ? nameInput.value.trim().length > 0 : true;
       
-      // For products with personalized_name, name is required
-      if (nameInput) {
-        this.refs.saveButton.disabled = !hasName;
+      // Check if baby/kid/mum name inputs exist and have values
+      const babyNameInput = this.refs.babyNameInput || this.querySelector('[data-name-input="baby"]');
+      const kidNameInput = this.refs.kidNameInput || this.querySelector('[data-name-input="kid"]');
+      const mumNameInput = this.refs.mumNameInput || this.querySelector('[data-name-input="mum"]');
+      
+      const hasBabyName = babyNameInput ? babyNameInput.value.trim().length > 0 : true;
+      const hasKidName = kidNameInput ? kidNameInput.value.trim().length > 0 : true;
+      const hasMumName = mumNameInput ? mumNameInput.value.trim().length > 0 : true;
+      
+      // If any of these inputs exist, they must have values
+      const babyNameRequired = babyNameInput && !hasBabyName;
+      const kidNameRequired = kidNameInput && !hasKidName;
+      const mumNameRequired = mumNameInput && !hasMumName;
+      
+      // Disable save button if:
+      // 1. Name input exists but is empty (for personalized_name products)
+      // 2. Any baby/kid/mum name input exists but is empty
+      if (nameInput && !hasName) {
+        this.refs.saveButton.disabled = true;
+      } else if (babyNameRequired || kidNameRequired || mumNameRequired) {
+        this.refs.saveButton.disabled = true;
       } else {
-        // For other personalization types, allow saving without name
+        // All required fields have values, enable save button
         this.refs.saveButton.disabled = false;
       }
     }
@@ -396,6 +621,16 @@ export class PersonaliseDialogComponent extends DialogComponent {
       return;
     }
 
+    // Collect Baby/Kid/Mum name values from inputs FIRST
+    const babyNameInput = this.refs.babyNameInput || this.querySelector('[data-name-input="baby"]');
+    const babyNameValue = babyNameInput && babyNameInput.value.trim() ? babyNameInput.value.trim() : null;
+    
+    const kidNameInput = this.refs.kidNameInput || this.querySelector('[data-name-input="kid"]');
+    const kidNameValue = kidNameInput && kidNameInput.value.trim() ? kidNameInput.value.trim() : null;
+    
+    const mumNameInput = this.refs.mumNameInput || this.querySelector('[data-name-input="mum"]');
+    const mumNameValue = mumNameInput && mumNameInput.value.trim() ? mumNameInput.value.trim() : null;
+
     // Collect all personalisation data
     const personalisation = {
       name: name,
@@ -411,7 +646,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
       message: null,
       optionalDob: null,
       time: null,
-      weight: null
+      weight: null,
+      babyName: babyNameValue,
+      kidName: kidNameValue,
+      mumName: mumNameValue
     };
 
     // Collect optional fields
@@ -455,6 +693,11 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const weightInput = this.refs.weightInput || this.querySelector('input[name="properties[Weight]"]');
     if (weightInput) personalisation.weight = weightInput.value.trim();
 
+    // Update personalisationData for next time
+    if (babyNameValue !== null) this.personalisationData.babyName = babyNameValue;
+    if (kidNameValue !== null) this.personalisationData.kidName = kidNameValue;
+    if (mumNameValue !== null) this.personalisationData.mumName = mumNameValue;
+
     // Store in sessionStorage with product ID as key (clears on page reload)
     let productId = this.closest('product-form-component')?.dataset?.productId;
     
@@ -477,12 +720,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
       productId = String(productId);
       const key = `personalisation_${productId}`;
       
-      console.log('Saving personalisation to sessionStorage:', { productId, key, personalisation });
       sessionStorage.setItem(key, JSON.stringify(personalisation));
-      
-      // Verify it was saved
-      const saved = sessionStorage.getItem(key);
-      console.log('Verification - saved to sessionStorage:', saved ? 'SUCCESS' : 'FAILED');
       
       // Trigger update of button text
       setTimeout(() => {
@@ -558,7 +796,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
         input.name = name;
         input.value = value.toString().trim();
         productForm.appendChild(input);
-        console.log('Added property field:', name, '=', input.value);
       }
     };
 
@@ -618,6 +855,18 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (personalisation.weight) {
       addProperty('properties[Weight]', personalisation.weight);
     }
+
+    if (personalisation.babyName) {
+      addProperty('properties[Baby\'s Name]', personalisation.babyName);
+    }
+
+    if (personalisation.kidName) {
+      addProperty('properties[Kid\'s Name]', personalisation.kidName);
+    }
+
+    if (personalisation.mumName) {
+      addProperty('properties[Mum\'s Name]', personalisation.mumName);
+    }
     
     // Also set up a listener to re-add fields before form submission
     this.#setupFormSubmitListener(productForm);
@@ -675,7 +924,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
               name.includes('[Personalisation:]') || 
               name.includes('[Personalise Date of Birth]') || 
               name.includes('[Time]') || 
-              name.includes('[Weight]')) {
+              name.includes('[Weight]') ||
+              name.includes('[Baby\'s Name]') ||
+              name.includes('[Kid\'s Name]') ||
+              name.includes('[Mum\'s Name]')) {
             input.remove();
           }
         });
@@ -718,6 +970,18 @@ export class PersonaliseDialogComponent extends DialogComponent {
         if (personalisation.optionalDob) addProperty('properties[Personalise Date of Birth]', personalisation.optionalDob);
         if (personalisation.time) addProperty('properties[Time]', personalisation.time);
         if (personalisation.weight) addProperty('properties[Weight]', personalisation.weight);
+        if (personalisation.babyName) {
+          addProperty('properties[Baby\'s Name]', personalisation.babyName);
+          console.log('Added Baby\'s Name to form:', personalisation.babyName);
+        }
+        if (personalisation.kidName) {
+          addProperty('properties[Kid\'s Name]', personalisation.kidName);
+          console.log('Added Kid\'s Name to form:', personalisation.kidName);
+        }
+        if (personalisation.mumName) {
+          addProperty('properties[Mum\'s Name]', personalisation.mumName);
+          console.log('Added Mum\'s Name to form:', personalisation.mumName);
+        }
         
         console.log('Successfully added all personalisation fields to form');
       } catch (e) {

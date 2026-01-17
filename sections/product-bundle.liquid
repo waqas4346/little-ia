@@ -2,54 +2,41 @@
   assign max_items = section.settings.max_products | default: 4
   assign items_per_view = section.settings.items_per_view | default: 4
   
-  # Get metaobject from metafield custom.cb_more_products
-  assign more_products_metaobject = blank
+  # Get metaobject from metafield custom.cb_bundle (on product)
+  assign bundle_metaobject = blank
   assign section_heading = blank
   assign section_subheading = blank
-  assign products_collection = blank
-  assign current_product_id = blank
+  assign bundle_products = blank
+  assign bundle_product = blank
   
-  # Try to get current product ID to exclude it from the list
+  # Try to get bundle metaobject from product metafield
   if product != blank
-    assign current_product_id = product.id
-  elsif closest.product != blank
-    assign current_product_id = closest.product.id
-  endif
-  
-  # Try collection metafield first (if on collection page)
-  if collection != blank
-    assign metafield_value = collection.metafields.custom.cb_more_products
+    assign metafield_value = product.metafields.custom.cb_bundle
     if metafield_value != blank
-      assign more_products_metaobject = metafield_value.value
+      assign bundle_metaobject = metafield_value.value
     endif
   endif
   
-  # Try product metafield (if on product page)
-  if more_products_metaobject == blank and product != blank
-    assign metafield_value = product.metafields.custom.cb_more_products
-    if metafield_value != blank
-      assign more_products_metaobject = metafield_value.value
-    endif
-  endif
-  
-  # Try shop metafield (global fallback)
-  if more_products_metaobject == blank
-    assign metafield_value = shop.metafields.custom.cb_more_products
-    if metafield_value != blank
-      assign more_products_metaobject = metafield_value.value
-    endif
-  endif
-  
-  # Extract heading, subheading, and collection from metaobject
-  if more_products_metaobject != blank
-    assign section_heading = more_products_metaobject.heading.value | default: more_products_metaobject.heading
+  # Extract heading and subheading from metaobject
+  if bundle_metaobject != blank
+    assign section_heading = bundle_metaobject.heading.value | default: bundle_metaobject.heading
     # Try both sub_heading and subheading field names for compatibility
-    if more_products_metaobject.sub_heading != blank
-      assign section_subheading = more_products_metaobject.sub_heading.value | default: more_products_metaobject.sub_heading
-    elsif more_products_metaobject.subheading != blank
-      assign section_subheading = more_products_metaobject.subheading.value | default: more_products_metaobject.subheading
+    if bundle_metaobject.sub_heading != blank
+      assign section_subheading = bundle_metaobject.sub_heading.value | default: bundle_metaobject.sub_heading
+    elsif bundle_metaobject.subheading != blank
+      assign section_subheading = bundle_metaobject.subheading.value | default: bundle_metaobject.subheading
     endif
-    assign products_collection = more_products_metaobject.collection.value | default: more_products_metaobject.collection
+    
+    # Get products from the product metafield inside the metaobject
+    if bundle_metaobject.product != blank
+      assign bundle_product = bundle_metaobject.product.value | default: bundle_metaobject.product
+      if bundle_product != blank
+        assign bundle_products_metafield = bundle_product.metafields.custom.cb_products_in_the_bundle
+        if bundle_products_metafield != blank
+          assign bundle_products = bundle_products_metafield.value
+        endif
+      endif
+    endif
   endif
   
   # If no heading/subheading from metaobject, use section settings as fallback
@@ -61,61 +48,58 @@
   endif
 %}
 
-{% if products_collection != blank and products_collection.products_count > 0 %}
+{% if bundle_products != blank %}
 <div class="section-background color-{{ section.settings.color_scheme }}"></div>
 <div
-  data-testid="explore-more-products"
+  data-testid="product-bundle"
   class="
     section
     section--{{ section.settings.section_width }}
     color-{{ section.settings.color_scheme }}
     spacing-style
     gap-style
-    explore-more-products-section
+    product-bundle-section
   "
   style="
     {% render 'spacing-style', settings: section.settings %}
     {% render 'gap-style', value: section.settings.gap %}
   "
 >
-  <div class="explore-more-products-header">
+  <div class="product-bundle-header">
     {% if section_heading != blank %}
-      <div class="explore-more-products-top-label">
-        <span class="explore-more-products-top-label-text">{{ section_heading }}</span>
+      <div class="product-bundle-top-label">
+        <span class="product-bundle-top-label-text">{{ section_heading }}</span>
       </div>
     {% endif %}
     
     {% if section_subheading != blank %}
-      <div class="explore-more-products-section-title">
-        <span class="explore-more-products-section-title-label">{{ section_subheading }}</span>
+      <div class="product-bundle-section-title">
+        <span class="product-bundle-section-title-label">{{ section_subheading }}</span>
       </div>
     {% endif %}
   </div>
 
-  {% comment %} Filter products to exclude current viewing product and build list {% endcomment %}
+  {% comment %} Build list of products from the bundle metafield {% endcomment %}
   {% capture list_items %}
-    {% if products_collection.products_count > 0 %}
+    {% if bundle_products != blank %}
       {% assign displayed_count = 0 %}
-      {% for product_item in products_collection.products %}
-        {% comment %} Skip the current viewing product {% endcomment %}
-        {% if current_product_id == blank or product_item.id != current_product_id %}
-          {% if displayed_count < max_items %}
-            <div class="resource-list__item" data-explore-more-item="true" data-product-id="{{ product_item.id }}">
-              {% # theme-check-disable UniqueStaticBlockId %}
-                {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product_item %}
-              {% # theme-check-enable UniqueStaticBlockId %}
-              {% comment %} Add View Product and + buttons using unified component {% endcomment %}
-              {% render 'product-card-actions', 
-                product: product_item, 
-                section_id: section.id
-              %}
-            </div>
-            {% assign displayed_count = displayed_count | plus: 1 %}
-            {% comment %} Add split marker after each item except potentially the last {% endcomment %}
-            {% unless displayed_count >= max_items %}
-              <!--@list/split-->
-            {% endunless %}
-          {% endif %}
+      {% for product_item in bundle_products %}
+        {% if displayed_count < max_items %}
+          <div class="resource-list__item" data-product-bundle-item="true" data-product-id="{{ product_item.id }}">
+            {% # theme-check-disable UniqueStaticBlockId %}
+              {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product_item %}
+            {% # theme-check-enable UniqueStaticBlockId %}
+            {% comment %} Add View Product and + buttons using unified component {% endcomment %}
+            {% render 'product-card-actions', 
+              product: product_item, 
+              section_id: section.id
+            %}
+          </div>
+          {% assign displayed_count = displayed_count | plus: 1 %}
+          {% comment %} Add split marker after each item except potentially the last {% endcomment %}
+          {% unless displayed_count >= max_items %}
+            <!--@list/split-->
+          {% endunless %}
         {% endif %}
       {% endfor %}
     {% endif %}
@@ -139,21 +123,21 @@
       {% render 'slideshow-slide'
         index : forloop.index0,
         children : item,
-        class : 'resource-list__slide explore-more-products-slide'
+        class : 'resource-list__slide product-bundle-slide'
       %}
     {% endfor %}
   {% endcapture %}
 
   {% comment %} Desktop carousel {% endcomment %}
-  <div class="explore-more-products-wrapper">
+  <div class="product-bundle-wrapper">
     <div
-      class="resource-list resource-list__carousel explore-more-products-carousel explore-more-products-desktop"
+      class="resource-list resource-list__carousel product-bundle-carousel product-bundle-desktop"
       style="{{ gutter_style }} --column-count: {{ items_per_view }}; --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 8 }}px;"
-      data-testid="explore-more-products-grid"
+      data-testid="product-bundle-grid"
       data-items-per-view="{{ items_per_view }}"
     >
       {% render 'slideshow',
-        ref: 'exploreMoreProductsDesktop',
+        ref: 'productBundleDesktop',
         class: 'resource-list__carousel',
         slides: slides,
         show_arrows: show_arrows,
@@ -168,21 +152,37 @@
       %}
     </div>
   </div>
+
+  {% comment %} Buy Bundle Button {% endcomment %}
+  {% if bundle_product != blank %}
+    {% liquid
+      assign bundle_price = bundle_product.price | money
+      assign bundle_url = bundle_product.url
+      if bundle_product.selected_or_first_available_variant.url != blank
+        assign bundle_url = bundle_product.selected_or_first_available_variant.url
+      endif
+    %}
+    <div class="product-bundle-button-wrapper">
+      <a href="{{ bundle_url }}" class="product-bundle-button">
+        Buy the complete Gift set - {{ bundle_price }}
+      </a>
+    </div>
+  {% endif %}
 </div>
 {% endif %}
 
 <style>
-  .explore-more-products-header {
+  .product-bundle-header {
     text-align: center;
     margin-bottom: 16px;
   }
 
-  .explore-more-products-top-label {
+  .product-bundle-top-label {
     text-align: center;
     margin-bottom: 0;
   }
 
-  .explore-more-products-top-label-text {
+  .product-bundle-top-label-text {
     margin: 0;
     font-family: 'Sacramento', cursive, sans-serif;
     font-weight: 400;
@@ -194,12 +194,12 @@
     display: block;
   }
 
-  .explore-more-products-section-title {
+  .product-bundle-section-title {
     text-align: center;
     margin-bottom: 0;
   }
 
-  .explore-more-products-section-title-label {
+  .product-bundle-section-title-label {
     margin: 0;
     font-family: 'FuturaPT-Demi', 'Outfit', sans-serif;
     font-weight: 500;
@@ -212,30 +212,30 @@
   }
 
   /* Product card media sizing/background in slider */
-  [data-testid="explore-more-products-grid"] .card-gallery .product-media-container {
+  [data-testid="product-bundle-grid"] .card-gallery .product-media-container {
     background: url("bg_removal [Background removed].png"), #F7F7F7;
     background-repeat: no-repeat;
     background-size: cover;
     background-position: center;
   }
 
-  [data-testid="explore-more-products-grid"] .card-gallery .product-media-container img,
-  [data-testid="explore-more-products-grid"] .card-gallery .product-media-container picture,
-  [data-testid="explore-more-products-grid"] .card-gallery .product-media-container video {
+  [data-testid="product-bundle-grid"] .card-gallery .product-media-container img,
+  [data-testid="product-bundle-grid"] .card-gallery .product-media-container picture,
+  [data-testid="product-bundle-grid"] .card-gallery .product-media-container video {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
   /* Hide sale/sold-out badge on slider images */
-  [data-testid="explore-more-products-grid"] .product-badges {
+  [data-testid="product-bundle-grid"] .product-badges {
     display: none !important;
   }
 
   /* Product title styling */
-  [data-testid="explore-more-products-grid"] .text-block--product_title,
-  [data-testid="explore-more-products-grid"] .text-block--product_title *,
-  [data-testid="explore-more-products-grid"] .text-block--product_title p {
+  [data-testid="product-bundle-grid"] .text-block--product_title,
+  [data-testid="product-bundle-grid"] .text-block--product_title *,
+  [data-testid="product-bundle-grid"] .text-block--product_title p {
     font-family: 'Outfit', sans-serif;
     font-weight: 500;
     font-style: normal;
@@ -246,9 +246,9 @@
   }
 
   /* Explicit class injected on product title block */
-  [data-testid="explore-more-products-grid"] .product-title-text,
-  [data-testid="explore-more-products-grid"] .product-title-text *,
-  [data-testid="explore-more-products-grid"] .product-title-text p {
+  [data-testid="product-bundle-grid"] .product-title-text,
+  [data-testid="product-bundle-grid"] .product-title-text *,
+  [data-testid="product-bundle-grid"] .product-title-text p {
     font-family: 'Outfit', sans-serif;
     font-weight: 500;
     font-style: normal;
@@ -259,20 +259,20 @@
   }
 
   /* Product slider carousel container */
-  .explore-more-products-carousel {
+  .product-bundle-carousel {
     position: relative;
   }
 
   /* Remove horizontal padding for max width */
-  [data-testid="explore-more-products"] .section--page-width {
+  [data-testid="product-bundle"] .section--page-width {
     padding-inline: 0 !important;
   }
 
-  [data-testid="explore-more-products"] .section--page-width > * {
+  [data-testid="product-bundle"] .section--page-width > * {
     padding-inline: 0 !important;
   }
 
-  [data-testid="explore-more-products-grid"] {
+  [data-testid="product-bundle-grid"] {
     padding-inline: 0 !important;
     --peek-next-slide-size: 0px;
     --gutter-slide-width: 0px !important;
@@ -280,33 +280,33 @@
   }
 
   @media (max-width: 767px) {
-    [data-testid="explore-more-products-grid"] {
+    [data-testid="product-bundle-grid"] {
       overflow: hidden;
     }
   }
 
   /* Desktop slider styling */
-  .explore-more-products-desktop .resource-list__carousel {
+  .product-bundle-desktop .resource-list__carousel {
     --column-count: {{ section.settings.items_per_view | default: 4 }};
     --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 8 }}px;
   }
 
   /* Ensure gap is applied to slideshow slides on desktop */
-  .explore-more-products-desktop slideshow-slides {
+  .product-bundle-desktop slideshow-slides {
     gap: {{ section.settings.columns_gap | default: 8 }}px !important;
   }
 
   /* Position arrows outside the carousel on desktop */
-  .explore-more-products-wrapper {
+  .product-bundle-wrapper {
     position: relative;
     padding: 0;
   }
 
-  .explore-more-products-desktop slideshow-container {
+  .product-bundle-desktop slideshow-container {
     position: relative;
   }
 
-  .explore-more-products-desktop slideshow-arrows {
+  .product-bundle-desktop slideshow-arrows {
     position: absolute;
     inset: 0;
     left: auto;
@@ -319,13 +319,13 @@
     margin-right: -60px;
   }
 
-  .explore-more-products-desktop slideshow-arrows[position='center'] {
+  .product-bundle-desktop slideshow-arrows[position='center'] {
     justify-content: space-between;
     align-items: center;
     padding: 0;
   }
 
-  .explore-more-products-desktop slideshow-arrows .slideshow-control {
+  .product-bundle-desktop slideshow-arrows .slideshow-control {
     position: absolute;
     margin: 0;
     pointer-events: auto;
@@ -334,25 +334,25 @@
     transform: translateY(-50%);
   }
 
-  .explore-more-products-desktop slideshow-arrows .slideshow-control--previous {
+  .product-bundle-desktop slideshow-arrows .slideshow-control--previous {
     left: 0;
   }
 
-  .explore-more-products-desktop slideshow-arrows .slideshow-control--next {
+  .product-bundle-desktop slideshow-arrows .slideshow-control--next {
     right: 0;
   }
 
   /* Tablet (iPad) - Show 3 items per row */
   @media (min-width: 768px) and (max-width: 1024px) {
-    .explore-more-products-desktop .resource-list__carousel {
+    .product-bundle-desktop .resource-list__carousel {
       --column-count: 3;
     }
 
-    [data-testid="explore-more-products-grid"] {
+    [data-testid="product-bundle-grid"] {
       overflow: hidden;
     }
 
-    .explore-more-products-desktop .resource-list__slide {
+    .product-bundle-desktop .resource-list__slide {
       width: calc((100% - (var(--resource-list-column-gap-desktop, 8px) * 2)) / 3);
       max-width: calc((100% - (var(--resource-list-column-gap-desktop, 8px) * 2)) / 3);
       flex: 0 0 calc((100% - (var(--resource-list-column-gap-desktop, 8px) * 2)) / 3);
@@ -360,11 +360,11 @@
   }
 
   @media (max-width: 1200px) {
-    .explore-more-products-wrapper {
+    .product-bundle-wrapper {
       padding: 0;
     }
 
-    .explore-more-products-desktop slideshow-arrows {
+    .product-bundle-desktop slideshow-arrows {
       width: calc(100% + 100px);
       margin-left: -50px;
       margin-right: -50px;
@@ -372,84 +372,125 @@
   }
 
   /* Hide default quick-add on hover for product slider (same as collection page) */
-  [data-testid="explore-more-products"] product-card[data-collection-page="true"]:is(:hover, :focus-within) .quick-add__button:not(.product-slider-quick-add-button) {
+  [data-testid="product-bundle"] product-card[data-collection-page="true"]:is(:hover, :focus-within) .quick-add__button:not(.product-slider-quick-add-button) {
     opacity: 0 !important;
     pointer-events: none !important;
   }
 
+  /* Buy Bundle Button Styling */
+  .product-bundle-button-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 32px;
+  }
+
+  .product-bundle-button {
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid #7295BB;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 140%;
+    text-transform: uppercase;
+    color: #7295BB;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .product-bundle-button:hover {
+    background-color: #7295BB;
+    color: #ffffff;
+  }
+
+  @media (max-width: 767px) {
+    .product-bundle-button-wrapper {
+      margin-top: 24px;
+    }
+
+    .product-bundle-button {
+      font-size: 14px;
+    }
+  }
+
 
   @media screen and (min-width: 750px) {
-    .explore-more-products-header {
+    .product-bundle-header {
       margin-bottom: 24px;
     }
 
-    .explore-more-products-top-label-text {
+    .product-bundle-top-label-text {
       font-size: 38px;
     }
   }
 
   @media (max-width: 767px) {
-    .explore-more-products-header {
+    .product-bundle-header {
       margin-bottom: 16px;
     }
 
-    [data-testid="explore-more-products-grid"] .card-gallery .product-media-container {
+    [data-testid="product-bundle-grid"] .card-gallery .product-media-container {
       background: url("bg_removal [Background removed].png"), #F7F7F7;
     }
 
-    [data-testid="explore-more-products-grid"] .text-block--product_title,
-    [data-testid="explore-more-products-grid"] .text-block--product_title *,
-    [data-testid="explore-more-products-grid"] .text-block--product_title p {
+    [data-testid="product-bundle-grid"] .text-block--product_title,
+    [data-testid="product-bundle-grid"] .text-block--product_title *,
+    [data-testid="product-bundle-grid"] .text-block--product_title p {
       font-size: 16px;
       line-height: 140%;
       color: #1D425A;
     }
 
-    [data-testid="explore-more-products-grid"] .product-title-text,
-    [data-testid="explore-more-products-grid"] .product-title-text *,
-    [data-testid="explore-more-products-grid"] .product-title-text p {
+    [data-testid="product-bundle-grid"] .product-title-text,
+    [data-testid="product-bundle-grid"] .product-title-text *,
+    [data-testid="product-bundle-grid"] .product-title-text p {
       font-size: 16px;
       line-height: 140%;
       letter-spacing: 0;
       color: #1D425A;
     }
 
-    .explore-more-products-wrapper {
+    .product-bundle-wrapper {
       padding: 0;
       overflow: hidden;
-      max-width: calc((173px * 2) + 8px);
+      max-width: calc((175px * 2) + 8px);
       width: 100%;
       margin: 0 auto;
     }
 
-    .explore-more-products-desktop slideshow-container {
+    .product-bundle-desktop slideshow-container {
       overflow: hidden;
-      max-width: calc((173px * 2) + 8px);
+      max-width: calc((175px * 2) + 8px);
       width: 100%;
       margin: 0 auto;
     }
 
-    .explore-more-products-desktop slideshow-arrows {
+    .product-bundle-desktop slideshow-arrows {
       display: none !important;
     }
 
     /* Mobile: Product slider carousel items - ensure proper sizing */
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card .card-gallery .product-media-container,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container {
-      width: 173px !important;
+    [data-testid="product-bundle-grid"] .resource-list__item product-card .card-gallery .product-media-container,
+    [data-testid="product-bundle-grid"] .resource-list__item product-card-link .card-gallery .product-media-container {
+      width: 175px !important;
       height: 175px !important;
-      max-width: 173px !important;
+      max-width: 175px !important;
     }
 
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card .card-gallery .product-media-container img,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card .card-gallery .product-media-container picture,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card .card-gallery .product-media-container video,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container img,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container picture,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container video {
-      width: 173px !important;
+    [data-testid="product-bundle-grid"] .resource-list__item product-card .card-gallery .product-media-container img,
+    [data-testid="product-bundle-grid"] .resource-list__item product-card .card-gallery .product-media-container picture,
+    [data-testid="product-bundle-grid"] .resource-list__item product-card .card-gallery .product-media-container video,
+    [data-testid="product-bundle-grid"] .resource-list__item product-card-link .card-gallery .product-media-container img,
+    [data-testid="product-bundle-grid"] .resource-list__item product-card-link .card-gallery .product-media-container picture,
+    [data-testid="product-bundle-grid"] .resource-list__item product-card-link .card-gallery .product-media-container video {
+      width: 175px !important;
       height: 175px !important;
-      max-width: 173px !important;
+      max-width: 175px !important;
       object-fit: cover !important;
     }
   }
@@ -457,11 +498,11 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const desktopCarousel = document.querySelector('[data-testid="explore-more-products-grid"]');
+    const desktopCarousel = document.querySelector('[data-testid="product-bundle-grid"]');
     if (!desktopCarousel) return;
 
     const itemsPerView = parseInt(desktopCarousel.getAttribute('data-items-per-view')) || 4;
-    const slideshow = desktopCarousel.querySelector('slideshow-component[ref="exploreMoreProductsDesktop"]');
+    const slideshow = desktopCarousel.querySelector('slideshow-component[ref="productBundleDesktop"]');
     if (!slideshow) return;
 
     const previousBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--previous');
@@ -511,7 +552,7 @@
 
     // Move product action buttons to be after the price block inside product-card
     function positionProductActions() {
-      const productItems = desktopCarousel.querySelectorAll('[data-explore-more-item="true"]');
+      const productItems = desktopCarousel.querySelectorAll('[data-product-bundle-item="true"]');
       productItems.forEach(function(item) {
         const actions = item.querySelector('.product-card-actions');
         if (!actions) return;
@@ -564,7 +605,7 @@
     }
 
     // Setup product cards and position buttons
-    function initializeExploreMoreProducts() {
+    function initializeProductBundle() {
       setupProductCards();
       // Run multiple times to ensure it works
       positionProductActions();
@@ -574,9 +615,9 @@
 
     // Initialize after initial load - use multiple attempts
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeExploreMoreProducts);
+      document.addEventListener('DOMContentLoaded', initializeProductBundle);
     } else {
-      initializeExploreMoreProducts();
+      initializeProductBundle();
     }
 
     // Also initialize after any dynamic updates
@@ -588,7 +629,7 @@
         }
       });
       if (shouldReposition) {
-        setTimeout(initializeExploreMoreProducts, 50);
+        setTimeout(initializeProductBundle, 50);
       }
     });
 
@@ -601,8 +642,8 @@
 
 {% schema %}
 {
-  "name": "Explore More Products",
-  "class": "ui-test-explore-more-products",
+  "name": "Product Bundle",
+  "class": "ui-test-product-bundle",
   "blocks": [
     {
       "type": "@theme"
@@ -622,14 +663,14 @@
       "type": "text",
       "id": "top_label",
       "label": "Top Label (Fallback)",
-      "default": "explore",
+      "default": "bundle",
       "info": "Text displayed above the section title. This is used as fallback if not provided in the metaobject."
     },
     {
       "type": "text",
       "id": "section_title",
       "label": "Section Title (Fallback)",
-      "default": "EXPLORE MORE PRODUCTS",
+      "default": "PRODUCT BUNDLE",
       "info": "Title displayed above the product slider. This is used as fallback if not provided in the metaobject."
     },
     {
@@ -638,7 +679,7 @@
     },
     {
       "type": "paragraph",
-      "content": "Products are automatically loaded from the metafield 'custom.cb_more_products' which is a metaobject with handle 'explore'. The metaobject should have 'heading', 'subheading', and 'collection' fields. The metafield can be set on the current collection, product, or shop level. The current viewing product will be automatically excluded from the list."
+      "content": "Products are automatically loaded from the product metafield 'custom.cb_bundle' which is a metaobject with handle 'cb_bundle'. The metaobject should have 'heading', 'subheading', and 'product' fields. The product field should have a metafield 'custom.cb_products_in_the_bundle' containing a list of products."
     },
     {
       "type": "header",
@@ -797,11 +838,11 @@
   ],
   "presets": [
     {
-      "name": "Explore More Products",
+      "name": "Product Bundle",
       "category": "Products",
       "settings": {
-        "top_label": "explore",
-        "section_title": "EXPLORE MORE PRODUCTS",
+        "top_label": "bundle",
+        "section_title": "PRODUCT BUNDLE",
         "items_per_view": 4,
         "max_products": 8,
         "columns_gap": 8,

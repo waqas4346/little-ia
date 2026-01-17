@@ -1,0 +1,1233 @@
+{% liquid
+  assign items_per_view = section.settings.items_per_view | default: 4
+  assign first_block = section.blocks | first
+  
+  # Get the first active collection from blocks
+  assign active_collection_handle = blank
+  assign active_collection_name = blank
+  assign active_collection = blank
+  
+  if first_block != blank
+    assign active_collection_handle = first_block.settings.collection.handle
+    assign active_collection = first_block.settings.collection
+    if first_block.settings.name != blank
+      assign active_collection_name = first_block.settings.name
+    else
+      assign active_collection_name = active_collection.title
+    endif
+  endif
+  
+  # Get sub-collections from metafield for active collection
+  assign sub_collections = blank
+  if active_collection != blank
+    assign metafield_value = active_collection.metafields.custom.cb_sub_collections
+    if metafield_value != blank
+      assign sub_collections = metafield_value.value
+    endif
+  endif
+%}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div
+  data-testid="shop-by-age"
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+    shop-by-age-section
+  "
+  style="
+    {% render 'spacing-style', settings: section.settings %}
+    {% render 'gap-style', value: section.settings.gap %}
+  "
+>
+  <div class="shop-by-age-header">
+    {% if section.settings.top_label != blank %}
+      <div class="shop-by-age-top-label">
+        <span class="shop-by-age-top-label-text">{{ section.settings.top_label }}</span>
+      </div>
+    {% endif %}
+    
+    {% if section.settings.section_title != blank %}
+      <div class="shop-by-age-section-title">
+        <span class="shop-by-age-section-title-label">{{ section.settings.section_title }}</span>
+      </div>
+    {% endif %}
+    
+    {% if section.blocks.size > 0 %}
+      <div class="shop-by-age-tabs-container">
+        <div class="shop-by-age-tabs">
+          {% for block in section.blocks %}
+            {% assign block_collection = block.settings.collection %}
+            {% assign tab_name = blank %}
+            {% if block.settings.name != blank %}
+              {% assign tab_name = block.settings.name %}
+            {% else %}
+              {% assign tab_name = block_collection.title %}
+            {% endif %}
+            
+            <button 
+              class="shop-by-age-tab {% if forloop.first %}active{% endif %}" 
+              data-target="{{ block_collection.handle }}"
+              data-block-id="{{ block.id }}"
+              type="button"
+              aria-controls="content-{{ block_collection.handle }}"
+              aria-selected="{% if forloop.first %}true{% else %}false{% endif %}">
+              {{ tab_name }}
+            </button>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if section.blocks.size > 0 %}
+    <div class="shop-by-age-contents">
+      {% for block in section.blocks %}
+        {% assign block_collection = block.settings.collection %}
+        {% assign block_sub_collections = blank %}
+        {% assign block_sub_collections_count = 0 %}
+        
+        {% if block_collection != blank %}
+          {% assign metafield_value = block_collection.metafields.custom.cb_sub_collections %}
+          
+          {% if metafield_value != blank and metafield_value.value != blank %}
+            {% assign block_sub_collections = metafield_value.value %}
+            {% if block_sub_collections != blank %}
+              {% assign block_sub_collections_count = block_sub_collections.size %}
+              {% comment %}Ensure it's iterable and has items{% endcomment %}
+              {% if block_sub_collections_count == 0 %}
+                {% assign block_sub_collections = blank %}
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+        
+        <div class="shop-by-age-content-wrapper {% unless forloop.first %}hidden{% endunless %}" 
+             id="content-{% if block_collection.handle %}{{ block_collection.handle }}{% else %}block-{{ block.id }}{% endif %}" 
+             data-block-id="{{ block.id }}"
+             data-collection-handle="{% if block_collection.handle %}{{ block_collection.handle }}{% else %}{{ block.id }}{% endif %}"
+             {% unless forloop.first %}style="display: none;"{% endunless %}>
+          
+          {% if block_sub_collections != blank %}
+            {% capture list_items %}
+              {% for sub_collection in block_sub_collections %}
+                <div class="resource-list__item shop-by-age-item">
+                  <div class="collection-slider-card">
+                    <a href="{{ sub_collection.url }}" class="collection-slider-card__link">
+                      <div class="collection-slider-card__image-wrapper">
+                        {% if sub_collection.featured_image %}
+                          {{
+                            sub_collection.featured_image
+                            | image_url: width: 800
+                            | image_tag: loading: 'lazy', class: 'collection-slider-card__image', alt: sub_collection.title
+                          }}
+                        {% else %}
+                          <div class="collection-slider-card__placeholder">
+                            {{ sub_collection.title | truncate: 60 }}
+                          </div>
+                        {% endif %}
+                        <div class="collection-slider-card__title-overlay" style="--title-position: {{ section.settings.title_position }}; --title-margin-bottom: 24px;">
+                          <span class="collection-slider-card__title">{{ sub_collection.title }}</span>
+                        </div>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+                {% unless forloop.last %}
+                  <!--@list/split-->
+                {% endunless %}
+              {% endfor %}
+            {% endcapture %}
+
+            {% liquid
+              assign list_items_array = list_items | strip | split: '<!--@list/split-->'
+              
+              # Prepare carousel settings - no gutters to maximize width
+              assign slideshow_gutters = null
+              assign gutter_style = '--gutter-slide-width: 0px;'
+
+              assign show_arrows = false
+              if section.settings.icons_style != 'none'
+                assign show_arrows = true
+              endif
+
+              # For mobile: group items into slides of 4 (2x2 grid)
+              # For desktop: each item is a slide, showing 4 at once
+              assign items_per_slide_mobile = 4
+              assign total_slides_mobile = list_items_array.size | divided_by: items_per_slide_mobile
+              assign remainder_mobile = list_items_array.size | modulo: items_per_slide_mobile
+              if remainder_mobile > 0
+                assign total_slides_mobile = total_slides_mobile | plus: 1
+              endif
+            %}
+
+            {% capture slides %}
+              {% comment %} Desktop: each item is a separate slide {% endcomment %}
+              {% for item in list_items_array %}
+                {% render 'slideshow-slide'
+                  index : forloop.index0,
+                  children : item,
+                  class : 'resource-list__slide shop-by-age-slide shop-by-age-slide-desktop'
+                %}
+              {% endfor %}
+            {% endcapture %}
+
+            {% capture slides_mobile %}
+              {% comment %} Mobile: group items into slides of 4 {% endcomment %}
+              {% assign slide_index = 0 %}
+              {% for i in (0..total_slides_mobile) %}
+                {% if forloop.index0 < total_slides_mobile %}
+                  {% capture mobile_slide_content %}
+                    <div class="shop-by-age-mobile-grid">
+                      {% assign start_index = forloop.index0 | times: items_per_slide_mobile %}
+                      {% assign end_index = start_index | plus: items_per_slide_mobile | minus: 1 %}
+                      {% for j in (start_index..end_index) %}
+                        {% if j < list_items_array.size %}
+                          {{ list_items_array[j] }}
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% endcapture %}
+                  {% render 'slideshow-slide'
+                    index : slide_index,
+                    children : mobile_slide_content,
+                    class : 'resource-list__slide shop-by-age-slide shop-by-age-slide-mobile'
+                  %}
+                  {% assign slide_index = slide_index | plus: 1 %}
+                {% endif %}
+              {% endfor %}
+            {% endcapture %}
+
+            {% comment %} Desktop carousel {% endcomment %}
+            <div class="shop-by-age-wrapper">
+              <div
+                class="resource-list resource-list__carousel shop-by-age-carousel shop-by-age-desktop"
+                style="{{ gutter_style }} --column-count: {{ items_per_view }}; --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 12 }}px; --peek-next-slide-size: 0px;"
+                data-testid="shop-by-age-grid-{{ block_collection.handle }}"
+                data-items-per-view="{{ items_per_view }}"
+              >
+                {% render 'slideshow',
+                  ref: 'shopByAgeDesktop',
+                  class: 'resource-list__carousel',
+                  slides: slides,
+                  show_arrows: show_arrows,
+                  icon_style: section.settings.icons_style,
+                  icon_shape: section.settings.icons_shape,
+                  auto_hide_controls: false,
+                  infinite: false,
+                  initial_slide: 0,
+                  slide_count: block_sub_collections_count,
+                  slideshow_gutters: slideshow_gutters,
+                  arrows_position: 'center'
+                %}
+              </div>
+            </div>
+
+            {% comment %} Mobile carousel {% endcomment %}
+            <div
+              class="resource-list__carousel shop-by-age-carousel shop-by-age-mobile hidden--desktop"
+              style="--gutter-slide-width: 0px;"
+              data-testid="shop-by-age-grid-mobile-{{ block_collection.handle }}"
+            >
+              {% render 'slideshow',
+                ref: 'shopByAgeMobile',
+                class: 'resource-list__carousel',
+                slides: slides_mobile,
+                show_arrows: false,
+                icon_style: 'none',
+                icon_shape: 'none',
+                auto_hide_controls: false,
+                infinite: false,
+                initial_slide: 0,
+                slide_count: total_slides_mobile,
+                slideshow_gutters: ''
+              %}
+              <div class="shop-by-age-scrollbar-indicator">
+                <div class="shop-by-age-scrollbar-track">
+                  <div class="shop-by-age-scrollbar-thumb"></div>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <div class="shop-by-age-empty">
+              <p>No sub-collections found for this collection.</p>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if section.settings.enable_shop_all and first_block != blank %}
+      <div class="shop-by-age-footer">
+        {% assign first_col = first_block.settings.collection %}
+        {% assign first_tab_name = blank %}
+        {% if first_block.settings.name != blank %}
+          {% assign first_tab_name = first_block.settings.name %}
+        {% else %}
+          {% assign first_tab_name = first_col.title %}
+        {% endif %}
+        <a href="{{ first_col.url }}" class="shop-by-age-shop-all-btn" data-collection-handle="{{ first_col.handle }}">
+          SHOP ALL {{ first_tab_name | upcase }}
+        </a>
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+
+<style>
+  .shop-by-age-header {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .shop-by-age-header {
+      margin-bottom: 24px;
+    }
+  }
+
+  .shop-by-age-top-label {
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  .shop-by-age-top-label-text {
+    margin: 0;
+    font-family: 'Sacramento', cursive, sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 150%;
+    color: #7295BB;
+    text-align: center;
+    text-transform: lowercase;
+    display: block;
+  }
+
+  .shop-by-age-section-title {
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  .shop-by-age-section-title-label {
+    margin: 0;
+    font-family: 'FuturaPT-Demi', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
+    text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
+    display: block;
+  }
+
+  .shop-by-age-tabs-container {
+    margin-bottom: 0;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    margin-top: 16px;
+  }
+
+  .shop-by-age-tabs-container::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .shop-by-age-tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .shop-by-age-tabs-container {
+      display: flex;
+      justify-content: center;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .shop-by-age-tabs {
+      gap: 0;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+    }
+  }
+  
+  .shop-by-age-tab {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 20.3px;
+    letter-spacing: 0%;
+    text-align: center;
+    text-transform: uppercase;
+    color: #1D425A;
+    text-decoration: none;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  
+  .shop-by-age-tab:hover {
+    opacity: 0.8;
+  }
+  
+  .shop-by-age-tab.active {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    color: #1D425A;
+    padding: 8px 16px;
+    border-bottom: 2px solid #1D425A;
+  }
+
+  .shop-by-age-content-wrapper {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .shop-by-age-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+  }
+
+  .shop-by-age-footer {
+    margin-top: 32px;
+    text-align: center;
+  }
+
+  .shop-by-age-shop-all-btn {
+    display: inline-block;
+    padding: 10px;
+    border: 1px solid #7295BB;
+    background: transparent;
+    color: #7295BB;
+    text-decoration: none;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 140%;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    border-radius: 0;
+  }
+
+  .shop-by-age-shop-all-btn:hover {
+    background-color: #7295BB;
+    color: #ffffff;
+  }
+
+  /* Collection slider card styling (reused from collection-slider) */
+  .shop-by-age-section .collection-slider-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .shop-by-age-section .collection-slider-card__link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+  }
+
+  .shop-by-age-section .collection-slider-card__image-wrapper {
+    height: 417px;
+    overflow: hidden;
+  }
+
+  .shop-by-age-section .collection-slider-card__image-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 53.36%, #000000 121.94%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .shop-by-age-section .collection-slider-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .shop-by-age-section .collection-slider-card__placeholder {
+    width: 100%;
+    height: 100%;
+    background: #F7F7F7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--padding-lg);
+    font-size: var(--font-size--lg);
+    color: var(--color-foreground);
+    text-align: center;
+  }
+
+  .shop-by-age-section .collection-slider-card__title-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: var(--title-margin-bottom);
+    display: flex;
+    justify-content: var(--title-position);
+    align-items: center;
+    padding: 0 8px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .shop-by-age-section .collection-slider-card__title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 22px;
+    line-height: 150%;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: text-decoration 0.3s ease;
+  }
+
+  .shop-by-age-section .collection-slider-card__link:hover .collection-slider-card__title {
+    text-decoration: underline;
+  }
+
+  /* Collection slider carousel container */
+  .shop-by-age-carousel {
+    position: relative;
+  }
+
+  /* Remove horizontal padding from section */
+  .shop-by-age-section {
+    padding-inline: 0 !important;
+  }
+
+  /* Allow overflow for arrows to show outside, but clip slides */
+  .shop-by-age-desktop slideshow-component {
+    overflow: visible;
+  }
+
+  .shop-by-age-desktop slideshow-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Ensure carousel container allows arrows to show */
+  .shop-by-age-desktop.resource-list__carousel {
+    overflow: visible;
+  }
+
+  /* Hide mobile carousel on desktop */
+  .shop-by-age-mobile {
+    display: none;
+  }
+
+  @media (max-width: 767px) {
+    .shop-by-age-desktop {
+      display: none;
+    }
+    
+    .shop-by-age-mobile {
+      display: block;
+    }
+  }
+
+  /* Desktop slider styling */
+  .shop-by-age-desktop .resource-list__carousel {
+    --column-count: {{ section.settings.items_per_view | default: 4 }};
+    --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 12 }}px;
+  }
+
+  /* Ensure gap is applied to slideshow slides on desktop */
+  .shop-by-age-desktop slideshow-slides {
+    gap: {{ section.settings.columns_gap | default: 12 }}px !important;
+  }
+
+  /* Position arrows outside the carousel on desktop */
+  .shop-by-age-wrapper {
+    position: relative;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .shop-by-age-desktop slideshow-container {
+    position: relative;
+    overflow: visible;
+  }
+
+  .shop-by-age-desktop slideshow-component {
+    overflow: visible;
+  }
+
+  .shop-by-age-desktop slideshow-arrows {
+    position: absolute;
+    inset: 0;
+    left: auto;
+    right: auto;
+    width: calc(100% + 120px);
+    max-width: none;
+    pointer-events: none;
+    z-index: var(--layer-heightened);
+    margin-left: -60px;
+    margin-right: -60px;
+    display: flex !important;
+  }
+
+  .shop-by-age-desktop slideshow-arrows[position='center'] {
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+  }
+
+  .shop-by-age-desktop slideshow-arrows .slideshow-control {
+    position: absolute;
+    margin: 0;
+    pointer-events: auto;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 1;
+    transition: opacity 0.3s ease-out;
+  }
+
+  .shop-by-age-desktop slideshow-arrows .slideshow-control--previous {
+    left: 0;
+  }
+
+  .shop-by-age-desktop slideshow-arrows .slideshow-control--next {
+    right: 0;
+  }
+
+  @media (max-width: 1200px) {
+    .shop-by-age-wrapper {
+      padding: 0;
+    }
+
+    .shop-by-age-desktop slideshow-arrows {
+      width: calc(100% + 100px);
+      margin-left: -50px;
+      margin-right: -50px;
+    }
+  }
+
+  /* Mobile slider styling - 2x2 grid */
+  @media screen and (min-width: 750px) {
+    .shop-by-age-top-label-text {
+      font-size: 38px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .shop-by-age-header {
+      margin-bottom: 16px;
+    }
+
+    .shop-by-age-section .collection-slider-card__title {
+      font-size: 14px;
+      line-height: 150%;
+    }
+
+    .shop-by-age-section .collection-slider-card__title-overlay {
+      padding: 0 12px;
+      --title-margin-bottom: 13px;
+    }
+
+    /* Mobile image dimensions and gradient */
+    .shop-by-age-section .collection-slider-card__image-wrapper {
+      height: 219px;
+    }
+
+    .shop-by-age-section .collection-slider-card__image-wrapper::before {
+      background: linear-gradient(180.06deg, rgba(0, 0, 0, 0) 45.21%, #000000 121.86%);
+    }
+
+    /* Enable scrollbar on mobile - override slideshow default */
+    .shop-by-age-mobile slideshow-component {
+      --cursor: grab;
+      padding-bottom: 0 !important;
+      margin-bottom: 0 !important;
+    }
+
+    .shop-by-age-mobile slideshow-container {
+      padding-bottom: 0 !important;
+      margin-bottom: 0 !important;
+    }
+
+    .shop-by-age-mobile slideshow-component[disabled='true'] slideshow-slides {
+      overflow-x: auto !important;
+    }
+
+    .shop-by-age-mobile slideshow-slides {
+      overflow-x: auto !important;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 0 !important;
+      margin-bottom: 0 !important;
+    }
+
+    /* Hide native scrollbar */
+    .shop-by-age-mobile slideshow-slides::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    /* Custom scrollbar indicator */
+    .shop-by-age-scrollbar-indicator {
+      width: 100%;
+      height: 4px;
+      position: relative;
+    }
+
+    .shop-by-age-scrollbar-track {
+      width: 100%;
+      height: 4px;
+      background-color: #EEEEEE;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shop-by-age-scrollbar-thumb {
+      height: 4px;
+      background-color: #7295BB;
+      border-radius: 10px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      transition: width 0.1s ease-out;
+      min-width: 20px;
+    }
+
+    /* Mobile slide: 2x2 grid layout */
+    .shop-by-age-mobile .shop-by-age-slide-mobile {
+      width: 100%;
+      flex: 0 0 100%;
+      scroll-snap-align: start;
+    }
+
+    .shop-by-age-mobile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+      width: 100%;
+      padding: 0;
+    }
+
+    .shop-by-age-mobile-grid .shop-by-age-item {
+      width: 100%;
+    }
+
+    .shop-by-age-tab {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20.3px;
+      letter-spacing: 0%;
+      text-align: center;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      color: #1D425A;
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .shop-by-age-tab.active {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 100%;
+      letter-spacing: 0%;
+      text-align: center;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      color: #1D425A;
+    }
+
+    .shop-by-age-shop-all-btn {
+      font-family: 'Outfit', sans-serif;
+      font-style: normal;
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 140%;
+      text-transform: uppercase;
+      color: #7295BB;
+      padding: 10px;
+      border: 1px solid #7295BB;
+    }
+
+    .shop-by-age-footer {
+      margin-top: 30px;
+    }
+  }
+
+  /* Desktop: Show arrows, hide on mobile */
+  @media (max-width: 767px) {
+    .shop-by-age-carousel slideshow-arrows {
+      display: none !important;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .shop-by-age-carousel slideshow-arrows {
+      display: flex;
+    }
+  }
+
+  /* Tablet and iPad responsive adjustments - ensure desktop view shows */
+  @media (min-width: 768px) {
+    .shop-by-age-desktop {
+      display: block !important;
+    }
+
+    .shop-by-age-mobile {
+      display: none !important;
+    }
+
+    /* Ensure proper column count for tablets */
+    .shop-by-age-desktop .resource-list__carousel {
+      --column-count: {{ section.settings.items_per_view | default: 4 }};
+    }
+  }
+
+  /* iPad Mini (768px) - base tablet height */
+  @media (min-width: 768px) and (max-width: 819px) {
+    .shop-by-age-section .collection-slider-card__image-wrapper {
+      height: 350px;
+    }
+  }
+
+  /* iPad Air and similar (820px - 1023px) */
+  @media (min-width: 820px) and (max-width: 1023px) {
+    .shop-by-age-section .collection-slider-card__image-wrapper {
+      height: 380px;
+    }
+  }
+
+  /* iPad Pro (1024px) - show 3 collections per row and full desktop height */
+  @media (min-width: 1024px) and (max-width: 1199px) {
+    .shop-by-age-section .collection-slider-card__image-wrapper {
+      height: 417px;
+    }
+  }
+
+  /* Large desktop (1200px+) - use default items_per_view setting */
+  @media (max-width: 1200px) {
+    .shop-by-age-desktop .resource-list__carousel {
+      --column-count: 3;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.shop-by-age-tab');
+    const contents = document.querySelectorAll('.shop-by-age-content-wrapper');
+    const shopAllBtn = document.querySelector('.shop-by-age-shop-all-btn');
+    
+    // Store collection data for button updates
+    const collectionsData = {};
+    {% for block in section.blocks %}
+      {% assign block_collection = block.settings.collection %}
+      {% assign tab_name = blank %}
+      {% if block.settings.name != blank %}
+        {% assign tab_name = block.settings.name %}
+      {% else %}
+        {% assign tab_name = block_collection.title %}
+      {% endif %}
+      collectionsData['{{ block_collection.handle }}'] = {
+        title: "{{ tab_name | escape }}",
+        url: "{{ block_collection.url }}"
+      };
+    {% endfor %}
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const targetHandle = this.dataset.target;
+        
+        // Update Tabs
+        tabs.forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        this.classList.add('active');
+        this.setAttribute('aria-selected', 'true');
+        
+        // Update Content
+        contents.forEach(content => {
+          if (content.dataset.collectionHandle === targetHandle) {
+            content.style.display = 'block';
+            content.classList.remove('hidden');
+            // Trigger reflow for animation if needed
+            content.style.animation = 'none';
+            content.offsetHeight; /* trigger reflow */
+            content.style.animation = 'fadeIn 0.5s ease-out forwards';
+            
+            // Force slideshow to refresh when tab becomes visible
+            const slideshow = content.querySelector('slideshow-component');
+            if (slideshow && slideshow.update) {
+              slideshow.update();
+            }
+            
+            // Trigger resize event to ensure proper layout
+            window.dispatchEvent(new Event('resize'));
+          } else {
+            content.style.display = 'none';
+            content.classList.add('hidden');
+          }
+        });
+        
+        // Update Shop All Button
+        if (shopAllBtn && collectionsData[targetHandle]) {
+          const data = collectionsData[targetHandle];
+          shopAllBtn.href = data.url;
+          shopAllBtn.textContent = 'SHOP ALL ' + data.title.toUpperCase();
+          shopAllBtn.setAttribute('data-collection-handle', targetHandle);
+        }
+      });
+    });
+
+    // Handle carousel navigation for each content wrapper
+    contents.forEach(content => {
+      const desktopCarousel = content.querySelector('[data-testid^="shop-by-age-grid-"]:not([data-testid*="mobile"])');
+      if (!desktopCarousel) return;
+
+      const itemsPerView = parseInt(desktopCarousel.getAttribute('data-items-per-view')) || 4;
+      const slideshow = desktopCarousel.querySelector('slideshow-component[ref="shopByAgeDesktop"]');
+      if (!slideshow) return;
+
+      const previousBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--previous');
+      const nextBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--next');
+      const slides = slideshow.querySelectorAll('slideshow-slide');
+
+      if (!previousBtn || !nextBtn || slides.length === 0) return;
+
+      let currentIndex = 0;
+      const totalSlides = slides.length;
+      const maxIndex = Math.max(0, totalSlides - itemsPerView);
+
+      // Override previous button
+      previousBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        currentIndex = Math.max(0, currentIndex - itemsPerView);
+        if (slides[currentIndex]) {
+          slideshow.select(currentIndex, e, { animate: true });
+        }
+      });
+
+      // Override next button
+      nextBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        currentIndex = Math.min(maxIndex, currentIndex + itemsPerView);
+        if (slides[currentIndex]) {
+          slideshow.select(currentIndex, e, { animate: true });
+        }
+      });
+
+      // Update current index when slideshow changes
+      slideshow.addEventListener('slideshow:select', function(event) {
+        currentIndex = event.detail.index || 0;
+      });
+    });
+
+    // Custom scrollbar indicator for mobile
+    contents.forEach(content => {
+      const mobileSlides = content.querySelector('.shop-by-age-mobile slideshow-slides');
+      const scrollbarThumb = content.querySelector('.shop-by-age-scrollbar-thumb');
+      const scrollbarIndicator = content.querySelector('.shop-by-age-scrollbar-indicator');
+      
+      if (!mobileSlides || !scrollbarThumb || !scrollbarIndicator) return;
+
+      function updateScrollbar() {
+        const scrollLeft = mobileSlides.scrollLeft;
+        const scrollWidth = mobileSlides.scrollWidth;
+        const clientWidth = mobileSlides.clientWidth;
+        const maxScroll = scrollWidth - clientWidth;
+        
+        if (maxScroll <= 0) {
+          scrollbarIndicator.style.display = 'none';
+          return;
+        }
+        
+        scrollbarIndicator.style.display = 'block';
+        
+        // Calculate thumb width and position
+        const thumbWidth = (clientWidth / scrollWidth) * 100;
+        const thumbPosition = (scrollLeft / maxScroll) * (100 - thumbWidth);
+        
+        scrollbarThumb.style.width = thumbWidth + '%';
+        scrollbarThumb.style.left = thumbPosition + '%';
+      }
+
+      // Update on scroll
+      mobileSlides.addEventListener('scroll', updateScrollbar);
+      
+      // Update on resize
+      const resizeObserver = new ResizeObserver(updateScrollbar);
+      resizeObserver.observe(mobileSlides);
+      
+      // Initial update
+      updateScrollbar();
+      
+      // Update periodically to catch any changes
+      setInterval(updateScrollbar, 100);
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Shop By Age",
+  "class": "ui-test-shop-by-age",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "blocks": [
+    {
+      "type": "age_group",
+      "name": "Age Group",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection",
+          "info": "Select the collection for this age group. Sub-collections will be loaded from the collection's metafield 'custom.cb_sub_collections'."
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Tab Name",
+          "info": "Optional: Custom name for the tab. If not provided, the collection name will be used."
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "text",
+      "id": "top_label",
+      "label": "Top Label",
+      "default": "shop",
+      "info": "Text displayed above the section title"
+    },
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section Title",
+      "default": "By Age",
+      "info": "Title displayed above the tabs"
+    },
+    {
+      "type": "range",
+      "id": "items_per_view",
+      "label": "Items per view",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "default": 4,
+      "info": "Number of collections to show at once in the slider"
+    },
+    {
+      "type": "select",
+      "id": "title_position",
+      "label": "Title Position",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "flex-end",
+          "label": "Right"
+        }
+      ],
+      "default": "center",
+      "info": "Position of collection title on the image"
+    },
+    {
+      "type": "select",
+      "id": "icons_style",
+      "label": "Arrow Style",
+      "options": [
+        {
+          "value": "arrow",
+          "label": "Arrows"
+        },
+        {
+          "value": "chevron",
+          "label": "Chevrons"
+        },
+        {
+          "value": "arrows_large",
+          "label": "Large Arrows"
+        },
+        {
+          "value": "chevron_large",
+          "label": "Large Chevrons"
+        },
+        {
+          "value": "blue_arrows",
+          "label": "Blue arrows"
+        },
+        {
+          "value": "none",
+          "label": "None"
+        }
+      ],
+      "default": "arrow"
+    },
+    {
+      "type": "select",
+      "id": "icons_shape",
+      "label": "Arrow Background",
+      "options": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "circle",
+          "label": "Circle"
+        },
+        {
+          "value": "square",
+          "label": "Square"
+        }
+      ],
+      "default": "none",
+      "visible_if": "{{ section.settings.icons_style != 'none' }}"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap",
+      "label": "Horizontal Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_shop_all",
+      "label": "Show 'Shop all' button",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Section Layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page"
+        },
+        {
+          "value": "full-width",
+          "label": "Full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color Scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Shop By Age",
+      "category": "Collections",
+      "settings": {
+        "top_label": "shop",
+        "section_title": "By Age",
+        "items_per_view": 4,
+        "title_position": "center",
+        "icons_style": "arrow",
+        "icons_shape": "none",
+        "columns_gap": 12,
+        "enable_shop_all": true,
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    }
+  ]
+}
+{% endschema %}

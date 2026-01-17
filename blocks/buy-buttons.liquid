@@ -33,6 +33,13 @@
       assign add_to_cart_text = 'products.product.unavailable' | t
     endif
   endif
+
+  # Check if product has personalization enabled
+  assign show_personalise_button = false
+  assign product_tags_lowercase = product.tags | join: ' ' | downcase
+  if product_tags_lowercase contains 'cust_personalized'
+    assign show_personalise_button = true
+  endif
 %}
 
 <span
@@ -82,6 +89,7 @@
           {% render 'gift-wrap-message', product: product, form: form, product_form_id: product_form_id %}
 
           {%- comment -%} Personalise It Button {%- endcomment -%}
+          {% if show_personalise_button %}
           <button
             type="button"
             class="personalise-button button-unstyled"
@@ -117,6 +125,7 @@
               <span class="personalise-confirmation__text" data-personalise-confirm-text></span>
             </label>
           </div>
+          {% endif %}
 
           {%- if has_quantity_rules -%}
             {%- assign cart_quantity = cart | item_count_for_variant: variant.id -%}
@@ -429,20 +438,33 @@
           }
         }
         
+        // Also try to get from URL if available
         if (!productId) {
-          console.log('updatePersonaliseButtonText: Product ID not found');
-          return;
+          const urlParams = new URLSearchParams(window.location.search);
+          const variantId = urlParams.get('variant');
+          // Try to extract product ID from variant or other sources
         }
         
-        // Convert to string to match sessionStorage key format
-        productId = String(productId);
-        const key = `personalisation_${productId}`;
+        // Try to find saved personalisation - use first available if productId not found
+        let savedPersonalisation = null;
+        let usedKey = null;
         
-        // Use sessionStorage (current session only, clears on reload)
-        const savedPersonalisation = sessionStorage.getItem(key);
+        if (productId) {
+          // Convert to string to match sessionStorage key format
+          productId = String(productId);
+          const key = `personalisation_${productId}`;
+          savedPersonalisation = sessionStorage.getItem(key);
+          usedKey = key;
+        } else {
+          // If productId not found, try to use the first available personalisation key
+          const allPersonalisationKeys = Object.keys(sessionStorage).filter(k => k.startsWith('personalisation_'));
+          if (allPersonalisationKeys.length > 0) {
+            usedKey = allPersonalisationKeys[0];
+            savedPersonalisation = sessionStorage.getItem(usedKey);
+          }
+        }
         
         const buttons = document.querySelectorAll('[data-personalise-button]');
-        console.log('Found buttons:', buttons.length);
         
         buttons.forEach(button => {
           const textSpan = button.querySelector('[data-personalise-text]');
@@ -462,16 +484,31 @@
               confirmationContainer = formButtons.querySelector('[data-personalise-confirmation]');
             }
           }
-          console.log('Confirmation container found:', confirmationContainer ? 'YES' : 'NO');
-          
           if (textSpan) {
+            // Prioritize sessionStorage as the source of truth, especially when modal is closed
+            const form = document.querySelector('form[data-type="add-to-cart-form"]');
+            const modalDialog = document.querySelector('personalise-dialog');
+            
+            const parts = [];
+            let colorText = '';
+            
+            // First, try to read from sessionStorage (most reliable when modal is closed)
             if (savedPersonalisation) {
               try {
                 const personalisation = JSON.parse(savedPersonalisation);
                 
-                // Format the summary: "Personalised: {name} | {date} ({color})"
-                // Include all active personalization fields
-                const parts = [];
+                // Always read baby/kid/mum names from sessionStorage if they exist
+                if (personalisation.babyName && typeof personalisation.babyName === 'string' && personalisation.babyName.trim()) {
+                  parts.push('Baby: ' + personalisation.babyName);
+                }
+                if (personalisation.kidName && typeof personalisation.kidName === 'string' && personalisation.kidName.trim()) {
+                  parts.push('Kid: ' + personalisation.kidName);
+                }
+                if (personalisation.mumName && typeof personalisation.mumName === 'string' && personalisation.mumName.trim()) {
+                  parts.push('Mum: ' + personalisation.mumName);
+                }
+                
+                // Read other fields from sessionStorage
                 if (personalisation.name) {
                   parts.push(personalisation.name);
                 }
@@ -496,103 +533,185 @@
                 if (personalisation.schoolYear) {
                   parts.push(personalisation.schoolYear);
                 }
-                const colorText = personalisation.color || '';
                 
-                let summaryText = 'Personalised:';
-                if (parts.length > 0) {
-                  summaryText += ' ' + parts.join(' | ');
+                // Read color from sessionStorage
+                if (personalisation.color) {
+                  colorText = personalisation.color;
                 }
-                if (colorText) {
-                  summaryText += ' (' + colorText + ')';
+              } catch (e) {
+                console.error('Error parsing personalisation from sessionStorage:', e);
+              }
+            }
+            
+            // Also check form inputs as a fallback/update (in case user is editing)
+            if (form || modalDialog) {
+              // Read Baby/Kid/Mum names from modal dialog inputs (they're in the modal, not the form)
+              let babyNameInput = modalDialog ? modalDialog.querySelector('input[name="properties[Baby\'s Name]"]') : null;
+              if (!babyNameInput && form) {
+                babyNameInput = form.querySelector('input[name="properties[Baby\'s Name]"]');
+              }
+              if (babyNameInput && babyNameInput.value.trim()) {
+                // Replace if already exists, or add if not
+                const existingIndex = parts.findIndex(p => p.startsWith('Baby: '));
+                if (existingIndex >= 0) {
+                  parts[existingIndex] = 'Baby: ' + babyNameInput.value.trim();
+                } else {
+                  parts.push('Baby: ' + babyNameInput.value.trim());
                 }
-                
-                // Show summary and update text
-                if (summarySpan) {
-                  summarySpan.textContent = summaryText;
-                  summarySpan.style.display = '';
-                  button.classList.add('has-summary');
+              }
+              
+              let kidNameInput = modalDialog ? modalDialog.querySelector('input[name="properties[Kid\'s Name]"]') : null;
+              if (!kidNameInput && form) {
+                kidNameInput = form.querySelector('input[name="properties[Kid\'s Name]"]');
+              }
+              if (kidNameInput && kidNameInput.value.trim()) {
+                const existingIndex = parts.findIndex(p => p.startsWith('Kid: '));
+                if (existingIndex >= 0) {
+                  parts[existingIndex] = 'Kid: ' + kidNameInput.value.trim();
+                } else {
+                  parts.push('Kid: ' + kidNameInput.value.trim());
                 }
-                textSpan.textContent = 'EDIT';
-                
-                // Show and update confirmation checkbox
-                if (confirmationContainer) {
-                  const confirmTextSpan = confirmationContainer.querySelector('[data-personalise-confirm-text]');
-                  if (confirmTextSpan) {
-                    // Build dynamic label based on ALL available fields
-                    const fields = [];
-                    if (personalisation.name) {
+              }
+              
+              let mumNameInput = modalDialog ? modalDialog.querySelector('input[name="properties[Mum\'s Name]"]') : null;
+              if (!mumNameInput && form) {
+                mumNameInput = form.querySelector('input[name="properties[Mum\'s Name]"]');
+              }
+              if (mumNameInput && mumNameInput.value.trim()) {
+                const existingIndex = parts.findIndex(p => p.startsWith('Mum: '));
+                if (existingIndex >= 0) {
+                  parts[existingIndex] = 'Mum: ' + mumNameInput.value.trim();
+                } else {
+                  parts.push('Mum: ' + mumNameInput.value.trim());
+                }
+              }
+              
+              // Also read other fields from modal dialog or form inputs
+              let nameInput = modalDialog ? modalDialog.querySelector('#personalise-name') : null;
+              if (!nameInput && form) {
+                nameInput = form.querySelector('input[name="properties[Name]"]') || form.querySelector('#personalise-name');
+              }
+              if (nameInput && nameInput.value.trim()) {
+                const existingIndex = parts.findIndex(p => !p.startsWith('Baby: ') && !p.startsWith('Kid: ') && !p.startsWith('Mum: ') && !p.includes('|'));
+                if (existingIndex >= 0 && !parts[existingIndex].includes('Name')) {
+                  // Replace first non-baby/kid/mum part if it looks like a name
+                } else {
+                  parts.push(nameInput.value.trim());
+                }
+              }
+              
+              const name1Input = form.querySelector('input[name="properties[Name 1]"]');
+              if (name1Input && name1Input.value.trim()) {
+                parts.push(name1Input.value.trim());
+              }
+              
+              const name2Input = form.querySelector('input[name="properties[Name 2]"]');
+              if (name2Input && name2Input.value.trim()) {
+                parts.push(name2Input.value.trim());
+              }
+              
+              const name3Input = form.querySelector('input[name="properties[Name 3]"]');
+              if (name3Input && name3Input.value.trim()) {
+                parts.push(name3Input.value.trim());
+              }
+              
+              const name4Input = form.querySelector('input[name="properties[Name 4]"]');
+              if (name4Input && name4Input.value.trim()) {
+                parts.push(name4Input.value.trim());
+              }
+              
+              const dobInput = form.querySelector('input[name="properties[Date of Birth]"]');
+              if (dobInput && dobInput.value.trim()) {
+                parts.push(dobInput.value.trim());
+              }
+              
+              const optionalDobInput = form.querySelector('input[name="properties[Personalise Date of Birth]"]') || form.querySelector('#dob_field_val');
+              if (optionalDobInput && optionalDobInput.value.trim()) {
+                parts.push(optionalDobInput.value.trim());
+              }
+              
+              const schoolYearInput = form.querySelector('input[name="properties[School Year]"]');
+              if (schoolYearInput && schoolYearInput.value.trim()) {
+                parts.push(schoolYearInput.value.trim());
+              }
+              
+              // Read color from hidden input or visible input
+              if (form) {
+                const colorInput = form.querySelector('input[name="properties[Text Color]"]');
+                if (colorInput && colorInput.value.trim()) {
+                  colorText = colorInput.value.trim();
+                }
+              }
+            }
+            
+            if (parts.length > 0) {
+              let summaryText = 'Personalised: ' + parts.join(' | ');
+              if (colorText) {
+                summaryText += ' (' + colorText + ')';
+              }
+              
+              // Show summary and update text
+              if (summarySpan) {
+                summarySpan.textContent = summaryText;
+                summarySpan.style.display = '';
+                button.classList.add('has-summary');
+              }
+              textSpan.textContent = 'EDIT';
+              
+              // Show and update confirmation checkbox
+              if (confirmationContainer) {
+                const confirmTextSpan = confirmationContainer.querySelector('[data-personalise-confirm-text]');
+                if (confirmTextSpan) {
+                  // Build dynamic label based on fields found in form or sessionStorage
+                  const fields = [];
+                  
+                  // Check form inputs first
+                  if (form) {
+                    if (form.querySelector('input[name="properties[Name]"]') || form.querySelector('#personalise-name')) {
                       fields.push('name');
                     }
-                    if (personalisation.name1) {
-                      fields.push('name1');
-                    }
-                    if (personalisation.name2) {
-                      fields.push('name2');
-                    }
-                    if (personalisation.name3) {
-                      fields.push('name3');
-                    }
-                    if (personalisation.name4) {
-                      fields.push('name4');
-                    }
-                    if (personalisation.dob || personalisation.optionalDob) {
+                    if (form.querySelector('input[name="properties[Name 1]"]')) fields.push('name1');
+                    if (form.querySelector('input[name="properties[Name 2]"]')) fields.push('name2');
+                    if (form.querySelector('input[name="properties[Name 3]"]')) fields.push('name3');
+                    if (form.querySelector('input[name="properties[Name 4]"]')) fields.push('name4');
+                    if (form.querySelector('input[name="properties[Date of Birth]"]') || form.querySelector('#dob_field_val')) {
                       fields.push('date');
                     }
-                    if (personalisation.color) {
-                      fields.push('colour');
-                    }
-                    if (personalisation.font) {
-                      fields.push('font');
-                    }
-                    if (personalisation.schoolYear) {
-                      fields.push('school year');
-                    }
-                    if (personalisation.textbox) {
-                      fields.push('text');
-                    }
-                    if (personalisation.message) {
-                      fields.push('message');
-                    }
-                    if (personalisation.time) {
-                      fields.push('time');
-                    }
-                    if (personalisation.weight) {
-                      fields.push('weight');
-                    }
-                    
-                    let labelText = 'I confirm that the personalisation';
-                    if (fields.length > 0) {
-                      if (fields.length === 1) {
-                        labelText += ' (' + fields[0] + ')';
-                      } else if (fields.length === 2) {
-                        labelText += ' (' + fields[0] + ' and ' + fields[1] + ')';
-                      } else {
-                        labelText += ' (' + fields.slice(0, -1).join(', ') + ', and ' + fields[fields.length - 1] + ')';
-                      }
-                    }
-                    labelText += ' is correct.';
-                    confirmTextSpan.innerHTML = labelText + '<br>No changes can be made once it is confirmed.';
+                    if (colorText) fields.push('colour');
+                    if (form.querySelector('input[name="properties[Baby\'s Name]"]')) fields.push('baby name');
+                    if (form.querySelector('input[name="properties[Kid\'s Name]"]')) fields.push('kid name');
+                    if (form.querySelector('input[name="properties[Mum\'s Name]"]')) fields.push('mum name');
                   }
-                  confirmationContainer.style.display = 'block';
-                  console.log('Confirmation container displayed');
-                } else {
-                  console.log('Confirmation container not found for button');
-                }
-                
-                console.log('Updated button to show summary and EDIT');
-              } catch (e) {
-                console.error('Error parsing personalisation:', e);
-                // Fallback: just show EDIT
-                if (summarySpan) {
-                  summarySpan.style.display = 'none';
-                  button.classList.remove('has-summary');
-                }
-                textSpan.textContent = 'EDIT';
-                if (confirmationContainer) {
-                  confirmationContainer.style.display = 'none';
+                  
+                  // Also check sessionStorage if form didn't have all fields
+                  if (savedPersonalisation) {
+                    try {
+                      const personalisation = JSON.parse(savedPersonalisation);
+                      if (personalisation.babyName && !fields.includes('baby name')) fields.push('baby name');
+                      if (personalisation.kidName && !fields.includes('kid name')) fields.push('kid name');
+                      if (personalisation.mumName && !fields.includes('mum name')) fields.push('mum name');
+                    } catch (e) {
+                      console.error('Error parsing personalisation for confirmation:', e);
+                    }
+                  }
+                  
+                  if (fields.length > 0) {
+                    confirmTextSpan.textContent = `I confirm my ${fields.join(', ')} personalisation`;
+                    confirmationContainer.style.display = '';
+                  }
                 }
               }
             } else {
+              // No personalisation found, show default button
+              if (summarySpan) {
+                summarySpan.style.display = 'none';
+                button.classList.remove('has-summary');
+              }
+              textSpan.textContent = 'PERSONALISE IT';
+              if (confirmationContainer) {
+                confirmationContainer.style.display = 'none';
+              }
+            }
               // Hide summary and show PERSONALISE IT
               if (summarySpan) {
                 summarySpan.style.display = 'none';
@@ -602,10 +721,7 @@
               if (confirmationContainer) {
                 confirmationContainer.style.display = 'none';
               }
-              console.log('Updated button to PERSONALISE IT');
             }
-          } else {
-            console.log('Text span not found in button');
           }
         });
       } catch (error) {
