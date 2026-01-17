@@ -1,0 +1,400 @@
+
+<div class="section section--{{ section.settings.section_width }} page-banner{% if section.settings.video or section.settings.image %} page-banner--has-image{% endif %}"
+  data-testid="page-banner"
+>
+  {% if section.settings.video or section.settings.image %}
+    <div class="page-banner__background">
+      {% if section.settings.video %}
+        <video
+          class="page-banner__video"
+          autoplay
+          muted
+          loop
+          playsinline
+          aria-label="Background video"
+        >
+          {%- for source in section.settings.video.sources -%}
+            <source src="{{ source.url }}" type="{{ source.mime_type }}">
+          {%- endfor -%}
+        </video>
+      {% elsif section.settings.image %}
+        {% liquid
+          assign media_width_desktop = '100vw'
+          assign media_width_mobile = '100vw'
+          assign sizes = '(min-width: 750px) ' | append: media_width_desktop | append: ', ' | append: media_width_mobile
+          assign widths = '832, 1200, 1600, 1920, 2560, 3840'
+        %}
+        {{
+          section.settings.image
+          | image_url: width: 3840
+          | image_tag:
+            loading: 'eager',
+            class: 'page-banner__image',
+            widths: widths,
+            sizes: sizes,
+            fetchpriority: 'high'
+        }}
+      {% endif %}
+      <div class="page-banner__overlay"></div>
+    </div>
+  {% endif %}
+
+  <div class="page-banner__content-wrapper">
+    <div class="page-banner__content">
+      {% if section.settings.title != blank %}
+        <h1 class="page-banner__title">
+          {{ section.settings.title }}
+        </h1>
+      {% endif %}
+
+      {% if section.settings.description != blank %}
+        <div class="page-banner__description">
+          {{ section.settings.description }}
+        </div>
+      {% endif %}
+
+      {% if section.blocks.size > 0 %}
+        <div class="page-banner__features">
+          {% for block in section.blocks %}
+            {% if block.settings.text != blank or block.settings.icon != blank or block.settings.image_upload != blank %}
+              <div class="page-banner__feature" {{ block.shopify_attributes }}>
+                {% if block.settings.icon != blank or block.settings.image_upload != blank %}
+                  <div class="page-banner__feature-icon">
+                    {% if block.settings.image_upload != blank %}
+                      {{
+                        block.settings.image_upload
+                        | image_url: width: 54
+                        | image_tag: class: 'page-banner__feature-icon-image', alt: block.settings.text | default: ''
+                      }}
+                    {% elsif block.settings.icon != blank and block.settings.icon != 'none' %}
+                      {% render 'icon-or-image',
+                        icon: block.settings.icon,
+                        image_upload: null,
+                        width: 27,
+                        class_name: 'page-banner__feature-icon-svg'
+                      %}
+                    {% endif %}
+                  </div>
+                {% endif %}
+                {% if block.settings.text != blank %}
+                  <span class="page-banner__feature-text">{{ block.settings.text }}</span>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .page-banner {
+    position: relative;
+    min-height: 50svh;
+    overflow: hidden;
+  }
+
+  @media screen and (min-width: 750px) {
+    .page-banner {
+      height: 336px;
+      min-height: 336px;
+      max-height: 336px;
+    }
+  }
+
+  .page-banner__background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  @media screen and (min-width: 750px) {
+    .page-banner__background {
+      height: 336px;
+    }
+  }
+
+  .page-banner__image,
+  .page-banner__video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  @media screen and (max-width: 749px) {
+    .page-banner__image,
+    .page-banner__video {
+      max-height: 382px;
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .page-banner__image,
+    .page-banner__video {
+      height: 336px;
+      max-height: 336px;
+    }
+  }
+
+  .page-banner__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(89.97deg, #000000 -12.75%, rgba(0, 0, 0, 0.810876) -3.35%, rgba(0, 0, 0, 0.648265) 29.36%, rgba(0, 0, 0, 0) 67.56%);
+    pointer-events: none;
+  }
+
+  @media screen and (max-width: 749px) {
+    .page-banner__overlay {
+      background: linear-gradient(202.37deg, rgba(0, 0, 0, 0) 23.99%, rgba(0, 0, 0, 0.485081) 38.69%, rgba(0, 0, 0, 0.821329) 102.45%, #000000 127.08%);
+    }
+  }
+
+  .page-banner__content-wrapper {
+    grid-column: 2;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    align-self: center;
+    min-height: inherit;
+    display: flex;
+    align-items: center;
+  }
+
+  @media screen and (max-width: 749px) {
+    .page-banner__content-wrapper {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+  }
+
+  .page-banner__content {
+    width: 100%;
+    padding-block: var(--padding-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0;
+    text-align: left;
+  }
+
+  @media screen and (max-width: 749px) {
+    .page-banner__content {
+      justify-content: flex-end;
+    }
+  }
+
+  .page-banner__title {
+    margin: 0;
+    font-weight: 500;
+    font-size: 36px;
+    line-height: 62.4px;
+    margin-bottom: 12px;
+  }
+
+  .page-banner--has-image .page-banner__title {
+    color: #ffffff;
+  }
+
+  .page-banner:not(.page-banner--has-image) .page-banner__title {
+    color: #1D425A;
+  }
+
+  .page-banner__description {
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 160%;
+    max-width: 600px;
+  }
+
+  .page-banner--has-image .page-banner__description {
+    color: #ffffff;
+  }
+
+  .page-banner:not(.page-banner--has-image) .page-banner__description {
+    color: #1D425A;
+  }
+
+  .page-banner__features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+    margin-top: 20px;
+  }
+
+  .page-banner__feature {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .page-banner__feature-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .page-banner__feature-icon-svg {
+    width: 27px;
+    height: 27px;
+  }
+
+  .page-banner__feature-icon-image {
+    width: 27px;
+    height: 27px;
+    object-fit: contain;
+  }
+
+  @media screen and (max-width: 749px) {
+    .page-banner__features {
+      gap: 6px;
+    }
+    .page-banner__feature-icon-svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .page-banner__feature-icon-image {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .page-banner__feature-text {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 160%;
+  }
+
+  .page-banner--has-image .page-banner__feature-text {
+    color: #ffffff;
+  }
+
+  .page-banner:not(.page-banner--has-image) .page-banner__feature-text {
+    color: #1D425A;
+  }
+
+  .page-banner--has-image .page-banner__feature-icon {
+    color: #ffffff;
+  }
+
+  .page-banner:not(.page-banner--has-image) .page-banner__feature-icon {
+    color: #1D425A;
+  }
+
+  @media screen and (max-width: 749px) {
+    .page-banner {
+      height: 382px;
+      min-height: 382px;
+      max-height: 382px;
+    }
+
+    .page-banner__background {
+      height: 382px;
+      max-height: 382px;
+    }
+
+    .page-banner__image,
+    .page-banner__video {
+      height: 382px;
+    }
+
+    .page-banner__content {
+      padding-block: var(--padding-md, 24px);
+      padding-block-end: 25px;
+    }
+
+    .page-banner__title {
+      font-size: 28px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-banner__video {
+      display: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Page banner",
+  "tag": "section",
+  "class": "section-wrapper",
+  "settings": [
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page width"
+        },
+        {
+          "value": "full-width",
+          "label": "Full width"
+        }
+      ],
+      "default": "full-width"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "Video",
+      "info": "Video will take priority over image if both are uploaded"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image",
+      "info": "Used as fallback if no video is uploaded"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Page title",
+      "default": "Page title"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Page description"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "Page feature",
+      "limit": 3,
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Feature text"
+        },
+        {
+          "type": "text",
+          "id": "icon",
+          "label": "Icon name",
+          "info": "Enter an icon name from your icon library"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_upload",
+          "label": "Icon image",
+          "info": "Upload a custom icon image (will override icon name if both are set)"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Page banner"
+    }
+  ]
+}
+{% endschema %}

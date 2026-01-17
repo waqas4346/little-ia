@@ -77,7 +77,7 @@
       ],
       "name": "t:names.announcement_bar",
       "settings": {
-        "speed": 10,
+        "speed": 5,
         "section_width": "page-width",
         "color_scheme": "scheme-9fa4efbe-6bfc-4f4c-8255-10dd25c96a2e",
         "divider_width": 1,
