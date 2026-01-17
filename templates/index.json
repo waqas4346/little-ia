@@ -34,8 +34,8 @@
             "gradient_direction": "to top",
             "padding-block-start": 48,
             "padding-block-end": 48,
-            "padding-inline-start": 48,
-            "padding-inline-end": 48
+            "padding-inline-start": 70,
+            "padding-inline-end": 70
           },
           "blocks": {
             "text_9r6ibq": {
@@ -66,7 +66,7 @@
             "text_BEGWaL": {
               "type": "text",
               "settings": {
-                "text": "<p>Thoughtfully crafted  personalised  essentials that  become keepsakes for life.</p>",
+                "text": "<p>Thoughtfully crafted  <strong>personalised</strong>  essentials that  become keepsakes for life.</p>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -131,8 +131,8 @@
             "gradient_direction": "to top",
             "padding-block-start": 48,
             "padding-block-end": 48,
-            "padding-inline-start": 48,
-            "padding-inline-end": 48
+            "padding-inline-start": 70,
+            "padding-inline-end": 70
           },
           "blocks": {
             "text_Wp3hWa": {
@@ -163,7 +163,7 @@
             "text_Ghywey": {
               "type": "text",
               "settings": {
-                "text": "<p>Thoughtfully crafted  personalised  essentials that  become keepsakes for life.</p>",
+                "text": "<p>Thoughtfully crafted  <strong>personalised</strong>  essentials that  become keepsakes for life.</p>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -1279,6 +1279,77 @@
         "color_scheme": "scheme-6",
         "padding-block-start": 40,
         "padding-block-end": 40
+      }
+    },
+    "shop_by_age_nMKDch": {
+      "type": "shop-by-age",
+      "blocks": {
+        "age_group_7NqiHN": {
+          "type": "age_group",
+          "settings": {
+            "collection": "personalised-gifts",
+            "name": "All Ages"
+          }
+        },
+        "age_group_6YJmUJ": {
+          "type": "age_group",
+          "settings": {
+            "collection": "personalised-baby-collection-age-0-24m",
+            "name": "0 - 2 Years"
+          }
+        },
+        "age_group_BUgV4h": {
+          "type": "age_group",
+          "settings": {
+            "collection": "personalised-kids-collection-age-3-5years",
+            "name": "3 - 5 Years"
+          }
+        },
+        "age_group_hryMBx": {
+          "type": "age_group",
+          "settings": {
+            "collection": "personalised-kids-collection-age-6-8",
+            "name": "6 - 8 Years"
+          }
+        },
+        "age_group_wLAYhy": {
+          "type": "age_group",
+          "settings": {
+            "collection": "personalised-kids-collection-age-8",
+            "name": "8+ Years"
+          }
+        },
+        "age_group_FMetiH": {
+          "type": "age_group",
+          "settings": {
+            "collection": "gifts-for-grown-ups",
+            "name": "Adults"
+          }
+        }
+      },
+      "block_order": [
+        "age_group_7NqiHN",
+        "age_group_6YJmUJ",
+        "age_group_BUgV4h",
+        "age_group_hryMBx",
+        "age_group_wLAYhy",
+        "age_group_FMetiH"
+      ],
+      "name": "Shop By Age",
+      "settings": {
+        "top_label": "shop",
+        "section_title": "By Age",
+        "items_per_view": 4,
+        "title_position": "center",
+        "icons_style": "blue_arrows",
+        "icons_shape": "none",
+        "columns_gap": 12,
+        "enable_shop_all": true,
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
       }
     },
     "section_rhqnyD": {
@@ -2792,6 +2863,7 @@
     "product_list_iPb8dT",
     "hero_NAcLj6",
     "promise_section_fTQwDr",
+    "shop_by_age_nMKDch",
     "section_rhqnyD",
     "collection_list_4Yyx7R",
     "theme_swatches_KYBFfi",
