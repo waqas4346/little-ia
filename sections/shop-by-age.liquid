@@ -88,18 +88,27 @@
       {% for block in section.blocks %}
         {% assign block_collection = block.settings.collection %}
         {% assign block_sub_collections = blank %}
+        {% assign block_sub_collections_count = 0 %}
         
         {% if block_collection != blank %}
           {% assign metafield_value = block_collection.metafields.custom.cb_sub_collections %}
-          {% if metafield_value != blank %}
+          
+          {% if metafield_value != blank and metafield_value.value != blank %}
             {% assign block_sub_collections = metafield_value.value %}
+            {% if block_sub_collections != blank %}
+              {% assign block_sub_collections_count = block_sub_collections.size %}
+              {% comment %}Ensure it's iterable and has items{% endcomment %}
+              {% if block_sub_collections_count == 0 %}
+                {% assign block_sub_collections = blank %}
+              {% endif %}
+            {% endif %}
           {% endif %}
         {% endif %}
         
         <div class="shop-by-age-content-wrapper {% unless forloop.first %}hidden{% endunless %}" 
-             id="content-{{ block_collection.handle }}" 
+             id="content-{% if block_collection.handle %}{{ block_collection.handle }}{% else %}block-{{ block.id }}{% endif %}" 
              data-block-id="{{ block.id }}"
-             data-collection-handle="{{ block_collection.handle }}"
+             data-collection-handle="{% if block_collection.handle %}{{ block_collection.handle }}{% else %}{{ block.id }}{% endif %}"
              {% unless forloop.first %}style="display: none;"{% endunless %}>
           
           {% if block_sub_collections != blank %}
@@ -210,7 +219,7 @@
                   auto_hide_controls: false,
                   infinite: false,
                   initial_slide: 0,
-                  slide_count: block_sub_collections.size,
+                  slide_count: block_sub_collections_count,
                   slideshow_gutters: slideshow_gutters,
                   arrows_position: 'center'
                 %}
@@ -485,7 +494,7 @@
     display: flex;
     justify-content: var(--title-position);
     align-items: center;
-    padding: 0 24px;
+    padding: 0 8px;
     pointer-events: none;
     z-index: 2;
   }
@@ -874,12 +883,23 @@
         contents.forEach(content => {
           if (content.dataset.collectionHandle === targetHandle) {
             content.style.display = 'block';
+            content.classList.remove('hidden');
             // Trigger reflow for animation if needed
             content.style.animation = 'none';
             content.offsetHeight; /* trigger reflow */
             content.style.animation = 'fadeIn 0.5s ease-out forwards';
+            
+            // Force slideshow to refresh when tab becomes visible
+            const slideshow = content.querySelector('slideshow-component');
+            if (slideshow && slideshow.update) {
+              slideshow.update();
+            }
+            
+            // Trigger resize event to ensure proper layout
+            window.dispatchEvent(new Event('resize'));
           } else {
             content.style.display = 'none';
+            content.classList.add('hidden');
           }
         });
         
