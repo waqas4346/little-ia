@@ -1,7 +1,5 @@
 {% liquid
   assign block_settings = block.settings
-  assign swatch_size = section.settings.swatch_size | default: 120
-  assign swatch_border_radius = section.settings.swatch_border_radius | default: 0
 %}
 
 <div class="theme-swatch-item" {{ block.shopify_attributes }}>
@@ -13,14 +11,7 @@
         aria-label="{{ block_settings.link_text }}"
       {% endif %}
     >
-      <div 
-        class="theme-swatch-image-wrapper"
-        style="
-          width: var(--theme-swatch-size);
-          height: var(--theme-swatch-size);
-          border-radius: var(--theme-swatch-border-radius);
-        "
-      >
+      <div class="theme-swatch-image-wrapper">
         {% if block_settings.image %}
           {{
             block_settings.image
@@ -28,14 +19,10 @@
             | image_tag: 
               loading: 'lazy', 
               class: 'theme-swatch-image',
-              sizes: '200px',
-              style: 'border-radius: ' | append: swatch_border_radius | append: 'px;'
+              sizes: '200px'
           }}
         {% else %}
-          <div 
-            class="theme-swatch-placeholder"
-            style="border-radius: {{ swatch_border_radius }}px;"
-          ></div>
+          <div class="theme-swatch-placeholder"></div>
         {% endif %}
       </div>
       {% if block_settings.link_text != blank %}
@@ -44,14 +31,7 @@
     </a>
   {% else %}
     <div class="theme-swatch-link">
-      <div 
-        class="theme-swatch-image-wrapper"
-        style="
-          width: var(--theme-swatch-size);
-          height: var(--theme-swatch-size);
-          border-radius: var(--theme-swatch-border-radius);
-        "
-      >
+      <div class="theme-swatch-image-wrapper">
         {% if block_settings.image %}
           {{
             block_settings.image
@@ -59,14 +39,10 @@
             | image_tag: 
               loading: 'lazy', 
               class: 'theme-swatch-image',
-              sizes: '200px',
-              style: 'border-radius: ' | append: swatch_border_radius | append: 'px;'
+              sizes: '200px'
           }}
         {% else %}
-          <div 
-            class="theme-swatch-placeholder"
-            style="border-radius: {{ swatch_border_radius }}px;"
-          ></div>
+          <div class="theme-swatch-placeholder"></div>
         {% endif %}
       </div>
       {% if block_settings.link_text != blank %}

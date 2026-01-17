@@ -8,8 +8,6 @@
     style="
       {% render 'spacing-style', settings: section.settings %}
       --theme-swatches-gap: {{ section.settings.gap }}px;
-      --theme-swatch-size: {{ section.settings.swatch_size }}px;
-      --theme-swatch-border-radius: {{ section.settings.swatch_border_radius }}px;
     "
   >
     {% if section.settings.heading != blank or section.settings.subheading != blank %}
@@ -46,7 +44,7 @@
     font-family: 'Sacramento', cursive, sans-serif;
     font-weight: 400;
     font-size: 30px;
-    line-height: 150%;
+    line-height: 100%;
     color: #7295BB;
     text-align: center;
     text-transform: lowercase;
@@ -54,13 +52,20 @@
 
   .theme-swatches-subheading {
     margin: 0;
-    font-family: 'FuturaPT-Demi', 'Outfit', sans-serif;
+    /* font-family: 'FuturaPT-Demi', 'Outfit', sans-serif; */
     font-weight: 500;
-    font-size: 28px;
+    font-size: 24px;
     line-height: 150%;
     text-transform: uppercase;
     color: #1D425A;
     text-align: center;
+  }
+
+  .theme-swatch-image-wrapper {
+    --theme-swatch-size: 76px;
+    width: var(--theme-swatch-size);
+    height: var(--theme-swatch-size);
+    border-radius: 50%;
   }
 
   @media screen and (min-width: 750px) {
@@ -74,6 +79,14 @@
 
     .theme-swatches-heading {
       font-size: 38px;
+    }
+
+    .theme-swatches-subheading {
+      font-size: 32px;
+    }
+
+    .theme-swatch-image-wrapper {
+      --theme-swatch-size: 120px;
     }
   }
 
@@ -138,28 +151,6 @@
       "default": 20
     },
     {
-      "type": "range",
-      "id": "swatch_size",
-      "label": "Swatch Size",
-      "min": 80,
-      "max": 200,
-      "step": 10,
-      "unit": "px",
-      "default": 120,
-      "info": "Size of each swatch image"
-    },
-    {
-      "type": "range",
-      "id": "swatch_border_radius",
-      "label": "Swatch Border Radius",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 0,
-      "info": "Border radius for swatch images (0 = square, 100 = circle)"
-    },
-    {
       "type": "color_scheme",
       "id": "color_scheme",
       "label": "t:settings.color_scheme",
@@ -196,8 +187,6 @@
       "category": "Custom",
       "settings": {
         "gap": 20,
-        "swatch_size": 120,
-        "swatch_border_radius": 0,
         "color_scheme": "scheme-1",
         "padding-block-start": 36,
         "padding-block-end": 36

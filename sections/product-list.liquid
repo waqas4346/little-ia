@@ -184,7 +184,7 @@
     font-family: 'Sacramento', cursive, sans-serif;
     font-weight: 400;
     font-size: 30px;
-    line-height: 150%;
+    line-height: 100%;
     color: #7295BB;
     text-align: center;
     text-transform: lowercase;
@@ -198,14 +198,20 @@
 
   .product-list-section-title-label {
     margin: 0;
-    font-family: 'FuturaPT-Demi', 'Outfit', sans-serif;
+    /* font-family: 'FuturaPT-Demi', 'Outfit', sans-serif; */
     font-weight: 500;
-    font-size: 28px;
+    font-size: 24px;
     line-height: 150%;
     text-transform: uppercase;
     color: #1D425A;
     text-align: center;
     display: block;
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-list-section-title-label {
+      font-size: 32px;
+    }
   }
 
   .product-list-tabs-container {
