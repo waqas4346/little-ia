@@ -81,10 +81,265 @@
         "padding-block-start": 40,
         "padding-block-end": 80
       }
+    },
+    "stocklist_DETGNG": {
+      "type": "stocklist",
+      "blocks": {
+        "country_6jKJQD": {
+          "type": "country",
+          "name": "Country",
+          "settings": {
+            "country_name": "Dubai"
+          }
+        },
+        "location_jjAh3Y": {
+          "type": "location",
+          "name": "Location",
+          "settings": {
+            "location_name": "Little IA Showroom",
+            "address": "Jumeirah Bay X2\nOffice 3402-3403\nJumeirah Lakes Towers, Dubai"
+          }
+        },
+        "location_eLXeec": {
+          "type": "location",
+          "settings": {
+            "location_name": "Let's Create",
+            "address": "Ground Floor\nThe Springs Souk, Dubai"
+          }
+        },
+        "location_gEKpPX": {
+          "type": "location",
+          "settings": {
+            "location_name": "Homesmiths",
+            "address": "Shop No. 3 & 4\nGrand Motor City, Dubai"
+          }
+        },
+        "location_BjGPBy": {
+          "type": "location",
+          "settings": {
+            "location_name": "Homesmiths",
+            "address": "Shop No. 17\nSpinneys Center Al Wasl Road, Dubai"
+          }
+        },
+        "location_b3HJYG": {
+          "type": "location",
+          "settings": {
+            "location_name": "Homesmiths",
+            "address": "Shop G-023, Meaisem Ctiy Centre\nDubai Production City, Dubai"
+          }
+        },
+        "location_Yz4MUi": {
+          "type": "location",
+          "settings": {
+            "location_name": "Homesmiths",
+            "address": "Shop No. 36, The Springs Souk\nAl Afnan St., Dubai"
+          }
+        },
+        "location_F8bkyj": {
+          "type": "location",
+          "settings": {
+            "location_name": "Homesmiths",
+            "address": "G-342, Near Storm Coaster Parking\nGround Level, Dubai Hills Mall, Dubai"
+          }
+        },
+        "location_UFT3PA": {
+          "type": "location",
+          "settings": {
+            "location_name": "Homesmiths",
+            "address": "Shop No. 14, Cedre Shopping Center\nSilicone Oasis, Dubai"
+          }
+        },
+        "location_RXh9dr": {
+          "type": "location",
+          "settings": {
+            "location_name": "Borders - Mall of Emirates",
+            "address": "Emirates Mall, 2nd Floor\nSheikh Zayed Rd., Dubai"
+          }
+        },
+        "location_Fm7BcT": {
+          "type": "location",
+          "settings": {
+            "location_name": "Borders - Dubai Hills Mall",
+            "address": "Dubai Hills Mall\nFirst Floor, Al Khail Rd., Dubai"
+          }
+        },
+        "location_8prAHk": {
+          "type": "location",
+          "settings": {
+            "location_name": "Borders - Dubai Mall",
+            "address": "Dubai Mall\nUnit LG-190\nFinancial Centre, Dubai"
+          }
+        },
+        "country_3rQYfN": {
+          "type": "country",
+          "settings": {
+            "country_name": "Online Retailer"
+          }
+        },
+        "location_DfwF3n": {
+          "type": "location",
+          "settings": {
+            "location_name": "Firstcry",
+            "address": "www.firtscry.ae"
+          }
+        },
+        "location_TiRkxV": {
+          "type": "location",
+          "settings": {
+            "location_name": "Ounass",
+            "address": "www.ounass.ae"
+          }
+        },
+        "location_e8G9Gg": {
+          "type": "location",
+          "settings": {
+            "location_name": "Laadlee",
+            "address": "www.laadlee.com"
+          }
+        },
+        "location_P3akK3": {
+          "type": "location",
+          "settings": {
+            "location_name": "Mom Store",
+            "address": "www.momstore.com"
+          }
+        },
+        "location_kKat67": {
+          "type": "location",
+          "settings": {
+            "location_name": "Deliveroo",
+            "address": "www.deliveroo.ae"
+          }
+        },
+        "location_9PeUKF": {
+          "type": "location",
+          "settings": {
+            "location_name": "Paper Planes",
+            "address": "www.paperplanesdubai.com"
+          }
+        },
+        "location_Nacqgr": {
+          "type": "location",
+          "settings": {
+            "location_name": "Hello Baby",
+            "address": "https:\/\/www.instagram.com\/hellobaby.lb\/?hl=en"
+          }
+        },
+        "location_3RfGYK": {
+          "type": "location",
+          "settings": {
+            "location_name": "Homesmiths",
+            "address": "www.homesmiths.ae"
+          }
+        },
+        "country_NAkJK7": {
+          "type": "country",
+          "settings": {
+            "country_name": "Qatar"
+          }
+        },
+        "location_4pQdCK": {
+          "type": "location",
+          "settings": {
+            "location_name": "Harvey Nichols Doha",
+            "address": "Doha Festival City\nDoha, Qatar"
+          }
+        },
+        "country_g7tdLa": {
+          "type": "country",
+          "settings": {
+            "country_name": "Saudi Arabia"
+          }
+        },
+        "location_q6bTp3": {
+          "type": "location",
+          "settings": {
+            "location_name": "Bella Baby",
+            "address": "1st Floor, Near Gate No. 3\nNorthern Ring Rd., Al Aqiq, Riyadh"
+          }
+        },
+        "location_KEpDeV": {
+          "type": "location",
+          "settings": {
+            "location_name": "Bella Baby",
+            "address": "3rd Floor, Near Gate No. 4 & 5\nKing Abdulaziz Rd., Ash Shati, Jeddah"
+          }
+        },
+        "location_9Nqm8m": {
+          "type": "location",
+          "settings": {
+            "location_name": "Bella Baby",
+            "address": "www.bellababy.sa"
+          }
+        },
+        "country_6QeyaW": {
+          "type": "country",
+          "settings": {
+            "country_name": "Kuwait"
+          }
+        },
+        "location_tw8QxC": {
+          "type": "location",
+          "settings": {
+            "location_name": "Yuehlia",
+            "address": "www.yuehlia.com"
+          }
+        },
+        "location_jckezC": {
+          "type": "location",
+          "settings": {
+            "location_name": "Les Petits Parisiens",
+            "address": "www.lppkuwait.com"
+          }
+        }
+      },
+      "block_order": [
+        "country_6jKJQD",
+        "location_jjAh3Y",
+        "location_eLXeec",
+        "location_gEKpPX",
+        "location_BjGPBy",
+        "location_b3HJYG",
+        "location_Yz4MUi",
+        "location_F8bkyj",
+        "location_UFT3PA",
+        "location_RXh9dr",
+        "location_Fm7BcT",
+        "location_8prAHk",
+        "country_3rQYfN",
+        "location_DfwF3n",
+        "location_TiRkxV",
+        "location_e8G9Gg",
+        "location_P3akK3",
+        "location_kKat67",
+        "location_9PeUKF",
+        "location_Nacqgr",
+        "location_3RfGYK",
+        "country_NAkJK7",
+        "location_4pQdCK",
+        "country_g7tdLa",
+        "location_q6bTp3",
+        "location_KEpDeV",
+        "location_9Nqm8m",
+        "country_6QeyaW",
+        "location_tw8QxC",
+        "location_jckezC"
+      ],
+      "name": "Stocklist",
+      "settings": {
+        "heading": "",
+        "subheading": "",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
     }
   },
   "order": [
     "page_banner_QQzccJ",
-    "main"
+    "main",
+    "stocklist_DETGNG"
   ]
 }
