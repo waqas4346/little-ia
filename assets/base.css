@@ -3970,8 +3970,8 @@ slideshow-arrows .slideshow-control.slideshow-control--style-none {
     &:has(product-card),
     &:has(product-card-link),
     &:has(.product-card) {
-      width: 175px !important;
-      max-width: 175px !important;
+      width: 173px !important;
+      max-width: 173px !important;
     }
   }
 }
