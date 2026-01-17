@@ -47,7 +47,7 @@
             <button
               ref="loadMoreButton"
               type="button"
-              class="blog-posts-load-more-button"
+              class="button blog-posts-load-more-button"
               aria-label="{{ section.settings.load_more_text | default: 'Load more articles' }}"
             >
               {{ section.settings.load_more_text | default: 'Load More' }}
@@ -156,29 +156,7 @@
   }
 
   .blog-posts-load-more-button {
-    padding: var(--padding-md, 12px) var(--padding-lg, 24px);
-    background-color: var(--color-primary, #7295BB);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: var(--font-size--md, 16px);
-    font-weight: var(--font-weight-medium, 500);
-    cursor: pointer;
-    transition: background-color var(--hover-transition-duration, 0.2s) var(--hover-transition-timing, ease),
-                opacity var(--hover-transition-duration, 0.2s) var(--hover-transition-timing, ease);
-  }
-
-  .blog-posts-load-more-button:hover {
-    background-color: var(--color-primary-hover, #5a7a9a);
-  }
-
-  .blog-posts-load-more-button:active {
-    opacity: 0.8;
-  }
-
-  .blog-posts-load-more-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    /* Uses primary button styles via .button class */
   }
 {% endstylesheet %}
 
