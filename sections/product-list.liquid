@@ -76,16 +76,68 @@
            
            {% liquid
              assign list_items_array = list_items | strip | split: '<!--@list/split-->'
+             
+             # Prepare carousel settings similar to explore-more-products
+             assign slideshow_gutters = null
+             assign gutter_style = '--gutter-slide-width: 0px;'
+             
+             assign show_arrows = false
+             if section.settings.icons_style != 'none' and section.settings.layout_type == 'carousel'
+               assign show_arrows = true
+             elsif section.settings.icons_style != 'none' and section.settings.carousel_on_mobile == true
+               assign show_arrows = true
+             endif
            %}
            
-           {% render 'resource-list',
-             list_items: list_items,
-             list_items_array: list_items_array,
-             settings: section.settings,
-             slide_count: max_items,
-             content_type: 'products',
-             test_id: 'resource-list-grid'
-           %}
+           {% if section.settings.layout_type == 'carousel' or section.settings.carousel_on_mobile == true %}
+             {% comment %} Carousel layout - match explore-more-products structure {% endcomment %}
+             {% capture slides %}
+               {% for item in list_items_array %}
+                 {% render 'slideshow-slide'
+                   index : forloop.index0,
+                   children : item,
+                   class : 'resource-list__slide product-list-slide'
+                 %}
+               {% endfor %}
+             {% endcapture %}
+             
+             <div class="product-list-wrapper">
+               <div
+                 class="resource-list resource-list__carousel product-list-carousel product-list-desktop"
+                 style="{{ gutter_style }} --column-count: {{ section.settings.columns | default: 4 }}; --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 8 }}px;"
+                 data-testid="product-list-grid"
+                 data-items-per-view="{{ section.settings.columns | default: 4 }}"
+               >
+                 {% liquid
+                   assign carousel_ref = 'productListCarousel' | append: forloop.index0
+                 %}
+                 {% render 'slideshow',
+                   ref: carousel_ref,
+                   class: 'resource-list__carousel',
+                   slides: slides,
+                   show_arrows: show_arrows,
+                   icon_style: section.settings.icons_style,
+                   icon_shape: section.settings.icons_shape,
+                   auto_hide_controls: false,
+                   infinite: false,
+                   initial_slide: 0,
+                   slide_count: list_items_array.size,
+                   slideshow_gutters: slideshow_gutters,
+                   arrows_position: 'center'
+                 %}
+               </div>
+             </div>
+           {% else %}
+             {% comment %} Grid layout - use resource-list snippet as before {% endcomment %}
+             {% render 'resource-list',
+               list_items: list_items,
+               list_items_array: list_items_array,
+               settings: section.settings,
+               slide_count: max_items,
+               content_type: 'products',
+               test_id: 'resource-list-grid'
+             %}
+           {% endif %}
         </div>
       {% endfor %}
     </div>
@@ -457,55 +509,42 @@
     }
   }
 
-  [data-testid="product-list"] .resource-list__carousel {
+  /* Product slider carousel container - match explore-more-products */
+  [data-testid="product-list-grid"] {
     padding-inline: 0 !important;
     --peek-next-slide-size: 0px;
     --gutter-slide-width: 0px !important;
     overflow: visible;
   }
 
-  /* Prevent horizontal scroll on mobile */
-  @media screen and (max-width: 749px) {
-    [data-testid="product-list"] {
-      overflow-x: hidden;
-      width: 100%;
-      max-width: 100%;
-    }
-
-    [data-testid="product-list"] .product-list-contents {
-      overflow-x: hidden;
-      width: 100%;
-      max-width: 100%;
-    }
-
-    [data-testid="product-list"] .product-list-content-wrapper {
-      overflow-x: hidden;
-      width: 100%;
-      max-width: 100%;
-      box-sizing: border-box;
-    }
-
-    /* Ensure resource-list container doesn't overflow */
-    [data-testid="product-list"] .resource-list {
-      width: 100% !important;
-      max-width: 100% !important;
-      box-sizing: border-box !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-
-    [data-testid="product-list"] .resource-list__carousel {
-      overflow: hidden;
-      width: 100%;
-      max-width: 100%;
-    }
-
-    [data-testid="product-list"] .resource-list__carousel slideshow-container {
+  @media (max-width: 767px) {
+    [data-testid="product-list-grid"] {
       overflow: hidden;
     }
   }
 
-  [data-testid="product-list"] .resource-list__carousel slideshow-arrows {
+  /* Desktop slider styling - match explore-more-products */
+  .product-list-desktop .resource-list__carousel {
+    --column-count: {{ section.settings.columns | default: 4 }};
+    --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 8 }}px;
+  }
+
+  /* Ensure gap is applied to slideshow slides on desktop */
+  .product-list-desktop slideshow-slides {
+    gap: {{ section.settings.columns_gap | default: 8 }}px !important;
+  }
+
+  /* Position arrows outside the carousel on desktop - match explore-more-products */
+  .product-list-wrapper {
+    position: relative;
+    padding: 0;
+  }
+
+  .product-list-desktop slideshow-container {
+    position: relative;
+  }
+
+  .product-list-desktop slideshow-arrows {
     position: absolute;
     inset: 0;
     left: auto;
@@ -516,64 +555,100 @@
     z-index: var(--layer-heightened);
     margin-left: -60px;
     margin-right: -60px;
-    display: flex !important;
-    padding: 0 !important;
   }
 
-  [data-testid="product-list"] .resource-list__carousel slideshow-arrows[position='center'] {
+  .product-list-desktop slideshow-arrows[position='center'] {
     justify-content: space-between;
     align-items: center;
+    padding: 0;
   }
 
-  [data-testid="product-list"] .resource-list__carousel slideshow-arrows .slideshow-control {
+  .product-list-desktop slideshow-arrows .slideshow-control {
     position: absolute;
     margin: 0;
     pointer-events: auto;
+    opacity: 1;
     top: 50%;
     transform: translateY(-50%);
-    opacity: 1;
   }
 
-  /* Position arrows outside the slider container */
-  [data-testid="product-list"] .resource-list__carousel slideshow-arrows .slideshow-control--previous {
+  .product-list-desktop slideshow-arrows .slideshow-control--previous {
     left: 0;
   }
 
-  [data-testid="product-list"] .resource-list__carousel slideshow-arrows .slideshow-control--next {
+  .product-list-desktop slideshow-arrows .slideshow-control--next {
     right: 0;
   }
 
+  /* Tablet (iPad) - Show 3 items per row - match explore-more-products */
+  @media (min-width: 768px) and (max-width: 1024px) {
+    .product-list-desktop .resource-list__carousel {
+      --column-count: 3;
+    }
+
+    [data-testid="product-list-grid"] {
+      overflow: hidden;
+    }
+
+    .product-list-desktop .resource-list__slide {
+      width: calc((100% - (var(--resource-list-column-gap-desktop, 8px) * 2)) / 3);
+      max-width: calc((100% - (var(--resource-list-column-gap-desktop, 8px) * 2)) / 3);
+      flex: 0 0 calc((100% - (var(--resource-list-column-gap-desktop, 8px) * 2)) / 3);
+    }
+  }
+
   @media (max-width: 1200px) {
-    [data-testid="product-list"] .resource-list__carousel slideshow-arrows {
+    .product-list-wrapper {
+      padding: 0;
+    }
+
+    .product-list-desktop slideshow-arrows {
       width: calc(100% + 100px);
       margin-left: -50px;
       margin-right: -50px;
     }
   }
 
-  /* Fix arrow positioning on mobile to prevent horizontal scroll */
-  @media screen and (max-width: 749px) {
-    [data-testid="product-list"] .resource-list__carousel slideshow-arrows {
+  /* Mobile carousel styling - match explore-more-products */
+  @media (max-width: 767px) {
+    .product-list-wrapper {
+      padding: 0;
+      overflow: hidden;
+      max-width: calc((173px * 2) + 8px);
       width: 100%;
-      margin-left: 0;
-      margin-right: 0;
-      left: 0;
-      right: 0;
+      margin: 0 auto;
     }
 
-    [data-testid="product-list"] .resource-list__carousel slideshow-arrows .slideshow-control--previous {
-      left: 8px;
+    .product-list-desktop slideshow-container {
+      overflow: hidden;
+      max-width: calc((173px * 2) + 8px);
+      width: 100%;
+      margin: 0 auto;
     }
 
-    [data-testid="product-list"] .resource-list__carousel slideshow-arrows .slideshow-control--next {
-      right: 8px;
+    .product-list-desktop slideshow-arrows {
+      display: none !important;
     }
-  }
 
-  /* Ensure carousel shows exactly the number of columns without peeking */
-  [data-testid="product-list"] .resource-list__carousel slideshow-slides {
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    /* Mobile: Product slider carousel items - ensure proper sizing - match explore-more-products */
+    [data-testid="product-list-grid"] .resource-list__item product-card .card-gallery .product-media-container,
+    [data-testid="product-list-grid"] .resource-list__item product-card-link .card-gallery .product-media-container {
+      width: 173px !important;
+      height: 175px !important;
+      max-width: 173px !important;
+    }
+
+    [data-testid="product-list-grid"] .resource-list__item product-card .card-gallery .product-media-container img,
+    [data-testid="product-list-grid"] .resource-list__item product-card .card-gallery .product-media-container picture,
+    [data-testid="product-list-grid"] .resource-list__item product-card .card-gallery .product-media-container video,
+    [data-testid="product-list-grid"] .resource-list__item product-card-link .card-gallery .product-media-container img,
+    [data-testid="product-list-grid"] .resource-list__item product-card-link .card-gallery .product-media-container picture,
+    [data-testid="product-list-grid"] .resource-list__item product-card-link .card-gallery .product-media-container video {
+      width: 173px !important;
+      height: 175px !important;
+      max-width: 173px !important;
+      object-fit: cover !important;
+    }
   }
 
   /* Allow arrows to extend beyond container (desktop only) */
@@ -606,25 +681,33 @@
   /* Product title styling */
   [data-testid="product-list"] .text-block--product_title,
   [data-testid="product-list"] .text-block--product_title *,
-  [data-testid="product-list"] .text-block--product_title p {
+  [data-testid="product-list"] .text-block--product_title p,
+  [data-testid="product-list-grid"] .text-block--product_title,
+  [data-testid="product-list-grid"] .text-block--product_title *,
+  [data-testid="product-list-grid"] .text-block--product_title p {
     font-family: 'Outfit', sans-serif;
-    font-style: normal;
     font-weight: 500;
+    font-style: normal;
     font-size: 20px;
     line-height: 140%;
-    color: #1D425A !important;
+    letter-spacing: 0;
+    color: #1D425A;
   }
 
   /* Explicit class injected on product title block */
   [data-testid="product-list"] .product-title-text,
   [data-testid="product-list"] .product-title-text *,
-  [data-testid="product-list"] .product-title-text p {
+  [data-testid="product-list"] .product-title-text p,
+  [data-testid="product-list-grid"] .product-title-text,
+  [data-testid="product-list-grid"] .product-title-text *,
+  [data-testid="product-list-grid"] .product-title-text p {
     font-family: 'Outfit', sans-serif;
-    font-style: normal;
     font-weight: 500;
+    font-style: normal;
     font-size: 20px;
     line-height: 140%;
-    color: #1D425A !important;
+    letter-spacing: 0;
+    color: #1D425A;
   }
 
   @media screen and (min-width: 750px) {
@@ -685,13 +768,17 @@
       margin-top: 30px;
     }
 
-    [data-testid="product-list"] .card-gallery .product-media-container {
+    [data-testid="product-list"] .card-gallery .product-media-container,
+    [data-testid="product-list-grid"] .card-gallery .product-media-container {
       background: url("bg_removal [Background removed].png"), #F7F7F7;
     }
 
     [data-testid="product-list"] .text-block--product_title,
     [data-testid="product-list"] .text-block--product_title *,
-    [data-testid="product-list"] .text-block--product_title p {
+    [data-testid="product-list"] .text-block--product_title p,
+    [data-testid="product-list-grid"] .text-block--product_title,
+    [data-testid="product-list-grid"] .text-block--product_title *,
+    [data-testid="product-list-grid"] .text-block--product_title p {
       font-family: 'Outfit', sans-serif;
       font-style: normal;
       font-weight: 500;
@@ -702,12 +789,16 @@
 
     [data-testid="product-list"] .product-title-text,
     [data-testid="product-list"] .product-title-text *,
-    [data-testid="product-list"] .product-title-text p {
+    [data-testid="product-list"] .product-title-text p,
+    [data-testid="product-list-grid"] .product-title-text,
+    [data-testid="product-list-grid"] .product-title-text *,
+    [data-testid="product-list-grid"] .product-title-text p {
       font-family: 'Outfit', sans-serif;
       font-style: normal;
       font-weight: 500;
       font-size: 16px;
       line-height: 140%;
+      letter-spacing: 0;
       color: #1D425A !important;
     }
 
@@ -1024,6 +1115,73 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Handle carousel arrow navigation similar to explore-more-products
+    function setupProductListCarousel(carouselContainer) {
+      if (!carouselContainer) return;
+      
+      const itemsPerView = parseInt(carouselContainer.getAttribute('data-items-per-view')) || 4;
+      const slideshow = carouselContainer.querySelector('slideshow-component');
+      if (!slideshow) return;
+
+      const previousBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--previous');
+      const nextBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--next');
+      const slides = slideshow.querySelectorAll('slideshow-slide');
+
+      if (!previousBtn || !nextBtn || slides.length === 0) return;
+
+      let currentIndex = 0;
+      const totalSlides = slides.length;
+      const maxIndex = Math.max(0, totalSlides - itemsPerView);
+
+      // Override previous button
+      previousBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        currentIndex = Math.max(0, currentIndex - itemsPerView);
+        if (slides[currentIndex]) {
+          slideshow.select(currentIndex, e, { animate: true });
+        }
+      });
+
+      // Override next button
+      nextBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        currentIndex = Math.min(maxIndex, currentIndex + itemsPerView);
+        if (slides[currentIndex]) {
+          slideshow.select(currentIndex, e, { animate: true });
+        }
+      });
+
+      // Update current index when slideshow changes
+      slideshow.addEventListener('slideshow:select', function(event) {
+        currentIndex = event.detail.index || 0;
+      });
+    }
+
+    // Setup carousel for all product list carousels
+    document.querySelectorAll('[data-testid="product-list-grid"]').forEach(setupProductListCarousel);
+    
+    // Hide arrows on mobile (JavaScript fallback)
+    function hideArrowsOnMobile() {
+      if (window.innerWidth <= 767) {
+        const allArrows = document.querySelectorAll('[data-testid="product-list-grid"] slideshow-arrows, .product-list-desktop slideshow-arrows');
+        allArrows.forEach(arrows => {
+          arrows.style.display = 'none';
+          arrows.style.visibility = 'hidden';
+          arrows.style.opacity = '0';
+          arrows.style.pointerEvents = 'none';
+        });
+      }
+    }
+    
+    // Run on load and resize
+    hideArrowsOnMobile();
+    window.addEventListener('resize', hideArrowsOnMobile);
+    
+    // Also setup carousel when tabs switch (re-run setup after content changes)
     // Fix mobile product card sizes - ensure everything is exactly 175px
     function fixMobileCardSizes() {
       if (window.innerWidth > 749) return; // Only on mobile
@@ -1257,6 +1415,12 @@
              
              // Fix card sizes after tab switch
              setTimeout(fixMobileCardSizes, 100);
+             
+             // Re-setup carousel after tab switch
+             const carouselContainer = content.querySelector('[data-testid="product-list-grid"]');
+             if (carouselContainer) {
+               setTimeout(() => setupProductListCarousel(carouselContainer), 100);
+             }
           } else {
              content.style.display = 'none';
           }
