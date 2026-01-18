@@ -1,3 +1,12 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
     "collection_banner_xgMNMz": {
@@ -14,7 +23,7 @@
           "type": "text",
           "name": "Title",
           "settings": {
-            "text": "<h1>{{ closest.collection.title }}<\/h1>",
+            "text": "<h1>{{ closest.collection.title }}</h1>",
             "width": "fit-content",
             "max_width": "normal",
             "alignment": "left",
@@ -287,10 +296,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify:\/\/shop_images\/Union.svg",
+            "image_upload": "shopify://shop_images/Union.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>COMPLIMENTARY<br\/>PERSONALISATION<\/p>",
+            "heading": "<p>COMPLIMENTARY<br/>PERSONALISATION</p>",
             "sub_heading": "on all items",
             "alignment": "vertical",
             "gap": 8
@@ -301,10 +310,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify:\/\/shop_images\/Delivery-Truck-Clock--Streamline-Ultimate.svg",
+            "image_upload": "shopify://shop_images/Delivery-Truck-Clock--Streamline-Ultimate.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>SAME DAY DELIVERY<br\/>IN DUBAI<\/p>",
+            "heading": "<p>SAME DAY DELIVERY<br/>IN DUBAI</p>",
             "sub_heading": "till 12pm",
             "alignment": "vertical",
             "gap": 8
@@ -315,10 +324,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify:\/\/shop_images\/Gift-Card--Streamline-Tabler.svg",
+            "image_upload": "shopify://shop_images/Gift-Card--Streamline-Tabler.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>COMPLIMENTARY<br\/>PACKAGING<\/p>",
+            "heading": "<p>COMPLIMENTARY<br/>PACKAGING</p>",
             "sub_heading": "with gift sets",
             "alignment": "vertical",
             "gap": 8
@@ -329,10 +338,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify:\/\/shop_images\/Vector_1.svg",
+            "image_upload": "shopify://shop_images/Vector_1.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>WORLDWIDE<br\/>EXPRESS SHIPPING<\/p>",
+            "heading": "<p>WORLDWIDE<br/>EXPRESS SHIPPING</p>",
             "sub_heading": "5 to 7 working days",
             "alignment": "vertical",
             "gap": 8
@@ -395,6 +404,101 @@
         "padding-block-start": 48,
         "padding-block-end": 48
       }
+    },
+    "build_your_set_kTPx6m": {
+      "type": "build-your-set",
+      "blocks": {
+        "collection_frhHWU": {
+          "type": "collection",
+          "settings": {
+            "collection": "baby-sleepsuits",
+            "name": ""
+          }
+        },
+        "collection_tnqnPd": {
+          "type": "collection",
+          "settings": {
+            "collection": "blankets-newborn",
+            "name": ""
+          }
+        },
+        "collection_DcKAjw": {
+          "type": "collection",
+          "settings": {
+            "collection": "blankets-muslin",
+            "name": ""
+          }
+        },
+        "collection_iKe37M": {
+          "type": "collection",
+          "settings": {
+            "collection": "back-to-school-essentials",
+            "name": ""
+          }
+        },
+        "collection_EMiiLp": {
+          "type": "collection",
+          "settings": {
+            "collection": "knitwear-for-baby",
+            "name": ""
+          }
+        },
+        "collection_c8wcin": {
+          "type": "collection",
+          "settings": {
+            "collection": "birdsong",
+            "name": ""
+          }
+        },
+        "collection_ywzp3g": {
+          "type": "collection",
+          "settings": {
+            "collection": "bestsellers",
+            "name": ""
+          }
+        },
+        "collection_Kbwr8U": {
+          "type": "collection",
+          "settings": {
+            "collection": "backpack",
+            "name": ""
+          }
+        },
+        "collection_rMReVy": {
+          "type": "collection",
+          "settings": {
+            "collection": "personalised-baby-clothing",
+            "name": ""
+          }
+        }
+      },
+      "block_order": [
+        "collection_frhHWU",
+        "collection_tnqnPd",
+        "collection_DcKAjw",
+        "collection_iKe37M",
+        "collection_EMiiLp",
+        "collection_c8wcin",
+        "collection_ywzp3g",
+        "collection_Kbwr8U",
+        "collection_rMReVy"
+      ],
+      "name": "Build Your Set",
+      "settings": {
+        "heading": "Build Your Set",
+        "subheading": "Select a theme",
+        "select_product_text": "Select a product",
+        "layout_type": "grid",
+        "product_card_size": "medium",
+        "mobile_product_card_size": "small",
+        "columns_gap_horizontal": 8,
+        "columns_gap_vertical": 12,
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
     }
   },
   "order": [
@@ -403,6 +507,7 @@
     "main",
     "usps_Fk8nmk",
     "section_WfycxL",
-    "collection_slider_VeqYEy"
+    "collection_slider_VeqYEy",
+    "build_your_set_kTPx6m"
   ]
 }
