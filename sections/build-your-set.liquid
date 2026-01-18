@@ -641,6 +641,7 @@
         const productCards = wrapper.querySelectorAll('product-card, product-card-link');
         productCards.forEach(function(card) {
           card.setAttribute('data-collection-page', 'true');
+          card.setAttribute('data-build-your-set', 'true');
         });
         return;
       }
@@ -714,10 +715,11 @@
                 if (skuComponent) {
                   skuComponent.remove();
                 }
-                // Ensure data-collection-page attribute is set
+                // Ensure data-collection-page and data-build-your-set attributes are set
                 const productCard = clonedCard.querySelector('product-card, product-card-link');
                 if (productCard) {
                   productCard.setAttribute('data-collection-page', 'true');
+                  productCard.setAttribute('data-build-your-set', 'true');
                 }
                 item.element.innerHTML = clonedCard.innerHTML;
                 return Promise.resolve();
@@ -829,6 +831,7 @@
               }
               
               productCard.setAttribute('data-collection-page', 'true');
+              productCard.setAttribute('data-build-your-set', 'true');
               
               // Get the outerHTML including wrapper if present
               const wrapper = productCard.parentElement;
@@ -920,6 +923,7 @@
               const productCardElement = clonedCard.querySelector('product-card, product-card-link');
               if (productCardElement) {
                 productCardElement.setAttribute('data-collection-page', 'true');
+                productCardElement.setAttribute('data-build-your-set', 'true');
               }
               
               // Remove SKU

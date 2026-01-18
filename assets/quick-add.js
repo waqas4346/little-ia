@@ -102,6 +102,21 @@ export class QuickAddComponent extends Component {
     event.stopPropagation();
     event.stopImmediatePropagation();
 
+    // Check if this quick-add is from build-your-set and mark it
+    const productCard = /** @type {import('./product-card').ProductCard | null} */ (this.closest('product-card'));
+    const isFromBuildYourSet = productCard?.hasAttribute('data-build-your-set') || 
+                                productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
+    
+    // Mark the modal content element with a data attribute if from build-your-set
+    const modalContent = document.getElementById('quick-add-modal-content');
+    if (modalContent) {
+      if (isFromBuildYourSet) {
+        modalContent.setAttribute('data-build-your-set', 'true');
+      } else {
+        modalContent.removeAttribute('data-build-your-set');
+      }
+    }
+
     const currentUrl = this.productPageUrl;
 
     if (!currentUrl) {
@@ -115,9 +130,6 @@ export class QuickAddComponent extends Component {
     this.#abortController?.abort();
     this.#abortController = new AbortController();
 
-    // Check if we have cached content first
-    const modalContent = document.getElementById('quick-add-modal-content');
-    
     // Clear any stuck loader state from previous errors
     if (modalContent) {
       // Check if content is stuck showing loader (skeleton)
@@ -305,6 +317,19 @@ export class QuickAddComponent extends Component {
   }
 
   #openQuickAddModal = () => {
+    // Ensure modal content marker is set after modal opens (in case it wasn't set before)
+    requestAnimationFrame(() => {
+      const modalContent = document.getElementById('quick-add-modal-content');
+      if (modalContent) {
+        const productCard = /** @type {import('./product-card').ProductCard | null} */ (this.closest('product-card'));
+        const isFromBuildYourSet = productCard?.hasAttribute('data-build-your-set') || 
+                                    productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
+        if (isFromBuildYourSet) {
+          modalContent.setAttribute('data-build-your-set', 'true');
+        }
+      }
+    });
+    
     const dialogComponent = document.getElementById('quick-add-dialog');
     if (!dialogComponent) {
       console.warn('Quick Add: Dialog element not found');
@@ -431,6 +456,9 @@ export class QuickAddComponent extends Component {
     const modalContent = document.getElementById('quick-add-modal-content');
 
     if (!productGrid || !modalContent) return;
+    
+    // Preserve build-your-set marker if it was set before content update
+    const wasBuildYourSet = modalContent.hasAttribute('data-build-your-set');
 
     // Check if the request was aborted before updating
     if (this.#abortController?.signal.aborted) {
@@ -441,6 +469,11 @@ export class QuickAddComponent extends Component {
     // The CSS will handle the layout differences
 
     morph(modalContent, productGrid);
+    
+    // Restore build-your-set marker after morphing
+    if (wasBuildYourSet) {
+      modalContent.setAttribute('data-build-your-set', 'true');
+    }
 
     this.#syncVariantSelection(modalContent);
     
@@ -462,6 +495,11 @@ export class QuickAddComponent extends Component {
 
       // Add View Product button to image container
       this.#addViewProductButton(modalContent);
+      
+      // Replace add-to-cart button with custom button for build-your-set
+      if (wasBuildYourSet) {
+        this.#replaceAddToCartButtonForBuildYourSet(modalContent);
+      }
     });
     
     // Ensure personalise button event listeners work with dynamically loaded content
@@ -737,6 +775,140 @@ export class QuickAddComponent extends Component {
 
     // Add to media container
     mediaContainer.appendChild(viewProductButton);
+  }
+
+  /**
+   * Replaces the default add-to-cart button with a custom button for build-your-set
+   * @param {Element} modalContent - The modal content element
+   */
+  #replaceAddToCartButtonForBuildYourSet(modalContent) {
+    if (!modalContent) return;
+    
+    // Find the add-to-cart button(s) in the modal
+    const addToCartButtons = modalContent.querySelectorAll('add-to-cart-component, [ref="addToCartButton"], button[type="submit"][name="add"]');
+    const productForm = modalContent.querySelector('product-form-component');
+    
+    if (!productForm || addToCartButtons.length === 0) return;
+    
+    const productId = productForm.dataset.productId;
+    
+    // Find the form to get variant ID and quantity
+    const form = modalContent.querySelector('form[data-type="add-to-cart-form"]');
+    if (!form) return;
+    
+    // Hide all existing add-to-cart buttons
+    addToCartButtons.forEach(button => {
+      if (button instanceof HTMLElement) {
+        button.style.display = 'none';
+      }
+    });
+    
+    // Find the button container (usually inside buy-buttons-block or product-form)
+    const buyButtonsBlock = modalContent.querySelector('.buy-buttons-block');
+    const buttonContainer = buyButtonsBlock || productForm;
+    
+    if (!buttonContainer) return;
+    
+    // Check if custom button already exists
+    let customButton = buttonContainer.querySelector('.build-your-set-add-to-session-button');
+    
+    if (!customButton) {
+      // Create custom button with same styling as original
+      customButton = document.createElement('button');
+      customButton.type = 'button';
+      customButton.className = 'button build-your-set-add-to-session-button';
+      customButton.setAttribute('data-product-id', productId || '');
+      
+      // Get the text from the original button if available
+      const originalButton = modalContent.querySelector('button[type="submit"][name="add"]');
+      let buttonText = 'Add to Set';
+      if (originalButton) {
+        const textElement = originalButton.querySelector('.add-to-cart-text, .add-to-cart-text__content');
+        if (textElement) {
+          buttonText = textElement.textContent.trim() || 'Add to Set';
+        }
+      }
+      
+      customButton.innerHTML = `
+        <span class="add-to-cart-text">
+          <span class="add-to-cart-text__content">
+            <span>
+              <span>${buttonText}</span>
+            </span>
+          </span>
+        </span>
+      `;
+      
+      // Add click handler
+      customButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Get variant ID and quantity from form
+        const variantIdInput = form.querySelector('input[name="id"][ref="variantId"]');
+        const quantityInput = form.querySelector('input[name="quantity"]');
+        
+        const variantId = variantIdInput?.value;
+        const quantity = quantityInput ? Number(quantityInput.value) || 1 : 1;
+        
+        if (!variantId) {
+          console.error('Build Your Set: Variant ID not found');
+          return;
+        }
+        
+        // Store in session storage
+        const storageKey = 'build-your-set-session-cart';
+        let sessionCart = [];
+        try {
+          const stored = sessionStorage.getItem(storageKey);
+          if (stored) {
+            sessionCart = JSON.parse(stored);
+          }
+        } catch (error) {
+          console.error('Build Your Set: Error reading session storage', error);
+          sessionCart = [];
+        }
+        
+        // Check if variant already exists, update quantity, otherwise add new
+        const existingIndex = sessionCart.findIndex(item => item.variant_id === variantId);
+        
+        if (existingIndex >= 0) {
+          sessionCart[existingIndex].quantity += quantity;
+        } else {
+          sessionCart.push({
+            variant_id: variantId,
+            product_id: productId,
+            quantity: quantity,
+            added_at: Date.now()
+          });
+        }
+        
+        try {
+          sessionStorage.setItem(storageKey, JSON.stringify(sessionCart));
+          
+          // Close the modal
+          const quickAddDialog = document.getElementById('quick-add-dialog');
+          if (quickAddDialog && typeof quickAddDialog.closeDialog === 'function') {
+            quickAddDialog.closeDialog();
+          }
+        } catch (error) {
+          console.error('Build Your Set: Error saving to session storage', error);
+        }
+      });
+      
+      // Insert the button in the same position as the original
+      const firstAddToCart = Array.from(addToCartButtons)[0];
+      if (firstAddToCart && firstAddToCart.parentElement) {
+        firstAddToCart.parentElement.insertBefore(customButton, firstAddToCart);
+      } else {
+        buttonContainer.appendChild(customButton);
+      }
+    }
+    
+    // Show the custom button
+    if (customButton instanceof HTMLElement) {
+      customButton.style.display = '';
+    }
   }
 
   /**

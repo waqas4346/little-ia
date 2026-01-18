@@ -336,7 +336,6 @@ class ProductFormComponent extends Component {
     // Add personalisation fields to form before creating FormData
     // This ensures personalisation data is included in the cart request
     // Uses sessionStorage (current session only, clears on reload)
-    const productId = this.dataset.productId;
     if (productId) {
       const key = `personalisation_${String(productId)}`;
       const saved = sessionStorage.getItem(key);
