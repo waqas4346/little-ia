@@ -103,6 +103,11 @@
     overflow: hidden;
     padding: 20px;
 
+    @media screen and (min-width: 750px) {
+      height: 90vh;
+      max-height: 90vh;
+    }
+
     @media screen and (max-width: 749px) {
       flex-direction: column;
       min-height: unset;
@@ -232,17 +237,19 @@
   }
 
   .quick-add-modal__content .product-details {
-    flex: 0 0 46.09% !important; /* Similar to personalisation modal */
+    flex: 1 1 auto !important; /* Take all available space */
     display: flex !important;
     flex-direction: column;
     justify-content: stretch;
     height: 100%;
     min-height: 0;
+    max-height: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-left: 20px;
     order: 1 !important;
-    width: 46.09% !important;
-    max-width: 46.09% !important;
+    width: auto !important;
+    max-width: none !important;
     visibility: visible !important;
 
     dialog[open] & {
@@ -251,22 +258,21 @@
     }
 
     @media screen and (min-width: 1400px) {
-      flex: 0 0 530px !important;
-      width: 530px !important;
-      max-width: 530px !important;
+      flex: 1 1 auto !important;
+      width: auto !important;
+      max-width: none !important;
     }
 
     @media screen and (max-width: 749px) {
-      flex: 1 !important;
+      flex: 0 0 auto !important;
       width: 100% !important;
       max-width: 100% !important;
       padding-inline: var(--padding-xl);
       padding-top: 0;
       padding-bottom: var(--padding-xl);
-      max-height: 60vh;
       height: auto;
       min-height: 0;
-      overflow-y: auto;
+      overflow: visible;
       order: 1 !important;
     }
   }
@@ -485,12 +491,12 @@
     }
 
     @media screen and (max-width: 749px) {
-      flex: 0 0 40% !important;
+      flex: 0 0 auto !important;
       width: 100% !important;
       max-width: 100% !important;
       min-height: 200px;
-      height: 40vh;
-      max-height: 40vh;
+      height: auto;
+      max-height: none;
       order: 0 !important;
     }
   }
