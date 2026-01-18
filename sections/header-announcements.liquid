@@ -114,10 +114,16 @@
     width: var(--button-size);
     height: var(--button-size);
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     opacity: 1;
     animation: none;
     pointer-events: auto;
+  }
+
+  @media screen and (min-width: 750px) {
+    .announcement-bar__slider .slideshow-control {
+      justify-content: center;
+    }
   }
 
   .announcement-bar__slider .slideshow-control .svg-wrapper {
