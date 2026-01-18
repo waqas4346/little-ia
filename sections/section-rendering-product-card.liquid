@@ -38,17 +38,100 @@
   >
 {%- endif -%}
 
-<product-card>
+<product-card
+  class="product-card"
+  data-product-id="{{ product.id }}"
+  data-product-transition="{{ settings.transition_to_main_product }}"
+>
   <a
     href="{{ url }}"
+    class="product-card__link"
     ref="productCardLink"
+  >
+    <span class="visually-hidden">
+      {{ product.title }}
+    </span>
+  </a>
+  <div
+    class="
+      product-card__content
+      layout-panel-flex
+      layout-panel-flex--column
+      product-grid__card
+      spacing-style
+      border-style
+      gap-style
+    "
+    style="
+      --product-card-gap: 4px;
+    "
   >
     <variant-picker>
       <script type="application/json">
         {{ product.selected_or_first_available_variant | json }}
       </script>
     </variant-picker>
+    
+    {% comment %} Product Card Gallery {% endcomment %}
+    {% if product.featured_media %}
+      {% liquid
+        assign image_ratio = 'adapt'
+        assign image_sizes = '(min-width: 750px) 50vw, 100vw'
+        assign first_media = product.featured_media
+        assign media_list = product.media | slice: 0, 2
+      %}
+      <div class="card-gallery">
+        <slideshow-component ref="cardGallery" initial-slide="0" class="card-gallery__slideshow" disabled="true">
+          <a class="contents" ref="cardGalleryLink" href="{{ url }}" aria-label="{{ product.title }}">
+            <slideshow-container ref="slideshowContainer">
+              <slideshow-slides>
+                {% for media in media_list limit: 2 %}
+                  {% liquid
+                    assign loading = 'lazy'
+                    if forloop.first
+                      assign loading = 'eager'
+                    endif
+                  %}
+                  {% capture slide_content %}
+                    {% render 'product-media', media: media, sizes: image_sizes, loading: loading, preview_image_only: true %}
+                  {% endcapture %}
+                  {% render 'slideshow-slide',
+                    slide_id: media.id,
+                    index: forloop.index0,
+                    hidden: false,
+                    class: 'product-media-container media-fit product-media-container--' | append: media.media_type,
+                    children: slide_content
+                  %}
+                {% endfor %}
+              </slideshow-slides>
+            </slideshow-container>
+          </a>
+        </slideshow-component>
+        
+        {% render 'product-card-badges', product: product, settings: settings %}
+        {% if settings.quick_add or settings.mobile_quick_add %}
+          {% render 'quick-add', product: product, section_id: section.id %}
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="card-gallery">
+        <div class="product-card__placeholder-image">
+          {{ 'product-1' | placeholder_svg_tag }}
+        </div>
+      </div>
+    {% endif %}
+    
     {% render 'variant-swatches', product_resource: product, has_option_selected: true %}
+    
+    {% comment %} Product Title - match product-title block structure {% endcomment %}
+    {% assign product_title = '<p>' | append: product.title | append: '</p>' %}
+    <a
+      class="contents user-select-text"
+      ref="productTitleLink"
+      href="{{ url }}"
+    >
+      {% render 'text', fallback_text: product_title, class: 'product-title-text' %}
+    </a>
 
     <product-price>
       {% render 'price', product_resource: product, show_unit_price: true, show_sale_price_first: true %}
@@ -59,14 +142,7 @@
       product: product, 
       section_id: section.id
     %}
-
-    <product-sku-component
-      data-product-id="{{ product.id }}"
-      style="{% if sku == blank %}display: none;{% else %}display: block;{% endif %}"
-    >
-      {% render 'sku', product_resource: product %}
-    </product-sku-component>
-  </a>
+  </div>
 </product-card>
 {%- if settings.transition_to_main_product -%}
   </product-card-link>

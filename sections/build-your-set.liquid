@@ -1,0 +1,1252 @@
+{% liquid
+  assign section_heading = section.settings.heading | default: 'Build Your Set'
+  assign section_subheading = section.settings.subheading | default: 'Select a theme'
+  assign select_product_text = section.settings.select_product_text | default: 'Select a product'
+%}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div
+  data-testid="build-your-set"
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+    build-your-set-section
+  "
+  style="
+    {% render 'spacing-style', settings: section.settings %}
+    {% render 'gap-style', value: section.settings.gap %}
+  "
+>
+  <div class="build-your-set-header">
+    {% if section_heading != blank %}
+      <div class="build-your-set-top-label">
+        <span class="build-your-set-top-label-text">{{ section_heading }}</span>
+      </div>
+    {% endif %}
+    
+    {% if section_subheading != blank %}
+      <div class="build-your-set-section-title">
+        <span class="build-your-set-section-title-label">{{ section_subheading }}</span>
+      </div>
+    {% endif %}
+  </div>
+
+    {% comment %} Collection slider {% endcomment %}
+    {% if section.blocks.size > 0 %}
+      <div class="build-your-set-collection-slider-wrapper">
+        <button 
+          type="button"
+          class="build-your-set-collection-arrow build-your-set-collection-arrow--prev"
+          aria-label="Previous collections"
+          data-collection-arrow="prev"
+        >
+          <svg width="11" height="19" viewBox="0 0 11 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9.36328 2.31564L1.26025 9.83979L9.36328 17.364" stroke="#7295BB" stroke-width="2.31515" stroke-linecap="square" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="build-your-set-collection-slider" data-collection-slider>
+          {% for block in section.blocks %}
+            {% liquid
+              assign collection = block.settings.collection
+              assign block_name = block.settings.name | default: collection.title | default: 'Collection'
+              assign block_image = block.settings.image
+            %}
+            <button
+              type="button"
+              class="build-your-set-collection-item {% if forloop.first %}active{% endif %}"
+              data-collection-id="{{ collection.id }}"
+              data-block-id="{{ block.id }}"
+              data-collection-handle="{{ collection.handle }}"
+              aria-label="{{ block_name }}"
+              {{ block.shopify_attributes }}
+            >
+              <div class="build-your-set-collection-image-wrapper">
+                {% if block_image != blank %}
+                  {{
+                    block_image
+                    | image_url: width: 400
+                    | image_tag:
+                      loading: 'lazy',
+                      class: 'build-your-set-collection-image',
+                      alt: block_image.alt | default: block_name,
+                      width: 200,
+                      height: 200
+                  }}
+                {% elsif collection.featured_image != blank %}
+                  {{
+                    collection.featured_image
+                    | image_url: width: 400
+                    | image_tag:
+                      loading: 'lazy',
+                      class: 'build-your-set-collection-image',
+                      alt: collection.featured_image.alt | default: block_name,
+                      width: 200,
+                      height: 200
+                  }}
+                {% else %}
+                  <div class="build-your-set-collection-image-placeholder">
+                    {{ 'collection-1' | placeholder_svg_tag: 'placeholder' }}
+                  </div>
+                {% endif %}
+              </div>
+              <div class="build-your-set-collection-label">{{ block_name }}</div>
+            </button>
+          {% endfor %}
+        </div>
+        <button 
+          type="button"
+          class="build-your-set-collection-arrow build-your-set-collection-arrow--next"
+          aria-label="Next collections"
+          data-collection-arrow="next"
+        >
+          <svg width="11" height="19" viewBox="0 0 11 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1.63672 16.6844L9.73975 9.16021L1.63672 1.63596" stroke="#7295BB" stroke-width="2.31515" stroke-linecap="square" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+    {% comment %} Select a product text {% endcomment %}
+    {% if select_product_text != blank %}
+      <div class="build-your-set-select-product-text">
+        <span class="build-your-set-select-product-text-label">{{ select_product_text }}</span>
+      </div>
+    {% endif %}
+
+    {% comment %} Product grids for each collection {% endcomment %}
+    <div class="build-your-set-products-wrapper" data-products-wrapper>
+      {% for block in section.blocks %}
+        {% liquid
+          assign collection = block.settings.collection
+          assign block_id = block.id
+          assign is_first = forloop.first
+        %}
+        {% if collection != blank and collection.products_count > 0 %}
+          <div
+            class="build-your-set-product-grid-wrapper {% unless is_first %}hidden{% endunless %}"
+            data-collection-id="{{ collection.id }}"
+            data-block-id="{{ block_id }}"
+            data-collection-handle="{{ collection.handle }}"
+            {% unless is_first %}style="display: none;"{% endunless %}
+          >
+            {% capture list_items %}
+              {% for product in collection.products %}
+                <li class="product-grid__item" data-product-id="{{ product.id }}" data-product-handle="{{ product.handle }}" data-collection-handle="{{ collection.handle }}">
+                  {% comment %} Product card will be loaded via JavaScript {% endcomment %}
+                  <div style="min-height: 300px; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+                    <span style="opacity: 0.5;">Loading product...</span>
+                  </div>
+                </li>
+              {% endfor %}
+            {% endcapture %}
+
+            <ul
+              class="product-grid product-grid--{{ section.id }} product-grid--{{ section.settings.layout_type }}"
+              data-testid="build-your-set-product-grid"
+              product-grid-view="default"
+              role="list"
+              data-product-card-size="{{ section.settings.product_card_size }}"
+              style="--mobile-columns: {% if section.settings.mobile_product_card_size == 'large' %}1{% else %}2{% endif %};"
+            >
+              {{ list_items }}
+            </ul>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+{% style %}
+  .build-your-set-header {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .build-your-set-top-label {
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  .build-your-set-top-label-text {
+    margin: 0;
+    font-family: 'Sacramento', cursive, sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 150%;
+    color: #7295BB;
+    text-align: center;
+    text-transform: lowercase;
+    display: block;
+  }
+
+  .build-your-set-section-title {
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  .build-your-set-section-title-label {
+    margin: 0;
+    font-family: 'FuturaPT-Demi', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
+    text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
+    display: block;
+  }
+
+  .build-your-set-collection-slider-wrapper {
+    margin: 32px 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .build-your-set-collection-slider {
+    display: flex;
+    gap: 24px;
+    padding: 0 16px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .build-your-set-collection-slider::-webkit-scrollbar {
+    display: none;
+  }
+
+  .build-your-set-collection-arrow {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.2s ease;
+    min-width: 44px;
+    min-height: 44px;
+    z-index: 2;
+  }
+
+  .build-your-set-collection-arrow:hover {
+    opacity: 0.7;
+  }
+
+  .build-your-set-collection-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .build-your-set-collection-arrow svg {
+    width: 11px;
+    height: 19px;
+  }
+
+  .build-your-set-collection-arrow--prev {
+    order: 1;
+  }
+
+  .build-your-set-collection-slider {
+    order: 2;
+  }
+
+  .build-your-set-collection-arrow--next {
+    order: 3;
+  }
+
+  .build-your-set-collection-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s ease;
+    min-width: 100px;
+    flex-shrink: 0;
+    flex-basis: auto;
+  }
+
+  .build-your-set-collection-item:hover {
+    opacity: 0.8;
+  }
+
+  .build-your-set-collection-image-wrapper {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid transparent;
+    transition: border-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #F7F7F7;
+  }
+
+  .build-your-set-collection-item.active .build-your-set-collection-image-wrapper {
+    border-color: #1D425A;
+  }
+
+  .build-your-set-collection-image,
+  .build-your-set-collection-image-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .build-your-set-collection-image-placeholder {
+    width: 100px;
+    height: 100px;
+  }
+
+  .build-your-set-collection-image-placeholder svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .build-your-set-collection-label {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 140%;
+    color: #1D425A;
+    text-align: center;
+    white-space: nowrap;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .build-your-set-select-product-text {
+    text-align: center;
+    margin: 32px 0 24px;
+  }
+
+  .build-your-set-select-product-text-label {
+    margin: 0;
+    font-family: 'FuturaPT-Demi', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
+    text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
+    display: block;
+  }
+
+  .build-your-set-products-wrapper {
+    width: 100%;
+  }
+
+  .build-your-set-product-grid-wrapper {
+    width: 100%;
+  }
+
+  .build-your-set-product-grid-wrapper.hidden {
+    display: none !important;
+  }
+
+  /* Product grid styles matching collection page */
+  .build-your-set-product-grid-wrapper {
+    width: 100%;
+    container-type: inline-size;
+    container-name: product-grid;
+  }
+
+  .build-your-set-product-grid-wrapper .product-grid {
+    --product-grid-gap-mobile: {{ section.settings.columns_gap_vertical | at_most: 12 }}px {{ section.settings.columns_gap_horizontal | at_most: 12 }}px;
+    --product-grid-gap-desktop: {{ section.settings.columns_gap_vertical }}px {{ section.settings.columns_gap_horizontal }}px;
+    --product-grid-gap: var(--product-grid-gap-mobile);
+    --mobile-columns: {% if section.settings.mobile_product_card_size == 'large' %}1{% else %}2{% endif %};
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: repeat(var(--mobile-columns), 1fr);
+    gap: var(--product-grid-gap-mobile);
+    margin: auto;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Desktop styles - matching base.css pattern */
+  @media screen and (min-width: 750px) {
+    .build-your-set-product-grid-wrapper .product-grid {
+      --product-grid-gap: var(--product-grid-gap-desktop);
+      gap: var(--product-grid-gap);
+    }
+
+    {% case section.settings.layout_type %}
+      {% when 'grid' %}
+        .build-your-set-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--grid {
+          --product-grid-columns-desktop: repeat(4, 324px);
+          grid-template-columns: var(--product-grid-columns-desktop);
+        }
+      {% when 'organic' %}
+        {% assign large_span = 2 %}
+        {% assign row_cycle = 3 %}
+        {% assign product_cycle = row_cycle | times: 2 %}
+        {% assign right_large_start_col = 3 %}
+        .build-your-set-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--organic .product-grid__item:nth-of-type({{ product_cycle }}n + 1) {
+          grid-column: 1 / span {{ large_span }};
+        }
+
+        .build-your-set-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--organic .product-grid__item:nth-of-type({{ product_cycle }}n + 2),
+        .build-your-set-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--organic .product-grid__item:nth-of-type({{ product_cycle }}n + 5) {
+          align-self: end;
+        }
+
+        .build-your-set-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--organic .product-grid__item:nth-of-type({{ product_cycle }}n + {{ product_cycle }}) {
+          grid-column: {{ right_large_start_col }} / span {{ large_span }};
+        }
+
+        .build-your-set-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--organic {
+          --product-grid-columns-desktop: repeat(4, 1fr);
+          grid-template-columns: var(--product-grid-columns-desktop);
+        }
+    {% endcase %}
+  }
+
+  /* Tablet (iPad) - Show 3 columns default for grid layout */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    {% case section.settings.layout_type %}
+      {% when 'grid' %}
+        .build-your-set-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--grid {
+          --product-grid-columns-desktop: repeat(3, 1fr) !important;
+          grid-template-columns: var(--product-grid-columns-desktop) !important;
+        }
+    {% endcase %}
+  }
+
+  /* Product card title styling matching collection page */
+  .build-your-set-products-wrapper .product-card .product-title-text,
+  .build-your-set-products-wrapper .product-card .product-title-text p,
+  .build-your-set-products-wrapper .product-card .text-block.product-title-text,
+  .build-your-set-products-wrapper .product-card .text-block.product-title-text p {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 140%;
+    color: #1D425A;
+  }
+
+  @media screen and (min-width: 750px) {
+    .build-your-set-products-wrapper .product-card .product-title-text,
+    .build-your-set-products-wrapper .product-card .product-title-text p,
+    .build-your-set-products-wrapper .product-card .text-block.product-title-text,
+    .build-your-set-products-wrapper .product-card .text-block.product-title-text p {
+      font-size: 20px;
+      line-height: 140%;
+      color: #1D425A;
+    }
+  }
+
+  @media screen and (max-width: 1023px) {
+    .build-your-set-products-wrapper .product-card .product-title-text,
+    .build-your-set-products-wrapper .product-card .product-title-text p,
+    .build-your-set-products-wrapper .product-card .text-block.product-title-text,
+    .build-your-set-products-wrapper .product-card .text-block.product-title-text p {
+      font-size: 16px;
+      line-height: 140%;
+      color: #1D425A;
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .build-your-set-header {
+      margin-bottom: 24px;
+    }
+
+    .build-your-set-top-label-text {
+      font-size: 38px;
+    }
+
+    .build-your-set-collection-slider {
+      padding: 0 24px;
+      gap: 32px;
+    }
+
+    .build-your-set-collection-image-wrapper {
+      width: 120px;
+      height: 120px;
+    }
+
+    .build-your-set-collection-image-placeholder {
+      width: 120px;
+      height: 120px;
+    }
+
+    .build-your-set-collection-label {
+      font-size: 16px;
+      max-width: 140px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .build-your-set-header {
+      margin-bottom: 16px;
+    }
+
+    .build-your-set-collection-slider-wrapper {
+      margin: 24px 0;
+    }
+
+    .build-your-set-collection-slider {
+      padding: 0 16px;
+      gap: 16px;
+      justify-content: flex-start;
+    }
+
+    .build-your-set-collection-image-wrapper {
+      width: 80px;
+      height: 80px;
+    }
+
+    .build-your-set-collection-image-placeholder {
+      width: 80px;
+      height: 80px;
+    }
+
+    .build-your-set-collection-label {
+      font-size: 12px;
+      max-width: 90px;
+    }
+
+    .build-your-set-select-product-text {
+      margin: 24px 0 16px;
+    }
+
+    .build-your-set-select-product-text-label {
+      font-size: 20px;
+    }
+
+    /* Hide arrows on mobile - allow touch scrolling */
+    .build-your-set-collection-arrow {
+      display: none;
+    }
+  }
+{% endstyle %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const section = document.querySelector('[data-testid="build-your-set"]');
+    if (!section) return;
+
+    const collectionSlider = section.querySelector('[data-collection-slider]');
+    const collectionItems = section.querySelectorAll('.build-your-set-collection-item');
+    const productsWrapper = section.querySelector('[data-products-wrapper]');
+    const productGridWrappers = section.querySelectorAll('.build-your-set-product-grid-wrapper');
+    const prevArrow = section.querySelector('[data-collection-arrow="prev"]');
+    const nextArrow = section.querySelector('[data-collection-arrow="next"]');
+    
+    if (!collectionSlider || !productsWrapper) return;
+
+    // Setup collection slider scroll functionality
+    if (prevArrow && nextArrow && collectionSlider) {
+      setupCollectionSlider(collectionSlider, prevArrow, nextArrow);
+    }
+
+    // Initialize first collection's product cards
+    if (productGridWrappers.length > 0) {
+      const firstWrapper = productGridWrappers[0];
+      if (!firstWrapper.classList.contains('hidden')) {
+        loadProductCards(firstWrapper);
+      }
+    }
+
+    // Function to load product cards from collection page
+    function loadProductCards(wrapper) {
+      const productItems = wrapper.querySelectorAll('.product-grid__item[data-product-handle]');
+      if (!productItems || productItems.length === 0) return;
+
+      // Get collection handle from first item
+      const firstItem = productItems[0];
+      const collectionHandle = firstItem.dataset.collectionHandle;
+      if (!collectionHandle) return;
+
+      // Collect all product handles
+      const productHandles = Array.from(productItems).map(function(item) {
+        return {
+          handle: item.dataset.productHandle,
+          id: item.dataset.productId,
+          element: item
+        };
+      }).filter(function(item) {
+        return item.handle && !item.element.querySelector('product-card, product-card-link');
+      });
+
+      if (productHandles.length === 0) {
+        // All products already loaded, just set attributes
+        const productCards = wrapper.querySelectorAll('product-card, product-card-link');
+        productCards.forEach(function(card) {
+          card.setAttribute('data-collection-page', 'true');
+        });
+        return;
+      }
+
+      // Fetch the collection page and extract product cards
+      // Try to fetch multiple pages to get all products
+      const fetchCollectionPage = function(page) {
+        const url = page > 1 ? `/collections/${collectionHandle}?page=${page}` : `/collections/${collectionHandle}`;
+        return fetch(url)
+          .then(function(response) {
+            return response.text();
+          })
+          .then(function(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const productGrid = doc.querySelector('.product-grid, [data-testid="product-grid"]');
+            
+            if (!productGrid) {
+              return { cards: [], hasMore: false };
+            }
+
+            // Extract product cards from the grid
+            const allProductCards = productGrid.querySelectorAll('.product-grid__item');
+            
+            // Check if there's a next page (look for pagination)
+            const pagination = doc.querySelector('.pagination, [class*="pagination"]');
+            const hasNextPage = pagination ? pagination.querySelector('a[aria-label*="Next"], a[rel="next"]') !== null : false;
+            
+            return {
+              cards: Array.from(allProductCards),
+              hasMore: hasNextPage
+            };
+          });
+      };
+
+      // Function to process all collected product cards
+      function processProductCards(cards) {
+        // Create a map of product IDs to cards for faster lookup
+        const productCardMap = {};
+        cards.forEach(function(card) {
+          // Try multiple ways to find product ID
+          const productCard = card.querySelector('[data-product-id]');
+          const productIdAttr = productCard?.getAttribute('data-product-id');
+          const cardDataId = card.getAttribute('data-product-id');
+          const productId = productIdAttr || cardDataId;
+          
+          if (productId) {
+            productCardMap[productId] = card;
+          }
+        });
+
+          // Load all products - prefer collection page cards, fallback to individual loading
+          const loadingPromises = productHandles.map(function(item) {
+            const matchingCard = productCardMap[item.id];
+            
+            if (matchingCard) {
+              // Check if the card has all necessary components (gallery, title, etc.)
+              const cardContent = matchingCard.innerHTML || '';
+              const hasGallery = matchingCard.querySelector('.card-gallery, slideshow-component, [class*="gallery"]') || cardContent.includes('card-gallery');
+              const hasTitle = matchingCard.querySelector('.product-title-text, product-card [class*="title"], [class*="title"]') || cardContent.includes('title');
+              const hasPrice = matchingCard.querySelector('product-price') || cardContent.includes('product-price');
+              
+              // Also check if it has a product-card element
+              const hasProductCard = matchingCard.querySelector('product-card, product-card-link');
+              
+              if (hasGallery && hasTitle && hasPrice && hasProductCard) {
+                // Clone the entire product card
+                const clonedCard = matchingCard.cloneNode(true);
+                // Remove SKU if present
+                const skuComponent = clonedCard.querySelector('product-sku-component');
+                if (skuComponent) {
+                  skuComponent.remove();
+                }
+                // Ensure data-collection-page attribute is set
+                const productCard = clonedCard.querySelector('product-card, product-card-link');
+                if (productCard) {
+                  productCard.setAttribute('data-collection-page', 'true');
+                }
+                item.element.innerHTML = clonedCard.innerHTML;
+                return Promise.resolve();
+              } else {
+                // Card is incomplete, load individually from product page
+                return loadSingleProductFromPage(item);
+              }
+            } else {
+              // Card not found in collection page, load individually from product page
+              return loadSingleProductFromPage(item);
+            }
+          });
+
+        // Wait for all products to load
+        Promise.all(loadingPromises).then(function() {
+          // Remove SKU from all loaded cards
+          const allSkuComponents = wrapper.querySelectorAll('product-sku-component');
+          allSkuComponents.forEach(function(sku) {
+            sku.remove();
+          });
+          
+          // Trigger product grid update event
+          window.dispatchEvent(new CustomEvent('product-grid:updated'));
+        });
+      }
+
+      // Start by fetching first page
+      fetchCollectionPage(1).then(function(result) {
+        let allProductCards = result.cards || [];
+        let page = 2;
+        const maxPages = 3; // Limit to 3 pages max
+        
+        // Fetch additional pages until we have all products or reach max pages
+        function fetchMorePages() {
+          if (page > maxPages || !result.hasMore || allProductCards.length >= productHandles.length) {
+            if (allProductCards.length > 0) {
+              processProductCards(allProductCards);
+            } else {
+              // No products found, fallback to Section Rendering API
+              loadViaSectionRendering(productHandles);
+            }
+            return;
+          }
+          
+          fetchCollectionPage(page).then(function(nextResult) {
+            allProductCards = allProductCards.concat(nextResult.cards || []);
+            result.hasMore = nextResult.hasMore;
+            page++;
+            fetchMorePages();
+          }).catch(function(error) {
+            console.error('Error fetching page', page, error);
+            if (allProductCards.length > 0) {
+              processProductCards(allProductCards);
+            } else {
+              loadViaSectionRendering(productHandles);
+            }
+          });
+        }
+        
+        fetchMorePages();
+      })
+        .catch(function(error) {
+          console.error('Error loading collection page:', error);
+          // Fallback: use Section Rendering API
+          loadViaSectionRendering(productHandles);
+        });
+
+      // Fallback function to load via Section Rendering API
+      function loadViaSectionRendering(items) {
+        items.forEach(function(item) {
+          loadSingleProduct(item);
+        });
+        window.dispatchEvent(new CustomEvent('product-grid:updated'));
+      }
+
+      // Load single product card via Section Rendering API (fallback)
+      function loadSingleProduct(item) {
+        return fetch(`/products/${item.handle}?section_id=section-rendering-product-card`)
+          .then(function(response) {
+            if (!response.ok) {
+              throw new Error('Failed to fetch product');
+            }
+            return response.text();
+          })
+          .then(function(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Get the product card - could be wrapped in product-card-link or standalone
+            let productCard = doc.querySelector('product-card-link');
+            if (!productCard) {
+              productCard = doc.querySelector('product-card');
+            }
+            
+            if (productCard) {
+              // Check if card has gallery
+              const hasGallery = productCard.querySelector('.card-gallery, slideshow-component');
+              const hasTitle = productCard.querySelector('.product-title-text, [class*="title"]');
+              
+              if (!hasGallery || !hasTitle) {
+                // Card is incomplete, try to get from product page instead
+                return fetchProductCardFromPage(item);
+              }
+              
+              // Remove SKU if present
+              const skuComponent = productCard.querySelector('product-sku-component');
+              if (skuComponent) {
+                skuComponent.remove();
+              }
+              
+              productCard.setAttribute('data-collection-page', 'true');
+              
+              // Get the outerHTML including wrapper if present
+              const wrapper = productCard.parentElement;
+              if (wrapper && wrapper.tagName === 'PRODUCT-CARD-LINK') {
+                item.element.innerHTML = wrapper.outerHTML;
+              } else {
+                item.element.innerHTML = productCard.outerHTML;
+              }
+            } else {
+              // No product card found, try product page
+              return fetchProductCardFromPage(item);
+            }
+          })
+          .catch(function(error) {
+            console.error('Error loading product card:', error);
+            // Try fetching from product page as last resort
+            return fetchProductCardFromPage(item);
+          });
+      }
+      
+      // Load single product card from product page (better fallback than section rendering)
+      function loadSingleProductFromPage(item) {
+        // Try to find this product in any collection page first
+        return fetch(`/products/${item.handle}`)
+          .then(function(response) {
+            if (!response.ok) {
+              throw new Error('Failed to fetch product page');
+            }
+            return response.text();
+          })
+          .then(function(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Try to find product recommendations or related products section
+            let productCard = null;
+            
+            // Check for product recommendations section
+            const recommendations = doc.querySelector('[data-testid="product-recommendations"], .product-recommendations');
+            if (recommendations) {
+              const productGrid = recommendations.querySelector('.product-grid, [data-testid="product-grid"]');
+              if (productGrid) {
+                const productCards = productGrid.querySelectorAll('.product-grid__item');
+                const matchingCard = Array.from(productCards).find(function(card) {
+                  const cardProductId = card.querySelector('[data-product-id]')?.getAttribute('data-product-id');
+                  return cardProductId === item.id;
+                });
+                if (matchingCard) {
+                  productCard = matchingCard;
+                }
+              }
+            }
+            
+            // If not found in recommendations, try explore-more-products section
+            if (!productCard) {
+              const exploreSection = doc.querySelector('[data-testid="explore-more-products"]');
+              if (exploreSection) {
+                const productGrid = exploreSection.querySelector('.product-grid, [data-testid="product-grid"], [data-testid="explore-more-products-grid"]');
+                if (productGrid) {
+                  const productCards = productGrid.querySelectorAll('.product-grid__item, .resource-list__item');
+                  const matchingCard = Array.from(productCards).find(function(card) {
+                    const cardProductId = card.querySelector('[data-product-id]')?.getAttribute('data-product-id');
+                    return cardProductId === item.id;
+                  });
+                  if (matchingCard) {
+                    productCard = matchingCard;
+                  }
+                }
+              }
+            }
+            
+            // If still not found, check any product-grid on the page
+            if (!productCard) {
+              const productGrid = doc.querySelector('.product-grid, [data-testid="product-grid"]');
+              if (productGrid) {
+                const productCards = productGrid.querySelectorAll('.product-grid__item');
+                const matchingCard = Array.from(productCards).find(function(card) {
+                  const cardProductId = card.querySelector('[data-product-id]')?.getAttribute('data-product-id');
+                  return cardProductId === item.id;
+                });
+                if (matchingCard) {
+                  productCard = matchingCard;
+                }
+              }
+            }
+            
+            if (productCard) {
+              const clonedCard = productCard.cloneNode(true);
+              const productCardElement = clonedCard.querySelector('product-card, product-card-link');
+              if (productCardElement) {
+                productCardElement.setAttribute('data-collection-page', 'true');
+              }
+              
+              // Remove SKU
+              const skuComponent = clonedCard.querySelector('product-sku-component');
+              if (skuComponent) {
+                skuComponent.remove();
+              }
+              
+              item.element.innerHTML = clonedCard.innerHTML;
+            } else {
+              // Last resort: use section-rendering-product-card
+              return loadSingleProduct(item);
+            }
+          })
+          .catch(function(error) {
+            console.error('Error fetching product page:', error);
+            // Fallback to section rendering
+            return loadSingleProduct(item);
+          });
+      }
+      
+      // Fallback: fetch full product page and extract card structure (legacy, keeping for compatibility)
+      function fetchProductCardFromPage(item) {
+        return loadSingleProductFromPage(item);
+      }
+    }
+
+    // Handle collection item clicks
+    collectionItems.forEach(function(item) {
+      item.addEventListener('click', function() {
+        // Remove active class from all items
+        collectionItems.forEach(function(ci) {
+          ci.classList.remove('active');
+        });
+
+        // Add active class to clicked item
+        item.classList.add('active');
+
+        // Get collection handle and block id
+        const handle = item.dataset.collectionHandle;
+        const blockId = item.dataset.blockId;
+        const collectionId = item.dataset.collectionId;
+
+        // Hide all product grids
+        productGridWrappers.forEach(function(wrapper) {
+          wrapper.classList.add('hidden');
+          wrapper.style.display = 'none';
+        });
+
+        // Show selected collection's product grid
+        const selectedWrapper = Array.from(productGridWrappers).find(function(wrapper) {
+          return wrapper.dataset.blockId === blockId || 
+                 wrapper.dataset.collectionHandle === handle ||
+                 wrapper.dataset.collectionId === collectionId;
+        });
+
+        if (selectedWrapper) {
+          selectedWrapper.classList.remove('hidden');
+          selectedWrapper.style.display = 'block';
+          
+          // Load product cards via Section Rendering API
+          loadProductCards(selectedWrapper);
+        }
+      });
+    });
+
+    // Function to setup collection slider with arrows
+    function setupCollectionSlider(slider, prevBtn, nextBtn) {
+      if (!slider || !prevBtn || !nextBtn) return;
+      
+      // Calculate scroll amount based on item width + gap
+      function getScrollAmount() {
+        const firstItem = slider.querySelector('.build-your-set-collection-item');
+        if (!firstItem) return 200;
+        const itemWidth = firstItem.offsetWidth;
+        const gap = 24; // Match CSS gap
+        return itemWidth + gap;
+      }
+
+      const scrollAmount = getScrollAmount();
+      
+      // Update arrow visibility based on scroll position
+      function updateArrows() {
+        if (!slider || !prevBtn || !nextBtn) return;
+        
+        const scrollLeft = slider.scrollLeft;
+        const scrollWidth = slider.scrollWidth;
+        const clientWidth = slider.clientWidth;
+        
+        const isAtStart = scrollLeft <= 5; // Small threshold for rounding
+        const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 5;
+        
+        prevBtn.disabled = isAtStart;
+        nextBtn.disabled = isAtEnd;
+        
+        // Also update visibility
+        prevBtn.style.opacity = isAtStart ? '0.3' : '1';
+        nextBtn.style.opacity = isAtEnd ? '0.3' : '1';
+      }
+
+      // Initial check - wait for layout
+      requestAnimationFrame(function() {
+        updateArrows();
+      });
+
+      // Previous button - scroll left
+      prevBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (slider.scrollLeft <= 0) return;
+        
+        const amount = getScrollAmount();
+        slider.scrollBy({
+          left: -amount,
+          behavior: 'smooth'
+        });
+      });
+
+      // Next button - scroll right
+      nextBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const maxScroll = slider.scrollWidth - slider.clientWidth;
+        if (slider.scrollLeft >= maxScroll) return;
+        
+        const amount = getScrollAmount();
+        slider.scrollBy({
+          left: amount,
+          behavior: 'smooth'
+        });
+      });
+
+      // Update arrows on scroll
+      slider.addEventListener('scroll', function() {
+        requestAnimationFrame(updateArrows);
+      });
+
+      // Update arrows on resize
+      let resizeTimer;
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+          updateArrows();
+        }, 100);
+      });
+
+      // Update arrows after a delay to ensure accurate measurements
+      setTimeout(updateArrows, 200);
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Build Your Set",
+  "class": "ui-test-build-your-set",
+  "blocks": [
+    {
+      "type": "collection",
+      "name": "Collection",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection"
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name",
+          "info": "Display name for this collection (defaults to collection title if not set)"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image",
+          "info": "Circular image shown in the slider (defaults to collection featured image if not set)"
+        }
+      ]
+    }
+  ],
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Build Your Set"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Select a theme"
+    },
+    {
+      "type": "text",
+      "id": "select_product_text",
+      "label": "Select Product Text",
+      "default": "Select a product"
+    },
+    {
+      "type": "header",
+      "content": "Product Grid Settings"
+    },
+    {
+      "type": "select",
+      "id": "layout_type",
+      "label": "Layout Type",
+      "options": [
+        {
+          "value": "grid",
+          "label": "Grid"
+        },
+        {
+          "value": "organic",
+          "label": "Organic"
+        }
+      ],
+      "default": "grid"
+    },
+    {
+      "type": "select",
+      "id": "product_card_size",
+      "label": "Product Card Size",
+      "options": [
+        {
+          "value": "small",
+          "label": "Small"
+        },
+        {
+          "value": "medium",
+          "label": "Medium"
+        },
+        {
+          "value": "large",
+          "label": "Large"
+        },
+        {
+          "value": "extra-large",
+          "label": "Extra Large"
+        }
+      ],
+      "default": "medium"
+    },
+    {
+      "type": "select",
+      "id": "mobile_product_card_size",
+      "label": "Mobile Product Card Size",
+      "options": [
+        {
+          "value": "small",
+          "label": "Small (2 columns)"
+        },
+        {
+          "value": "large",
+          "label": "Large (1 column)"
+        }
+      ],
+      "default": "small"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap_horizontal",
+      "label": "Horizontal Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "columns_gap_vertical",
+      "label": "Vertical Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "Section Layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page"
+        },
+        {
+          "value": "full-width",
+          "label": "Full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color Scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Build Your Set",
+      "category": "Products",
+      "settings": {
+        "heading": "Build Your Set",
+        "subheading": "Select a theme",
+        "select_product_text": "Select a product",
+        "layout_type": "grid",
+        "product_card_size": "medium",
+        "mobile_product_card_size": "small",
+        "columns_gap_horizontal": 8,
+        "columns_gap_vertical": 12,
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      },
+      "blocks": {},
+      "block_order": []
+    }
+  ]
+}
+{% endschema %}
