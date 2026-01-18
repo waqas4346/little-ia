@@ -1,0 +1,290 @@
+{%- doc -%}
+  Renders product recommendations in the cart drawer.
+  Uses the most recent cart item and tries complementary first, then falls back to related.
+{%- enddoc -%}
+
+{%- if cart.items.size > 0 and settings.show_cart_drawer_recommendations != false -%}
+  {%- liquid
+    # Get the most recent cart item (last in array)
+    assign most_recent_item = cart.items.last
+    assign product_id = most_recent_item.product.id
+    
+    # Default settings
+    assign max_products = 4
+    if settings.cart_drawer_recommendations_max_products
+      assign max_products = settings.cart_drawer_recommendations_max_products
+    endif
+  -%}
+
+  <script
+    src="{{ 'cart-drawer-recommendations.js' | asset_url }}"
+    type="module"
+    fetchpriority="low"
+  ></script>
+  <script
+    src="{{ 'quick-add.js' | asset_url }}"
+    type="module"
+    fetchpriority="low"
+  ></script>
+
+  <div class="cart-drawer-recommendations__header">
+    <h3 class="cart-drawer-recommendations__title">Pairs Well With</h3>
+  </div>
+
+  <cart-drawer-recommendations
+    id="cart-drawer-recommendations-{{ section.id }}"
+    class="cart-drawer-recommendations"
+    data-url="{{ routes.product_recommendations_url }}?limit={{ max_products }}"
+    data-section-id="product-recommendations"
+    data-max-products="{{ max_products }}"
+    data-product-id="{{ product_id }}"
+  >
+    <div class="cart-drawer-recommendations__loading">
+      <div class="cart-drawer-recommendations__skeleton" style="display: flex; flex-direction: row; gap: 12px;">
+        {%- for i in (1..max_products) -%}
+          <div class="cart-drawer-recommendations__skeleton-item"></div>
+        {%- endfor -%}
+      </div>
+    </div>
+  </cart-drawer-recommendations>
+{%- endif -%}
+
+{% stylesheet %}
+  .cart-drawer-recommendations__header {
+    padding: 0 15px;
+    margin-top: 24px;
+    margin-bottom: 14px;
+  }
+
+  .cart-drawer-recommendations__title {
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0;
+    color: var(--color-foreground);
+  }
+
+  .cart-drawer-recommendations {
+    padding: 0 0 15px 15px;
+  }
+
+  .cart-drawer-recommendations .cart-items__percentage-off {
+    background-color: #FDF8E7;
+    padding: 1px 3px;
+    border-radius: 70px;
+    font-size: 10px;
+  }
+
+  .cart-drawer-recommendations .cart-items__details .compare-at-price {
+    font-size: 12px !important;
+    text-decoration-thickness: 1px;
+  }
+
+  .cart-drawer-recommendations.hidden {
+    display: none;
+  }
+
+  .cart-drawer-recommendations__loading {
+    width: 100%;
+  }
+
+  .cart-drawer-recommendations__skeleton {
+    overflow-x: auto;
+    overflow-y: visible;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    width: 100%;
+  }
+
+  .cart-drawer-recommendations__skeleton::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cart-drawer-recommendations__skeleton-item {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr) 32px;
+    column-gap: 6px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    margin-bottom: 0;
+    position: relative;
+    flex: 0 0 auto;
+    min-width: 280px;
+    width: 280px;
+  }
+
+  .cart-drawer-recommendations__skeleton-item::before {
+    content: '';
+    width: 86px;
+    height: 86px;
+    background-color: var(--color-foreground);
+    opacity: var(--skeleton-opacity, 0.1);
+    border-radius: 4px;
+    grid-column: 1;
+  }
+
+  .cart-drawer-recommendations__skeleton-item::after {
+    content: '';
+    background-color: var(--color-foreground);
+    opacity: var(--skeleton-opacity, 0.1);
+    border-radius: 4px;
+    height: 40px;
+    grid-column: 2;
+    align-self: center;
+  }
+
+  /* Horizontal scroll container */
+  .cart-drawer-recommendations__scroll-container {
+    overflow-x: auto;
+    overflow-y: visible;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    width: 100%;
+  }
+
+  .cart-drawer-recommendations__scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Style the recommendations table to match cart items */
+  .cart-drawer-recommendations .cart-items__table {
+    width: 100%;
+    margin: 0;
+    display: block;
+  }
+
+  .cart-drawer-recommendations .cart-items__table tbody {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .cart-drawer-recommendations .cart-items__table * {
+    margin: 0;
+  }
+
+  .cart-drawer-recommendations .cart-items__table-row {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr) 32px;
+    grid-template-areas:
+      'media details quick-add';
+    column-gap: 6px;
+    align-items: start;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    margin-bottom: 0;
+    flex: 0 0 auto;
+    min-width: 315px;
+    width: 315px;
+    background-color: #F7F7F7;
+    padding: 9px 8px;
+  }
+
+  .cart-drawer-recommendations .cart-items__media {
+    grid-area: media;
+    width: 86px;
+  }
+
+  .cart-drawer-recommendations .cart-items__media-container {
+    width: 86px;
+    height: 86px;
+  }
+
+  .cart-drawer-recommendations .cart-items__media-image {
+    width: 86px;
+    height: 86px;
+    object-fit: cover;
+  }
+
+  .cart-drawer-recommendations .cart-items__details {
+    grid-area: details;
+    align-self: start;
+  }
+
+  .cart-drawer-recommendations .cart-items__title {
+    margin-bottom: 14px;
+    display: block;
+  }
+
+  /* Price styling in recommendations */
+  .cart-drawer-recommendations .cart-items__details > div > span:not(.visually-hidden):not(.compare-at-price):not(.cart-items__percentage-off) {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .cart-drawer-recommendations .cart-items__quick-add {
+    grid-area: quick-add;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    width: 32px;
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  /* Ensure quick-add component is visible in recommendations */
+  .cart-drawer-recommendations .product-card-actions__quick-add-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+    position: relative !important;
+    width: 32px;
+    height: 32px;
+  }
+
+  .cart-drawer-recommendations .product-card-actions__quick-add-button {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    border-radius: 50% !important;
+    border: 1px solid #1D425A !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    position: relative !important;
+    z-index: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .cart-drawer-recommendations .product-card-actions__quick-add-plus {
+    font-family: 'Geologica', sans-serif;
+    font-style: normal;
+    font-weight: 100;
+    font-size: 19.5279px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #1D425A;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    position: relative;
+  }
+
+  /* Fallback styles for resource-list (if Section Rendering API is used) */
+  .cart-drawer-recommendations .resource-list {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .cart-drawer-recommendations .resource-list::-webkit-scrollbar {
+    display: none;
+  }
+{% endstylesheet %}

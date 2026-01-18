@@ -252,7 +252,7 @@
                       
                       if compare_price > current_price
                         assign price_difference = compare_price | minus: current_price
-                        assign percentage_off = price_difference | times: 100.0 | divided_by: compare_price | round
+                        assign percentage_off = price_difference | times: 100.0 | divided_by: compare_price | floor
                       endif
                     -%}
                     {% if item.original_price != item.final_price %}

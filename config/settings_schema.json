@@ -1785,6 +1785,28 @@
         "visible_if": "{{ settings.cart_type == 'drawer' }}"
       },
       {
+        "type": "header",
+        "content": "Cart drawer recommendations",
+        "visible_if": "{{ settings.cart_type == 'drawer' }}"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_cart_drawer_recommendations",
+        "label": "Show recommended products",
+        "default": true,
+        "visible_if": "{{ settings.cart_type == 'drawer' }}"
+      },
+      {
+        "type": "range",
+        "id": "cart_drawer_recommendations_max_products",
+        "label": "Maximum number of recommended products",
+        "min": 2,
+        "max": 6,
+        "step": 1,
+        "default": 4,
+        "visible_if": "{{ settings.cart_type == 'drawer' and settings.show_cart_drawer_recommendations == true }}"
+      },
+      {
         "type": "number",
         "id": "free_shipping_threshold",
         "label": "Free shipping threshold",
