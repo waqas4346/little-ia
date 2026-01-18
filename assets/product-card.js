@@ -44,7 +44,11 @@ export class ProductCard extends Component {
   }
 
   #fetchProductPageHandler = () => {
-    this.refs.quickAdd?.fetchProductPage(this.productPageUrl);
+    const quickAdd = this.refs.quickAdd;
+    // Check if quickAdd exists and has the fetchProductPage method
+    if (quickAdd && typeof quickAdd.fetchProductPage === 'function') {
+      quickAdd.fetchProductPage(this.productPageUrl);
+    }
   };
 
   /**
@@ -134,7 +138,12 @@ export class ProductCard extends Component {
     this.updatePrice(event);
     this.#isUnavailableVariantSelected(event);
     this.#updateProductUrl(event);
-    this.refs.quickAdd?.fetchProductPage(this.productPageUrl);
+    
+    // Only call fetchProductPage if the method exists (custom element might not be fully initialized)
+    const quickAdd = this.refs.quickAdd;
+    if (quickAdd && typeof quickAdd.fetchProductPage === 'function') {
+      quickAdd.fetchProductPage(this.productPageUrl);
+    }
 
     if (event.target !== this.variantPicker) {
       this.variantPicker?.updateVariantPicker(event.detail.data.html);

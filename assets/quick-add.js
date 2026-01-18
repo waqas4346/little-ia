@@ -752,6 +752,29 @@ export class QuickAddComponent extends Component {
       if (personaliseModal) {
         // Move it to the document body so it's accessible globally
         document.body.appendChild(personaliseModal);
+        
+        // CRITICAL: Ensure custom element is properly defined and initialized
+        // When content is loaded via morph, the script might not have run yet
+        customElements.whenDefined('personalise-dialog').then(() => {
+          console.log('PersonaliseDialog: Custom element defined');
+          
+          // Force re-initialization by temporarily disconnecting and reconnecting
+          // This ensures connectedCallback runs and sets up all handlers and functionality
+          const parent = personaliseModal.parentNode;
+          if (parent) {
+            console.log('PersonaliseDialog: Re-initializing element after move to body');
+            parent.removeChild(personaliseModal);
+            document.body.appendChild(personaliseModal);
+            
+            // The element should now be properly initialized with all its methods
+            console.log('PersonaliseDialog: Element re-initialized, methods available:', {
+              showDialog: typeof personaliseModal.showDialog === 'function',
+              closePersonaliseOnly: typeof personaliseModal.closePersonaliseOnly === 'function'
+            });
+          }
+        }).catch((error) => {
+          console.error('PersonaliseDialog: Error waiting for custom element definition:', error);
+        });
       }
     }
 
@@ -895,6 +918,18 @@ class QuickAddDialog extends DialogComponent {
    * Since parent's closeDialog is an arrow function (instance property), we implement it directly
    */
   closeDialog = async () => {
+    // CRITICAL: Don't close if a personalise dialog is currently open
+    // This prevents closing parent dialog when closing personalise popup
+    const personaliseDialogElement = document.querySelector('personalise-dialog');
+    if (personaliseDialogElement) {
+      const personaliseNativeDialog = personaliseDialogElement.refs?.dialog || 
+                                      personaliseDialogElement.querySelector('dialog');
+      if (personaliseNativeDialog && personaliseNativeDialog.open) {
+        // Personalise dialog is open, don't close quick-add dialog
+        return;
+      }
+    }
+
     // Get the correct dialog - the quick-add-modal, not personalise-modal
     let dialog = this.querySelector('dialog.quick-add-modal');
     
@@ -908,10 +943,16 @@ class QuickAddDialog extends DialogComponent {
     
     if (!dialog) {
       console.warn('QuickAddDialog: No dialog found to close');
-      // Still reset body styles in case they're stuck
-      document.body.style.width = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
+      // Still reset body styles in case they're stuck (only if personalise dialog is also closed)
+      const personaliseDialog = document.querySelector('personalise-dialog');
+      const personaliseIsOpen = personaliseDialog && 
+                                 (personaliseDialog.refs?.dialog?.open || 
+                                  personaliseDialog.querySelector('dialog')?.open);
+      if (!personaliseIsOpen) {
+        document.body.style.width = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+      }
       return;
     }
     
@@ -960,10 +1001,20 @@ class QuickAddDialog extends DialogComponent {
       console.warn('QuickAddDialog: Animation end error (ignored):', error);
     }
 
-    document.body.style.width = '';
-    document.body.style.position = '';
-    document.body.style.top = '';
-    window.scrollTo({ top: this.#previousScrollY || 0, behavior: 'instant' });
+    // Check if personalise dialog is still open - if so, don't reset body styles
+    // This fixes the overlay issue where body styles weren't being reset properly
+    const personaliseDialog = document.querySelector('personalise-dialog');
+    const personaliseIsOpen = personaliseDialog && 
+                               (personaliseDialog.refs?.dialog?.open || 
+                                personaliseDialog.querySelector('dialog')?.open);
+    
+    // Only reset body styles if personalise dialog is also closed
+    if (!personaliseIsOpen) {
+      document.body.style.width = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      window.scrollTo({ top: this.#previousScrollY || 0, behavior: 'instant' });
+    }
 
     dialog.close();
     dialog.classList.remove('dialog-closing');
