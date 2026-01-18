@@ -681,6 +681,7 @@
     .shop-by-age-mobile slideshow-container {
       padding-bottom: 0 !important;
       margin-bottom: 0 !important;
+      overflow: visible; /* Allow peek of next slide to show */
     }
 
     .shop-by-age-mobile slideshow-component[disabled='true'] slideshow-slides {
@@ -688,6 +689,7 @@
     }
 
     .shop-by-age-mobile slideshow-slides {
+      gap: 5px;
       overflow-x: auto !important;
       scrollbar-width: none;
       -ms-overflow-style: none;
@@ -709,6 +711,7 @@
       width: 100%;
       height: 4px;
       position: relative;
+      margin-top: 12px;
     }
 
     .shop-by-age-scrollbar-track {
@@ -731,10 +734,10 @@
       min-width: 20px;
     }
 
-    /* Mobile slide: 2x2 grid layout */
+    /* Mobile slide: 2x2 grid layout - slightly smaller to show peek */
     .shop-by-age-mobile .shop-by-age-slide-mobile {
-      width: 100%;
-      flex: 0 0 100%;
+      width: calc(100% - 10px);
+      flex: 0 0 calc(100% - 10px);
       scroll-snap-align: start;
     }
 
