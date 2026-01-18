@@ -1,7 +1,7 @@
 import { morph } from '@theme/morph';
 import { Component } from '@theme/component';
 import { CartUpdateEvent, ThemeEvents, VariantSelectedEvent } from '@theme/events';
-import { DialogComponent, DialogCloseEvent } from '@theme/dialog';
+import { DialogComponent, DialogCloseEvent, DialogOpenEvent } from '@theme/dialog';
 import { mediaQueryLarge, isMobileBreakpoint, getIOSVersion, onAnimationEnd } from '@theme/utilities';
 
 export class QuickAddComponent extends Component {
@@ -833,18 +833,41 @@ class QuickAddDialog extends DialogComponent {
 
   /**
    * Override showDialog to ensure close button handler is attached when dialog opens
+   * Also prevents closing on outside clicks - only closes via close button
    */
   showDialog() {
-    // Store scroll position before opening
-    this.#previousScrollY = window.scrollY;
-    
+    const { dialog } = this.refs;
+
     // Ensure we have the correct dialog ref before showing
     const quickAddDialog = this.querySelector('dialog.quick-add-modal');
     if (quickAddDialog && this.refs) {
       this.refs.dialog = quickAddDialog;
     }
-    
-    super.showDialog();
+
+    // Use the refs dialog if available, otherwise use the found one
+    const dialogToShow = this.refs?.dialog || quickAddDialog || dialog;
+    if (!dialogToShow) return;
+
+    if (dialogToShow.open) return;
+
+    // Store scroll position before opening
+    const scrollY = window.scrollY;
+    this.#previousScrollY = scrollY;
+
+    // Prevent layout thrashing by separating DOM reads from DOM writes
+    requestAnimationFrame(() => {
+      document.body.style.width = '100%';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+
+      dialogToShow.showModal();
+      this.dispatchEvent(new DialogOpenEvent());
+
+      // Only attach keydown listener for Escape key, NOT click listener for outside clicks
+      // This prevents the dialog from closing when clicking outside
+      this.addEventListener('keydown', this.#handleKeyDown);
+    });
+
     // Ensure close button handler is attached after dialog is shown
     requestAnimationFrame(() => {
       this.#ensureCloseButtonHandler();
@@ -853,6 +876,18 @@ class QuickAddDialog extends DialogComponent {
         this.#ensureCloseButtonHandler();
       }, 50);
     });
+  }
+
+  /**
+   * Handle Escape key to close dialog
+   * @param {KeyboardEvent} event - The keyboard event
+   * @private
+   */
+  #handleKeyDown = (event) => {
+    if (event.key !== 'Escape') return;
+
+    event.preventDefault();
+    this.closeDialog();
   }
 
   /**
@@ -913,9 +948,8 @@ class QuickAddDialog extends DialogComponent {
       this.refs.dialog = dialog;
     }
     
-    // Implement parent's closeDialog logic directly (since it's an arrow function instance property)
-    // Remove event listeners (parent does this but we can't access their private methods)
-    // The parent's #handleClick and #handleKeyDown are private, but removing listeners won't hurt even if they don't exist
+    // Remove event listeners before closing
+    this.removeEventListener('keydown', this.#handleKeyDown);
     
     dialog.classList.add('dialog-closing');
 

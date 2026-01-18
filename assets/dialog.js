@@ -112,6 +112,17 @@ export class DialogComponent extends Component {
   #handleClick(event) {
     const { dialog } = this.refs;
 
+    // Don't close if clicking on a size guide button
+    const sizeGuideButton = event.target.closest('[data-size-guide-button]');
+    if (sizeGuideButton) {
+      return;
+    }
+
+    // Don't close if the event was marked as a size guide button click
+    if (event.sizeGuideButtonClick) {
+      return;
+    }
+
     if (isClickedOutside(event, dialog)) {
       this.closeDialog();
     }

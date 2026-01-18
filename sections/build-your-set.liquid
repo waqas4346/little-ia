@@ -212,9 +212,9 @@
 
   .build-your-set-collection-slider {
     display: flex;
-    gap: 24px;
+    gap: 18px 24px;
     padding: 0 16px;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: flex-start;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -225,6 +225,10 @@
     width: 100%;
     max-width: 100%;
     min-width: 0;
+  }
+
+  .build-your-set-collection-slider--has-overflow {
+    justify-content: flex-start;
   }
 
   .build-your-set-collection-slider::-webkit-scrollbar {
@@ -240,7 +244,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
     min-width: 44px;
     min-height: 44px;
     z-index: 2;
@@ -253,6 +257,10 @@
   .build-your-set-collection-arrow:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+  }
+
+  .build-your-set-collection-arrow--hidden {
+    display: none !important;
   }
 
   .build-your-set-collection-arrow svg {
@@ -276,15 +284,17 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 5px;
     background: none;
     border: none;
     cursor: pointer;
     padding: 0;
     transition: opacity 0.2s ease;
-    min-width: 100px;
+    min-width: 62px;
     flex-shrink: 0;
     flex-basis: auto;
+    width: auto;
+    max-width: 120px;
   }
 
   .build-your-set-collection-item:hover {
@@ -292,20 +302,25 @@
   }
 
   .build-your-set-collection-image-wrapper {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
+    width: 62px;
+    height: 62px;
+    border-radius: 100000px;
     overflow: hidden;
-    border: 3px solid transparent;
+    border: none;
     transition: border-color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #F7F7F7;
+    background: transparent;
+    position: relative;
+    box-sizing: border-box;
+    padding: 0;
   }
 
   .build-your-set-collection-item.active .build-your-set-collection-image-wrapper {
-    border-color: #1D425A;
+    border: 1px solid #1D425A;
+    padding: 1px;
+    box-sizing: border-box;
   }
 
   .build-your-set-collection-image,
@@ -313,12 +328,20 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 50%;
+    border-radius: 100000px;
+    box-sizing: border-box;
+  }
+
+  .build-your-set-collection-item.active .build-your-set-collection-image,
+  .build-your-set-collection-item.active .build-your-set-collection-image-placeholder {
+    width: calc(100% - 2px);
+    height: calc(100% - 2px);
+    margin: 1px;
   }
 
   .build-your-set-collection-image-placeholder {
-    width: 100px;
-    height: 100px;
+    width: 62px;
+    height: 62px;
   }
 
   .build-your-set-collection-image-placeholder svg {
@@ -328,15 +351,23 @@
 
   .build-your-set-collection-label {
     font-family: 'Outfit', sans-serif;
+    font-style: normal;
     font-weight: 400;
     font-size: 14px;
     line-height: 140%;
-    color: #1D425A;
     text-align: center;
-    white-space: nowrap;
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    text-transform: uppercase;
+    color: #787878;
+    margin-top: 5px;
+    pointer-events: none;
+    transition: color 0.2s ease;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow: visible;
+  }
+
+  .build-your-set-collection-item.active .build-your-set-collection-label {
+    color: #1D425A;
   }
 
   .build-your-set-select-product-text {
@@ -483,22 +514,27 @@
 
     .build-your-set-collection-slider {
       padding: 0 24px;
-      gap: 32px;
+      gap: 18px 24px;
     }
 
     .build-your-set-collection-image-wrapper {
-      width: 120px;
-      height: 120px;
+      width: 62px;
+      height: 62px;
     }
 
     .build-your-set-collection-image-placeholder {
-      width: 120px;
-      height: 120px;
+      width: 62px;
+      height: 62px;
+    }
+
+    .build-your-set-collection-item {
+      width: auto;
+      min-width: 62px;
+      max-width: 120px;
     }
 
     .build-your-set-collection-label {
-      font-size: 16px;
-      max-width: 140px;
+      font-size: 14px;
     }
   }
 
@@ -513,23 +549,28 @@
 
     .build-your-set-collection-slider {
       padding: 0 16px;
-      gap: 16px;
+      gap: 18px;
       justify-content: flex-start;
     }
 
     .build-your-set-collection-image-wrapper {
-      width: 80px;
-      height: 80px;
+      width: 62px;
+      height: 62px;
     }
 
     .build-your-set-collection-image-placeholder {
-      width: 80px;
-      height: 80px;
+      width: 62px;
+      height: 62px;
+    }
+
+    .build-your-set-collection-item {
+      width: auto;
+      min-width: 62px;
+      max-width: 120px;
     }
 
     .build-your-set-collection-label {
-      font-size: 12px;
-      max-width: 90px;
+      font-size: 14px;
     }
 
     .build-your-set-select-product-text {
@@ -542,7 +583,7 @@
 
     /* Hide arrows on mobile - allow touch scrolling */
     .build-your-set-collection-arrow {
-      display: none;
+      display: none !important;
     }
   }
 {% endstyle %}
@@ -952,9 +993,9 @@
       // Calculate scroll amount based on item width + gap
       function getScrollAmount() {
         const firstItem = slider.querySelector('.build-your-set-collection-item');
-        if (!firstItem) return 200;
+        if (!firstItem) return 80;
         const itemWidth = firstItem.offsetWidth;
-        const gap = 24; // Match CSS gap
+        const gap = 24; // Match CSS gap (horizontal)
         return itemWidth + gap;
       }
 
@@ -968,21 +1009,56 @@
         const scrollWidth = slider.scrollWidth;
         const clientWidth = slider.clientWidth;
         
+        // Check if there's overflow (need to scroll)
+        const hasOverflow = scrollWidth > clientWidth + 1; // Small threshold for rounding
+        
+        if (!hasOverflow) {
+          // No overflow - hide both arrows and center the slider
+          prevBtn.classList.add('build-your-set-collection-arrow--hidden');
+          nextBtn.classList.add('build-your-set-collection-arrow--hidden');
+          prevBtn.disabled = true;
+          nextBtn.disabled = true;
+          slider.classList.remove('build-your-set-collection-slider--has-overflow');
+          return;
+        }
+        
+        // Has overflow - show arrows and align left
+        prevBtn.classList.remove('build-your-set-collection-arrow--hidden');
+        nextBtn.classList.remove('build-your-set-collection-arrow--hidden');
+        slider.classList.add('build-your-set-collection-slider--has-overflow');
+        
         const isAtStart = scrollLeft <= 5; // Small threshold for rounding
         const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 5;
         
         prevBtn.disabled = isAtStart;
         nextBtn.disabled = isAtEnd;
         
-        // Also update visibility
-        prevBtn.style.opacity = isAtStart ? '0.3' : '1';
-        nextBtn.style.opacity = isAtEnd ? '0.3' : '1';
+        // Update opacity based on scroll position
+        if (isAtStart) {
+          prevBtn.classList.add('build-your-set-collection-arrow--hidden');
+        } else {
+          prevBtn.classList.remove('build-your-set-collection-arrow--hidden');
+        }
+        
+        if (isAtEnd) {
+          nextBtn.classList.add('build-your-set-collection-arrow--hidden');
+        } else {
+          nextBtn.classList.remove('build-your-set-collection-arrow--hidden');
+        }
       }
 
-      // Initial check - wait for layout
-      requestAnimationFrame(function() {
-        updateArrows();
-      });
+      // Initial check - wait for layout and images to load
+      function initialCheck() {
+        requestAnimationFrame(function() {
+          updateArrows();
+          // Double check after a short delay to account for image loading
+          setTimeout(function() {
+            updateArrows();
+          }, 100);
+        });
+      }
+      
+      initialCheck();
 
       // Previous button - scroll left
       prevBtn.addEventListener('click', function(e) {
@@ -1029,6 +1105,18 @@
 
       // Update arrows after a delay to ensure accurate measurements
       setTimeout(updateArrows, 200);
+      
+      // Update arrows when images load (they might affect layout)
+      const images = slider.querySelectorAll('.build-your-set-collection-image');
+      images.forEach(function(img) {
+        if (img.complete) {
+          updateArrows();
+        } else {
+          img.addEventListener('load', function() {
+            updateArrows();
+          });
+        }
+      });
     }
   });
 </script>
