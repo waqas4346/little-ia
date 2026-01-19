@@ -1,13 +1,21 @@
-<build-your-set-sticky-bar id="build-your-set-sticky-bar" style="display: none;">
+<script>
+  // Immediately hide sticky bar before any rendering to prevent flash
+  (function() {
+    const style = document.createElement('style');
+    style.textContent = 'build-your-set-sticky-bar { display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important; }';
+    document.head.insertBefore(style, document.head.firstChild);
+  })();
+</script>
+<build-your-set-sticky-bar id="build-your-set-sticky-bar" style="display: none !important; visibility: hidden !important; opacity: 0 !important;" hidden>
   <div class="build-your-set-sticky-bar__header">
     <h3 class="build-your-set-sticky-bar__title">Your Set</h3>
   </div>
   <div class="build-your-set-sticky-bar__products" ref="productsContainer"></div>
   <div class="build-your-set-sticky-bar__actions">
-    <button class="build-your-set-sticky-bar__button build-your-set-sticky-bar__button--start-over" ref="startOverButton" on:click="/handleStartOver">
+    <button class="build-your-set-sticky-bar__button build-your-set-sticky-bar__button--start-over" ref="startOverButton" type="button">
       Start Over
     </button>
-    <button class="build-your-set-sticky-bar__button build-your-set-sticky-bar__button--add-all" ref="addAllButton" on:click="/handleAddAllToCart">
+    <button class="build-your-set-sticky-bar__button build-your-set-sticky-bar__button--add-all" ref="addAllButton" type="button">
       <span class="build-your-set-sticky-bar__button-text">Add All to Cart</span>
       <span class="build-your-set-sticky-bar__total-price" ref="totalPrice"></span>
     </button>
@@ -26,10 +34,20 @@
     z-index: var(--layer-floating);
     padding: 16px 20px;
     max-height: 50vh;
-    display: flex;
+    display: none !important; /* Hidden by default, shown only when items are in session */
     flex-direction: column;
     gap: 16px;
     overflow-y: auto;
+    visibility: hidden !important; /* Additional hiding to prevent flash */
+    opacity: 0 !important; /* Triple protection against flash */
+    pointer-events: none !important; /* Prevent any interaction when hidden */
+  }
+  
+  build-your-set-sticky-bar:not([hidden]) {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
 
   .build-your-set-sticky-bar__header {

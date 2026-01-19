@@ -1,55 +1,93 @@
 import { Component } from '@theme/component';
-import { ThemeEvents } from '@theme/events';
+import { ThemeEvents, CartAddEvent } from '@theme/events';
 import { fetchConfig } from '@theme/utilities';
+import { sectionRenderer } from '@theme/section-renderer';
 
 /**
  * Component for managing the build-your-set sticky bar
  */
 export class BuildYourSetStickyBarComponent extends Component {
   requiredRefs = ['productsContainer', 'startOverButton', 'addAllButton', 'totalPrice'];
+  
+  /** @type {boolean} */
+  #isAddingToCart = false;
 
   connectedCallback() {
     super.connectedCallback();
     
-    // Wait a bit for refs to be ready
-    requestAnimationFrame(() => {
-      // Initial check on load
-      this.updateDisplay();
+    // Keep sticky bar hidden by default - only show if session has items
+    // Don't check session immediately, wait for session clearing to complete
+    // The session is cleared in DOMContentLoaded, so wait for that
+    
+    // Wait for DOMContentLoaded to complete (session clearing happens there)
+    const initStickyBar = () => {
+      // Check session - only show if items exist
+      const sessionCart = this.getSessionCart();
       
-      // Listen for build-your-set updates
+      // If no items, ensure it stays hidden
+      if (!sessionCart || sessionCart.length === 0) {
+        this.style.display = 'none';
+        this.style.visibility = 'hidden';
+        this.setAttribute('hidden', '');
+      } else {
+        // Only show if we have items
+        this.updateDisplay();
+      }
+      
+      // Set up event listeners
       const updateHandler = () => {
         console.log('Build Your Set: Sticky bar received update event');
         this.updateDisplay();
       };
       document.addEventListener('build-your-set-updated', updateHandler);
       
-      // Store handler for cleanup
-      this._updateHandler = updateHandler;
-      
-      // Also check on page load in case products were added before component loaded
-      if (document.readyState === 'loading') {
-        window.addEventListener('load', () => {
-          this.updateDisplay();
-        });
-      } else {
-        // Already loaded, check immediately
+      const clearedHandler = () => {
+        console.log('Build Your Set: Sticky bar received cleared event');
         this.updateDisplay();
-      }
+      };
+      document.addEventListener('build-your-set-cleared', clearedHandler);
+      
+      // Store handlers for cleanup
+      this._updateHandler = updateHandler;
+      this._clearedHandler = clearedHandler;
       
       // Set up button handlers
       if (this.refs.startOverButton) {
-        this.refs.startOverButton.addEventListener('click', this.handleStartOver.bind(this));
+        // Remove any existing handler to prevent duplicates
+        if (this.refs.startOverButton._clickHandler) {
+          this.refs.startOverButton.removeEventListener('click', this.refs.startOverButton._clickHandler);
+        }
+        const startOverHandler = this.handleStartOver.bind(this);
+        this.refs.startOverButton.addEventListener('click', startOverHandler);
+        this.refs.startOverButton._clickHandler = startOverHandler;
       }
       if (this.refs.addAllButton) {
-        this.refs.addAllButton.addEventListener('click', this.handleAddAllToCart.bind(this));
+        // Remove any existing handler to prevent duplicates
+        if (this.refs.addAllButton._clickHandler) {
+          this.refs.addAllButton.removeEventListener('click', this.refs.addAllButton._clickHandler);
+        }
+        const addAllHandler = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handleAddAllToCart();
+        };
+        this.refs.addAllButton.addEventListener('click', addAllHandler);
+        this.refs.addAllButton._clickHandler = addAllHandler;
       }
-    });
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    if (this._updateHandler) {
-      document.removeEventListener('build-your-set-updated', this._updateHandler);
+    };
+    
+    // Wait for DOMContentLoaded to finish (where session is cleared)
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        // Wait a bit more to ensure session clearing script has run
+        setTimeout(initStickyBar, 100);
+      });
+    } else {
+      // DOMContentLoaded already fired, wait a bit then check
+      setTimeout(initStickyBar, 100);
+    }
+    if (this._clearedHandler) {
+      document.removeEventListener('build-your-set-cleared', this._clearedHandler);
     }
   }
 
@@ -57,15 +95,42 @@ export class BuildYourSetStickyBarComponent extends Component {
    * Updates the sticky bar display
    */
   updateDisplay() {
+    // Ensure refs are ready
+    if (!this.refs.productsContainer) {
+      console.warn('Build Your Set: Products container not ready, retrying...');
+      setTimeout(() => this.updateDisplay(), 100);
+      return;
+    }
+    
     const sessionCart = this.getSessionCart();
     console.log('Build Your Set: Updating sticky bar display', { itemCount: sessionCart.length });
     
-    if (sessionCart.length === 0) {
-      this.style.display = 'none';
+    // Always check if session is empty first - don't show if empty
+    if (!sessionCart || sessionCart.length === 0) {
+      // Force hide the sticky bar immediately with all methods
+      this.style.setProperty('display', 'none', 'important');
+      this.style.setProperty('visibility', 'hidden', 'important');
+      this.style.setProperty('opacity', '0', 'important');
+      this.style.setProperty('pointer-events', 'none', 'important');
+      this.setAttribute('hidden', '');
+      
+      // Clear the products container
+      if (this.refs.productsContainer) {
+        this.refs.productsContainer.innerHTML = '';
+      }
+      if (this.refs.totalPrice) {
+        this.refs.totalPrice.textContent = '';
+      }
       return;
     }
 
-    this.style.display = 'flex';
+    // Only show if we have items in session - remove all hiding styles
+    this.removeAttribute('hidden');
+    this.style.setProperty('display', 'flex', 'important');
+    this.style.setProperty('visibility', 'visible', 'important');
+    this.style.setProperty('opacity', '1', 'important');
+    this.style.setProperty('pointer-events', 'auto', 'important');
+    
     this.renderProducts(sessionCart);
     this.updateTotalPrice(sessionCart);
   }
@@ -166,7 +231,11 @@ export class BuildYourSetStickyBarComponent extends Component {
     const storageKey = 'build-your-set-session-cart';
     try {
       sessionStorage.removeItem(storageKey);
-      this.updateDisplay();
+      
+      // Update display immediately
+      requestAnimationFrame(() => {
+        this.updateDisplay();
+      });
       
       // Dispatch event to notify other components
       document.dispatchEvent(new CustomEvent('build-your-set-cleared', {
@@ -182,6 +251,12 @@ export class BuildYourSetStickyBarComponent extends Component {
    * Handles add all to cart button click
    */
   async handleAddAllToCart() {
+    // Prevent duplicate calls
+    if (this.#isAddingToCart) {
+      console.warn('Build Your Set: Already adding products to cart, ignoring duplicate call');
+      return;
+    }
+
     const sessionCart = this.getSessionCart();
     if (sessionCart.length === 0) {
       console.warn('Build Your Set: No products to add to cart');
@@ -189,6 +264,9 @@ export class BuildYourSetStickyBarComponent extends Component {
     }
 
     if (!this.refs.addAllButton) return;
+
+    // Set flag to prevent duplicates
+    this.#isAddingToCart = true;
 
     // Disable button during processing
     this.refs.addAllButton.disabled = true;
@@ -199,21 +277,45 @@ export class BuildYourSetStickyBarComponent extends Component {
     }
 
     try {
-      // Add each product to cart
-      const addPromises = sessionCart.map(item => this.addProductToCart(item));
-      await Promise.all(addPromises);
+      // Get cart section IDs that need to be updated
+      const cartSectionIds = this.#getCartSectionIds();
+      
+      // Add each product to cart (one at a time to avoid conflicts)
+      for (const item of sessionCart) {
+        await this.addProductToCart(item);
+      }
+
+      // Fetch updated cart with sections after all products are added
+      const cartData = await this.#fetchCartWithSections(cartSectionIds);
+      
+      // Calculate total items added
+      const totalItemsAdded = sessionCart.reduce((sum, item) => sum + (item.quantity || 1), 0);
 
       // Clear session after successful add
       const storageKey = 'build-your-set-session-cart';
       sessionStorage.removeItem(storageKey);
+      
+      // Force update display immediately to hide sticky bar
+      // Use multiple methods to ensure it updates
       this.updateDisplay();
-
-      // Dispatch cart update event
-      document.dispatchEvent(new CustomEvent(ThemeEvents.cartUpdate, {
+      requestAnimationFrame(() => {
+        this.updateDisplay();
+      });
+      
+      // Also dispatch cleared event to ensure all listeners update
+      document.dispatchEvent(new CustomEvent('build-your-set-cleared', {
         bubbles: true,
-        cancelable: true,
-        detail: { itemsAdded: sessionCart.length }
+        cancelable: true
       }));
+
+      // Dispatch cart update event with sections
+      document.dispatchEvent(
+        new CartAddEvent(cartData, this.id, {
+          source: 'build-your-set-sticky-bar',
+          itemCount: totalItemsAdded,
+          sections: cartData.sections || {}
+        })
+      );
 
       // Show success message (optional)
       if (buttonText) {
@@ -225,7 +327,10 @@ export class BuildYourSetStickyBarComponent extends Component {
           if (this.refs.addAllButton) {
             this.refs.addAllButton.disabled = false;
           }
+          this.#isAddingToCart = false;
         }, 2000);
+      } else {
+        this.#isAddingToCart = false;
       }
     } catch (error) {
       console.error('Build Your Set: Error adding products to cart:', error);
@@ -239,7 +344,94 @@ export class BuildYourSetStickyBarComponent extends Component {
         if (this.refs.addAllButton) {
           this.refs.addAllButton.disabled = false;
         }
+        this.#isAddingToCart = false;
       }, 2000);
+    }
+  }
+
+  /**
+   * Gets cart section IDs that need to be updated
+   * @returns {Array<string>} Array of section IDs
+   */
+  #getCartSectionIds() {
+    const sectionIds = [];
+    
+    // Get section IDs from cart-items-component
+    const cartItemsComponents = document.querySelectorAll('cart-items-component');
+    cartItemsComponents.forEach((item) => {
+      if (item instanceof HTMLElement && item.sectionId) {
+        sectionIds.push(item.sectionId);
+      }
+    });
+    
+    // Also check for cart-icon and other cart-related components
+    const cartIcon = document.querySelector('cart-icon');
+    if (cartIcon && cartIcon.dataset.sectionId) {
+      sectionIds.push(cartIcon.dataset.sectionId);
+    }
+    
+    // Remove duplicates
+    return [...new Set(sectionIds)];
+  }
+
+  /**
+   * Fetches cart with sections
+   * @param {Array<string>} sectionIds - Section IDs to fetch
+   * @returns {Promise<Object>} Cart data with sections
+   */
+  async #fetchCartWithSections(sectionIds) {
+    try {
+      let url = '/cart.js';
+      if (sectionIds && sectionIds.length > 0) {
+        const sectionsParam = sectionIds.join(',');
+        url = `/cart.js?sections=${sectionsParam}`;
+      }
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      if (!response.ok) {
+        console.warn('Build Your Set: Failed to fetch cart sections, continuing without sections');
+        const cartData = await fetch('/cart.js', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        }).then(r => r.ok ? r.json() : {});
+        return { ...cartData, sections: {} };
+      }
+
+      const data = await response.json();
+      // Shopify returns sections in a 'sections' property when using ?sections= parameter
+      return {
+        ...data,
+        sections: data.sections || {}
+      };
+    } catch (error) {
+      console.warn('Build Your Set: Error fetching cart sections:', error);
+      // Fallback: fetch cart without sections
+      try {
+        const response = await fetch('/cart.js', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+        if (response.ok) {
+          const cartData = await response.json();
+          return { ...cartData, sections: {} };
+        }
+      } catch (e) {
+        console.error('Build Your Set: Error fetching cart:', e);
+      }
+      return { sections: {} };
     }
   }
 

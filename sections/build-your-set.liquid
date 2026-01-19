@@ -597,6 +597,11 @@
     const storageKey = 'build-your-set-session-cart';
     try {
       sessionStorage.removeItem(storageKey);
+      // Dispatch event to notify sticky bar that session was cleared
+      document.dispatchEvent(new CustomEvent('build-your-set-cleared', {
+        bubbles: true,
+        cancelable: true
+      }));
     } catch (error) {
       console.warn('Build Your Set: Error clearing session storage on page load', error);
     }
