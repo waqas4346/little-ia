@@ -47,9 +47,44 @@ export class BuildYourSetStickyBarComponent extends Component {
       };
       document.addEventListener('build-your-set-cleared', clearedHandler);
       
+      // Listen for personalization saved events to update session
+      const personalizationSavedHandler = (event) => {
+        const personalisation = event.detail || {};
+        const productId = personalisation.productId || this._pendingPersonalizationProductId;
+        const index = this._pendingPersonalizationIndex;
+        
+        if (typeof index === 'number' && productId) {
+          // Convert personalisation object to the format stored in session
+          const personalizations = {};
+          if (personalisation.name) personalizations['personalise-name'] = personalisation.name;
+          if (personalisation.font) personalizations['personalise-font'] = personalisation.font;
+          if (personalisation.color) personalizations['personalise-color'] = personalisation.color;
+          if (personalisation.dob) personalizations['properties[Date of Birth]'] = personalisation.dob;
+          if (personalisation.schoolYear) personalizations['properties[School Year]'] = personalisation.schoolYear;
+          if (personalisation.name1) personalizations['properties[Name 1]'] = personalisation.name1;
+          if (personalisation.name2) personalizations['properties[Name 2]'] = personalisation.name2;
+          if (personalisation.name3) personalizations['properties[Name 3]'] = personalisation.name3;
+          if (personalisation.name4) personalizations['properties[Name 4]'] = personalisation.name4;
+          if (personalisation.textbox) personalizations['properties[Personalisation:]'] = personalisation.textbox;
+          if (personalisation.message) personalizations['properties[Message]'] = personalisation.message;
+          if (personalisation.babyName) personalizations["properties[Baby's Name]"] = personalisation.babyName;
+          if (personalisation.kidName) personalizations["properties[Kid's Name]"] = personalisation.kidName;
+          if (personalisation.mumName) personalizations["properties[Mum's Name]"] = personalisation.mumName;
+          
+          console.log('Build Your Set: Personalization saved, updating session', { productId, index, personalizations });
+          this.updateProductPersonalization(index, personalizations);
+          
+          // Clear pending personalization data
+          this._pendingPersonalizationProductId = null;
+          this._pendingPersonalizationIndex = null;
+        }
+      };
+      document.addEventListener('personalisation-saved', personalizationSavedHandler);
+      
       // Store handlers for cleanup
       this._updateHandler = updateHandler;
       this._clearedHandler = clearedHandler;
+      this._personalizationSavedHandler = personalizationSavedHandler;
       
       // Set up button handlers
       if (this.refs.startOverButton) {
@@ -86,8 +121,18 @@ export class BuildYourSetStickyBarComponent extends Component {
       // DOMContentLoaded already fired, wait a bit then check
       setTimeout(initStickyBar, 100);
     }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this._updateHandler) {
+      document.removeEventListener('build-your-set-updated', this._updateHandler);
+    }
     if (this._clearedHandler) {
       document.removeEventListener('build-your-set-cleared', this._clearedHandler);
+    }
+    if (this._personalizationSavedHandler) {
+      document.removeEventListener('personalisation-saved', this._personalizationSavedHandler);
     }
   }
 
@@ -168,7 +213,8 @@ export class BuildYourSetStickyBarComponent extends Component {
 
       // Build personalisation text - only values separated by |
       let personalisationText = '';
-      if (item.personalizations && Object.keys(item.personalizations).length > 0) {
+      const hasPersonalizations = item.personalizations && Object.keys(item.personalizations).length > 0;
+      if (hasPersonalizations) {
         const parts = [];
         const personalizations = item.personalizations;
         
@@ -186,15 +232,47 @@ export class BuildYourSetStickyBarComponent extends Component {
       const imageUrl = item.featured_image || (item.images && item.images[0]) || '';
       const productName = item.product_name || 'Product';
       const price = item.price || 'AED 0.00';
+      const needsPersonalization = item.needs_personalization === true;
+      const showAddPersonalizationButton = needsPersonalization && !hasPersonalizations;
 
       productElement.innerHTML = `
+        <button class="build-your-set-sticky-bar__product-remove" data-product-index="${index}" aria-label="Remove ${productName} from set">
+          <svg class="build-your-set-sticky-bar__product-remove-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
         <img src="${imageUrl}" alt="${productName}" class="build-your-set-sticky-bar__product-image" loading="lazy" onerror="this.style.display='none'">
         <div class="build-your-set-sticky-bar__product-info">
           <h4 class="build-your-set-sticky-bar__product-name">${productName}</h4>
           <div class="build-your-set-sticky-bar__product-price">${price}</div>
           ${personalisationText ? `<div class="build-your-set-sticky-bar__product-personalisation">${personalisationText}</div>` : ''}
+          ${showAddPersonalizationButton ? `
+            <button class="build-your-set-sticky-bar__product-add-personalisation" data-product-index="${index}" data-product-id="${item.product_id}" data-variant-id="${item.variant_id}" aria-label="Add personalization for ${productName}">
+              Add Personalization
+            </button>
+          ` : ''}
         </div>
       `;
+
+      // Add click handler for remove button
+      const removeButton = productElement.querySelector('.build-your-set-sticky-bar__product-remove');
+      if (removeButton) {
+        removeButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.removeProductFromSet(index);
+        });
+      }
+
+      // Add click handler for add personalization button
+      const addPersonalizationButton = productElement.querySelector('.build-your-set-sticky-bar__product-add-personalisation');
+      if (addPersonalizationButton) {
+        addPersonalizationButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.openPersonalizationForProduct(item, index);
+        });
+      }
 
       this.refs.productsContainer.appendChild(productElement);
     });
@@ -221,6 +299,162 @@ export class BuildYourSetStickyBarComponent extends Component {
       this.refs.totalPrice.textContent = `(${formattedTotal})`;
     } else {
       this.refs.totalPrice.textContent = '';
+    }
+  }
+
+  /**
+   * Opens personalization modal for a product
+   * @param {Object} item - Product item from session
+   * @param {number} index - Index of the product in the session cart
+   */
+  async openPersonalizationForProduct(item, index) {
+    const productId = item.product_id;
+    const variantId = item.variant_id;
+
+    if (!productId || !variantId) {
+      console.error('Build Your Set: Missing product ID or variant ID for personalization');
+      return;
+    }
+
+    console.log('Build Your Set: Opening personalization for product', { productId, variantId, item });
+
+    try {
+      // First check if element exists in DOM
+      let personaliseDialogElement = document.getElementById('build-your-set-personalise-dialog');
+      if (!personaliseDialogElement) {
+        personaliseDialogElement = document.querySelector('build-your-set-personalise-dialog');
+      }
+      
+      if (!personaliseDialogElement) {
+        console.error('Build Your Set: Personalization dialog element not found in DOM');
+        console.log('Build Your Set: Checking if snippet is rendered...');
+        // Try waiting a bit and check again
+        await new Promise(resolve => setTimeout(resolve, 500));
+        personaliseDialogElement = document.getElementById('build-your-set-personalise-dialog') || 
+                                   document.querySelector('build-your-set-personalise-dialog');
+        if (!personaliseDialogElement) {
+          console.error('Build Your Set: Personalization dialog still not found after waiting');
+          return;
+        }
+      }
+      
+      console.log('Build Your Set: Found dialog element', personaliseDialogElement);
+      
+      // Wait for custom element to be defined
+      await customElements.whenDefined('build-your-set-personalise-dialog');
+      
+      // Get the component instance
+      let personaliseDialog = /** @type {any} */ (personaliseDialogElement);
+      
+      // Wait a bit more for component to initialize
+      if (!personaliseDialog.refs || !personaliseDialog.refs.dialog) {
+        console.log('Build Your Set: Component not fully initialized, waiting...');
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+
+      console.log('Build Your Set: Dialog component ready', {
+        hasRefs: !!personaliseDialog.refs,
+        hasDialog: !!(personaliseDialog.refs && personaliseDialog.refs.dialog),
+        hasOpenWithProduct: typeof personaliseDialog.openWithProduct === 'function'
+      });
+      
+      // Open the dialog with product data
+      if (typeof personaliseDialog.openWithProduct === 'function') {
+        console.log('Build Your Set: Opening personalization modal with product data');
+        personaliseDialog.openWithProduct(item, index);
+      } else {
+        console.error('Build Your Set: Personalization dialog does not have openWithProduct method', personaliseDialog);
+        console.log('Build Your Set: Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(personaliseDialog)));
+        console.log('Build Your Set: Component class:', personaliseDialog.constructor.name);
+      }
+    } catch (error) {
+      console.error('Build Your Set: Error opening personalization modal:', error);
+      console.error('Build Your Set: Error stack:', error.stack);
+    }
+  }
+
+  /**
+   * Updates personalization for a product in the session
+   * @param {number} index - Index of the product in the session cart
+   * @param {Object} personalizations - Personalization data
+   */
+  updateProductPersonalization(index, personalizations) {
+    const sessionCart = this.getSessionCart();
+    
+    if (index < 0 || index >= sessionCart.length) {
+      console.warn('Build Your Set: Invalid product index to update personalization', index);
+      return;
+    }
+
+    // Update personalizations for the product
+    sessionCart[index].personalizations = personalizations;
+
+    // Save updated cart to session storage
+    const storageKey = 'build-your-set-session-cart';
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify(sessionCart));
+      
+      // Update display
+      this.updateDisplay();
+
+      // Dispatch event to notify other components
+      document.dispatchEvent(new CustomEvent('build-your-set-updated', {
+        bubbles: true,
+        cancelable: true,
+        detail: { productCount: sessionCart.length }
+      }));
+    } catch (error) {
+      console.error('Build Your Set: Error updating product personalization:', error);
+    }
+  }
+
+  /**
+   * Removes a product from the set by index
+   * @param {number} index - Index of the product to remove
+   */
+  removeProductFromSet(index) {
+    const sessionCart = this.getSessionCart();
+    
+    if (index < 0 || index >= sessionCart.length) {
+      console.warn('Build Your Set: Invalid product index to remove', index);
+      return;
+    }
+
+    const removedProduct = sessionCart[index];
+    console.log('Build Your Set: Removing product from set', {
+      index,
+      product_id: removedProduct?.product_id,
+      variant_id: removedProduct?.variant_id
+    });
+
+    // Remove the product at the specified index
+    sessionCart.splice(index, 1);
+
+    // Save updated cart to session storage
+    const storageKey = 'build-your-set-session-cart';
+    try {
+      if (sessionCart.length === 0) {
+        // If cart is empty, remove the key entirely
+        sessionStorage.removeItem(storageKey);
+        // Hide sticky bar
+        this.style.display = 'none';
+        this.style.visibility = 'hidden';
+        this.setAttribute('hidden', '');
+      } else {
+        sessionStorage.setItem(storageKey, JSON.stringify(sessionCart));
+      }
+
+      // Update display
+      this.updateDisplay();
+
+      // Dispatch event to notify other components
+      document.dispatchEvent(new CustomEvent('build-your-set-updated', {
+        bubbles: true,
+        cancelable: true,
+        detail: { productCount: sessionCart.length }
+      }));
+    } catch (error) {
+      console.error('Build Your Set: Error removing product from session:', error);
     }
   }
 

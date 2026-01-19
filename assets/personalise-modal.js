@@ -219,6 +219,11 @@ export class PersonaliseDialogComponent extends DialogComponent {
   loadSavedPersonalisation() {
     let productId = this.closest('product-form-component')?.dataset?.productId;
     
+    // If not found, check data attributes on the dialog itself (for build-your-set context)
+    if (!productId) {
+      productId = this.dataset?.productId;
+    }
+    
     // If not found, check if we're in a quick-add modal context
     if (!productId) {
       const quickAddModal = document.querySelector('#quick-add-modal-content');
@@ -255,6 +260,14 @@ export class PersonaliseDialogComponent extends DialogComponent {
           const formComponent = form.closest('product-form-component');
           productId = formComponent?.dataset?.productId;
         }
+      }
+    }
+    
+    // Last resort: check for build-your-set temporary product form
+    if (!productId) {
+      const tempProductForm = document.querySelector('product-form-component[data-build-your-set-temp]');
+      if (tempProductForm) {
+        productId = tempProductForm.dataset?.productId;
       }
     }
     
@@ -1029,6 +1042,19 @@ export class PersonaliseDialogComponent extends DialogComponent {
     } else {
       // Store in sessionStorage with product ID as key (clears on page reload)
       let productId = this.closest('product-form-component')?.dataset?.productId;
+      
+      // If not found, check data attributes on the dialog itself (for build-your-set context)
+      if (!productId) {
+        productId = this.dataset?.productId;
+      }
+      
+      // Last resort: check for build-your-set temporary product form
+      if (!productId) {
+        const tempProductForm = document.querySelector('product-form-component[data-build-your-set-temp]');
+        if (tempProductForm) {
+          productId = tempProductForm.dataset?.productId;
+        }
+      }
       
       // If not found, check if we're in a quick-add modal context
       if (!productId) {
