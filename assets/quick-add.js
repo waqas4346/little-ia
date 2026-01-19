@@ -873,21 +873,33 @@ export class QuickAddComponent extends Component {
       }
     }
 
-    // Get price information
+    // Get price information - get regular price (not discounted)
     const priceElement = modalContent.querySelector('product-price');
     if (priceElement) {
-      const priceText = priceElement.textContent?.trim() || '';
-      const priceValue = priceElement.querySelector('.price, .price-snippet');
-      if (priceValue) {
-        productData.price = priceValue.textContent?.trim() || priceText;
+      // First try to get compare_at_price (regular price if on sale)
+      const compareAtPriceElement = priceElement.querySelector('.compare-at-price');
+      if (compareAtPriceElement) {
+        productData.price = compareAtPriceElement.textContent?.trim() || '';
+        // Try to get numeric price value from compare_at_price
+        const priceMatch = productData.price.match(/[\d,]+\.?\d*/);
+        if (priceMatch) {
+          productData.price_value = parseFloat(priceMatch[0].replace(/,/g, ''));
+        }
       } else {
-        productData.price = priceText;
-      }
-
-      // Try to get numeric price value
-      const priceMatch = priceText.match(/[\d,]+\.?\d*/);
-      if (priceMatch) {
-        productData.price_value = parseFloat(priceMatch[0].replace(/,/g, ''));
+        // No compare_at_price, so current price is the regular price
+        const priceValue = priceElement.querySelector('.price:not(.compare-at-price), .price-snippet .price');
+        if (priceValue) {
+          productData.price = priceValue.textContent?.trim() || '';
+        } else {
+          const priceText = priceElement.textContent?.trim() || '';
+          productData.price = priceText;
+        }
+        
+        // Try to get numeric price value
+        const priceMatch = productData.price.match(/[\d,]+\.?\d*/);
+        if (priceMatch) {
+          productData.price_value = parseFloat(priceMatch[0].replace(/,/g, ''));
+        }
       }
     }
 
@@ -1243,6 +1255,13 @@ export class QuickAddComponent extends Component {
             needs_personalization: productData.needs_personalization,
             has_personalizations: !!productData.personalizations
           });
+          
+          // Dispatch event to update sticky bar
+          document.dispatchEvent(new CustomEvent('build-your-set-updated', {
+            bubbles: true,
+            cancelable: true,
+            detail: { productCount: sessionCart.length }
+          }));
           
           // Close the modal
           const quickAddDialog = document.getElementById('quick-add-dialog');
