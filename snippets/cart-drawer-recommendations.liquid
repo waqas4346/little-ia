@@ -5,8 +5,9 @@
 
 {%- if cart.items.size > 0 and settings.show_cart_drawer_recommendations != false -%}
   {%- liquid
-    # Get the most recent cart item (last in array)
-    assign most_recent_item = cart.items.last
+    # Get the most recent cart item (first in array - most recently added)
+    # In Shopify, cart.items.first is the most recently added product (appears at top)
+    assign most_recent_item = cart.items.first
     assign product_id = most_recent_item.product.id
     
     # Default settings
@@ -16,11 +17,6 @@
     endif
   -%}
 
-  <script
-    src="{{ 'cart-drawer-recommendations.js' | asset_url }}"
-    type="module"
-    fetchpriority="low"
-  ></script>
   <script
     src="{{ 'quick-add.js' | asset_url }}"
     type="module"
