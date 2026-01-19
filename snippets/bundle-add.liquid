@@ -1,0 +1,85 @@
+{%- doc -%}
+  Renders a bundle add component (similar to quick add but saves to bundle instead of cart).
+
+  @param {object} product - The product object
+  @param {string} section_id - The section ID
+  @param {object} [block] - The block object
+  @param {string} [color_scheme] - The color scheme to use
+{%- enddoc -%}
+
+{% liquid
+  if block.id != blank
+    assign product_form_id = 'BundleAdd-ProductForm-' | append: product.id | append: '-' | append: block.id
+  else
+    assign product_form_id = 'BundleAdd-ProductForm-' | append: product.id | append: '-' | append: section_id
+  endif
+  assign add_to_bundle_text = 'Add to bundle'
+  assign choose_options_text = 'Add to bundle'
+  assign color_scheme = color_scheme | default: settings.quick_add_color_scheme
+
+  # Logic to determine which variant to use (matching swatch selection logic from product-card)
+  assign variant = product.selected_or_first_available_variant
+
+  if variant.available
+    assign can_add_to_bundle = true
+  else
+    assign can_add_to_bundle = false
+  endif
+
+  # Always show "Add to bundle" button that opens the popup, even for single-variant products
+  assign bundle_add_button = 'choose'
+%}
+
+<!-- DEBUG: bundle-add snippet START, product: {{ product.id }}, section_id: {{ section_id }} -->
+<span style="display:none;" data-bundle-add-debug="rendered">BUNDLE-ADD-RENDERED</span>
+<bundle-add-component
+  class="bundle-add product-card-actions__quick-add color-{{ color_scheme }} "
+  data-product-title="{{ product.title }}"
+  data-bundle-add-button="{{ bundle_add_button }}"
+  data-product-options-count="{{ product.options.size }}"
+  data-test-bundle-add="true"
+>
+  <product-form-component
+    data-section-id="{{ section_id }}"
+    data-product-id="{{ product.id }}"
+    on:submit="/handleSubmit"
+    class="bundle-add__product-form-component quick-add__product-form-component"
+    data-bundle-mode="true"
+  >
+    <div
+      class="visually-hidden"
+      aria-live="assertive"
+      role="status"
+      aria-atomic="true"
+      ref="liveRegion"
+    ></div>
+    {%- form 'product', product, id: product_form_id, novalidate: 'novalidate', data-type: 'add-to-bundle-form' -%}
+      <input
+        type="hidden"
+        name="id"
+        ref="variantId"
+        value="{{ variant.id }}"
+        {% if variant.available == false %}
+          disabled
+        {% endif %}
+      >
+      <input
+        type="hidden"
+        name="quantity"
+        value="{% if variant.quantity_rule.min %}{{ variant.quantity_rule.min }}{% else %}1{% endif %}"
+      >
+      <button
+        class="button bundle-add__button bundle-add__button--choose add-to-bundle-button product-card-actions__quick-add-button"
+        type="button"
+        name="add"
+        on:click="bundle-add-component/handleClick"
+        data-bundle-add-trigger="true"
+        data-no-navigation="true"
+      >
+        <span class="product-card-actions__quick-add-plus">+</span>
+      </button>
+    {%- endform -%}
+  </product-form-component>
+</bundle-add-component>
+<span style="display:none;" data-bundle-add-debug="end">BUNDLE-ADD-END</span>
+<!-- DEBUG: bundle-add snippet END -->

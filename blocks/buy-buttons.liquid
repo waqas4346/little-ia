@@ -426,6 +426,16 @@
       try {
         // Try multiple ways to get product ID
         let productId = document.querySelector('product-form-component')?.dataset?.productId;
+        
+        // Check if we're in a quick-add modal context
+        if (!productId) {
+          const quickAddModal = document.querySelector('#quick-add-modal-content');
+          if (quickAddModal) {
+            const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
+            productId = quickAddFormComponent?.dataset?.productId;
+          }
+        }
+        
         if (!productId) {
           productId = document.querySelector('sticky-add-to-cart')?.dataset?.productId;
         }
@@ -435,6 +445,13 @@
           if (button) {
             productId = button.closest('product-form-component')?.dataset?.productId || 
                         button.closest('sticky-add-to-cart')?.dataset?.productId;
+            
+            // Also check if button is in quick-add modal
+            if (!productId && button.closest('#quick-add-modal-content')) {
+              const quickAddModal = button.closest('#quick-add-modal-content');
+              const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
+              productId = quickAddFormComponent?.dataset?.productId;
+            }
           }
         }
         
@@ -448,6 +465,29 @@
         // Try to find saved personalisation - use first available if productId not found
         let savedPersonalisation = null;
         let usedKey = null;
+        
+        // First, try to get product ID from buttons if not found yet
+        if (!productId) {
+          const buttons = document.querySelectorAll('[data-personalise-button]');
+          for (const button of buttons) {
+            // Check if button is in quick-add modal
+            const quickAddModal = button.closest('#quick-add-modal-content');
+            if (quickAddModal) {
+              const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
+              if (quickAddFormComponent?.dataset?.productId) {
+                productId = quickAddFormComponent.dataset.productId;
+                break;
+              }
+            }
+            
+            // Check button's closest product-form-component
+            const formComponent = button.closest('product-form-component');
+            if (formComponent?.dataset?.productId) {
+              productId = formComponent.dataset.productId;
+              break;
+            }
+          }
+        }
         
         if (productId) {
           // Convert to string to match sessionStorage key format
@@ -464,9 +504,8 @@
           }
         }
         
-        const buttons = document.querySelectorAll('[data-personalise-button]');
-        
-        buttons.forEach(button => {
+        // Helper function to update a single button (defined first so it can be used in retry)
+        const updateButton = (button) => {
           const textSpan = button.querySelector('[data-personalise-text]');
           const summarySpan = button.querySelector('[data-personalise-summary]');
           
@@ -484,6 +523,41 @@
               confirmationContainer = formButtons.querySelector('[data-personalise-confirmation]');
             }
           }
+          
+          // Find the product ID for THIS specific button
+          let buttonProductId = productId;
+          if (!buttonProductId) {
+            // Check if button is in quick-add modal
+            const quickAddModal = button.closest('#quick-add-modal-content');
+            if (quickAddModal) {
+              const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
+              buttonProductId = quickAddFormComponent?.dataset?.productId;
+            }
+            
+            // If still not found, check button's closest product-form-component
+            if (!buttonProductId) {
+              const formComponent = button.closest('product-form-component');
+              buttonProductId = formComponent?.dataset?.productId;
+            }
+            
+            // If still not found, check sticky-add-to-cart
+            if (!buttonProductId) {
+              const stickyCart = button.closest('sticky-add-to-cart');
+              buttonProductId = stickyCart?.dataset?.productId;
+            }
+          }
+          
+          // Get personalization for THIS button's product
+          let buttonPersonalisation = savedPersonalisation;
+          if (buttonProductId && (!buttonPersonalisation || buttonProductId !== productId)) {
+            const buttonKey = `personalisation_${String(buttonProductId)}`;
+            const buttonSaved = sessionStorage.getItem(buttonKey);
+            if (buttonSaved) {
+              buttonPersonalisation = buttonSaved;
+              console.log('updatePersonaliseButtonText: Found personalisation for button product ID:', buttonProductId);
+            }
+          }
+          
           if (textSpan) {
             // Prioritize sessionStorage as the source of truth, especially when modal is closed
             const form = document.querySelector('form[data-type="add-to-cart-form"]');
@@ -493,9 +567,9 @@
             let colorText = '';
             
             // First, try to read from sessionStorage (most reliable when modal is closed)
-            if (savedPersonalisation) {
+            if (buttonPersonalisation) {
               try {
-                const personalisation = JSON.parse(savedPersonalisation);
+                const personalisation = JSON.parse(buttonPersonalisation);
                 
                 // Always read baby/kid/mum names from sessionStorage if they exist
                 if (personalisation.babyName && typeof personalisation.babyName === 'string' && personalisation.babyName.trim()) {
@@ -544,11 +618,21 @@
             }
             
             // Also check form inputs as a fallback/update (in case user is editing)
-            if (form || modalDialog) {
+            // First, try to find form in quick-add modal context
+            let quickAddForm = null;
+            const quickAddModal = document.querySelector('#quick-add-modal-content');
+            if (quickAddModal) {
+              quickAddForm = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+            }
+            
+            // Use quick-add form if available, otherwise use the found form
+            const activeForm = quickAddForm || form;
+            
+            if (activeForm || modalDialog) {
               // Read Baby/Kid/Mum names from modal dialog inputs (they're in the modal, not the form)
               let babyNameInput = modalDialog ? modalDialog.querySelector('input[name="properties[Baby\'s Name]"]') : null;
-              if (!babyNameInput && form) {
-                babyNameInput = form.querySelector('input[name="properties[Baby\'s Name]"]');
+              if (!babyNameInput && activeForm) {
+                babyNameInput = activeForm.querySelector('input[name="properties[Baby\'s Name]"]');
               }
               if (babyNameInput && babyNameInput.value.trim()) {
                 // Replace if already exists, or add if not
@@ -561,8 +645,8 @@
               }
               
               let kidNameInput = modalDialog ? modalDialog.querySelector('input[name="properties[Kid\'s Name]"]') : null;
-              if (!kidNameInput && form) {
-                kidNameInput = form.querySelector('input[name="properties[Kid\'s Name]"]');
+              if (!kidNameInput && activeForm) {
+                kidNameInput = activeForm.querySelector('input[name="properties[Kid\'s Name]"]');
               }
               if (kidNameInput && kidNameInput.value.trim()) {
                 const existingIndex = parts.findIndex(p => p.startsWith('Kid: '));
@@ -574,8 +658,8 @@
               }
               
               let mumNameInput = modalDialog ? modalDialog.querySelector('input[name="properties[Mum\'s Name]"]') : null;
-              if (!mumNameInput && form) {
-                mumNameInput = form.querySelector('input[name="properties[Mum\'s Name]"]');
+              if (!mumNameInput && activeForm) {
+                mumNameInput = activeForm.querySelector('input[name="properties[Mum\'s Name]"]');
               }
               if (mumNameInput && mumNameInput.value.trim()) {
                 const existingIndex = parts.findIndex(p => p.startsWith('Mum: '));
@@ -588,8 +672,8 @@
               
               // Also read other fields from modal dialog or form inputs
               let nameInput = modalDialog ? modalDialog.querySelector('#personalise-name') : null;
-              if (!nameInput && form) {
-                nameInput = form.querySelector('input[name="properties[Name]"]') || form.querySelector('#personalise-name');
+              if (!nameInput && activeForm) {
+                nameInput = activeForm.querySelector('input[name="properties[Name]"]') || activeForm.querySelector('#personalise-name');
               }
               if (nameInput && nameInput.value.trim()) {
                 const existingIndex = parts.findIndex(p => !p.startsWith('Baby: ') && !p.startsWith('Kid: ') && !p.startsWith('Mum: ') && !p.includes('|'));
@@ -600,54 +684,65 @@
                 }
               }
               
-              const name1Input = form.querySelector('input[name="properties[Name 1]"]');
-              if (name1Input && name1Input.value.trim()) {
-                parts.push(name1Input.value.trim());
-              }
-              
-              const name2Input = form.querySelector('input[name="properties[Name 2]"]');
-              if (name2Input && name2Input.value.trim()) {
-                parts.push(name2Input.value.trim());
-              }
-              
-              const name3Input = form.querySelector('input[name="properties[Name 3]"]');
-              if (name3Input && name3Input.value.trim()) {
-                parts.push(name3Input.value.trim());
-              }
-              
-              const name4Input = form.querySelector('input[name="properties[Name 4]"]');
-              if (name4Input && name4Input.value.trim()) {
-                parts.push(name4Input.value.trim());
-              }
-              
-              const dobInput = form.querySelector('input[name="properties[Date of Birth]"]');
-              if (dobInput && dobInput.value.trim()) {
-                parts.push(dobInput.value.trim());
-              }
-              
-              const optionalDobInput = form.querySelector('input[name="properties[Personalise Date of Birth]"]') || form.querySelector('#dob_field_val');
-              if (optionalDobInput && optionalDobInput.value.trim()) {
-                parts.push(optionalDobInput.value.trim());
-              }
-              
-              const schoolYearInput = form.querySelector('input[name="properties[School Year]"]');
-              if (schoolYearInput && schoolYearInput.value.trim()) {
-                parts.push(schoolYearInput.value.trim());
-              }
-              
-              // Read color from hidden input or visible input
-              if (form) {
-                const colorInput = form.querySelector('input[name="properties[Text Color]"]');
+              if (activeForm) {
+                const name1Input = activeForm.querySelector('input[name="properties[Name 1]"]');
+                if (name1Input && name1Input.value.trim()) {
+                  parts.push(name1Input.value.trim());
+                }
+                
+                const name2Input = activeForm.querySelector('input[name="properties[Name 2]"]');
+                if (name2Input && name2Input.value.trim()) {
+                  parts.push(name2Input.value.trim());
+                }
+                
+                const name3Input = activeForm.querySelector('input[name="properties[Name 3]"]');
+                if (name3Input && name3Input.value.trim()) {
+                  parts.push(name3Input.value.trim());
+                }
+                
+                const name4Input = activeForm.querySelector('input[name="properties[Name 4]"]');
+                if (name4Input && name4Input.value.trim()) {
+                  parts.push(name4Input.value.trim());
+                }
+                
+                const dobInput = activeForm.querySelector('input[name="properties[Date of Birth]"]');
+                if (dobInput && dobInput.value.trim()) {
+                  parts.push(dobInput.value.trim());
+                }
+                
+                const optionalDobInput = activeForm.querySelector('input[name="properties[Personalise Date of Birth]"]') || activeForm.querySelector('#dob_field_val');
+                if (optionalDobInput && optionalDobInput.value.trim()) {
+                  parts.push(optionalDobInput.value.trim());
+                }
+                
+                const schoolYearInput = activeForm.querySelector('input[name="properties[School Year]"]');
+                if (schoolYearInput && schoolYearInput.value.trim()) {
+                  parts.push(schoolYearInput.value.trim());
+                }
+                
+                // Read color from hidden input or visible input
+                const colorInput = activeForm.querySelector('input[name="properties[Text Color]"]');
                 if (colorInput && colorInput.value.trim()) {
                   colorText = colorInput.value.trim();
                 }
               }
             }
             
-            if (parts.length > 0) {
-              let summaryText = 'Personalised: ' + parts.join(' | ');
+            // Check if we have personalisation data (from sessionStorage or form inputs)
+            const hasPersonalisation = buttonPersonalisation || parts.length > 0;
+            
+            if (hasPersonalisation) {
+              // Build summary text - prefer sessionStorage data, fallback to form inputs
+              let summaryText = 'Personalised:';
+              if (parts.length > 0) {
+                summaryText += ' ' + parts.join(' | ');
+              }
               if (colorText) {
-                summaryText += ' (' + colorText + ')';
+                if (parts.length > 0) {
+                  summaryText += ' (' + colorText + ')';
+                } else {
+                  summaryText += ' ' + colorText;
+                }
               }
               
               // Show summary and update text
@@ -665,33 +760,33 @@
                   // Build dynamic label based on fields found in form or sessionStorage
                   const fields = [];
                   
-                  // Check form inputs first
-                  if (form) {
-                    if (form.querySelector('input[name="properties[Name]"]') || form.querySelector('#personalise-name')) {
+                  // Check form inputs first (use activeForm which could be quick-add form)
+                  if (activeForm) {
+                    if (activeForm.querySelector('input[name="properties[Name]"]') || activeForm.querySelector('#personalise-name')) {
                       fields.push('name');
                     }
-                    if (form.querySelector('input[name="properties[Name 1]"]')) fields.push('name1');
-                    if (form.querySelector('input[name="properties[Name 2]"]')) fields.push('name2');
-                    if (form.querySelector('input[name="properties[Name 3]"]')) fields.push('name3');
-                    if (form.querySelector('input[name="properties[Name 4]"]')) fields.push('name4');
-                    if (form.querySelector('input[name="properties[Date of Birth]"]') || form.querySelector('#dob_field_val')) {
+                    if (activeForm.querySelector('input[name="properties[Name 1]"]')) fields.push('name1');
+                    if (activeForm.querySelector('input[name="properties[Name 2]"]')) fields.push('name2');
+                    if (activeForm.querySelector('input[name="properties[Name 3]"]')) fields.push('name3');
+                    if (activeForm.querySelector('input[name="properties[Name 4]"]')) fields.push('name4');
+                    if (activeForm.querySelector('input[name="properties[Date of Birth]"]') || activeForm.querySelector('#dob_field_val')) {
                       fields.push('date');
                     }
                     if (colorText) fields.push('colour');
-                    if (form.querySelector('input[name="properties[Baby\'s Name]"]')) fields.push('baby name');
-                    if (form.querySelector('input[name="properties[Kid\'s Name]"]')) fields.push('kid name');
-                    if (form.querySelector('input[name="properties[Mum\'s Name]"]')) fields.push('mum name');
+                    if (activeForm.querySelector('input[name="properties[Baby\'s Name]"]')) fields.push('baby name');
+                    if (activeForm.querySelector('input[name="properties[Kid\'s Name]"]')) fields.push('kid name');
+                    if (activeForm.querySelector('input[name="properties[Mum\'s Name]"]')) fields.push('mum name');
                   }
                   
                   // Also check sessionStorage if form didn't have all fields
-                  if (savedPersonalisation) {
+                  if (buttonPersonalisation) {
                     try {
-                      const personalisation = JSON.parse(savedPersonalisation);
+                      const personalisation = JSON.parse(buttonPersonalisation);
                       if (personalisation.babyName && !fields.includes('baby name')) fields.push('baby name');
                       if (personalisation.kidName && !fields.includes('kid name')) fields.push('kid name');
                       if (personalisation.mumName && !fields.includes('mum name')) fields.push('mum name');
                     } catch (e) {
-                      console.error('Error parsing personalisation for confirmation:', e);
+                      // Error parsing personalisation - continue without it
                     }
                   }
                   
@@ -712,17 +807,26 @@
                 confirmationContainer.style.display = 'none';
               }
             }
-              // Hide summary and show PERSONALISE IT
-              if (summarySpan) {
-                summarySpan.style.display = 'none';
-                button.classList.remove('has-summary');
-              }
-              textSpan.textContent = 'PERSONALISE IT';
-              if (confirmationContainer) {
-                confirmationContainer.style.display = 'none';
-              }
-            }
           }
+        };
+        
+        // Find buttons in both main page and quick-add modal
+        let buttons = document.querySelectorAll('[data-personalise-button]');
+        
+        // If no buttons found, wait a bit for dynamically loaded content (like quick-add modal)
+        if (buttons.length === 0) {
+          setTimeout(() => {
+            const retryButtons = document.querySelectorAll('[data-personalise-button]');
+            if (retryButtons.length > 0) {
+              retryButtons.forEach(button => updateButton(button));
+            }
+          }, 500);
+          return;
+        }
+        
+        // Update all buttons
+        buttons.forEach(button => {
+          updateButton(button);
         });
       } catch (error) {
         console.error('Error updating personalise button text:', error);
@@ -731,12 +835,34 @@
   }
   
   // Listen for personalisation-saved event to update button
-  function handlePersonalisationSaved() {
-    setTimeout(function() {
+  function handlePersonalisationSaved(event) {
+    // Use multiple retries to ensure buttons are updated
+    const updateWithRetry = (attempts = 0) => {
       if (window.updatePersonaliseButtonText) {
         window.updatePersonaliseButtonText();
+        
+        // Check if buttons were updated
+        setTimeout(() => {
+          const buttons = document.querySelectorAll('[data-personalise-button]');
+          let anyUpdated = false;
+          buttons.forEach(button => {
+            const textSpan = button.querySelector('[data-personalise-text]');
+            if (textSpan && textSpan.textContent === 'EDIT') {
+              anyUpdated = true;
+            }
+          });
+          
+          // If buttons exist but weren't updated, retry
+          if (buttons.length > 0 && !anyUpdated && attempts < 10) {
+            setTimeout(() => updateWithRetry(attempts + 1), 200);
+          }
+        }, 100);
+      } else if (attempts < 10) {
+        setTimeout(() => updateWithRetry(attempts + 1), 200);
       }
-    }, 100);
+    };
+    
+    updateWithRetry(0);
   }
   
   // Set up event listeners

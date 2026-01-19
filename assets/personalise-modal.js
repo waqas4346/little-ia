@@ -161,6 +161,16 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (productFormComponent) {
       productForm = productFormComponent.querySelector('form[data-type="add-to-cart-form"]');
     }
+    
+    // If not found, check if we're in a quick-add modal context
+    if (!productForm) {
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        productForm = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+      }
+    }
+    
+    // Fallback to any form
     if (!productForm) {
       productForm = document.querySelector('form[data-type="add-to-cart-form"]');
     }
@@ -184,6 +194,16 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (productFormComponent) {
       productForm = productFormComponent.querySelector('form[data-type="add-to-cart-form"]');
     }
+    
+    // If not found, check if we're in a quick-add modal context
+    if (!productForm) {
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        productForm = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+      }
+    }
+    
+    // Fallback to any form
     if (!productForm) {
       productForm = document.querySelector(`form[data-type="add-to-cart-form"]`);
     }
@@ -198,6 +218,15 @@ export class PersonaliseDialogComponent extends DialogComponent {
   loadSavedPersonalisation() {
     let productId = this.closest('product-form-component')?.dataset?.productId;
     
+    // If not found, check if we're in a quick-add modal context
+    if (!productId) {
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
+        productId = quickAddFormComponent?.dataset?.productId;
+      }
+    }
+    
     // If not found, try to get from sticky-add-to-cart
     if (!productId) {
       const stickyCart = document.querySelector('sticky-add-to-cart');
@@ -208,10 +237,23 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // If still not found, try to get from the form
     if (!productId) {
-      const form = document.querySelector('form[data-type="add-to-cart-form"]');
-      if (form) {
-        const formComponent = form.closest('product-form-component');
-        productId = formComponent?.dataset?.productId;
+      // First try quick-add modal form
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        const form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+        if (form) {
+          const formComponent = form.closest('product-form-component');
+          productId = formComponent?.dataset?.productId;
+        }
+      }
+      
+      // Fallback to any form
+      if (!productId) {
+        const form = document.querySelector('form[data-type="add-to-cart-form"]');
+        if (form) {
+          const formComponent = form.closest('product-form-component');
+          productId = formComponent?.dataset?.productId;
+        }
       }
     }
     
@@ -980,6 +1022,15 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Store in sessionStorage with product ID as key (clears on page reload)
     let productId = this.closest('product-form-component')?.dataset?.productId;
     
+    // If not found, check if we're in a quick-add modal context
+    if (!productId) {
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
+        productId = quickAddFormComponent?.dataset?.productId;
+      }
+    }
+    
     // If not found, try to get from sticky-add-to-cart
     if (!productId) {
       productId = document.querySelector('sticky-add-to-cart')?.dataset?.productId;
@@ -987,10 +1038,23 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // If still not found, try to get from the form
     if (!productId) {
-      const form = document.querySelector('form[data-type="add-to-cart-form"]');
-      if (form) {
-        const formComponent = form.closest('product-form-component');
-        productId = formComponent?.dataset?.productId;
+      // First try quick-add modal form
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        const form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+        if (form) {
+          const formComponent = form.closest('product-form-component');
+          productId = formComponent?.dataset?.productId;
+        }
+      }
+      
+      // Fallback to any form
+      if (!productId) {
+        const form = document.querySelector('form[data-type="add-to-cart-form"]');
+        if (form) {
+          const formComponent = form.closest('product-form-component');
+          productId = formComponent?.dataset?.productId;
+        }
       }
     }
     
@@ -1001,12 +1065,33 @@ export class PersonaliseDialogComponent extends DialogComponent {
       
       sessionStorage.setItem(key, JSON.stringify(personalisation));
       
-      // Trigger update of button text
-      setTimeout(() => {
+      // Trigger update of button text - with multiple retries to ensure buttons are in DOM
+      const updateButtonWithRetry = (attempts = 0) => {
         if (typeof window.updatePersonaliseButtonText === 'function') {
           window.updatePersonaliseButtonText();
+          
+          // Check if buttons were updated, if not retry
+          const buttons = document.querySelectorAll('[data-personalise-button]');
+          let anyButtonUpdated = false;
+          buttons.forEach((button) => {
+            const textSpan = button.querySelector('[data-personalise-text]');
+            if (textSpan && textSpan.textContent === 'EDIT') {
+              anyButtonUpdated = true;
+            }
+          });
+          
+          // If no buttons were updated and we haven't exceeded retries, try again
+          if (!anyButtonUpdated && attempts < 10) {
+            setTimeout(() => updateButtonWithRetry(attempts + 1), 200);
+          }
+        } else if (attempts < 10) {
+          // Function not defined yet, retry
+          setTimeout(() => updateButtonWithRetry(attempts + 1), 200);
         }
-      }, 100);
+      };
+      
+      // Start with immediate call, then retry if needed
+      setTimeout(() => updateButtonWithRetry(0), 100);
     } else {
       console.error('Product ID not found when saving personalisation');
     }
@@ -1031,12 +1116,33 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Close the dialog
     this.closeDialog();
     
-    // Update buttons after a short delay to ensure localStorage is set and DOM is updated
-    setTimeout(() => {
+    // Update buttons after a short delay to ensure sessionStorage is set and DOM is updated
+    // Use multiple retries to ensure buttons in quick-add modal are found
+    const updateButtonWithRetry2 = (attempts = 0) => {
       if (typeof window.updatePersonaliseButtonText === 'function') {
         window.updatePersonaliseButtonText();
+        
+        // Check if buttons were updated, if not retry
+        const buttons = document.querySelectorAll('[data-personalise-button]');
+        let anyButtonUpdated = false;
+        buttons.forEach((button) => {
+          const textSpan = button.querySelector('[data-personalise-text]');
+          if (textSpan && textSpan.textContent === 'EDIT') {
+            anyButtonUpdated = true;
+          }
+        });
+        
+        // If no buttons were updated and we haven't exceeded retries, try again
+        if (!anyButtonUpdated && attempts < 10) {
+          setTimeout(() => updateButtonWithRetry2(attempts + 1), 200);
+        }
+      } else if (attempts < 10) {
+        // Function not defined yet, retry
+        setTimeout(() => updateButtonWithRetry2(attempts + 1), 200);
       }
-    }, 300);
+    };
+    
+    setTimeout(() => updateButtonWithRetry2(0), 300);
   };
 
   /**
@@ -1051,6 +1157,15 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const productFormComponent = this.closest('product-form-component');
     if (productFormComponent) {
       productForm = productFormComponent.querySelector('form[data-type="add-to-cart-form"]');
+    }
+    
+    // If not found, check if we're in a quick-add modal context
+    if (!productForm) {
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        // Find the form within the quick-add modal
+        productForm = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+      }
     }
     
     // Fallback: find any product form
@@ -1166,8 +1281,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Helper function to add personalisation fields to form
     const addPersonalisationFieldsToForm = (targetForm) => {
       // Get the current product ID
-      const productFormComponent = targetForm.closest('product-form-component');
-      const productId = productFormComponent?.dataset?.productId;
+      let productFormComponent = targetForm.closest('product-form-component');
+      let productId = productFormComponent?.dataset?.productId;
+      
+      // If not found, check if we're in a quick-add modal context
+      if (!productId) {
+        const quickAddModal = document.querySelector('#quick-add-modal-content');
+        if (quickAddModal) {
+          productFormComponent = quickAddModal.querySelector('product-form-component');
+          productId = productFormComponent?.dataset?.productId;
+        }
+      }
       
       if (!productId) {
         console.warn('Product ID not found for personalisation fields');

@@ -4,7 +4,9 @@ import { CartUpdateEvent, ThemeEvents, VariantSelectedEvent } from '@theme/event
 import { DialogComponent, DialogCloseEvent, DialogOpenEvent } from '@theme/dialog';
 import { mediaQueryLarge, isMobileBreakpoint, getIOSVersion, onAnimationEnd } from '@theme/utilities';
 
-export class QuickAddComponent extends Component {
+console.log('Bundle Add JS: Module loaded');
+
+export class BundleAddComponent extends Component {
   /** @type {AbortController | null} */
   #abortController = null;
   /** @type {Map<string, Element>} */
@@ -33,7 +35,7 @@ export class QuickAddComponent extends Component {
       }
     }
     
-    // Final fallback: Check data attributes on the quick-add component itself
+    // Final fallback: Check data attributes on the bundle-add component itself
     if (!productUrl) {
       productUrl = this.getAttribute('data-product-url') || '';
       if (!productUrl && this.getAttribute('data-product-handle')) {
@@ -69,21 +71,71 @@ export class QuickAddComponent extends Component {
 
   connectedCallback() {
     super.connectedCallback();
+    
+    // Check if we're inside a bundle item wrapper and should be in bundle mode
+    const isInBundleWrapper = this.closest('[data-product-bundle-item="true"], [data-require-bundle-mode="true"], .product-bundle-item');
+    if (isInBundleWrapper) {
+      console.log('Bundle Add Component: Detected bundle context from wrapper');
+    }
+    
+    console.log('Bundle Add Component connected', {
+      element: this,
+      tagName: this.tagName,
+      className: this.className,
+      productUrl: this.productPageUrl,
+      hasDialog: !!document.getElementById('bundle-add-dialog'),
+      buttons: this.querySelectorAll('button').length,
+      inBundleWrapper: !!isInBundleWrapper
+    });
 
-    mediaQueryLarge.addEventListener('change', this.#closeQuickAddModal);
+    // Add direct click listeners to buttons as a fallback to on:click
+    // This ensures bundle-add handles clicks even if on:click doesn't work
+    const buttons = this.querySelectorAll('button[data-bundle-add-trigger], button.add-to-bundle-button, button.bundle-add__button');
+    buttons.forEach(button => {
+      // Remove any existing listener to avoid duplicates
+      if (button._bundleAddHandler) {
+        button.removeEventListener('click', button._bundleAddHandler);
+      }
+      
+      const handler = (e) => {
+        // Only handle if this is our button and not already handled
+        if (e.target === button || button.contains(e.target)) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          console.log('Bundle Add: Direct button click handler called');
+          this.handleClick(e);
+        }
+      };
+      
+      button._bundleAddHandler = handler;
+      // Use capture phase to ensure we catch it before others
+      button.addEventListener('click', handler, { capture: true });
+    });
+
+    mediaQueryLarge.addEventListener('change', this.#closeBundleAddModal);
     document.addEventListener(ThemeEvents.cartUpdate, this.#handleCartUpdate, {
       signal: this.#cartUpdateAbortController.signal,
     });
-    document.addEventListener(ThemeEvents.variantSelected, this.#updateQuickAddButtonState.bind(this));
+    document.addEventListener(ThemeEvents.variantSelected, this.#updateBundleAddButtonState.bind(this));
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
 
-    mediaQueryLarge.removeEventListener('change', this.#closeQuickAddModal);
+    // Clean up button listeners
+    const buttons = this.querySelectorAll('button[data-bundle-add-trigger], button.add-to-bundle-button, button.bundle-add__button');
+    buttons.forEach(button => {
+      if (button._bundleAddHandler) {
+        button.removeEventListener('click', button._bundleAddHandler, { capture: true });
+        delete button._bundleAddHandler;
+      }
+    });
+
+    mediaQueryLarge.removeEventListener('change', this.#closeBundleAddModal);
     this.#abortController?.abort();
     this.#cartUpdateAbortController.abort();
-    document.removeEventListener(ThemeEvents.variantSelected, this.#updateQuickAddButtonState.bind(this));
+    document.removeEventListener(ThemeEvents.variantSelected, this.#updateBundleAddButtonState.bind(this));
   }
 
   /**
@@ -94,35 +146,26 @@ export class QuickAddComponent extends Component {
   };
 
   /**
-   * Handles quick add button click
+   * Handles bundle add button click
    * @param {Event} event - The click event
    */
   handleClick = async (event) => {
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-
-    // Check if this quick-add is from build-your-set and mark it
-    const productCard = /** @type {import('./product-card').ProductCard | null} */ (this.closest('product-card'));
-    const isFromBuildYourSet = productCard?.hasAttribute('data-build-your-set') || 
-                                productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
     
-    // Mark the modal content element with a data attribute if from build-your-set
-    const modalContent = document.getElementById('quick-add-modal-content');
-    if (modalContent) {
-      if (isFromBuildYourSet) {
-        modalContent.setAttribute('data-build-your-set', 'true');
-      } else {
-        modalContent.removeAttribute('data-build-your-set');
-      }
-    }
+    console.log('Bundle Add: handleClick called', {
+      component: this,
+      productUrl: this.productPageUrl,
+      hasDialog: !!document.getElementById('bundle-add-dialog')
+    });
 
     const currentUrl = this.productPageUrl;
 
     if (!currentUrl) {
-      console.warn('Quick Add: Product page URL is empty');
+      console.warn('Bundle Add: Product page URL is empty');
       // Still try to open the modal with empty content
-      this.#openQuickAddModal();
+      this.#openBundleAddModal();
       return;
     }
 
@@ -130,10 +173,13 @@ export class QuickAddComponent extends Component {
     this.#abortController?.abort();
     this.#abortController = new AbortController();
 
+    // Check if we have cached content first
+    const modalContent = document.getElementById('bundle-add-modal-content');
+    
     // Clear any stuck loader state from previous errors
     if (modalContent) {
       // Check if content is stuck showing loader (skeleton)
-      const hasSkeleton = modalContent.querySelector('.quick-add-modal__loading-skeleton');
+      const hasSkeleton = modalContent.querySelector('.bundle-add-modal__loading-skeleton');
       if (hasSkeleton && modalContent.innerHTML.trim() === this.#createLoadingSkeleton().trim()) {
         // Content is stuck on loader, clear it
         modalContent.innerHTML = '';
@@ -145,20 +191,20 @@ export class QuickAddComponent extends Component {
     // If we have cached content, use it immediately (no loader needed)
     if (productGrid && modalContent) {
       // Open modal first
-      this.#openQuickAddModal();
+      this.#openBundleAddModal();
       // Update with cached content immediately (no loader)
       const freshContent = /** @type {Element} */ (productGrid.cloneNode(true));
       requestAnimationFrame(async () => {
         if (!this.#abortController?.signal.aborted) {
           try {
-            await this.updateQuickAddModal(freshContent);
+            await this.updateBundleAddModal(freshContent);
             // Clear abort controller after successful update (ready for next operation)
             if (this.#abortController) {
               this.#abortController = null;
             }
           } catch (error) {
             if (error.name !== 'AbortError') {
-              console.error('Quick Add: Error updating modal with cached content', error);
+              console.error('Bundle Add: Error updating modal with cached content', error);
             }
             // Clear abort controller even on error (unless it was aborted)
             if (this.#abortController && !this.#abortController.signal.aborted) {
@@ -176,7 +222,7 @@ export class QuickAddComponent extends Component {
     }
 
     // Open the modal immediately, then load content asynchronously
-    this.#openQuickAddModal();
+    this.#openBundleAddModal();
 
     // Load content asynchronously
     (async () => {
@@ -224,7 +270,7 @@ export class QuickAddComponent extends Component {
               clearTimeout(timeoutId);
             }
             if (error.name !== 'AbortError' && error.message !== 'Fetch timeout') {
-              console.error('Quick Add: Error fetching product page', error);
+              console.error('Bundle Add: Error fetching product page', error);
             }
             return;
           }
@@ -239,17 +285,17 @@ export class QuickAddComponent extends Component {
           try {
             // Use a fresh clone from the cache
             const freshContent = /** @type {Element} */ (productGrid.cloneNode(true));
-            await this.updateQuickAddModal(freshContent);
+            await this.updateBundleAddModal(freshContent);
             // Clear abort controller after successful update (ready for next operation)
             if (this.#abortController) {
               this.#abortController = null;
             }
           } catch (error) {
             if (error.name !== 'AbortError') {
-              console.error('Quick Add: Error updating modal content', error);
+              console.error('Bundle Add: Error updating modal content', error);
               // Clear loader if there was an error
-              const modalContent = document.getElementById('quick-add-modal-content');
-              if (modalContent && modalContent.querySelector('.quick-add-modal__loading-skeleton')) {
+              const modalContent = document.getElementById('bundle-add-modal-content');
+              if (modalContent && modalContent.querySelector('.bundle-add-modal__loading-skeleton')) {
                 modalContent.innerHTML = '<div style="padding: 2rem; text-align: center;">Error loading product. Please try again.</div>';
               }
             }
@@ -260,8 +306,8 @@ export class QuickAddComponent extends Component {
           }
         } else {
           // No product grid found - clear loader and show error
-          const modalContent = document.getElementById('quick-add-modal-content');
-          if (modalContent && modalContent.querySelector('.quick-add-modal__loading-skeleton')) {
+          const modalContent = document.getElementById('bundle-add-modal-content');
+          if (modalContent && modalContent.querySelector('.bundle-add-modal__loading-skeleton')) {
             modalContent.innerHTML = '<div style="padding: 2rem; text-align: center;">Product not found. Please try again.</div>';
           }
           // Clear abort controller
@@ -271,10 +317,10 @@ export class QuickAddComponent extends Component {
         }
       } catch (error) {
         if (error.name !== 'AbortError') {
-          console.error('Quick Add: Unexpected error loading content', error);
+          console.error('Bundle Add: Unexpected error loading content', error);
           // Clear loader on unexpected error
-          const modalContent = document.getElementById('quick-add-modal-content');
-          if (modalContent && modalContent.querySelector('.quick-add-modal__loading-skeleton')) {
+          const modalContent = document.getElementById('bundle-add-modal-content');
+          if (modalContent && modalContent.querySelector('.bundle-add-modal__loading-skeleton')) {
             modalContent.innerHTML = '<div style="padding: 2rem; text-align: center;">Error loading product. Please try again.</div>';
           }
           // Clear abort controller
@@ -286,7 +332,7 @@ export class QuickAddComponent extends Component {
     })();
   };
 
-  /** @param {QuickAddDialog} dialogComponent */
+  /** @param {BundleAddDialog} dialogComponent */
   #stayVisibleUntilDialogCloses(dialogComponent) {
     this.toggleAttribute('stay-visible', true);
 
@@ -305,17 +351,6 @@ export class QuickAddComponent extends Component {
    * Cleans up state when dialog closes (abort requests, reset content if needed)
    */
   #cleanupOnDialogClose() {
-    // Clear personalization when dialog closes
-    const modalContent = document.getElementById('quick-add-modal-content');
-    if (modalContent) {
-      const productFormComponent = modalContent.querySelector('product-form-component');
-      const productId = productFormComponent?.dataset?.productId;
-      if (productId) {
-        const key = `personalisation_${String(productId)}`;
-        sessionStorage.removeItem(key);
-      }
-    }
-    
     // Abort any pending fetch requests
     if (this.#abortController && !this.#abortController.signal.aborted) {
       this.#abortController.abort();
@@ -327,36 +362,23 @@ export class QuickAddComponent extends Component {
     // the last product they viewed when reopening. Only clear on new product selection.
   }
 
-  #openQuickAddModal = () => {
-    // Ensure modal content marker is set after modal opens (in case it wasn't set before)
-    requestAnimationFrame(() => {
-      const modalContent = document.getElementById('quick-add-modal-content');
-      if (modalContent) {
-        const productCard = /** @type {import('./product-card').ProductCard | null} */ (this.closest('product-card'));
-        const isFromBuildYourSet = productCard?.hasAttribute('data-build-your-set') || 
-                                    productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
-        if (isFromBuildYourSet) {
-          modalContent.setAttribute('data-build-your-set', 'true');
-        }
-      }
-    });
-    
-    const dialogComponent = document.getElementById('quick-add-dialog');
+  #openBundleAddModal = () => {
+    const dialogComponent = document.getElementById('bundle-add-dialog');
     if (!dialogComponent) {
-      console.warn('Quick Add: Dialog element not found');
+      console.warn('Bundle Add: Dialog element not found');
       return;
     }
 
-    // Check if it's a QuickAddDialog instance or the right custom element
-    if (!(dialogComponent instanceof QuickAddDialog) && dialogComponent.tagName.toLowerCase() !== 'quick-add-dialog') {
-      console.warn('Quick Add: Dialog element is not a QuickAddDialog instance');
+    // Check if it's a BundleAddDialog instance or the right custom element
+    if (!(dialogComponent instanceof BundleAddDialog) && dialogComponent.tagName.toLowerCase() !== 'bundle-add-dialog') {
+      console.warn('Bundle Add: Dialog element is not a BundleAddDialog instance');
       return;
     }
 
     // Function to actually open the dialog
-    const openDialog = (/** @type {QuickAddDialog} */ dialog) => {
+    const openDialog = (/** @type {BundleAddDialog} */ dialog) => {
       if (!dialog || !dialog.refs || !dialog.refs.dialog) {
-        console.warn('Quick Add: Dialog refs not ready');
+        console.warn('Bundle Add: Dialog refs not ready');
         // Try again after a short delay
         setTimeout(() => {
           if (dialog && dialog.refs && dialog.refs.dialog) {
@@ -376,14 +398,14 @@ export class QuickAddComponent extends Component {
     };
 
     // If the custom element hasn't been upgraded yet, wait for it
-    if (!(dialogComponent instanceof QuickAddDialog)) {
+    if (!(dialogComponent instanceof BundleAddDialog)) {
       // Wait for custom element to be defined
-      customElements.whenDefined('quick-add-dialog').then(() => {
-        if (dialogComponent instanceof QuickAddDialog) {
+      customElements.whenDefined('bundle-add-dialog').then(() => {
+        if (dialogComponent instanceof BundleAddDialog) {
           openDialog(dialogComponent);
         }
       }).catch((error) => {
-        console.error('Quick Add: Error waiting for custom element', error);
+        console.error('Bundle Add: Error waiting for custom element', error);
       });
       return;
     }
@@ -391,9 +413,9 @@ export class QuickAddComponent extends Component {
     openDialog(dialogComponent);
   };
 
-  #closeQuickAddModal = () => {
-    const dialogComponent = document.getElementById('quick-add-dialog');
-    if (!(dialogComponent instanceof QuickAddDialog)) return;
+  #closeBundleAddModal = () => {
+    const dialogComponent = document.getElementById('bundle-add-dialog');
+    if (!(dialogComponent instanceof BundleAddDialog)) return;
 
     dialogComponent.closeDialog();
   };
@@ -434,26 +456,69 @@ export class QuickAddComponent extends Component {
   }
 
   /**
+   * Updates button text from "Add to cart" to "Add to bundle" and marks form as bundle mode
+   * @param {Element} modalContent - The modal content element
+   */
+  #updateButtonTextForBundle(modalContent) {
+    if (!modalContent) return;
+
+    // Find all product form components and mark them as bundle mode
+    const productForms = modalContent.querySelectorAll('product-form-component');
+    productForms.forEach(form => {
+      form.setAttribute('data-bundle-mode', 'true');
+    });
+
+    // Find all forms and change their data-type to add-to-bundle-form
+    const forms = modalContent.querySelectorAll('form[data-type="add-to-cart-form"]');
+    forms.forEach(form => {
+      form.setAttribute('data-type', 'add-to-bundle-form');
+    });
+
+    // Find all "Add to cart" buttons and change text to "Add to bundle"
+    const addToCartButtons = modalContent.querySelectorAll(
+      'add-to-cart-component button, .add-to-cart-button, button[type="submit"][name="add"]'
+    );
+    
+    addToCartButtons.forEach(button => {
+      // Change button text
+      const textElements = button.querySelectorAll('.add-to-cart-text, .button-text, span');
+      textElements.forEach(el => {
+        if (el.textContent && el.textContent.toLowerCase().includes('add to cart')) {
+          el.textContent = el.textContent.replace(/Add to cart/gi, 'Add to bundle');
+        }
+      });
+      
+      // Change aria-label if it exists
+      if (button.hasAttribute('aria-label')) {
+        const ariaLabel = button.getAttribute('aria-label');
+        if (ariaLabel && ariaLabel.toLowerCase().includes('add to cart')) {
+          button.setAttribute('aria-label', ariaLabel.replace(/Add to cart/gi, 'Add to bundle'));
+        }
+      }
+    });
+  }
+
+  /**
    * Creates a loading skeleton that matches the modal design
    * @returns {string} HTML string for the loading skeleton
    */
   #createLoadingSkeleton() {
     return `
-      <div class="quick-add-modal__loading-skeleton product-information__grid">
-        <div class="quick-add-modal__skeleton-media product-information__media">
-          <div class="quick-add-modal__skeleton-image"></div>
+      <div class="bundle-add-modal__loading-skeleton product-information__grid">
+        <div class="bundle-add-modal__skeleton-media product-information__media">
+          <div class="bundle-add-modal__skeleton-image"></div>
         </div>
-        <div class="quick-add-modal__skeleton-details product-details">
-          <div class="quick-add-modal__skeleton-line quick-add-modal__skeleton-title"></div>
-          <div class="quick-add-modal__skeleton-line quick-add-modal__skeleton-price"></div>
-          <div class="quick-add-modal__skeleton-line quick-add-modal__skeleton-line--medium"></div>
-          <div class="quick-add-modal__skeleton-line quick-add-modal__skeleton-line--small"></div>
-          <div class="quick-add-modal__skeleton-variants">
-            <div class="quick-add-modal__skeleton-variant"></div>
-            <div class="quick-add-modal__skeleton-variant"></div>
-            <div class="quick-add-modal__skeleton-variant"></div>
+        <div class="bundle-add-modal__skeleton-details product-details">
+          <div class="bundle-add-modal__skeleton-line bundle-add-modal__skeleton-title"></div>
+          <div class="bundle-add-modal__skeleton-line bundle-add-modal__skeleton-price"></div>
+          <div class="bundle-add-modal__skeleton-line bundle-add-modal__skeleton-line--medium"></div>
+          <div class="bundle-add-modal__skeleton-line bundle-add-modal__skeleton-line--small"></div>
+          <div class="bundle-add-modal__skeleton-variants">
+            <div class="bundle-add-modal__skeleton-variant"></div>
+            <div class="bundle-add-modal__skeleton-variant"></div>
+            <div class="bundle-add-modal__skeleton-variant"></div>
           </div>
-          <div class="quick-add-modal__skeleton-button"></div>
+          <div class="bundle-add-modal__skeleton-button"></div>
         </div>
       </div>
     `;
@@ -463,13 +528,10 @@ export class QuickAddComponent extends Component {
    * Re-renders the variant picker.
    * @param {Element} productGrid - The product grid element
    */
-  async updateQuickAddModal(productGrid) {
-    const modalContent = document.getElementById('quick-add-modal-content');
+  async updateBundleAddModal(productGrid) {
+    const modalContent = document.getElementById('bundle-add-modal-content');
 
     if (!productGrid || !modalContent) return;
-    
-    // Preserve build-your-set marker if it was set before content update
-    const wasBuildYourSet = modalContent.hasAttribute('data-build-your-set');
 
     // Check if the request was aborted before updating
     if (this.#abortController?.signal.aborted) {
@@ -480,19 +542,17 @@ export class QuickAddComponent extends Component {
     // The CSS will handle the layout differences
 
     morph(modalContent, productGrid);
-    
-    // Restore build-your-set marker after morphing
-    if (wasBuildYourSet) {
-      modalContent.setAttribute('data-build-your-set', 'true');
-    }
 
     this.#syncVariantSelection(modalContent);
+    
+    // Change "Add to cart" button text to "Add to bundle" and mark form as bundle mode
+    this.#updateButtonTextForBundle(modalContent);
     
     // Ensure close button handler is re-attached after content is loaded
     // Use multiple callbacks to ensure DOM is settled after morph
     requestAnimationFrame(() => {
-      const dialogComponent = document.getElementById('quick-add-dialog');
-      if (dialogComponent instanceof QuickAddDialog) {
+      const dialogComponent = document.getElementById('bundle-add-dialog');
+      if (dialogComponent instanceof BundleAddDialog) {
         // Trigger updatedCallback to ensure close button handler is set up via refs
         dialogComponent.updatedCallback();
         // Also use our helper method to ensure close button handler
@@ -507,71 +567,13 @@ export class QuickAddComponent extends Component {
       // Add View Product button to image container
       this.#addViewProductButton(modalContent);
       
-      // Replace add-to-cart button with custom button for build-your-set
-      if (wasBuildYourSet) {
-        this.#replaceAddToCartButtonForBuildYourSet(modalContent);
-      }
+      // Update button text again after DOM settles
+      this.#updateButtonTextForBundle(modalContent);
     });
     
     // Ensure personalise button event listeners work with dynamically loaded content
     requestAnimationFrame(() => {
       this.#ensurePersonaliseButtonHandlers(modalContent);
-      
-      // Clear any existing personalization for this product when modal opens
-      // This ensures a fresh state each time the popup is opened
-      const productFormComponent = modalContent.querySelector('product-form-component');
-      const productId = productFormComponent?.dataset?.productId;
-      if (productId) {
-        const key = `personalisation_${String(productId)}`;
-        sessionStorage.removeItem(key);
-      }
-
-      // Update personalise button text after modal content is loaded
-      // Use multiple retries to ensure buttons are in DOM and function is available
-      const updateButtonWithRetry = (attempts = 0) => {
-        // Check if function exists in the morphed content's scripts
-        if (attempts === 0) {
-          // Execute all scripts in the morphed content (morph doesn't execute scripts automatically)
-          const scripts = modalContent.querySelectorAll('script');
-          scripts.forEach((script) => {
-            if (script.textContent) {
-              try {
-                // Execute the script to define functions and run initialization code
-                const newScript = document.createElement('script');
-                newScript.textContent = script.textContent;
-                document.head.appendChild(newScript);
-                document.head.removeChild(newScript);
-              } catch (e) {
-                console.error('Quick Add: Error executing script:', e);
-              }
-            }
-          });
-        }
-        
-        if (typeof window.updatePersonaliseButtonText === 'function') {
-          window.updatePersonaliseButtonText();
-          
-          // Check if buttons in quick-add modal were updated
-          const quickAddButtons = modalContent.querySelectorAll('[data-personalise-button]');
-          let anyButtonUpdated = false;
-          quickAddButtons.forEach((button) => {
-            const textSpan = button.querySelector('[data-personalise-text]');
-            if (textSpan && textSpan.textContent === 'EDIT') {
-              anyButtonUpdated = true;
-            }
-          });
-          
-          // If buttons exist but weren't updated, retry
-          if (quickAddButtons.length > 0 && !anyButtonUpdated && attempts < 10) {
-            setTimeout(() => updateButtonWithRetry(attempts + 1), 300);
-          }
-        } else if (attempts < 10) {
-          // Function not defined yet, retry
-          setTimeout(() => updateButtonWithRetry(attempts + 1), 300);
-        }
-      };
-      
-      setTimeout(() => updateButtonWithRetry(0), 300);
     });
 
     // Prevent media gallery flickering on variant update - update image smoothly
@@ -588,10 +590,10 @@ export class QuickAddComponent extends Component {
   #preventMediaGalleryFlicker(modalContent) {
     if (!modalContent) return;
 
-    // Add data attribute to mark this as a quick-add modal media gallery
+    // Add data attribute to mark this as a bundle-add modal media gallery
     const mediaGallery = modalContent.querySelector('media-gallery');
     if (mediaGallery) {
-      mediaGallery.setAttribute('data-quick-add-modal', 'true');
+      mediaGallery.setAttribute('data-bundle-add-modal', 'true');
     }
 
     // Find the first image element (the one that should be displayed)
@@ -668,23 +670,23 @@ export class QuickAddComponent extends Component {
   }
 
   /**
-   * Updates the quick-add button state based on whether a swatch is selected
+   * Updates the bundle-add button state based on whether a swatch is selected
    * @param {VariantSelectedEvent} event - The variant selected event
    */
-  #updateQuickAddButtonState(event) {
+  #updateBundleAddButtonState(event) {
     if (!(event.target instanceof HTMLElement)) return;
     if (event.target.closest('product-card') !== this.closest('product-card')) return;
     const productOptionsCount = this.dataset.productOptionsCount;
     const quickAddButton = productOptionsCount === '1' ? 'add' : 'choose';
-    this.setAttribute('data-quick-add-button', quickAddButton);
+    this.setAttribute('data-bundle-add-button', quickAddButton);
   }
 
   /**
    * Ensures the close button handler is attached to the dialog
-   * @param {QuickAddDialog} dialogComponent - The dialog component
+   * @param {BundleAddDialog} dialogComponent - The dialog component
    */
   #ensureCloseButtonHandler(dialogComponent) {
-    if (!(dialogComponent instanceof QuickAddDialog)) return;
+    if (!(dialogComponent instanceof BundleAddDialog)) return;
     
     // Try multiple ways to find the close button
     let closeButton = null;
@@ -698,17 +700,17 @@ export class QuickAddComponent extends Component {
     if (!closeButton) {
       const dialog = dialogComponent.refs?.dialog || dialogComponent.querySelector('dialog');
       if (dialog) {
-        closeButton = dialog.querySelector('.quick-add-modal__close') || 
+        closeButton = dialog.querySelector('.bundle-add-modal__close') || 
                      dialog.querySelector('button[ref="closeButton"]') ||
-                     dialog.querySelector('button.quick-add-modal__close');
+                     dialog.querySelector('button.bundle-add-modal__close');
       }
     }
     
     // Method 3: Direct query from dialogComponent
     if (!closeButton) {
-      closeButton = dialogComponent.querySelector('.quick-add-modal__close') || 
+      closeButton = dialogComponent.querySelector('.bundle-add-modal__close') || 
                    dialogComponent.querySelector('button[ref="closeButton"]') ||
-                   dialogComponent.querySelector('button.quick-add-modal__close');
+                   dialogComponent.querySelector('button.bundle-add-modal__close');
     }
     
     if (closeButton instanceof HTMLElement) {
@@ -760,7 +762,7 @@ export class QuickAddComponent extends Component {
       // Also set a data attribute to mark it as handled
       closeButton.dataset.closeHandlerAttached = 'true';
     } else {
-      console.warn('Quick Add: Close button not found', dialogComponent);
+      console.warn('Bundle Add: Close button not found', dialogComponent);
     }
   }
 
@@ -794,7 +796,7 @@ export class QuickAddComponent extends Component {
     if (!mediaContainer) return;
 
     // Check if button already exists
-    let viewProductButton = mediaContainer.querySelector('.quick-add-modal__view-product-button');
+    let viewProductButton = mediaContainer.querySelector('.bundle-add-modal__view-product-button');
     if (viewProductButton) {
       // Update href if it exists
       viewProductButton.href = this.productPageUrl;
@@ -804,12 +806,12 @@ export class QuickAddComponent extends Component {
     // Create the button
     viewProductButton = document.createElement('a');
     viewProductButton.href = this.productPageUrl;
-    viewProductButton.className = 'quick-add-modal__view-product-button';
+    viewProductButton.className = 'bundle-add-modal__view-product-button';
     viewProductButton.setAttribute('aria-label', 'View Product');
 
     // Create icon container
     const iconContainer = document.createElement('span');
-    iconContainer.className = 'quick-add-modal__view-product-button-icon';
+    iconContainer.className = 'bundle-add-modal__view-product-button-icon';
     
     // Create eye icon SVG
     const iconSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -845,140 +847,6 @@ export class QuickAddComponent extends Component {
   }
 
   /**
-   * Replaces the default add-to-cart button with a custom button for build-your-set
-   * @param {Element} modalContent - The modal content element
-   */
-  #replaceAddToCartButtonForBuildYourSet(modalContent) {
-    if (!modalContent) return;
-    
-    // Find the add-to-cart button(s) in the modal
-    const addToCartButtons = modalContent.querySelectorAll('add-to-cart-component, [ref="addToCartButton"], button[type="submit"][name="add"]');
-    const productForm = modalContent.querySelector('product-form-component');
-    
-    if (!productForm || addToCartButtons.length === 0) return;
-    
-    const productId = productForm.dataset.productId;
-    
-    // Find the form to get variant ID and quantity
-    const form = modalContent.querySelector('form[data-type="add-to-cart-form"]');
-    if (!form) return;
-    
-    // Hide all existing add-to-cart buttons
-    addToCartButtons.forEach(button => {
-      if (button instanceof HTMLElement) {
-        button.style.display = 'none';
-      }
-    });
-    
-    // Find the button container (usually inside buy-buttons-block or product-form)
-    const buyButtonsBlock = modalContent.querySelector('.buy-buttons-block');
-    const buttonContainer = buyButtonsBlock || productForm;
-    
-    if (!buttonContainer) return;
-    
-    // Check if custom button already exists
-    let customButton = buttonContainer.querySelector('.build-your-set-add-to-session-button');
-    
-    if (!customButton) {
-      // Create custom button with same styling as original
-      customButton = document.createElement('button');
-      customButton.type = 'button';
-      customButton.className = 'button build-your-set-add-to-session-button';
-      customButton.setAttribute('data-product-id', productId || '');
-      
-      // Get the text from the original button if available
-      const originalButton = modalContent.querySelector('button[type="submit"][name="add"]');
-      let buttonText = 'Add to Set';
-      if (originalButton) {
-        const textElement = originalButton.querySelector('.add-to-cart-text, .add-to-cart-text__content');
-        if (textElement) {
-          buttonText = textElement.textContent.trim() || 'Add to Set';
-        }
-      }
-      
-      customButton.innerHTML = `
-        <span class="add-to-cart-text">
-          <span class="add-to-cart-text__content">
-            <span>
-              <span>${buttonText}</span>
-            </span>
-          </span>
-        </span>
-      `;
-      
-      // Add click handler
-      customButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        // Get variant ID and quantity from form
-        const variantIdInput = form.querySelector('input[name="id"][ref="variantId"]');
-        const quantityInput = form.querySelector('input[name="quantity"]');
-        
-        const variantId = variantIdInput?.value;
-        const quantity = quantityInput ? Number(quantityInput.value) || 1 : 1;
-        
-        if (!variantId) {
-          console.error('Build Your Set: Variant ID not found');
-          return;
-        }
-        
-        // Store in session storage
-        const storageKey = 'build-your-set-session-cart';
-        let sessionCart = [];
-        try {
-          const stored = sessionStorage.getItem(storageKey);
-          if (stored) {
-            sessionCart = JSON.parse(stored);
-          }
-        } catch (error) {
-          console.error('Build Your Set: Error reading session storage', error);
-          sessionCart = [];
-        }
-        
-        // Check if variant already exists, update quantity, otherwise add new
-        const existingIndex = sessionCart.findIndex(item => item.variant_id === variantId);
-        
-        if (existingIndex >= 0) {
-          sessionCart[existingIndex].quantity += quantity;
-        } else {
-          sessionCart.push({
-            variant_id: variantId,
-            product_id: productId,
-            quantity: quantity,
-            added_at: Date.now()
-          });
-        }
-        
-        try {
-          sessionStorage.setItem(storageKey, JSON.stringify(sessionCart));
-          
-          // Close the modal
-          const quickAddDialog = document.getElementById('quick-add-dialog');
-          if (quickAddDialog && typeof quickAddDialog.closeDialog === 'function') {
-            quickAddDialog.closeDialog();
-          }
-        } catch (error) {
-          console.error('Build Your Set: Error saving to session storage', error);
-        }
-      });
-      
-      // Insert the button in the same position as the original
-      const firstAddToCart = Array.from(addToCartButtons)[0];
-      if (firstAddToCart && firstAddToCart.parentElement) {
-        firstAddToCart.parentElement.insertBefore(customButton, firstAddToCart);
-      } else {
-        buttonContainer.appendChild(customButton);
-      }
-    }
-    
-    // Show the custom button
-    if (customButton instanceof HTMLElement) {
-      customButton.style.display = '';
-    }
-  }
-
-  /**
    * Ensures personalise button event handlers work with dynamically loaded content
    * @param {Element} modalContent - The modal content element
    */
@@ -991,29 +859,6 @@ export class QuickAddComponent extends Component {
       if (personaliseModal) {
         // Move it to the document body so it's accessible globally
         document.body.appendChild(personaliseModal);
-        
-        // CRITICAL: Ensure custom element is properly defined and initialized
-        // When content is loaded via morph, the script might not have run yet
-        customElements.whenDefined('personalise-dialog').then(() => {
-          console.log('PersonaliseDialog: Custom element defined');
-          
-          // Force re-initialization by temporarily disconnecting and reconnecting
-          // This ensures connectedCallback runs and sets up all handlers and functionality
-          const parent = personaliseModal.parentNode;
-          if (parent) {
-            console.log('PersonaliseDialog: Re-initializing element after move to body');
-            parent.removeChild(personaliseModal);
-            document.body.appendChild(personaliseModal);
-            
-            // The element should now be properly initialized with all its methods
-            console.log('PersonaliseDialog: Element re-initialized, methods available:', {
-              showDialog: typeof personaliseModal.showDialog === 'function',
-              closePersonaliseOnly: typeof personaliseModal.closePersonaliseOnly === 'function'
-            });
-          }
-        }).catch((error) => {
-          console.error('PersonaliseDialog: Error waiting for custom element definition:', error);
-        });
       }
     }
 
@@ -1050,20 +895,64 @@ export class QuickAddComponent extends Component {
   }
 }
 
-if (!customElements.get('quick-add-component')) {
-  customElements.define('quick-add-component', QuickAddComponent);
+if (!customElements.get('bundle-add-component')) {
+  customElements.define('bundle-add-component', BundleAddComponent);
+  console.log('Bundle Add Component: Custom element defined');
+  
+  // Upgrade any existing elements
+  document.querySelectorAll('bundle-add-component').forEach(el => {
+    console.log('Bundle Add Component: Upgrading existing element', el);
+  });
+  
+  // Check for quick-add components inside bundle wrappers that should be bundle-add
+  // This is a fallback in case bundle-add-component isn't being rendered due to Liquid issues
+  setTimeout(() => {
+    const bundleWrappers = document.querySelectorAll('[data-product-bundle-item="true"], [data-require-bundle-mode="true"], .product-bundle-item');
+    bundleWrappers.forEach(wrapper => {
+      const quickAddComponents = wrapper.querySelectorAll('quick-add-component');
+      const quickAddButtons = wrapper.querySelectorAll('.product-card-actions__quick-add-button');
+      
+      quickAddComponents.forEach(quickAdd => {
+        console.warn('Bundle Add: Found quick-add-component inside bundle wrapper - this should be bundle-add-component', quickAdd);
+      });
+      
+      // Convert quick-add buttons to bundle-add behavior
+      quickAddButtons.forEach(button => {
+        if (button.closest('[data-product-bundle-item], [data-require-bundle-mode]')) {
+          console.log('Bundle Add: Converting quick-add button to bundle-add behavior', button);
+          // Remove quick-add event handler and add bundle-add handler
+          button.setAttribute('data-bundle-add-trigger', 'true');
+          button.setAttribute('data-no-navigation', 'true');
+          // The on:click handler should be changed, but we'll handle it with direct listener
+          button.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Find or create bundle-add component
+            const bundleAddComponent = wrapper.querySelector('bundle-add-component');
+            if (bundleAddComponent && typeof bundleAddComponent.handleClick === 'function') {
+              bundleAddComponent.handleClick(e);
+            } else {
+              console.error('Bundle Add: bundle-add-component not found in wrapper');
+            }
+          }, { capture: true });
+        }
+      });
+    });
+  }, 1000);
 }
 
-class QuickAddDialog extends DialogComponent {
+class BundleAddDialog extends DialogComponent {
   #abortController = new AbortController();
   #previousScrollY = 0;
 
   connectedCallback() {
     super.connectedCallback();
 
-    // Ensure we have the correct dialog ref - find the quick-add-modal dialog
-    if (!this.refs?.dialog || !this.refs.dialog.classList.contains('quick-add-modal')) {
-      const quickAddDialog = this.querySelector('dialog.quick-add-modal');
+    // Ensure we have the correct dialog ref - find the bundle-add-modal dialog
+    if (!this.refs?.dialog || !this.refs.dialog.classList.contains('bundle-add-modal')) {
+      const quickAddDialog = this.querySelector('dialog.bundle-add-modal');
       if (quickAddDialog && this.refs) {
         this.refs.dialog = quickAddDialog;
       }
@@ -1081,9 +970,9 @@ class QuickAddDialog extends DialogComponent {
   updatedCallback() {
     super.updatedCallback();
     
-    // Ensure we have the correct dialog ref - find the quick-add-modal dialog
-    if (!this.refs?.dialog || !this.refs.dialog.classList.contains('quick-add-modal')) {
-      const quickAddDialog = this.querySelector('dialog.quick-add-modal');
+    // Ensure we have the correct dialog ref - find the bundle-add-modal dialog
+    if (!this.refs?.dialog || !this.refs.dialog.classList.contains('bundle-add-modal')) {
+      const quickAddDialog = this.querySelector('dialog.bundle-add-modal');
       if (quickAddDialog && this.refs) {
         this.refs.dialog = quickAddDialog;
       }
@@ -1101,7 +990,7 @@ class QuickAddDialog extends DialogComponent {
     const { dialog } = this.refs;
 
     // Ensure we have the correct dialog ref before showing
-    const quickAddDialog = this.querySelector('dialog.quick-add-modal');
+    const quickAddDialog = this.querySelector('dialog.bundle-add-modal');
     if (quickAddDialog && this.refs) {
       this.refs.dialog = quickAddDialog;
     }
@@ -1153,50 +1042,12 @@ class QuickAddDialog extends DialogComponent {
   }
 
   /**
-   * Clear personalization for the product in the quick add modal
-   * @private
-   */
-  #clearQuickAddPersonalisation() {
-    const modalContent = document.getElementById('quick-add-modal-content');
-    if (!modalContent) return;
-
-    // Find the product ID from the modal content
-    const productFormComponent = modalContent.querySelector('product-form-component');
-    const productId = productFormComponent?.dataset?.productId;
-
-    if (productId) {
-      const key = `personalisation_${String(productId)}`;
-      sessionStorage.removeItem(key);
-      
-      // Also update button text to reset it
-      if (typeof window.updatePersonaliseButtonText === 'function') {
-        window.updatePersonaliseButtonText();
-      }
-    }
-  }
-
-  /**
    * Override closeDialog to ensure we're closing the correct dialog
    * Since parent's closeDialog is an arrow function (instance property), we implement it directly
    */
   closeDialog = async () => {
-    // CRITICAL: Don't close if a personalise dialog is currently open
-    // This prevents closing parent dialog when closing personalise popup
-    const personaliseDialogElement = document.querySelector('personalise-dialog');
-    if (personaliseDialogElement) {
-      const personaliseNativeDialog = personaliseDialogElement.refs?.dialog || 
-                                      personaliseDialogElement.querySelector('dialog');
-      if (personaliseNativeDialog && personaliseNativeDialog.open) {
-        // Personalise dialog is open, don't close quick-add dialog
-        return;
-      }
-    }
-
-    // Clear personalization when closing the quick add popup
-    this.#clearQuickAddPersonalisation();
-
-    // Get the correct dialog - the quick-add-modal, not personalise-modal
-    let dialog = this.querySelector('dialog.quick-add-modal');
+    // Get the correct dialog - the bundle-add-modal, not personalise-modal
+    let dialog = this.querySelector('dialog.bundle-add-modal');
     
     // If we found the correct dialog, update refs
     if (dialog && this.refs) {
@@ -1207,26 +1058,20 @@ class QuickAddDialog extends DialogComponent {
     }
     
     if (!dialog) {
-      console.warn('QuickAddDialog: No dialog found to close');
-      // Still reset body styles in case they're stuck (only if personalise dialog is also closed)
-      const personaliseDialog = document.querySelector('personalise-dialog');
-      const personaliseIsOpen = personaliseDialog && 
-                                 (personaliseDialog.refs?.dialog?.open || 
-                                  personaliseDialog.querySelector('dialog')?.open);
-      if (!personaliseIsOpen) {
-        document.body.style.width = '';
-        document.body.style.position = '';
-        document.body.style.top = '';
-      }
+      console.warn('BundleAddDialog: No dialog found to close');
+      // Still reset body styles in case they're stuck
+      document.body.style.width = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
       return;
     }
     
-    // Verify it's the quick-add-modal
-    if (!dialog.classList.contains('quick-add-modal')) {
-      console.warn('QuickAddDialog: Dialog is not quick-add-modal, finding correct one');
-      const quickAddDialog = this.querySelector('dialog.quick-add-modal');
+    // Verify it's the bundle-add-modal
+    if (!dialog.classList.contains('bundle-add-modal')) {
+      console.warn('BundleAddDialog: Dialog is not bundle-add-modal, finding correct one');
+      const quickAddDialog = this.querySelector('dialog.bundle-add-modal');
       if (!quickAddDialog) {
-        console.error('QuickAddDialog: Cannot find quick-add-modal dialog');
+        console.error('BundleAddDialog: Cannot find bundle-add-modal dialog');
         // Reset styles anyway
         document.body.style.width = '';
         document.body.style.position = '';
@@ -1263,23 +1108,13 @@ class QuickAddDialog extends DialogComponent {
       await onAnimationEnd(dialog, undefined, { subtree: false });
     } catch (error) {
       // Ignore animation errors - continue with closing
-      console.warn('QuickAddDialog: Animation end error (ignored):', error);
+      console.warn('BundleAddDialog: Animation end error (ignored):', error);
     }
 
-    // Check if personalise dialog is still open - if so, don't reset body styles
-    // This fixes the overlay issue where body styles weren't being reset properly
-    const personaliseDialog = document.querySelector('personalise-dialog');
-    const personaliseIsOpen = personaliseDialog && 
-                               (personaliseDialog.refs?.dialog?.open || 
-                                personaliseDialog.querySelector('dialog')?.open);
-    
-    // Only reset body styles if personalise dialog is also closed
-    if (!personaliseIsOpen) {
-      document.body.style.width = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      window.scrollTo({ top: this.#previousScrollY || 0, behavior: 'instant' });
-    }
+    document.body.style.width = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    window.scrollTo({ top: this.#previousScrollY || 0, behavior: 'instant' });
 
     dialog.close();
     dialog.classList.remove('dialog-closing');
@@ -1288,8 +1123,8 @@ class QuickAddDialog extends DialogComponent {
     
     // Restore original refs if it was different (though we want to keep the correct one)
     // Actually, keep the correct dialog ref instead of restoring potentially wrong one
-    if (this.refs && originalRefsDialog && originalRefsDialog !== dialog && originalRefsDialog.classList?.contains('quick-add-modal')) {
-      // Only restore if the original was also a valid quick-add-modal
+    if (this.refs && originalRefsDialog && originalRefsDialog !== dialog && originalRefsDialog.classList?.contains('bundle-add-modal')) {
+      // Only restore if the original was also a valid bundle-add-modal
       this.refs.dialog = originalRefsDialog;
     }
   };
@@ -1303,7 +1138,7 @@ class QuickAddDialog extends DialogComponent {
     if (!closeButton || Array.isArray(closeButton)) {
       const dialog = this.refs?.dialog || this.querySelector('dialog');
       if (dialog) {
-        closeButton = dialog.querySelector('.quick-add-modal__close') || 
+        closeButton = dialog.querySelector('.bundle-add-modal__close') || 
                      dialog.querySelector('button[ref="closeButton"]');
       }
     }
@@ -1339,21 +1174,21 @@ class QuickAddDialog extends DialogComponent {
     if (!closeButton) {
       const dialog = this.refs?.dialog || this.querySelector('dialog');
       if (dialog) {
-        closeButton = dialog.querySelector('.quick-add-modal__close') || 
+        closeButton = dialog.querySelector('.bundle-add-modal__close') || 
                      dialog.querySelector('button[ref="closeButton"]') ||
-                     dialog.querySelector('button.quick-add-modal__close');
+                     dialog.querySelector('button.bundle-add-modal__close');
       }
     }
     
     // Method 3: Direct query
     if (!closeButton) {
-      closeButton = this.querySelector('.quick-add-modal__close') || 
+      closeButton = this.querySelector('.bundle-add-modal__close') || 
                    this.querySelector('button[ref="closeButton"]') ||
-                   this.querySelector('button.quick-add-modal__close');
+                   this.querySelector('button.bundle-add-modal__close');
     }
     
     if (!closeButton || !(closeButton instanceof HTMLElement)) {
-      console.warn('QuickAddDialog: Close button not found');
+      console.warn('BundleAddDialog: Close button not found');
       return;
     }
     
@@ -1374,45 +1209,45 @@ class QuickAddDialog extends DialogComponent {
     // Add a direct event listener as a fallback to ensure it works
     // Use both capture and bubble phases to ensure it runs
     const clickHandler = async (/** @type {MouseEvent} */ event) => {
-      console.log('QuickAddDialog: Close button clicked', event);
+      console.log('BundleAddDialog: Close button clicked', event);
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
       
       // Call closeDialog method
       try {
-        // Get the correct dialog - should be in refs, but verify it's the quick-add-modal
+        // Get the correct dialog - should be in refs, but verify it's the bundle-add-modal
         let dialog = this.refs?.dialog;
         
-        // Verify we have the right dialog (quick-add-modal, not personalise-modal)
-        if (dialog && !dialog.classList.contains('quick-add-modal')) {
-          console.warn('QuickAddDialog: refs.dialog is wrong dialog, finding correct one');
-          dialog = this.querySelector('dialog.quick-add-modal');
+        // Verify we have the right dialog (bundle-add-modal, not personalise-modal)
+        if (dialog && !dialog.classList.contains('bundle-add-modal')) {
+          console.warn('BundleAddDialog: refs.dialog is wrong dialog, finding correct one');
+          dialog = this.querySelector('dialog.bundle-add-modal');
         }
         
         // If still no dialog, try to find it
         if (!dialog) {
-          dialog = this.querySelector('dialog.quick-add-modal');
+          dialog = this.querySelector('dialog.bundle-add-modal');
         }
         
-        console.log('QuickAddDialog: Attempting to close dialog', {
+        console.log('BundleAddDialog: Attempting to close dialog', {
           hasCloseDialog: typeof this.closeDialog === 'function',
           hasDialogRef: !!this.refs?.dialog,
           dialogElement: !!dialog,
           dialogOpen: dialog?.open,
           dialogClassList: dialog?.classList?.toString(),
-          isQuickAddModal: dialog?.classList?.contains('quick-add-modal')
+          isBundleAddModal: dialog?.classList?.contains('bundle-add-modal')
         });
         
         // If we don't have the right dialog, try to close it directly
-        if (!dialog || !dialog.classList.contains('quick-add-modal')) {
-          console.error('QuickAddDialog: Cannot find quick-add-modal dialog');
+        if (!dialog || !dialog.classList.contains('bundle-add-modal')) {
+          console.error('BundleAddDialog: Cannot find bundle-add-modal dialog');
           return;
         }
         
         // If dialog is not open, something is wrong
         if (!dialog.open) {
-          console.warn('QuickAddDialog: Dialog is not open, but trying to close anyway');
+          console.warn('BundleAddDialog: Dialog is not open, but trying to close anyway');
           // Still try to close it and reset styles
           dialog.close();
           document.body.style.width = '';
@@ -1423,14 +1258,14 @@ class QuickAddDialog extends DialogComponent {
         
         if (typeof this.closeDialog === 'function') {
           // closeDialog is async, so await it
-          console.log('QuickAddDialog: Calling closeDialog method');
+          console.log('BundleAddDialog: Calling closeDialog method');
           await this.closeDialog();
-          console.log('QuickAddDialog: closeDialog completed');
+          console.log('BundleAddDialog: closeDialog completed');
           
           // Double-check: if dialog is still open, force close it
-          const checkDialog = this.refs?.dialog || this.querySelector('dialog.quick-add-modal');
+          const checkDialog = this.refs?.dialog || this.querySelector('dialog.bundle-add-modal');
           if (checkDialog && checkDialog.open) {
-            console.warn('QuickAddDialog: Dialog still open after closeDialog, forcing close');
+            console.warn('BundleAddDialog: Dialog still open after closeDialog, forcing close');
             checkDialog.close();
             // Also reset body styles in case closeDialog didn't complete properly
             document.body.style.width = '';
@@ -1438,7 +1273,7 @@ class QuickAddDialog extends DialogComponent {
             document.body.style.top = '';
           }
         } else {
-          console.warn('QuickAddDialog: closeDialog is not a function, using fallback');
+          console.warn('BundleAddDialog: closeDialog is not a function, using fallback');
           // Fallback: close dialog directly
           if (dialog.open) {
             dialog.close();
@@ -1446,23 +1281,23 @@ class QuickAddDialog extends DialogComponent {
             document.body.style.width = '';
             document.body.style.position = '';
             document.body.style.top = '';
-            console.log('QuickAddDialog: Dialog close() called');
+            console.log('BundleAddDialog: Dialog close() called');
           }
         }
       } catch (error) {
-        console.error('QuickAddDialog: Error closing dialog:', error, error.stack);
-        // Last resort: try to close the quick-add dialog element directly
+        console.error('BundleAddDialog: Error closing dialog:', error, error.stack);
+        // Last resort: try to close the bundle-add dialog element directly
         try {
-          const quickAddDialog = this.querySelector('dialog.quick-add-modal');
+          const quickAddDialog = this.querySelector('dialog.bundle-add-modal');
           if (quickAddDialog) {
             quickAddDialog.close();
             document.body.style.width = '';
             document.body.style.position = '';
             document.body.style.top = '';
-            console.log('QuickAddDialog: Fallback - Quick-add dialog close() called directly');
+            console.log('BundleAddDialog: Fallback - Quick-add dialog close() called directly');
           }
         } catch (fallbackError) {
-          console.error('QuickAddDialog: Fallback close also failed:', fallbackError);
+          console.error('BundleAddDialog: Fallback close also failed:', fallbackError);
         }
       }
     };
@@ -1519,6 +1354,6 @@ class QuickAddDialog extends DialogComponent {
   };
 }
 
-if (!customElements.get('quick-add-dialog')) {
-  customElements.define('quick-add-dialog', QuickAddDialog);
+if (!customElements.get('bundle-add-dialog')) {
+  customElements.define('bundle-add-dialog', BundleAddDialog);
 }

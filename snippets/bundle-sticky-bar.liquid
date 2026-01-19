@@ -1,0 +1,221 @@
+<bundle-sticky-bar id="bundle-sticky-bar" style="display: none;">
+  <div class="bundle-sticky-bar__header">
+    <h3 class="bundle-sticky-bar__title">Selected products</h3>
+  </div>
+  <div class="bundle-sticky-bar__products" ref="productsContainer"></div>
+  <div class="bundle-sticky-bar__actions">
+    <button class="bundle-sticky-bar__button bundle-sticky-bar__button--start-over" ref="startOverButton" on:click="/handleStartOver">
+      Start over
+    </button>
+    <button class="bundle-sticky-bar__button bundle-sticky-bar__button--personalise-all" ref="personaliseAllButton" on:click="/handlePersonaliseAll">
+      Personalise all
+    </button>
+    <button class="bundle-sticky-bar__button bundle-sticky-bar__button--add-all" ref="addAllButton" on:click="/handleAddAllToCart">
+      <span class="bundle-sticky-bar__button-text">Add all to cart</span>
+      <span class="bundle-sticky-bar__total-price" ref="totalPrice">(AED 0.00)</span>
+    </button>
+  </div>
+</bundle-sticky-bar>
+
+{% stylesheet %}
+  bundle-sticky-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    border-top: 1px solid #D0D0D0;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    z-index: var(--layer-floating);
+    padding: 16px 20px;
+    max-height: 50vh;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+  }
+
+  .bundle-sticky-bar__header {
+    flex-shrink: 0;
+  }
+
+  .bundle-sticky-bar__title {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 140%;
+    color: #1D425A;
+    margin: 0;
+    text-transform: uppercase;
+  }
+
+  .bundle-sticky-bar__products {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .bundle-sticky-bar__product {
+    flex: 0 0 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    padding: 8px;
+    border: 1px solid #E0E0E0;
+    border-radius: 4px;
+    background: #FFFFFF;
+  }
+
+  .bundle-sticky-bar__product-image {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .bundle-sticky-bar__product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .bundle-sticky-bar__product-name {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 140%;
+    color: #1D425A;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bundle-sticky-bar__product-price {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 140%;
+    color: #7295BB;
+  }
+
+  .bundle-sticky-bar__product-personalisation {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 10px;
+    line-height: 140%;
+    color: #777777;
+    margin-top: 4px;
+  }
+
+  .bundle-sticky-bar__product-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 1px solid #D0D0D0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 1;
+  }
+
+  .bundle-sticky-bar__product-remove:hover {
+    background: #F5F5F5;
+    border-color: #7295BB;
+  }
+
+  .bundle-sticky-bar__product-remove-icon {
+    width: 12px;
+    height: 12px;
+    stroke: #1D425A;
+  }
+
+  .bundle-sticky-bar__actions {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+    padding-top: 8px;
+    border-top: 1px solid #E0E0E0;
+  }
+
+  .bundle-sticky-bar__button {
+    padding: 10px 16px;
+    border: 1px solid #7295BB;
+    background: transparent;
+    color: #7295BB;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 140%;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 0;
+  }
+
+  .bundle-sticky-bar__button:hover {
+    background: #7295BB;
+    color: #FFFFFF;
+  }
+
+  .bundle-sticky-bar__button--add-all {
+    flex: 1;
+    background: #7295BB;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .bundle-sticky-bar__button--add-all:hover {
+    background: #5a7a9a;
+  }
+
+  .bundle-sticky-bar__total-price {
+    font-weight: 400;
+  }
+
+  @media screen and (max-width: 749px) {
+    bundle-sticky-bar {
+      padding: 12px 16px;
+    }
+
+    .bundle-sticky-bar__products {
+      gap: 8px;
+    }
+
+    .bundle-sticky-bar__product {
+      flex: 0 0 100px;
+      padding: 6px;
+    }
+
+    .bundle-sticky-bar__product-image {
+      height: 80px;
+    }
+
+    .bundle-sticky-bar__actions {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .bundle-sticky-bar__button {
+      width: 100%;
+    }
+  }
+{% endstylesheet %}
