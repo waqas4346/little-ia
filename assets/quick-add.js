@@ -845,6 +845,274 @@ export class QuickAddComponent extends Component {
   }
 
   /**
+   * Collects all product information from the modal content
+   * @param {Element} modalContent - The modal content element
+   * @param {string} productId - The product ID
+   * @param {string} variantId - The variant ID
+   * @returns {Object} Product information object
+   */
+  #collectProductInformation(modalContent, productId, variantId) {
+    const productData = {
+      product_id: productId,
+      variant_id: variantId
+    };
+
+    // Get product name/title
+    const productTitle = modalContent.querySelector('.product-title-text, .view-product-title, h1, [data-product-title]');
+    if (productTitle) {
+      productData.product_name = productTitle.textContent?.trim() || '';
+    }
+
+    // Get product handle/URL
+    const productLink = modalContent.querySelector('.view-product-title a, .product-header a, a[href*="/products/"]');
+    if (productLink) {
+      productData.product_url = productLink.href || '';
+      const urlMatch = productLink.href?.match(/\/products\/([^/?]+)/);
+      if (urlMatch) {
+        productData.product_handle = urlMatch[1];
+      }
+    }
+
+    // Get price information
+    const priceElement = modalContent.querySelector('product-price');
+    if (priceElement) {
+      const priceText = priceElement.textContent?.trim() || '';
+      const priceValue = priceElement.querySelector('.price, .price-snippet');
+      if (priceValue) {
+        productData.price = priceValue.textContent?.trim() || priceText;
+      } else {
+        productData.price = priceText;
+      }
+
+      // Try to get numeric price value
+      const priceMatch = priceText.match(/[\d,]+\.?\d*/);
+      if (priceMatch) {
+        productData.price_value = parseFloat(priceMatch[0].replace(/,/g, ''));
+      }
+    }
+
+    // Get variant information
+    const variantPicker = modalContent.querySelector('variant-picker, variant-main-picker');
+    if (variantPicker) {
+      const selectedVariant = variantPicker.querySelector(`input[data-variant-id="${variantId}"], [data-variant-id="${variantId}"]`);
+      if (selectedVariant) {
+        productData.variant_title = selectedVariant.getAttribute('data-variant-title') || 
+                                    selectedVariant.getAttribute('aria-label') || 
+                                    selectedVariant.textContent?.trim() || '';
+      }
+    }
+
+    // Get product images
+    const images = [];
+    const mediaGallery = modalContent.querySelector('media-gallery, slideshow-component');
+    if (mediaGallery) {
+      const imageElements = mediaGallery.querySelectorAll('img[src], img[data-src]');
+      imageElements.forEach((img) => {
+        const imageUrl = img.src || img.getAttribute('data-src') || img.getAttribute('srcset')?.split(' ')[0];
+        if (imageUrl && !images.includes(imageUrl)) {
+          images.push(imageUrl);
+        }
+      });
+    }
+    
+    // Fallback: get images from product media containers
+    if (images.length === 0) {
+      const mediaContainers = modalContent.querySelectorAll('.product-media img, .product-information__media img');
+      mediaContainers.forEach((img) => {
+        const imageUrl = img.src || img.getAttribute('data-src') || img.getAttribute('srcset')?.split(' ')[0];
+        if (imageUrl && !images.includes(imageUrl)) {
+          images.push(imageUrl);
+        }
+      });
+    }
+
+    // Get featured image (first image)
+    if (images.length > 0) {
+      productData.featured_image = images[0];
+      productData.images = images;
+    }
+
+    // Check if product supports personalization (has personalization button)
+    const personaliseButton = modalContent.querySelector('[data-personalise-button]');
+    productData.needs_personalization = personaliseButton !== null;
+    
+    // Collect personalization field structure (what fields are available for this product)
+    productData.personalization_fields = null;
+    if (productData.needs_personalization) {
+      const personalizationFields = [];
+      
+      // Find the personalise modal/dialog
+      const personaliseModal = document.querySelector('personalise-dialog');
+      const personaliseModalContent = personaliseModal?.querySelector('.personalise-modal') || 
+                                      document.querySelector('.personalise-modal');
+      
+      if (personaliseModalContent) {
+        // Collect all personalization input fields
+        const nameInputs = personaliseModalContent.querySelectorAll('input[name="personalise-name"], input[name^="properties["]');
+        nameInputs.forEach((input) => {
+          const fieldInfo = {
+            name: input.name || '',
+            type: input.type || 'text',
+            maxlength: input.maxlength || null,
+            placeholder: input.placeholder || '',
+            required: input.hasAttribute('required') || input.hasAttribute('aria-required'),
+            label: ''
+          };
+          
+          // Try to find the label for this input
+          const label = personaliseModalContent.querySelector(`label[for="${input.id}"]`) ||
+                        input.closest('.personalise-modal__field')?.querySelector('.personalise-modal__label') ||
+                        input.closest('.personalise-name-tabs__panel')?.querySelector('.personalise-name-tabs__panel-title');
+          if (label) {
+            fieldInfo.label = label.textContent?.trim() || '';
+          }
+          
+          // Check for specific field types
+          if (input.name === 'personalise-name') {
+            fieldInfo.field_type = 'name';
+            // Get maxlength from dynamic_max if available
+            const charCounter = personaliseModalContent.querySelector('.personalise-modal__counter');
+            if (charCounter) {
+              const maxText = charCounter.textContent?.match(/\/(\d+)/);
+              if (maxText) {
+                fieldInfo.maxlength = parseInt(maxText[1], 10);
+              }
+            }
+          } else if (input.name.includes("Baby's Name")) {
+            fieldInfo.field_type = 'baby_name';
+          } else if (input.name.includes("Kid's Name")) {
+            fieldInfo.field_type = 'kid_name';
+          } else if (input.name.includes("Mum's Name")) {
+            fieldInfo.field_type = 'mum_name';
+          } else if (input.name.includes('Name 1')) {
+            fieldInfo.field_type = 'name1';
+          } else if (input.name.includes('Name 2')) {
+            fieldInfo.field_type = 'name2';
+          } else if (input.name.includes('Name 3')) {
+            fieldInfo.field_type = 'name3';
+          } else if (input.name.includes('Name 4')) {
+            fieldInfo.field_type = 'name4';
+          } else if (input.name.includes('Date of Birth')) {
+            fieldInfo.field_type = 'dob';
+            fieldInfo.pattern = input.pattern || '';
+          } else if (input.name.includes('School Year')) {
+            fieldInfo.field_type = 'school_year';
+          }
+          
+          personalizationFields.push(fieldInfo);
+        });
+        
+        // Collect color options if available
+        const colorGrid = personaliseModalContent.querySelector('.personalise-modal__color-grid');
+        if (colorGrid) {
+          const colorOptions = [];
+          const colorButtons = colorGrid.querySelectorAll('.personalise-modal__color-button, [data-color]');
+          colorButtons.forEach((button) => {
+            const colorValue = button.getAttribute('data-color') || 
+                              button.querySelector('input[type="radio"]')?.value || '';
+            if (colorValue) {
+              colorOptions.push({
+                value: colorValue,
+                label: button.getAttribute('title') || colorValue,
+                display: button.querySelector('.swatch')?.style.backgroundColor || colorValue
+              });
+            }
+          });
+          if (colorOptions.length > 0) {
+            personalizationFields.push({
+              field_type: 'text_color',
+              name: 'personalise-color',
+              type: 'radio',
+              options: colorOptions,
+              required: true,
+              label: 'Text Colour'
+            });
+          }
+        }
+        
+        // Collect font options if available
+        const fontGrid = personaliseModalContent.querySelector('.personalise-modal__font-grid');
+        if (fontGrid) {
+          const fontOptions = [];
+          const fontButtons = fontGrid.querySelectorAll('.personalise-modal__font-button, [data-font]');
+          fontButtons.forEach((button) => {
+            const fontValue = button.getAttribute('data-font') || '';
+            if (fontValue) {
+              fontOptions.push({
+                value: fontValue,
+                label: fontValue,
+                display: button.textContent?.trim() || fontValue
+              });
+            }
+          });
+          if (fontOptions.length > 0) {
+            personalizationFields.push({
+              field_type: 'font',
+              name: 'personalise-font',
+              type: 'select',
+              options: fontOptions,
+              required: true,
+              label: 'Choose Your Font'
+            });
+          }
+        }
+      }
+      
+      if (personalizationFields.length > 0) {
+        productData.personalization_fields = personalizationFields;
+      }
+    }
+    
+    // Get personalizations from sessionStorage (if they exist - the actual values filled by user)
+    productData.personalizations = null;
+    if (productId) {
+      const personalisationKey = `personalisation_${String(productId)}`;
+      try {
+        const personalisationData = sessionStorage.getItem(personalisationKey);
+        if (personalisationData) {
+          const parsed = JSON.parse(personalisationData);
+          // Check if personalizations exist and have data
+          if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+            productData.personalizations = parsed;
+          }
+        }
+      } catch (error) {
+        console.warn('Build Your Set: Error reading personalization data', error);
+      }
+    }
+
+    // Get variant options/attributes
+    const variantOptions = {};
+    const optionInputs = modalContent.querySelectorAll('input[type="radio"][name^="options"], select[name^="options"]');
+    optionInputs.forEach((input) => {
+      if (input.checked || (input instanceof HTMLSelectElement && input.selectedIndex >= 0)) {
+        const optionName = input.name.replace('options[', '').replace(']', '');
+        const optionValue = input.value || (input instanceof HTMLSelectElement ? input.options[input.selectedIndex]?.text : input.getAttribute('data-option-value'));
+        if (optionName && optionValue) {
+          variantOptions[optionName] = optionValue;
+        }
+      }
+    });
+    if (Object.keys(variantOptions).length > 0) {
+      productData.variant_options = variantOptions;
+    }
+
+    // Get product description if available
+    const productDescription = modalContent.querySelector('.product-description, [data-product-description]');
+    if (productDescription) {
+      productData.product_description = productDescription.textContent?.trim() || '';
+    }
+
+    // Get SKU if available
+    const skuElement = modalContent.querySelector('product-sku-component, [data-sku]');
+    if (skuElement) {
+      productData.sku = skuElement.textContent?.trim() || skuElement.getAttribute('data-sku') || '';
+    }
+
+    return productData;
+  }
+
+  /**
    * Replaces the default add-to-cart button with a custom button for build-your-set
    * @param {Element} modalContent - The modal content element
    */
@@ -923,6 +1191,13 @@ export class QuickAddComponent extends Component {
           return;
         }
         
+        // Collect all product information
+        const productData = this.#collectProductInformation(modalContent, productId, variantId);
+        
+        // Ensure product_id and variant_id are set (in case they weren't collected)
+        productData.product_id = productId;
+        productData.variant_id = variantId;
+        
         // Store in session storage
         const storageKey = 'build-your-set-session-cart';
         let sessionCart = [];
@@ -940,18 +1215,34 @@ export class QuickAddComponent extends Component {
         const existingIndex = sessionCart.findIndex(item => item.variant_id === variantId);
         
         if (existingIndex >= 0) {
+          // Update quantity and refresh product data
           sessionCart[existingIndex].quantity += quantity;
+          // Update product data in case it changed (e.g., personalizations)
+          sessionCart[existingIndex] = {
+            ...sessionCart[existingIndex],
+            ...productData,
+            quantity: sessionCart[existingIndex].quantity
+          };
         } else {
-          sessionCart.push({
+          // Add new product to session cart
+          const newProduct = {
+            ...productData,
             variant_id: variantId,
             product_id: productId,
             quantity: quantity,
             added_at: Date.now()
-          });
+          };
+          sessionCart.push(newProduct);
         }
         
         try {
           sessionStorage.setItem(storageKey, JSON.stringify(sessionCart));
+          console.log('Build Your Set: Product added to session', {
+            product_id: productId,
+            variant_id: variantId,
+            needs_personalization: productData.needs_personalization,
+            has_personalizations: !!productData.personalizations
+          });
           
           // Close the modal
           const quickAddDialog = document.getElementById('quick-add-dialog');

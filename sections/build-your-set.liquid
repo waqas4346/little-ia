@@ -590,6 +590,14 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Clear build-your-set session cart on page reload
+    const storageKey = 'build-your-set-session-cart';
+    try {
+      sessionStorage.removeItem(storageKey);
+    } catch (error) {
+      console.warn('Build Your Set: Error clearing session storage on page load', error);
+    }
+    
     const section = document.querySelector('[data-testid="build-your-set"]');
     if (!section) return;
 
