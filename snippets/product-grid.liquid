@@ -224,6 +224,15 @@
     display: none;
 
     @media screen and (min-width: 1024px) {
+      display: none;
+    }
+  }
+
+  /* Show arrows on hover for product cards on desktop */
+  @media screen and (min-width: 1024px) {
+    .product-grid product-card:hover slideshow-arrows .slideshow-control,
+    .product-grid product-card-link:hover slideshow-arrows .slideshow-control,
+    .product-grid .card-gallery:hover slideshow-arrows .slideshow-control {
       display: grid;
     }
   }

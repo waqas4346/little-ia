@@ -1,7 +1,7 @@
 import { morph } from '@theme/morph';
 import { Component } from '@theme/component';
 import { CartUpdateEvent, ThemeEvents, VariantSelectedEvent } from '@theme/events';
-import { DialogComponent, DialogCloseEvent } from '@theme/dialog';
+import { DialogComponent, DialogCloseEvent, DialogOpenEvent } from '@theme/dialog';
 import { mediaQueryLarge, isMobileBreakpoint, getIOSVersion, onAnimationEnd } from '@theme/utilities';
 
 export class QuickAddComponent extends Component {
@@ -102,6 +102,21 @@ export class QuickAddComponent extends Component {
     event.stopPropagation();
     event.stopImmediatePropagation();
 
+    // Check if this quick-add is from build-your-set and mark it
+    const productCard = /** @type {import('./product-card').ProductCard | null} */ (this.closest('product-card'));
+    const isFromBuildYourSet = productCard?.hasAttribute('data-build-your-set') || 
+                                productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
+    
+    // Mark the modal content element with a data attribute if from build-your-set
+    const modalContent = document.getElementById('quick-add-modal-content');
+    if (modalContent) {
+      if (isFromBuildYourSet) {
+        modalContent.setAttribute('data-build-your-set', 'true');
+      } else {
+        modalContent.removeAttribute('data-build-your-set');
+      }
+    }
+
     const currentUrl = this.productPageUrl;
 
     if (!currentUrl) {
@@ -115,9 +130,6 @@ export class QuickAddComponent extends Component {
     this.#abortController?.abort();
     this.#abortController = new AbortController();
 
-    // Check if we have cached content first
-    const modalContent = document.getElementById('quick-add-modal-content');
-    
     // Clear any stuck loader state from previous errors
     if (modalContent) {
       // Check if content is stuck showing loader (skeleton)
@@ -293,6 +305,17 @@ export class QuickAddComponent extends Component {
    * Cleans up state when dialog closes (abort requests, reset content if needed)
    */
   #cleanupOnDialogClose() {
+    // Clear personalization when dialog closes
+    const modalContent = document.getElementById('quick-add-modal-content');
+    if (modalContent) {
+      const productFormComponent = modalContent.querySelector('product-form-component');
+      const productId = productFormComponent?.dataset?.productId;
+      if (productId) {
+        const key = `personalisation_${String(productId)}`;
+        sessionStorage.removeItem(key);
+      }
+    }
+    
     // Abort any pending fetch requests
     if (this.#abortController && !this.#abortController.signal.aborted) {
       this.#abortController.abort();
@@ -305,6 +328,19 @@ export class QuickAddComponent extends Component {
   }
 
   #openQuickAddModal = () => {
+    // Ensure modal content marker is set after modal opens (in case it wasn't set before)
+    requestAnimationFrame(() => {
+      const modalContent = document.getElementById('quick-add-modal-content');
+      if (modalContent) {
+        const productCard = /** @type {import('./product-card').ProductCard | null} */ (this.closest('product-card'));
+        const isFromBuildYourSet = productCard?.hasAttribute('data-build-your-set') || 
+                                    productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
+        if (isFromBuildYourSet) {
+          modalContent.setAttribute('data-build-your-set', 'true');
+        }
+      }
+    });
+    
     const dialogComponent = document.getElementById('quick-add-dialog');
     if (!dialogComponent) {
       console.warn('Quick Add: Dialog element not found');
@@ -431,6 +467,9 @@ export class QuickAddComponent extends Component {
     const modalContent = document.getElementById('quick-add-modal-content');
 
     if (!productGrid || !modalContent) return;
+    
+    // Preserve build-your-set marker if it was set before content update
+    const wasBuildYourSet = modalContent.hasAttribute('data-build-your-set');
 
     // Check if the request was aborted before updating
     if (this.#abortController?.signal.aborted) {
@@ -441,6 +480,11 @@ export class QuickAddComponent extends Component {
     // The CSS will handle the layout differences
 
     morph(modalContent, productGrid);
+    
+    // Restore build-your-set marker after morphing
+    if (wasBuildYourSet) {
+      modalContent.setAttribute('data-build-your-set', 'true');
+    }
 
     this.#syncVariantSelection(modalContent);
     
@@ -462,11 +506,72 @@ export class QuickAddComponent extends Component {
 
       // Add View Product button to image container
       this.#addViewProductButton(modalContent);
+      
+      // Replace add-to-cart button with custom button for build-your-set
+      if (wasBuildYourSet) {
+        this.#replaceAddToCartButtonForBuildYourSet(modalContent);
+      }
     });
     
     // Ensure personalise button event listeners work with dynamically loaded content
     requestAnimationFrame(() => {
       this.#ensurePersonaliseButtonHandlers(modalContent);
+      
+      // Clear any existing personalization for this product when modal opens
+      // This ensures a fresh state each time the popup is opened
+      const productFormComponent = modalContent.querySelector('product-form-component');
+      const productId = productFormComponent?.dataset?.productId;
+      if (productId) {
+        const key = `personalisation_${String(productId)}`;
+        sessionStorage.removeItem(key);
+      }
+
+      // Update personalise button text after modal content is loaded
+      // Use multiple retries to ensure buttons are in DOM and function is available
+      const updateButtonWithRetry = (attempts = 0) => {
+        // Check if function exists in the morphed content's scripts
+        if (attempts === 0) {
+          // Execute all scripts in the morphed content (morph doesn't execute scripts automatically)
+          const scripts = modalContent.querySelectorAll('script');
+          scripts.forEach((script) => {
+            if (script.textContent) {
+              try {
+                // Execute the script to define functions and run initialization code
+                const newScript = document.createElement('script');
+                newScript.textContent = script.textContent;
+                document.head.appendChild(newScript);
+                document.head.removeChild(newScript);
+              } catch (e) {
+                console.error('Quick Add: Error executing script:', e);
+              }
+            }
+          });
+        }
+        
+        if (typeof window.updatePersonaliseButtonText === 'function') {
+          window.updatePersonaliseButtonText();
+          
+          // Check if buttons in quick-add modal were updated
+          const quickAddButtons = modalContent.querySelectorAll('[data-personalise-button]');
+          let anyButtonUpdated = false;
+          quickAddButtons.forEach((button) => {
+            const textSpan = button.querySelector('[data-personalise-text]');
+            if (textSpan && textSpan.textContent === 'EDIT') {
+              anyButtonUpdated = true;
+            }
+          });
+          
+          // If buttons exist but weren't updated, retry
+          if (quickAddButtons.length > 0 && !anyButtonUpdated && attempts < 10) {
+            setTimeout(() => updateButtonWithRetry(attempts + 1), 300);
+          }
+        } else if (attempts < 10) {
+          // Function not defined yet, retry
+          setTimeout(() => updateButtonWithRetry(attempts + 1), 300);
+        }
+      };
+      
+      setTimeout(() => updateButtonWithRetry(0), 300);
     });
 
     // Prevent media gallery flickering on variant update - update image smoothly
@@ -740,6 +845,450 @@ export class QuickAddComponent extends Component {
   }
 
   /**
+   * Collects all product information from the modal content
+   * @param {Element} modalContent - The modal content element
+   * @param {string} productId - The product ID
+   * @param {string} variantId - The variant ID
+   * @returns {Object} Product information object
+   */
+  #collectProductInformation(modalContent, productId, variantId) {
+    const productData = {
+      product_id: productId,
+      variant_id: variantId
+    };
+
+    // Get product name/title
+    const productTitle = modalContent.querySelector('.product-title-text, .view-product-title, h1, [data-product-title]');
+    if (productTitle) {
+      productData.product_name = productTitle.textContent?.trim() || '';
+    }
+
+    // Get product handle/URL
+    const productLink = modalContent.querySelector('.view-product-title a, .product-header a, a[href*="/products/"]');
+    if (productLink) {
+      productData.product_url = productLink.href || '';
+      const urlMatch = productLink.href?.match(/\/products\/([^/?]+)/);
+      if (urlMatch) {
+        productData.product_handle = urlMatch[1];
+      }
+    }
+
+    // Get price information - get regular price (not discounted)
+    const priceElement = modalContent.querySelector('product-price');
+    if (priceElement) {
+      // First try to get compare_at_price (regular price if on sale)
+      const compareAtPriceElement = priceElement.querySelector('.compare-at-price');
+      if (compareAtPriceElement) {
+        productData.price = compareAtPriceElement.textContent?.trim() || '';
+        // Try to get numeric price value from compare_at_price
+        const priceMatch = productData.price.match(/[\d,]+\.?\d*/);
+        if (priceMatch) {
+          productData.price_value = parseFloat(priceMatch[0].replace(/,/g, ''));
+        }
+      } else {
+        // No compare_at_price, so current price is the regular price
+        const priceValue = priceElement.querySelector('.price:not(.compare-at-price), .price-snippet .price');
+        if (priceValue) {
+          productData.price = priceValue.textContent?.trim() || '';
+        } else {
+          const priceText = priceElement.textContent?.trim() || '';
+          productData.price = priceText;
+        }
+        
+        // Try to get numeric price value
+        const priceMatch = productData.price.match(/[\d,]+\.?\d*/);
+        if (priceMatch) {
+          productData.price_value = parseFloat(priceMatch[0].replace(/,/g, ''));
+        }
+      }
+    }
+
+    // Get variant information
+    const variantPicker = modalContent.querySelector('variant-picker, variant-main-picker');
+    if (variantPicker) {
+      const selectedVariant = variantPicker.querySelector(`input[data-variant-id="${variantId}"], [data-variant-id="${variantId}"]`);
+      if (selectedVariant) {
+        productData.variant_title = selectedVariant.getAttribute('data-variant-title') || 
+                                    selectedVariant.getAttribute('aria-label') || 
+                                    selectedVariant.textContent?.trim() || '';
+      }
+    }
+
+    // Get product images
+    const images = [];
+    const mediaGallery = modalContent.querySelector('media-gallery, slideshow-component');
+    if (mediaGallery) {
+      const imageElements = mediaGallery.querySelectorAll('img[src], img[data-src]');
+      imageElements.forEach((img) => {
+        const imageUrl = img.src || img.getAttribute('data-src') || img.getAttribute('srcset')?.split(' ')[0];
+        if (imageUrl && !images.includes(imageUrl)) {
+          images.push(imageUrl);
+        }
+      });
+    }
+    
+    // Fallback: get images from product media containers
+    if (images.length === 0) {
+      const mediaContainers = modalContent.querySelectorAll('.product-media img, .product-information__media img');
+      mediaContainers.forEach((img) => {
+        const imageUrl = img.src || img.getAttribute('data-src') || img.getAttribute('srcset')?.split(' ')[0];
+        if (imageUrl && !images.includes(imageUrl)) {
+          images.push(imageUrl);
+        }
+      });
+    }
+
+    // Get featured image (first image)
+    if (images.length > 0) {
+      productData.featured_image = images[0];
+      productData.images = images;
+    }
+
+    // Check if product supports personalization (has personalization button)
+    const personaliseButton = modalContent.querySelector('[data-personalise-button]');
+    productData.needs_personalization = personaliseButton !== null;
+    
+    // Collect personalization field structure (what fields are available for this product)
+    productData.personalization_fields = null;
+    if (productData.needs_personalization) {
+      const personalizationFields = [];
+      
+      // Find the personalise modal/dialog
+      const personaliseModal = document.querySelector('personalise-dialog');
+      const personaliseModalContent = personaliseModal?.querySelector('.personalise-modal') || 
+                                      document.querySelector('.personalise-modal');
+      
+      if (personaliseModalContent) {
+        // Collect all personalization input fields
+        const nameInputs = personaliseModalContent.querySelectorAll('input[name="personalise-name"], input[name^="properties["]');
+        nameInputs.forEach((input) => {
+          const fieldInfo = {
+            name: input.name || '',
+            type: input.type || 'text',
+            maxlength: input.maxlength || null,
+            placeholder: input.placeholder || '',
+            required: input.hasAttribute('required') || input.hasAttribute('aria-required'),
+            label: ''
+          };
+          
+          // Try to find the label for this input
+          const label = personaliseModalContent.querySelector(`label[for="${input.id}"]`) ||
+                        input.closest('.personalise-modal__field')?.querySelector('.personalise-modal__label') ||
+                        input.closest('.personalise-name-tabs__panel')?.querySelector('.personalise-name-tabs__panel-title');
+          if (label) {
+            fieldInfo.label = label.textContent?.trim() || '';
+          }
+          
+          // Check for specific field types
+          if (input.name === 'personalise-name') {
+            fieldInfo.field_type = 'name';
+            // Get maxlength from dynamic_max if available
+            const charCounter = personaliseModalContent.querySelector('.personalise-modal__counter');
+            if (charCounter) {
+              const maxText = charCounter.textContent?.match(/\/(\d+)/);
+              if (maxText) {
+                fieldInfo.maxlength = parseInt(maxText[1], 10);
+              }
+            }
+          } else if (input.name.includes("Baby's Name")) {
+            fieldInfo.field_type = 'baby_name';
+          } else if (input.name.includes("Kid's Name")) {
+            fieldInfo.field_type = 'kid_name';
+          } else if (input.name.includes("Mum's Name")) {
+            fieldInfo.field_type = 'mum_name';
+          } else if (input.name.includes('Name 1')) {
+            fieldInfo.field_type = 'name1';
+          } else if (input.name.includes('Name 2')) {
+            fieldInfo.field_type = 'name2';
+          } else if (input.name.includes('Name 3')) {
+            fieldInfo.field_type = 'name3';
+          } else if (input.name.includes('Name 4')) {
+            fieldInfo.field_type = 'name4';
+          } else if (input.name.includes('Date of Birth')) {
+            fieldInfo.field_type = 'dob';
+            fieldInfo.pattern = input.pattern || '';
+          } else if (input.name.includes('School Year')) {
+            fieldInfo.field_type = 'school_year';
+          }
+          
+          personalizationFields.push(fieldInfo);
+        });
+        
+        // Collect color options if available
+        const colorGrid = personaliseModalContent.querySelector('.personalise-modal__color-grid');
+        if (colorGrid) {
+          const colorOptions = [];
+          const colorButtons = colorGrid.querySelectorAll('.personalise-modal__color-button, [data-color]');
+          colorButtons.forEach((button) => {
+            const colorValue = button.getAttribute('data-color') || 
+                              button.querySelector('input[type="radio"]')?.value || '';
+            if (colorValue) {
+              colorOptions.push({
+                value: colorValue,
+                label: button.getAttribute('title') || colorValue,
+                display: button.querySelector('.swatch')?.style.backgroundColor || colorValue
+              });
+            }
+          });
+          if (colorOptions.length > 0) {
+            personalizationFields.push({
+              field_type: 'text_color',
+              name: 'personalise-color',
+              type: 'radio',
+              options: colorOptions,
+              required: true,
+              label: 'Text Colour'
+            });
+          }
+        }
+        
+        // Collect font options if available
+        const fontGrid = personaliseModalContent.querySelector('.personalise-modal__font-grid');
+        if (fontGrid) {
+          const fontOptions = [];
+          const fontButtons = fontGrid.querySelectorAll('.personalise-modal__font-button, [data-font]');
+          fontButtons.forEach((button) => {
+            const fontValue = button.getAttribute('data-font') || '';
+            if (fontValue) {
+              fontOptions.push({
+                value: fontValue,
+                label: fontValue,
+                display: button.textContent?.trim() || fontValue
+              });
+            }
+          });
+          if (fontOptions.length > 0) {
+            personalizationFields.push({
+              field_type: 'font',
+              name: 'personalise-font',
+              type: 'select',
+              options: fontOptions,
+              required: true,
+              label: 'Choose Your Font'
+            });
+          }
+        }
+      }
+      
+      if (personalizationFields.length > 0) {
+        productData.personalization_fields = personalizationFields;
+      }
+    }
+    
+    // Get personalizations from sessionStorage (if they exist - the actual values filled by user)
+    productData.personalizations = null;
+    if (productId) {
+      const personalisationKey = `personalisation_${String(productId)}`;
+      try {
+        const personalisationData = sessionStorage.getItem(personalisationKey);
+        if (personalisationData) {
+          const parsed = JSON.parse(personalisationData);
+          // Check if personalizations exist and have data
+          if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+            productData.personalizations = parsed;
+          }
+        }
+      } catch (error) {
+        console.warn('Build Your Set: Error reading personalization data', error);
+      }
+    }
+
+    // Get variant options/attributes
+    const variantOptions = {};
+    const optionInputs = modalContent.querySelectorAll('input[type="radio"][name^="options"], select[name^="options"]');
+    optionInputs.forEach((input) => {
+      if (input.checked || (input instanceof HTMLSelectElement && input.selectedIndex >= 0)) {
+        const optionName = input.name.replace('options[', '').replace(']', '');
+        const optionValue = input.value || (input instanceof HTMLSelectElement ? input.options[input.selectedIndex]?.text : input.getAttribute('data-option-value'));
+        if (optionName && optionValue) {
+          variantOptions[optionName] = optionValue;
+        }
+      }
+    });
+    if (Object.keys(variantOptions).length > 0) {
+      productData.variant_options = variantOptions;
+    }
+
+    // Get product description if available
+    const productDescription = modalContent.querySelector('.product-description, [data-product-description]');
+    if (productDescription) {
+      productData.product_description = productDescription.textContent?.trim() || '';
+    }
+
+    // Get SKU if available
+    const skuElement = modalContent.querySelector('product-sku-component, [data-sku]');
+    if (skuElement) {
+      productData.sku = skuElement.textContent?.trim() || skuElement.getAttribute('data-sku') || '';
+    }
+
+    return productData;
+  }
+
+  /**
+   * Replaces the default add-to-cart button with a custom button for build-your-set
+   * @param {Element} modalContent - The modal content element
+   */
+  #replaceAddToCartButtonForBuildYourSet(modalContent) {
+    if (!modalContent) return;
+    
+    // Find the add-to-cart button(s) in the modal
+    const addToCartButtons = modalContent.querySelectorAll('add-to-cart-component, [ref="addToCartButton"], button[type="submit"][name="add"]');
+    const productForm = modalContent.querySelector('product-form-component');
+    
+    if (!productForm || addToCartButtons.length === 0) return;
+    
+    const productId = productForm.dataset.productId;
+    
+    // Find the form to get variant ID and quantity
+    const form = modalContent.querySelector('form[data-type="add-to-cart-form"]');
+    if (!form) return;
+    
+    // Hide all existing add-to-cart buttons
+    addToCartButtons.forEach(button => {
+      if (button instanceof HTMLElement) {
+        button.style.display = 'none';
+      }
+    });
+    
+    // Find the button container (usually inside buy-buttons-block or product-form)
+    const buyButtonsBlock = modalContent.querySelector('.buy-buttons-block');
+    const buttonContainer = buyButtonsBlock || productForm;
+    
+    if (!buttonContainer) return;
+    
+    // Check if custom button already exists
+    let customButton = buttonContainer.querySelector('.build-your-set-add-to-session-button');
+    
+    if (!customButton) {
+      // Create custom button with same styling as original
+      customButton = document.createElement('button');
+      customButton.type = 'button';
+      customButton.className = 'button build-your-set-add-to-session-button';
+      customButton.setAttribute('data-product-id', productId || '');
+      
+      // Get the text from the original button if available
+      const originalButton = modalContent.querySelector('button[type="submit"][name="add"]');
+      let buttonText = 'Add to Set';
+      if (originalButton) {
+        const textElement = originalButton.querySelector('.add-to-cart-text, .add-to-cart-text__content');
+        if (textElement) {
+          buttonText = textElement.textContent.trim() || 'Add to Set';
+        }
+      }
+      
+      customButton.innerHTML = `
+        <span class="add-to-cart-text">
+          <span class="add-to-cart-text__content">
+            <span>
+              <span>${buttonText}</span>
+            </span>
+          </span>
+        </span>
+      `;
+      
+      // Add click handler
+      customButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Get variant ID and quantity from form
+        const variantIdInput = form.querySelector('input[name="id"][ref="variantId"]');
+        const quantityInput = form.querySelector('input[name="quantity"]');
+        
+        const variantId = variantIdInput?.value;
+        const quantity = quantityInput ? Number(quantityInput.value) || 1 : 1;
+        
+        if (!variantId) {
+          console.error('Build Your Set: Variant ID not found');
+          return;
+        }
+        
+        // Collect all product information
+        const productData = this.#collectProductInformation(modalContent, productId, variantId);
+        
+        // Ensure product_id and variant_id are set (in case they weren't collected)
+        productData.product_id = productId;
+        productData.variant_id = variantId;
+        
+        // Store in session storage
+        const storageKey = 'build-your-set-session-cart';
+        let sessionCart = [];
+        try {
+          const stored = sessionStorage.getItem(storageKey);
+          if (stored) {
+            sessionCart = JSON.parse(stored);
+          }
+        } catch (error) {
+          console.error('Build Your Set: Error reading session storage', error);
+          sessionCart = [];
+        }
+        
+        // Check if variant already exists, update quantity, otherwise add new
+        const existingIndex = sessionCart.findIndex(item => item.variant_id === variantId);
+        
+        if (existingIndex >= 0) {
+          // Update quantity and refresh product data
+          sessionCart[existingIndex].quantity += quantity;
+          // Update product data in case it changed (e.g., personalizations)
+          sessionCart[existingIndex] = {
+            ...sessionCart[existingIndex],
+            ...productData,
+            quantity: sessionCart[existingIndex].quantity
+          };
+        } else {
+          // Add new product to session cart
+          const newProduct = {
+            ...productData,
+            variant_id: variantId,
+            product_id: productId,
+            quantity: quantity,
+            added_at: Date.now()
+          };
+          sessionCart.push(newProduct);
+        }
+        
+        try {
+          sessionStorage.setItem(storageKey, JSON.stringify(sessionCart));
+          console.log('Build Your Set: Product added to session', {
+            product_id: productId,
+            variant_id: variantId,
+            needs_personalization: productData.needs_personalization,
+            has_personalizations: !!productData.personalizations
+          });
+          
+          // Dispatch event to update sticky bar
+          document.dispatchEvent(new CustomEvent('build-your-set-updated', {
+            bubbles: true,
+            cancelable: true,
+            detail: { productCount: sessionCart.length }
+          }));
+          
+          // Close the modal
+          const quickAddDialog = document.getElementById('quick-add-dialog');
+          if (quickAddDialog && typeof quickAddDialog.closeDialog === 'function') {
+            quickAddDialog.closeDialog();
+          }
+        } catch (error) {
+          console.error('Build Your Set: Error saving to session storage', error);
+        }
+      });
+      
+      // Insert the button in the same position as the original
+      const firstAddToCart = Array.from(addToCartButtons)[0];
+      if (firstAddToCart && firstAddToCart.parentElement) {
+        firstAddToCart.parentElement.insertBefore(customButton, firstAddToCart);
+      } else {
+        buttonContainer.appendChild(customButton);
+      }
+    }
+    
+    // Show the custom button
+    if (customButton instanceof HTMLElement) {
+      customButton.style.display = '';
+    }
+  }
+
+  /**
    * Ensures personalise button event handlers work with dynamically loaded content
    * @param {Element} modalContent - The modal content element
    */
@@ -752,6 +1301,29 @@ export class QuickAddComponent extends Component {
       if (personaliseModal) {
         // Move it to the document body so it's accessible globally
         document.body.appendChild(personaliseModal);
+        
+        // CRITICAL: Ensure custom element is properly defined and initialized
+        // When content is loaded via morph, the script might not have run yet
+        customElements.whenDefined('personalise-dialog').then(() => {
+          console.log('PersonaliseDialog: Custom element defined');
+          
+          // Force re-initialization by temporarily disconnecting and reconnecting
+          // This ensures connectedCallback runs and sets up all handlers and functionality
+          const parent = personaliseModal.parentNode;
+          if (parent) {
+            console.log('PersonaliseDialog: Re-initializing element after move to body');
+            parent.removeChild(personaliseModal);
+            document.body.appendChild(personaliseModal);
+            
+            // The element should now be properly initialized with all its methods
+            console.log('PersonaliseDialog: Element re-initialized, methods available:', {
+              showDialog: typeof personaliseModal.showDialog === 'function',
+              closePersonaliseOnly: typeof personaliseModal.closePersonaliseOnly === 'function'
+            });
+          }
+        }).catch((error) => {
+          console.error('PersonaliseDialog: Error waiting for custom element definition:', error);
+        });
       }
     }
 
@@ -833,18 +1405,41 @@ class QuickAddDialog extends DialogComponent {
 
   /**
    * Override showDialog to ensure close button handler is attached when dialog opens
+   * Also prevents closing on outside clicks - only closes via close button
    */
   showDialog() {
-    // Store scroll position before opening
-    this.#previousScrollY = window.scrollY;
-    
+    const { dialog } = this.refs;
+
     // Ensure we have the correct dialog ref before showing
     const quickAddDialog = this.querySelector('dialog.quick-add-modal');
     if (quickAddDialog && this.refs) {
       this.refs.dialog = quickAddDialog;
     }
-    
-    super.showDialog();
+
+    // Use the refs dialog if available, otherwise use the found one
+    const dialogToShow = this.refs?.dialog || quickAddDialog || dialog;
+    if (!dialogToShow) return;
+
+    if (dialogToShow.open) return;
+
+    // Store scroll position before opening
+    const scrollY = window.scrollY;
+    this.#previousScrollY = scrollY;
+
+    // Prevent layout thrashing by separating DOM reads from DOM writes
+    requestAnimationFrame(() => {
+      document.body.style.width = '100%';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+
+      dialogToShow.showModal();
+      this.dispatchEvent(new DialogOpenEvent());
+
+      // Only attach keydown listener for Escape key, NOT click listener for outside clicks
+      // This prevents the dialog from closing when clicking outside
+      this.addEventListener('keydown', this.#handleKeyDown);
+    });
+
     // Ensure close button handler is attached after dialog is shown
     requestAnimationFrame(() => {
       this.#ensureCloseButtonHandler();
@@ -856,10 +1451,60 @@ class QuickAddDialog extends DialogComponent {
   }
 
   /**
+   * Handle Escape key to close dialog
+   * @param {KeyboardEvent} event - The keyboard event
+   * @private
+   */
+  #handleKeyDown = (event) => {
+    if (event.key !== 'Escape') return;
+
+    event.preventDefault();
+    this.closeDialog();
+  }
+
+  /**
+   * Clear personalization for the product in the quick add modal
+   * @private
+   */
+  #clearQuickAddPersonalisation() {
+    const modalContent = document.getElementById('quick-add-modal-content');
+    if (!modalContent) return;
+
+    // Find the product ID from the modal content
+    const productFormComponent = modalContent.querySelector('product-form-component');
+    const productId = productFormComponent?.dataset?.productId;
+
+    if (productId) {
+      const key = `personalisation_${String(productId)}`;
+      sessionStorage.removeItem(key);
+      
+      // Also update button text to reset it
+      if (typeof window.updatePersonaliseButtonText === 'function') {
+        window.updatePersonaliseButtonText();
+      }
+    }
+  }
+
+  /**
    * Override closeDialog to ensure we're closing the correct dialog
    * Since parent's closeDialog is an arrow function (instance property), we implement it directly
    */
   closeDialog = async () => {
+    // CRITICAL: Don't close if a personalise dialog is currently open
+    // This prevents closing parent dialog when closing personalise popup
+    const personaliseDialogElement = document.querySelector('personalise-dialog');
+    if (personaliseDialogElement) {
+      const personaliseNativeDialog = personaliseDialogElement.refs?.dialog || 
+                                      personaliseDialogElement.querySelector('dialog');
+      if (personaliseNativeDialog && personaliseNativeDialog.open) {
+        // Personalise dialog is open, don't close quick-add dialog
+        return;
+      }
+    }
+
+    // Clear personalization when closing the quick add popup
+    this.#clearQuickAddPersonalisation();
+
     // Get the correct dialog - the quick-add-modal, not personalise-modal
     let dialog = this.querySelector('dialog.quick-add-modal');
     
@@ -873,10 +1518,16 @@ class QuickAddDialog extends DialogComponent {
     
     if (!dialog) {
       console.warn('QuickAddDialog: No dialog found to close');
-      // Still reset body styles in case they're stuck
-      document.body.style.width = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
+      // Still reset body styles in case they're stuck (only if personalise dialog is also closed)
+      const personaliseDialog = document.querySelector('personalise-dialog');
+      const personaliseIsOpen = personaliseDialog && 
+                                 (personaliseDialog.refs?.dialog?.open || 
+                                  personaliseDialog.querySelector('dialog')?.open);
+      if (!personaliseIsOpen) {
+        document.body.style.width = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+      }
       return;
     }
     
@@ -913,9 +1564,8 @@ class QuickAddDialog extends DialogComponent {
       this.refs.dialog = dialog;
     }
     
-    // Implement parent's closeDialog logic directly (since it's an arrow function instance property)
-    // Remove event listeners (parent does this but we can't access their private methods)
-    // The parent's #handleClick and #handleKeyDown are private, but removing listeners won't hurt even if they don't exist
+    // Remove event listeners before closing
+    this.removeEventListener('keydown', this.#handleKeyDown);
     
     dialog.classList.add('dialog-closing');
 
@@ -926,10 +1576,20 @@ class QuickAddDialog extends DialogComponent {
       console.warn('QuickAddDialog: Animation end error (ignored):', error);
     }
 
-    document.body.style.width = '';
-    document.body.style.position = '';
-    document.body.style.top = '';
-    window.scrollTo({ top: this.#previousScrollY || 0, behavior: 'instant' });
+    // Check if personalise dialog is still open - if so, don't reset body styles
+    // This fixes the overlay issue where body styles weren't being reset properly
+    const personaliseDialog = document.querySelector('personalise-dialog');
+    const personaliseIsOpen = personaliseDialog && 
+                               (personaliseDialog.refs?.dialog?.open || 
+                                personaliseDialog.querySelector('dialog')?.open);
+    
+    // Only reset body styles if personalise dialog is also closed
+    if (!personaliseIsOpen) {
+      document.body.style.width = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      window.scrollTo({ top: this.#previousScrollY || 0, behavior: 'instant' });
+    }
 
     dialog.close();
     dialog.classList.remove('dialog-closing');

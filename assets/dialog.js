@@ -73,6 +73,17 @@ export class DialogComponent extends Component {
 
     if (!dialog.open) return;
 
+    // Don't close if a personalise dialog is open (prevents closing parent dialog when closing personalise popup)
+    // Check both the custom element and the native dialog element
+    const personaliseDialogElement = document.querySelector('personalise-dialog');
+    if (personaliseDialogElement) {
+      const personaliseNativeDialog = personaliseDialogElement.refs?.dialog || 
+                                      personaliseDialogElement.querySelector('dialog');
+      if (personaliseNativeDialog && personaliseNativeDialog.open) {
+        return;
+      }
+    }
+
     this.removeEventListener('click', this.#handleClick);
     this.removeEventListener('keydown', this.#handleKeyDown);
 
@@ -111,6 +122,50 @@ export class DialogComponent extends Component {
    */
   #handleClick(event) {
     const { dialog } = this.refs;
+
+    // Don't close if clicking on a size guide button
+    const sizeGuideButton = event.target.closest('[data-size-guide-button]');
+    if (sizeGuideButton) {
+      return;
+    }
+
+    // Don't close if the event was marked as a size guide button click
+    if (event.sizeGuideButtonClick) {
+      return;
+    }
+
+    // Don't close if the event was marked as a personalise dialog click
+    if (event.personaliseDialogClick) {
+      return;
+    }
+
+    // Don't close if clicking inside a personalise dialog (prevents closing parent dialog when closing personalise popup)
+    const personaliseDialog = event.target.closest('personalise-dialog');
+    if (personaliseDialog) {
+      return;
+    }
+
+    // Don't close if clicking inside a personalise modal dialog element
+    const personaliseModal = event.target.closest('.personalise-modal');
+    if (personaliseModal) {
+      return;
+    }
+
+    // Don't close if clicking on personalise dialog buttons
+    const personaliseButton = event.target.closest('.personalise-modal__close, .personalise-modal__cancel-button');
+    if (personaliseButton) {
+      return;
+    }
+
+    // Don't close if a personalise dialog is currently open (additional check to prevent closing parent dialog)
+    const openPersonaliseDialog = document.querySelector('personalise-dialog');
+    if (openPersonaliseDialog) {
+      const personaliseNativeDialog = openPersonaliseDialog.refs?.dialog || 
+                                      openPersonaliseDialog.querySelector('dialog');
+      if (personaliseNativeDialog && personaliseNativeDialog.open) {
+        return;
+      }
+    }
 
     if (isClickedOutside(event, dialog)) {
       this.closeDialog();

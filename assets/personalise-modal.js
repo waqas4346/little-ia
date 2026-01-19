@@ -1,5 +1,6 @@
-import { DialogComponent } from '@theme/dialog';
+import { DialogComponent, DialogOpenEvent, DialogCloseEvent } from '@theme/dialog';
 import { Component } from '@theme/component';
+import { onAnimationEnd } from '@theme/utilities';
 import { morphSection } from '@theme/section-renderer';
 
 /**
@@ -36,6 +37,11 @@ export class PersonaliseDialogComponent extends DialogComponent {
       mumName: null
     };
     
+    // Set up direct click handlers for close buttons to stop propagation
+    setTimeout(() => {
+      this.#setupCloseButtonHandlers();
+    }, 100);
+    
     // Set up form submit listener
     setTimeout(() => {
       this.#setupFormSubmitListenerForCurrentSession();
@@ -43,6 +49,107 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Set form attribute on Baby/Kid/Mum inputs
     this.#setFormAttributeOnInputs();
+  }
+
+  /**
+   * Sets up direct click handlers for close and cancel buttons to prevent event bubbling
+   * @private
+   */
+  #setupCloseButtonHandlers() {
+    console.log('PersonaliseDialog: #setupCloseButtonHandlers called');
+    
+    // Store reference to component for use in event handlers
+    const component = this;
+    
+    const dialogElement = this.refs?.dialog || this.querySelector('dialog');
+    console.log('PersonaliseDialog: Dialog element:', dialogElement);
+    
+    if (!dialogElement) {
+      console.warn('PersonaliseDialog: Dialog element not found, retrying...');
+      // Dialog element not ready yet, try again later
+      setTimeout(() => this.#setupCloseButtonHandlers(), 50);
+      return;
+    }
+    
+    // DIRECT HANDLER FUNCTION - MUST stop propagation IMMEDIATELY before anything else
+    const handleClose = (event) => {
+      // CRITICAL: Stop ALL propagation FIRST before anything else can process
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      
+      // Mark event so other handlers (like quick-add) know to ignore it
+      event.personaliseDialogClick = true;
+      event.cancelBubble = true;
+      event.returnValue = false;
+      
+      console.log('PersonaliseDialog: handleClose called, stopping propagation');
+      
+      // Call close method immediately
+      component.closePersonaliseOnly();
+      
+      // Return false to ensure no other handlers run
+      return false;
+    };
+    
+    // Find ALL close buttons by multiple selectors
+    const selectors = [
+      '[data-personalise-close="true"]',
+      '.personalise-modal__close',
+      '.personalise-modal__cancel-button'
+    ];
+    
+    let buttonsFound = 0;
+    selectors.forEach(selector => {
+      const buttons = this.querySelectorAll(selector);
+      console.log(`Found ${buttons.length} buttons with selector: ${selector}`);
+      buttons.forEach(btn => {
+        buttonsFound++;
+        console.log('Attaching handler to button:', btn);
+        // Remove any existing handlers first to avoid duplicates
+        btn.removeEventListener('click', handleClose, { capture: true });
+        btn.removeEventListener('mousedown', handleClose, { capture: true });
+        
+        // Create wrapped handlers that ensure propagation is stopped IMMEDIATELY
+        const wrappedMousedown = (e) => {
+          console.log('PersonaliseDialog: Mousedown on close button:', e.target, btn.className);
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          e.personaliseDialogClick = true;
+          handleClose(e);
+          return false;
+        };
+        
+        const wrappedClick = (e) => {
+          console.log('PersonaliseDialog: Click on close button:', e.target, btn.className);
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          e.personaliseDialogClick = true;
+          handleClose(e);
+          return false;
+        };
+        
+        // Add handlers with capture phase FIRST to catch events BEFORE quick-add handlers
+        btn.addEventListener('mousedown', wrappedMousedown, { capture: true, passive: false });
+        btn.addEventListener('click', wrappedClick, { capture: true, passive: false });
+      });
+    });
+    console.log(`Total buttons found: ${buttonsFound}`);
+    
+    // ALSO set up delegation on dialog element as additional safety
+    if (!dialogElement.dataset.personaliseCloseHandlerSetup) {
+      const handleDelegatedClick = (event) => {
+        const closeBtn = event.target.closest('[data-personalise-close="true"], .personalise-modal__close, .personalise-modal__cancel-button');
+        if (closeBtn) {
+          handleClose(event);
+        }
+      };
+      
+      dialogElement.addEventListener('click', handleDelegatedClick, { capture: true, passive: false });
+      dialogElement.dataset.personaliseCloseHandlerSetup = 'true';
+    }
   }
   
   /**
@@ -55,6 +162,16 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (productFormComponent) {
       productForm = productFormComponent.querySelector('form[data-type="add-to-cart-form"]');
     }
+    
+    // If not found, check if we're in a quick-add modal context
+    if (!productForm) {
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        productForm = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+      }
+    }
+    
+    // Fallback to any form
     if (!productForm) {
       productForm = document.querySelector('form[data-type="add-to-cart-form"]');
     }
@@ -78,6 +195,16 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (productFormComponent) {
       productForm = productFormComponent.querySelector('form[data-type="add-to-cart-form"]');
     }
+    
+    // If not found, check if we're in a quick-add modal context
+    if (!productForm) {
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        productForm = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+      }
+    }
+    
+    // Fallback to any form
     if (!productForm) {
       productForm = document.querySelector(`form[data-type="add-to-cart-form"]`);
     }
@@ -92,6 +219,15 @@ export class PersonaliseDialogComponent extends DialogComponent {
   loadSavedPersonalisation() {
     let productId = this.closest('product-form-component')?.dataset?.productId;
     
+    // If not found, check if we're in a quick-add modal context
+    if (!productId) {
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
+        productId = quickAddFormComponent?.dataset?.productId;
+      }
+    }
+    
     // If not found, try to get from sticky-add-to-cart
     if (!productId) {
       const stickyCart = document.querySelector('sticky-add-to-cart');
@@ -102,10 +238,23 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // If still not found, try to get from the form
     if (!productId) {
-      const form = document.querySelector('form[data-type="add-to-cart-form"]');
-      if (form) {
-        const formComponent = form.closest('product-form-component');
-        productId = formComponent?.dataset?.productId;
+      // First try quick-add modal form
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        const form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+        if (form) {
+          const formComponent = form.closest('product-form-component');
+          productId = formComponent?.dataset?.productId;
+        }
+      }
+      
+      // Fallback to any form
+      if (!productId) {
+        const form = document.querySelector('form[data-type="add-to-cart-form"]');
+        if (form) {
+          const formComponent = form.closest('product-form-component');
+          productId = formComponent?.dataset?.productId;
+        }
       }
     }
     
@@ -131,10 +280,50 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
   /**
    * Shows the dialog.
+   * Overridden to prevent click handlers from interfering with parent dialog
    */
   showDialog() {
-    // Call parent showDialog FIRST to open the dialog immediately
-    super.showDialog();
+    const { dialog } = this.refs;
+
+    if (dialog.open) return;
+
+    const scrollY = window.scrollY;
+
+    // Set up close button handlers BEFORE opening dialog
+    // This ensures they're ready when the dialog opens
+    this.#setupCloseButtonHandlers();
+
+    // Prevent layout thrashing by separating DOM reads from DOM writes
+    requestAnimationFrame(() => {
+      document.body.style.width = '100%';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+
+      dialog.showModal();
+      this.dispatchEvent(new DialogOpenEvent());
+
+      // Only add keydown listener for Escape key, NOT click listener
+      // This prevents the personalise dialog from closing parent dialog
+      this.addEventListener('keydown', this.#handleKeyDownPersonalise);
+      
+      // Set up close button handlers again after dialog opens (ensure they're attached)
+      // CRITICAL: Must set up handlers AFTER dialog is shown to catch events before quick-add handlers
+      requestAnimationFrame(() => {
+        this.#setupCloseButtonHandlers();
+        // Try multiple times to ensure refs are populated and handlers are attached
+        setTimeout(() => {
+          this.#setupCloseButtonHandlers();
+          // One more time after animation completes
+          setTimeout(() => {
+            this.#setupCloseButtonHandlers();
+            // Final attempt after everything is fully loaded
+            setTimeout(() => {
+              this.#setupCloseButtonHandlers();
+            }, 200);
+          }, 200);
+        }, 100);
+      });
+    });
     
     // Load saved personalisation from current session only (non-blocking)
     try {
@@ -144,7 +333,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
     }
     
     // Wait for dialog to be fully open and refs to be available
-    // The base showDialog uses requestAnimationFrame, so we need to wait a bit longer
     let attempts = 0;
     const maxAttempts = 20; // Maximum 1 second (20 * 50ms)
     
@@ -179,6 +367,139 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Start checking after a small delay to let the dialog open
     setTimeout(checkAndPopulate, 100);
   }
+
+  /**
+   * Handle Escape key for personalise dialog only
+   * @private
+   */
+  #handleKeyDownPersonalise = (event) => {
+    if (event.key !== 'Escape') return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    this.closePersonaliseDialog();
+  };
+
+  /**
+   * COMPLETELY SEPARATE CLOSE METHOD - bypasses ALL parent logic
+   * Only called by buttons with data-personalise-close="true"
+   * This method name is unique and won't conflict with anything
+   */
+  closePersonaliseOnly = async () => {
+    console.log('closePersonaliseOnly called');
+    
+    // Get dialog directly - don't rely on refs if they might be stale
+    const dialogElement = this.querySelector('dialog') || this.refs?.dialog;
+    console.log('Dialog element:', dialogElement, 'Open:', dialogElement?.open);
+    
+    if (!dialogElement) {
+      console.warn('PersonaliseDialog: Dialog element not found');
+      // Even if dialog isn't open, ensure body styles are reset if no other dialogs are open
+      const quickAddDialog = document.querySelector('#quick-add-dialog dialog');
+      const quickAddIsOpen = quickAddDialog && quickAddDialog.open;
+      if (!quickAddIsOpen) {
+        document.body.style.width = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+      }
+      return;
+    }
+    
+    if (!dialogElement.open) {
+      console.log('Dialog already closed');
+      // Even if dialog isn't open, ensure body styles are reset if no other dialogs are open
+      const quickAddDialog = document.querySelector('#quick-add-dialog dialog');
+      const quickAddIsOpen = quickAddDialog && quickAddDialog.open;
+      if (!quickAddIsOpen) {
+        document.body.style.width = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+      }
+      return;
+    }
+
+    console.log('Closing dialog...');
+
+    // Remove keydown listener
+    try {
+      this.removeEventListener('keydown', this.#handleKeyDownPersonalise);
+    } catch (e) {
+      // Ignore
+    }
+
+    dialogElement.classList.add('dialog-closing');
+
+    try {
+      await onAnimationEnd(dialogElement, undefined, {
+        subtree: false,
+      });
+    } catch (e) {
+      console.warn('Animation end error:', e);
+    }
+
+    // Close this dialog FIRST - don't check anything else
+    console.log('Calling dialogElement.close()');
+    try {
+      dialogElement.close();
+      console.log('Dialog close() called, open status:', dialogElement.open);
+    } catch (e) {
+      console.error('Error calling dialog.close():', e);
+    }
+    
+    dialogElement.classList.remove('dialog-closing');
+
+    // Check if quick-add dialog is still open AFTER closing this one
+    const quickAddDialog = document.querySelector('#quick-add-dialog dialog');
+    const quickAddIsOpen = quickAddDialog && quickAddDialog.open;
+    
+    console.log('Quick-add dialog open?', quickAddIsOpen);
+    
+    // Only reset body styles if quick-add dialog is also closed
+    if (!quickAddIsOpen) {
+      document.body.style.width = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      // Get scroll position from body style or use 0
+      const topValue = document.body.style.top;
+      let savedScrollY = 0;
+      if (topValue && topValue.startsWith('-')) {
+        savedScrollY = parseInt(topValue.substring(1), 10) || 0;
+      }
+      window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+    }
+
+    try {
+      this.dispatchEvent(new DialogCloseEvent());
+      console.log('DialogCloseEvent dispatched');
+    } catch (e) {
+      console.error('Error dispatching event:', e);
+    }
+  };
+
+  /**
+   * Keep old method names for backwards compatibility but delegate to new method
+   */
+  handleCloseButton = async (event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+    }
+    await this.closePersonaliseOnly();
+  };
+
+  closePersonaliseDialog = async () => {
+    return this.closePersonaliseOnly();
+  };
+
+  /**
+   * Override closeDialog to use our custom implementation
+   * This prevents parent dialog checks from interfering
+   */
+  closeDialog = async () => {
+    return this.closePersonaliseOnly();
+  };
   
   /**
    * Populates all form fields from saved personalisation data
@@ -699,15 +1020,24 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (kidNameValue !== null) this.personalisationData.kidName = kidNameValue;
     if (mumNameValue !== null) this.personalisationData.mumName = mumNameValue;
 
-    // Check if we're editing from cart context
+     // Check if we're editing from cart context
     const cartContext = window.cartPersonalizationContext;
     
     if (cartContext && cartContext.cartLine) {
       // Update cart item properties
       this.#updateCartItemProperties(cartContext, personalisation);
     } else {
-      // Normal flow: save to sessionStorage for product page
+      // Store in sessionStorage with product ID as key (clears on page reload)
       let productId = this.closest('product-form-component')?.dataset?.productId;
+      
+      // If not found, check if we're in a quick-add modal context
+      if (!productId) {
+        const quickAddModal = document.querySelector('#quick-add-modal-content');
+        if (quickAddModal) {
+          const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
+          productId = quickAddFormComponent?.dataset?.productId;
+        }
+      }
       
       // If not found, try to get from sticky-add-to-cart
       if (!productId) {
@@ -716,10 +1046,23 @@ export class PersonaliseDialogComponent extends DialogComponent {
       
       // If still not found, try to get from the form
       if (!productId) {
-        const form = document.querySelector('form[data-type="add-to-cart-form"]');
-        if (form) {
-          const formComponent = form.closest('product-form-component');
-          productId = formComponent?.dataset?.productId;
+        // First try quick-add modal form
+        const quickAddModal = document.querySelector('#quick-add-modal-content');
+        if (quickAddModal) {
+          const form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+          if (form) {
+            const formComponent = form.closest('product-form-component');
+            productId = formComponent?.dataset?.productId;
+          }
+        }
+        
+        // Fallback to any form
+        if (!productId) {
+          const form = document.querySelector('form[data-type="add-to-cart-form"]');
+          if (form) {
+            const formComponent = form.closest('product-form-component');
+            productId = formComponent?.dataset?.productId;
+          }
         }
       }
       
@@ -730,12 +1073,33 @@ export class PersonaliseDialogComponent extends DialogComponent {
         
         sessionStorage.setItem(key, JSON.stringify(personalisation));
         
-        // Trigger update of button text
-        setTimeout(() => {
+        // Trigger update of button text - with multiple retries to ensure buttons are in DOM
+        const updateButtonWithRetry = (attempts = 0) => {
           if (typeof window.updatePersonaliseButtonText === 'function') {
             window.updatePersonaliseButtonText();
+            
+            // Check if buttons were updated, if not retry
+            const buttons = document.querySelectorAll('[data-personalise-button]');
+            let anyButtonUpdated = false;
+            buttons.forEach((button) => {
+              const textSpan = button.querySelector('[data-personalise-text]');
+              if (textSpan && textSpan.textContent === 'EDIT') {
+                anyButtonUpdated = true;
+              }
+            });
+            
+            // If no buttons were updated and we haven't exceeded retries, try again
+            if (!anyButtonUpdated && attempts < 10) {
+              setTimeout(() => updateButtonWithRetry(attempts + 1), 200);
+            }
+          } else if (attempts < 10) {
+            // Function not defined yet, retry
+            setTimeout(() => updateButtonWithRetry(attempts + 1), 200);
           }
-        }, 100);
+        };
+        
+        // Start with immediate call, then retry if needed
+        setTimeout(() => updateButtonWithRetry(0), 100);
       } else {
         console.error('Product ID not found when saving personalisation');
       }
@@ -765,13 +1129,31 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (cartContext) {
       window.cartPersonalizationContext = null;
     }
-    
-    // Update buttons after a short delay to ensure localStorage is set and DOM is updated
-    setTimeout(() => {
+    const updateButtonWithRetry2 = (attempts = 0) => {
       if (typeof window.updatePersonaliseButtonText === 'function') {
         window.updatePersonaliseButtonText();
+        
+        // Check if buttons were updated, if not retry
+        const buttons = document.querySelectorAll('[data-personalise-button]');
+        let anyButtonUpdated = false;
+        buttons.forEach((button) => {
+          const textSpan = button.querySelector('[data-personalise-text]');
+          if (textSpan && textSpan.textContent === 'EDIT') {
+            anyButtonUpdated = true;
+          }
+        });
+        
+        // If no buttons were updated and we haven't exceeded retries, try again
+        if (!anyButtonUpdated && attempts < 10) {
+          setTimeout(() => updateButtonWithRetry2(attempts + 1), 200);
+        }
+      } else if (attempts < 10) {
+        // Function not defined yet, retry
+        setTimeout(() => updateButtonWithRetry2(attempts + 1), 200);
       }
-    }, 300);
+    };
+    
+    setTimeout(() => updateButtonWithRetry2(0), 300);
   };
 
   /**
@@ -900,6 +1282,15 @@ export class PersonaliseDialogComponent extends DialogComponent {
       productForm = productFormComponent.querySelector('form[data-type="add-to-cart-form"]');
     }
     
+    // If not found, check if we're in a quick-add modal context
+    if (!productForm) {
+      const quickAddModal = document.querySelector('#quick-add-modal-content');
+      if (quickAddModal) {
+        // Find the form within the quick-add modal
+        productForm = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+      }
+    }
+    
     // Fallback: find any product form
     if (!productForm) {
       productForm = document.querySelector(`form[data-type="add-to-cart-form"]`);
@@ -1013,8 +1404,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Helper function to add personalisation fields to form
     const addPersonalisationFieldsToForm = (targetForm) => {
       // Get the current product ID
-      const productFormComponent = targetForm.closest('product-form-component');
-      const productId = productFormComponent?.dataset?.productId;
+      let productFormComponent = targetForm.closest('product-form-component');
+      let productId = productFormComponent?.dataset?.productId;
+      
+      // If not found, check if we're in a quick-add modal context
+      if (!productId) {
+        const quickAddModal = document.querySelector('#quick-add-modal-content');
+        if (quickAddModal) {
+          productFormComponent = quickAddModal.querySelector('product-form-component');
+          productId = productFormComponent?.dataset?.productId;
+        }
+      }
       
       if (!productId) {
         console.warn('Product ID not found for personalisation fields');

@@ -92,7 +92,7 @@
   >
     <button
       ref="closeButton"
-      on:click="/closeDialog"
+      data-personalise-close="true"
       class="button button-unstyled close-button personalise-modal__close"
       aria-label="{{ 'accessibility.close_dialog' | t }}"
     >
@@ -576,9 +576,9 @@
           </button>
           <button
             type="button"
+            data-personalise-close="true"
             class="personalise-modal__cancel-button button button-unstyled"
             ref="cancelButton"
-            on:click="/closeDialog"
           >
             CANCEL
           </button>
