@@ -338,6 +338,35 @@ export class PersonaliseDialogComponent extends DialogComponent {
       });
     });
     
+    // Check if this is for build-your-set - if so, clear state first
+    const quickAddModal = document.getElementById('quick-add-modal-content');
+    const isBuildYourSet = quickAddModal?.hasAttribute('data-build-your-set');
+    
+    if (isBuildYourSet) {
+      // Clear internal state for build-your-set to ensure fresh start
+      this.selectedFont = null;
+      this.selectedColor = null;
+      this.personalisationData = {
+        name: '',
+        font: null,
+        color: null,
+        dob: null,
+        schoolYear: null,
+        name1: null,
+        name2: null,
+        name3: null,
+        name4: null,
+        textbox: null,
+        message: null,
+        optionalDob: null,
+        time: null,
+        weight: null,
+        babyName: null,
+        kidName: null,
+        mumName: null
+      };
+    }
+    
     // Load saved personalisation from current session only (non-blocking)
     try {
       this.loadSavedPersonalisation();
@@ -402,10 +431,34 @@ export class PersonaliseDialogComponent extends DialogComponent {
   closePersonaliseOnly = async () => {
     console.log('closePersonaliseOnly called');
     
+    // Clear internal state when closing (especially for build-your-set to prevent font persistence)
+    this.selectedFont = null;
+    this.selectedColor = null;
+    // Reset personalisationData to initial state
+    this.personalisationData = {
+      name: '',
+      font: null,
+      color: null,
+      dob: null,
+      schoolYear: null,
+      name1: null,
+      name2: null,
+      name3: null,
+      name4: null,
+      textbox: null,
+      message: null,
+      optionalDob: null,
+      time: null,
+      weight: null,
+      babyName: null,
+      kidName: null,
+      mumName: null
+    };
+    
     // Get dialog directly - don't rely on refs if they might be stale
     const dialogElement = this.querySelector('dialog') || this.refs?.dialog;
     console.log('Dialog element:', dialogElement, 'Open:', dialogElement?.open);
-    
+
     if (!dialogElement) {
       console.warn('PersonaliseDialog: Dialog element not found');
       // Even if dialog isn't open, ensure body styles are reset if no other dialogs are open

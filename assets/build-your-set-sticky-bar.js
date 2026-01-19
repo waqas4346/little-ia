@@ -7,7 +7,7 @@ import { sectionRenderer } from '@theme/section-renderer';
  * Component for managing the build-your-set sticky bar
  */
 export class BuildYourSetStickyBarComponent extends Component {
-  requiredRefs = ['productsContainer', 'startOverButton', 'addAllButton', 'totalPrice'];
+  requiredRefs = ['productsContainer', 'startOverButton', 'personaliseAllButton', 'addAllButton', 'totalPrice'];
   
   /** @type {boolean} */
   #isAddingToCart = false;
@@ -95,6 +95,19 @@ export class BuildYourSetStickyBarComponent extends Component {
         const startOverHandler = this.handleStartOver.bind(this);
         this.refs.startOverButton.addEventListener('click', startOverHandler);
         this.refs.startOverButton._clickHandler = startOverHandler;
+      }
+      if (this.refs.personaliseAllButton) {
+        // Remove any existing handler to prevent duplicates
+        if (this.refs.personaliseAllButton._clickHandler) {
+          this.refs.personaliseAllButton.removeEventListener('click', this.refs.personaliseAllButton._clickHandler);
+        }
+        const personaliseAllHandler = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.handlePersonaliseAll();
+        };
+        this.refs.personaliseAllButton.addEventListener('click', personaliseAllHandler);
+        this.refs.personaliseAllButton._clickHandler = personaliseAllHandler;
       }
       if (this.refs.addAllButton) {
         // Remove any existing handler to prevent duplicates
@@ -234,6 +247,7 @@ export class BuildYourSetStickyBarComponent extends Component {
       const price = item.price || 'AED 0.00';
       const needsPersonalization = item.needs_personalization === true;
       const showAddPersonalizationButton = needsPersonalization && !hasPersonalizations;
+      const showEditButton = hasPersonalizations && needsPersonalization;
 
       productElement.innerHTML = `
         <button class="build-your-set-sticky-bar__product-remove" data-product-index="${index}" aria-label="Remove ${productName} from set">
@@ -245,7 +259,18 @@ export class BuildYourSetStickyBarComponent extends Component {
         <div class="build-your-set-sticky-bar__product-info">
           <h4 class="build-your-set-sticky-bar__product-name">${productName}</h4>
           <div class="build-your-set-sticky-bar__product-price">${price}</div>
-          ${personalisationText ? `<div class="build-your-set-sticky-bar__product-personalisation">${personalisationText}</div>` : ''}
+          ${personalisationText ? `
+            <div class="build-your-set-sticky-bar__product-personalisation">
+              <span class="build-your-set-sticky-bar__personalisation-text">${personalisationText}</span>
+              ${showEditButton ? `
+                <button class="build-your-set-sticky-bar__product-edit-personalisation" data-product-index="${index}" data-product-id="${item.product_id}" data-variant-id="${item.variant_id}" aria-label="Edit personalization for ${productName}">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M11.3333 2.00004C11.5084 1.82493 11.7163 1.68605 11.9441 1.59129C12.1719 1.49652 12.4151 1.44775 12.6667 1.44775C12.9182 1.44775 13.1614 1.49652 13.3892 1.59129C13.617 1.68605 13.8249 1.82493 14 2.00004C14.1751 2.17515 14.314 2.38306 14.4087 2.61087C14.5035 2.83868 14.5523 3.08188 14.5523 3.33337C14.5523 3.58487 14.5035 3.82807 14.4087 4.05588C14.314 4.28369 14.1751 4.4916 14 4.66671L5.00001 13.6667L1.33334 14.6667L2.33334 11L11.3333 2.00004Z" stroke="#7295BB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              ` : ''}
+            </div>
+          ` : ''}
           ${showAddPersonalizationButton ? `
             <button class="build-your-set-sticky-bar__product-add-personalisation" data-product-index="${index}" data-product-id="${item.product_id}" data-variant-id="${item.variant_id}" aria-label="Add personalization for ${productName}">
               Add Personalization
@@ -268,6 +293,16 @@ export class BuildYourSetStickyBarComponent extends Component {
       const addPersonalizationButton = productElement.querySelector('.build-your-set-sticky-bar__product-add-personalisation');
       if (addPersonalizationButton) {
         addPersonalizationButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.openPersonalizationForProduct(item, index);
+        });
+      }
+
+      // Add click handler for edit personalization button
+      const editPersonalizationButton = productElement.querySelector('.build-your-set-sticky-bar__product-edit-personalisation');
+      if (editPersonalizationButton) {
+        editPersonalizationButton.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           this.openPersonalizationForProduct(item, index);
@@ -427,6 +462,16 @@ export class BuildYourSetStickyBarComponent extends Component {
       variant_id: removedProduct?.variant_id
     });
 
+    // Clear personalisation data from sessionStorage for this product
+    if (removedProduct?.product_id) {
+      const personalisationKey = `personalisation_${String(removedProduct.product_id)}`;
+      try {
+        sessionStorage.removeItem(personalisationKey);
+      } catch (error) {
+        // Silently fail if sessionStorage is not available
+      }
+    }
+
     // Remove the product at the specified index
     sessionCart.splice(index, 1);
 
@@ -456,6 +501,15 @@ export class BuildYourSetStickyBarComponent extends Component {
     } catch (error) {
       console.error('Build Your Set: Error removing product from session:', error);
     }
+  }
+
+  /**
+   * Handles "Personalise All" button click
+   * Placeholder - functionality to be implemented later
+   */
+  handlePersonaliseAll() {
+    // TODO: Implement personalise all functionality
+    console.log('Build Your Set: Personalise All clicked');
   }
 
   /**

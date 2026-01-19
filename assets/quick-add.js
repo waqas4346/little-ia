@@ -470,6 +470,21 @@ export class QuickAddComponent extends Component {
     
     // Preserve build-your-set marker if it was set before content update
     const wasBuildYourSet = modalContent.hasAttribute('data-build-your-set');
+    
+    // If this is a build-your-set product, clear any existing personalisation data
+    // so it starts fresh each time the modal opens
+    if (wasBuildYourSet) {
+      const productFormComponent = modalContent.querySelector('product-form-component');
+      const productId = productFormComponent?.dataset?.productId;
+      if (productId) {
+        const personalisationKey = `personalisation_${String(productId)}`;
+        try {
+          sessionStorage.removeItem(personalisationKey);
+        } catch (error) {
+          // Silently fail if sessionStorage is not available
+        }
+      }
+    }
 
     // Check if the request was aborted before updating
     if (this.#abortController?.signal.aborted) {
@@ -872,6 +887,52 @@ export class QuickAddComponent extends Component {
         productData.product_handle = urlMatch[1];
       }
     }
+    
+    // Fallback: Try to get URL from product-form-component
+    if (!productData.product_url) {
+      const productForm = modalContent.querySelector('product-form-component');
+      if (productForm) {
+        // Check for data-product-url first
+        if (productForm.dataset.productUrl) {
+          productData.product_url = productForm.dataset.productUrl;
+        } else if (productForm.dataset.productHandle) {
+          // Construct URL from handle
+          productData.product_handle = productForm.dataset.productHandle;
+          productData.product_url = `/products/${productData.product_handle}`;
+        }
+      }
+    }
+    
+    // Fallback: Try to get URL from product card if not found in modal
+    if (!productData.product_url) {
+      const productCard = modalContent.closest('product-card') || document.querySelector(`product-card[data-product-id="${productId}"]`);
+      if (productCard) {
+        const cardLink = productCard.querySelector('a[href*="/products/"]');
+        if (cardLink) {
+          productData.product_url = cardLink.href;
+          const urlMatch = cardLink.href?.match(/\/products\/([^/?]+)/);
+          if (urlMatch) {
+            productData.product_handle = urlMatch[1];
+          }
+        }
+      }
+    }
+    
+    // Last resort: Construct from product ID if we have it
+    if (!productData.product_url && productId) {
+      // We can't construct URL from just ID, but we can try to get handle from a product card
+      const anyProductCard = document.querySelector(`product-card[data-product-id="${productId}"]`);
+      if (anyProductCard) {
+        const cardLink = anyProductCard.querySelector('a[href*="/products/"]');
+        if (cardLink) {
+          productData.product_url = cardLink.href;
+          const urlMatch = cardLink.href?.match(/\/products\/([^/?]+)/);
+          if (urlMatch) {
+            productData.product_handle = urlMatch[1];
+          }
+        }
+      }
+    }
 
     // Get price information - get regular price (not discounted)
     const priceElement = modalContent.querySelector('product-price');
@@ -959,9 +1020,14 @@ export class QuickAddComponent extends Component {
                                       document.querySelector('.personalise-modal');
       
       if (personaliseModalContent) {
-        // Collect all personalization input fields
-        const nameInputs = personaliseModalContent.querySelectorAll('input[name="personalise-name"], input[name^="properties["]');
-        nameInputs.forEach((input) => {
+        // Collect all personalization input fields (including text, date, etc.)
+        const allInputs = personaliseModalContent.querySelectorAll('input[name="personalise-name"], input[name^="properties["], input[type="date"], input[type="text"]:not([type="hidden"])');
+        allInputs.forEach((input) => {
+          // Skip hidden inputs and inputs that are part of radio/checkbox groups (handled separately)
+          if (input.type === 'hidden' || input.type === 'radio' || input.type === 'checkbox') {
+            return;
+          }
+          
           const fieldInfo = {
             name: input.name || '',
             type: input.type || 'text',
@@ -1004,11 +1070,45 @@ export class QuickAddComponent extends Component {
             fieldInfo.field_type = 'name3';
           } else if (input.name.includes('Name 4')) {
             fieldInfo.field_type = 'name4';
-          } else if (input.name.includes('Date of Birth')) {
+          } else if (input.name.includes('Date of Birth') || input.type === 'date') {
             fieldInfo.field_type = 'dob';
+            fieldInfo.type = 'date';
             fieldInfo.pattern = input.pattern || '';
           } else if (input.name.includes('School Year')) {
             fieldInfo.field_type = 'school_year';
+          } else if (input.name.includes('Time')) {
+            fieldInfo.field_type = 'time';
+          } else if (input.name.includes('Weight')) {
+            fieldInfo.field_type = 'weight';
+          }
+          
+          personalizationFields.push(fieldInfo);
+        });
+        
+        // Collect all textarea fields
+        const textareas = personaliseModalContent.querySelectorAll('textarea[name^="properties["]');
+        textareas.forEach((textarea) => {
+          const fieldInfo = {
+            name: textarea.name || '',
+            type: 'textarea',
+            maxlength: textarea.maxlength || null,
+            placeholder: textarea.placeholder || '',
+            required: textarea.hasAttribute('required') || textarea.hasAttribute('aria-required'),
+            label: '',
+            rows: textarea.rows || 3
+          };
+          
+          // Try to find the label for this textarea
+          const label = personaliseModalContent.querySelector(`label[for="${textarea.id}"]`) ||
+                        textarea.closest('.personalise-modal__field')?.querySelector('.personalise-modal__label');
+          if (label) {
+            fieldInfo.label = label.textContent?.trim() || '';
+          }
+          
+          if (textarea.name.includes('Personalisation:')) {
+            fieldInfo.field_type = 'textbox';
+          } else if (textarea.name.includes('Message')) {
+            fieldInfo.field_type = 'message';
           }
           
           personalizationFields.push(fieldInfo);
@@ -1070,27 +1170,112 @@ export class QuickAddComponent extends Component {
         }
       }
       
-      if (personalizationFields.length > 0) {
-        productData.personalization_fields = personalizationFields;
+        if (personalizationFields.length > 0) {
+          productData.personalization_fields = personalizationFields;
+        }
+      }
+      
+      // Note: Product tags will be fetched from JSON API when button is created
+      // The personalise modal is not included in quick-add modal content, so we fetch from API
+      productData.product_tags = null;
+    
+    // Collect personalizations from form inputs in the modal (current values)
+    productData.personalizations = null;
+    const personalizations = {};
+    
+    // Collect from personalise modal if it exists in the quick-add modal
+    const personaliseModal = modalContent.querySelector('personalise-dialog') || 
+                             document.querySelector('personalise-dialog');
+    const personaliseModalContent = personaliseModal?.querySelector('.personalise-modal') || 
+                                    modalContent.querySelector('.personalise-modal') ||
+                                    document.querySelector('.personalise-modal');
+    
+    if (personaliseModalContent) {
+      // Collect name input
+      const nameInput = personaliseModalContent.querySelector('input[name="personalise-name"]');
+      if (nameInput && nameInput.value) {
+        personalizations['personalise-name'] = nameInput.value;
+      }
+      
+      // Collect all properties inputs
+      const propertyInputs = personaliseModalContent.querySelectorAll('input[name^="properties["]');
+      propertyInputs.forEach((input) => {
+        if (input.type === 'radio') {
+          if (input.checked && input.value) {
+            const propName = input.name.match(/properties\[(.+)\]/)?.[1];
+            if (propName) {
+              personalizations[`properties[${propName}]`] = input.value;
+            }
+          }
+        } else if (input.type !== 'hidden' && input.value) {
+          const propName = input.name.match(/properties\[(.+)\]/)?.[1];
+          if (propName) {
+            personalizations[`properties[${propName}]`] = input.value;
+          }
+        }
+      });
+      
+      // Collect textareas
+      const propertyTextareas = personaliseModalContent.querySelectorAll('textarea[name^="properties["]');
+      propertyTextareas.forEach((textarea) => {
+        if (textarea.value) {
+          const propName = textarea.name.match(/properties\[(.+)\]/)?.[1];
+          if (propName) {
+            personalizations[`properties[${propName}]`] = textarea.value;
+          }
+        }
+      });
+      
+      // Collect color selection (from radio buttons)
+      const colorRadio = personaliseModalContent.querySelector('input[name="personalise-color"]:checked, input[type="radio"][name*="color"]:checked');
+      if (colorRadio && colorRadio.value) {
+        personalizations['personalise-color'] = colorRadio.value;
+      }
+      
+      // Collect font selection (from hidden input or button data)
+      const fontInput = personaliseModalContent.querySelector('input[name="personalise-font"], input[type="hidden"][name*="font"]');
+      if (fontInput && fontInput.value) {
+        personalizations['personalise-font'] = fontInput.value;
+      } else {
+        // Try to get from selected font button (uses --selected class, not .active)
+        const selectedFontButton = personaliseModalContent.querySelector('.personalise-modal__font-button--selected, .personalise-modal__font-button[data-font].personalise-modal__font-button--selected');
+        if (selectedFontButton) {
+          const fontValue = selectedFontButton.getAttribute('data-font') || selectedFontButton.textContent?.trim();
+          if (fontValue) {
+            personalizations['personalise-font'] = fontValue;
+          }
+        }
+        // Also check for active class as fallback
+        if (!personalizations['personalise-font']) {
+          const activeFontButton = personaliseModalContent.querySelector('.personalise-modal__font-button.active, [data-font].active');
+          if (activeFontButton) {
+            const fontValue = activeFontButton.getAttribute('data-font') || activeFontButton.textContent?.trim();
+            if (fontValue) {
+              personalizations['personalise-font'] = fontValue;
+            }
+          }
+        }
       }
     }
     
-    // Get personalizations from sessionStorage (if they exist - the actual values filled by user)
-    productData.personalizations = null;
-    if (productId) {
+    // If no personalizations found in modal, try sessionStorage as fallback
+    if (Object.keys(personalizations).length === 0 && productId) {
       const personalisationKey = `personalisation_${String(productId)}`;
       try {
         const personalisationData = sessionStorage.getItem(personalisationKey);
         if (personalisationData) {
           const parsed = JSON.parse(personalisationData);
-          // Check if personalizations exist and have data
           if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-            productData.personalizations = parsed;
+            Object.assign(personalizations, parsed);
           }
         }
       } catch (error) {
-        console.warn('Build Your Set: Error reading personalization data', error);
+        // Silently fail - personalization data not critical
       }
+    }
+    
+    if (Object.keys(personalizations).length > 0) {
+      productData.personalizations = personalizations;
     }
 
     // Get variant options/attributes
@@ -1160,11 +1345,60 @@ export class QuickAddComponent extends Component {
     let customButton = buttonContainer.querySelector('.build-your-set-add-to-session-button');
     
     if (!customButton) {
+      // Get variant ID from form (needed to collect product data)
+      const variantIdInput = form.querySelector('input[name="id"][ref="variantId"]');
+      const variantId = variantIdInput?.value;
+      
+      if (!variantId) {
+        return;
+      }
+      
+      // Collect all product information ONCE when button is created
+      const productData = this.#collectProductInformation(modalContent, productId, variantId);
+      productData.product_id = productId;
+      productData.variant_id = variantId;
+      
+      // Ensure product_url is set - try from product-form-component if not already set
+      if (!productData.product_url) {
+        const productForm = modalContent.querySelector('product-form-component');
+        if (productForm && productForm.dataset.productUrl) {
+          productData.product_url = productForm.dataset.productUrl;
+        } else if (productForm && productForm.dataset.productHandle) {
+          productData.product_url = `/products/${productForm.dataset.productHandle}`;
+          productData.product_handle = productForm.dataset.productHandle;
+        }
+      }
+      
+      // Fetch product tags from JSON API (personalise modal not in quick-add DOM)
+      if (productData.product_url && productData.needs_personalization) {
+        fetch(`${productData.product_url}.json`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.product && data.product.tags) {
+              const tags = Array.isArray(data.product.tags) 
+                ? data.product.tags 
+                : data.product.tags.split(',').map(t => t.trim());
+              productData.product_tags = tags;
+              
+              // Update button data attribute with tags
+                const updatedProductDataJson = JSON.stringify(productData);
+                customButton.setAttribute('data-product-data', updatedProductDataJson);
+              }
+            })
+            .catch(() => {
+              // Silently fail - tags will be fetched when needed
+            });
+      }
+      
+      // Store product data in button data attribute (tags will be updated async)
+      const productDataJson = JSON.stringify(productData);
+      
       // Create custom button with same styling as original
       customButton = document.createElement('button');
       customButton.type = 'button';
       customButton.className = 'button build-your-set-add-to-session-button';
       customButton.setAttribute('data-product-id', productId || '');
+      customButton.setAttribute('data-product-data', productDataJson);
       
       // Get the text from the original button if available
       const originalButton = modalContent.querySelector('button[type="submit"][name="add"]');
@@ -1186,31 +1420,274 @@ export class QuickAddComponent extends Component {
         </span>
       `;
       
-      // Add click handler
-      customButton.addEventListener('click', (e) => {
+      // Add click handler - read from data attribute and collect fresh personalizations
+      customButton.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
         
-        // Get variant ID and quantity from form
-        const variantIdInput = form.querySelector('input[name="id"][ref="variantId"]');
-        const quantityInput = form.querySelector('input[name="quantity"]');
-        
-        const variantId = variantIdInput?.value;
-        const quantity = quantityInput ? Number(quantityInput.value) || 1 : 1;
-        
-        if (!variantId) {
-          console.error('Build Your Set: Variant ID not found');
+        // Get product data from button data attribute
+        let productDataJson = customButton.getAttribute('data-product-data');
+        if (!productDataJson) {
           return;
         }
         
-        // Collect all product information
-        const productData = this.#collectProductInformation(modalContent, productId, variantId);
+        let productData = JSON.parse(productDataJson);
+        const variantId = productData.variant_id;
         
-        // Ensure product_id and variant_id are set (in case they weren't collected)
-        productData.product_id = productId;
-        productData.variant_id = variantId;
+        // Collect fresh personalizations from the modal at click time
+        // Get modal content fresh from DOM (may have changed since button creation)
+        const currentModalContent = document.getElementById('quick-add-modal-content') || modalContent;
+        const personalizations = {};
+        const personaliseModal = currentModalContent.querySelector('personalise-dialog') || 
+                                 document.querySelector('personalise-dialog');
+        const personaliseModalContent = personaliseModal?.querySelector('.personalise-modal') || 
+                                        currentModalContent.querySelector('.personalise-modal') ||
+                                        document.querySelector('.personalise-modal');
         
-        // Store in session storage
+        if (personaliseModalContent) {
+          // Collect name input
+          const nameInput = personaliseModalContent.querySelector('input[name="personalise-name"]');
+          if (nameInput && nameInput.value) {
+            personalizations['personalise-name'] = nameInput.value;
+          }
+          
+          // Collect all properties inputs
+          const propertyInputs = personaliseModalContent.querySelectorAll('input[name^="properties["]');
+          propertyInputs.forEach((input) => {
+            if (input.type === 'radio') {
+              if (input.checked && input.value) {
+                const propName = input.name.match(/properties\[(.+)\]/)?.[1];
+                if (propName) {
+                  personalizations[`properties[${propName}]`] = input.value;
+                }
+              }
+            } else if (input.type !== 'hidden' && input.value) {
+              const propName = input.name.match(/properties\[(.+)\]/)?.[1];
+              if (propName) {
+                personalizations[`properties[${propName}]`] = input.value;
+              }
+            }
+          });
+          
+          // Collect textareas
+          const propertyTextareas = personaliseModalContent.querySelectorAll('textarea[name^="properties["]');
+          propertyTextareas.forEach((textarea) => {
+            if (textarea.value) {
+              const propName = textarea.name.match(/properties\[(.+)\]/)?.[1];
+              if (propName) {
+                personalizations[`properties[${propName}]`] = textarea.value;
+              }
+            }
+          });
+          
+          // Collect color selection (from radio buttons)
+          const colorRadio = personaliseModalContent.querySelector('input[name="personalise-color"]:checked, input[type="radio"][name*="color"]:checked');
+          if (colorRadio && colorRadio.value) {
+            personalizations['personalise-color'] = colorRadio.value;
+          }
+          
+          // Collect font selection - try multiple methods (prioritize button selection as most reliable)
+          let fontValue = null;
+          
+          // Method 1: Try to get from selected font button (uses --selected class) - most reliable
+          const selectedFontButton = personaliseModalContent.querySelector('.personalise-modal__font-button--selected');
+          if (selectedFontButton) {
+            fontValue = selectedFontButton.getAttribute('data-font') || selectedFontButton.textContent?.trim();
+          }
+          
+          // Method 2: Try to get from personalise modal component instance (custom element)
+          if (!fontValue && personaliseModal) {
+            // @ts-ignore - personalise-dialog is a custom element with these properties
+            if (typeof personaliseModal.selectedFont === 'string' && personaliseModal.selectedFont) {
+              fontValue = personaliseModal.selectedFont;
+            // @ts-ignore
+            } else if (personaliseModal.personalisationData && personaliseModal.personalisationData.font) {
+              // @ts-ignore
+              fontValue = personaliseModal.personalisationData.font;
+            }
+          }
+          
+          // Method 3: Try hidden input
+          if (!fontValue) {
+            const fontInput = personaliseModalContent.querySelector('input[name="personalise-font"], input[type="hidden"][name*="font"]');
+            if (fontInput && fontInput.value) {
+              fontValue = fontInput.value;
+            }
+          }
+          
+          // Method 4: Fallback to active class
+          if (!fontValue) {
+            const activeFontButton = personaliseModalContent.querySelector('.personalise-modal__font-button.active, [data-font].active');
+            if (activeFontButton) {
+              fontValue = activeFontButton.getAttribute('data-font') || activeFontButton.textContent?.trim();
+            }
+          }
+          
+          if (fontValue) {
+            personalizations['personalise-font'] = fontValue;
+          }
+        }
+        
+        // Also check the form directly in case personalizations are there
+        if (Object.keys(personalizations).length === 0) {
+          const form = currentModalContent.querySelector('form[data-type="add-to-cart-form"]');
+          if (form) {
+            // Check for personalise-name in form
+            const formNameInput = form.querySelector('input[name="personalise-name"]');
+            if (formNameInput && formNameInput.value) {
+              personalizations['personalise-name'] = formNameInput.value;
+            }
+            
+            // Check for properties in form
+            const formPropertyInputs = form.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
+            formPropertyInputs.forEach((input) => {
+              if (input.type === 'radio') {
+                if (input.checked && input.value) {
+                  const propName = input.name.match(/properties\[(.+)\]/)?.[1];
+                  if (propName) {
+                    personalizations[`properties[${propName}]`] = input.value;
+                  }
+                }
+              } else if (input.type !== 'hidden' && input.value) {
+                const propName = input.name.match(/properties\[(.+)\]/)?.[1];
+                if (propName) {
+                  personalizations[`properties[${propName}]`] = input.value;
+                }
+              }
+            });
+          }
+        }
+        
+        // If personalizations found, update productData
+        if (Object.keys(personalizations).length > 0) {
+          productData.personalizations = personalizations;
+        } else if (!productData.personalizations) {
+          // Fallback to sessionStorage if no personalizations in modal
+          const personalisationKey = `personalisation_${String(productId)}`;
+          try {
+            const personalisationData = sessionStorage.getItem(personalisationKey);
+            if (personalisationData) {
+              const parsed = JSON.parse(personalisationData);
+              if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+                productData.personalizations = parsed;
+              }
+            }
+          } catch (error) {
+            // Silently fail
+          }
+        }
+        
+        // Prepare tag fetching function (will run in background after saving)
+        const fetchTagsAndUpdate = () => {
+          // Try to construct product URL if not available
+          if (!productData.product_url && productData.product_handle) {
+            productData.product_url = `/products/${productData.product_handle}`;
+          }
+          
+          // Also try to get from product-form-component
+          if (!productData.product_url) {
+            const productForm = modalContent.querySelector('product-form-component');
+            if (productForm && productForm.dataset.productUrl) {
+              productData.product_url = productForm.dataset.productUrl;
+            } else if (productForm && productForm.dataset.productHandle) {
+              productData.product_url = `/products/${productForm.dataset.productHandle}`;
+              productData.product_handle = productForm.dataset.productHandle;
+            }
+          }
+          
+          if (productData.needs_personalization && !productData.product_tags) {
+            let tagsUrl = null;
+            
+            // Try to construct URL from available data
+            if (productData.product_url) {
+              // Ensure URL is absolute
+              tagsUrl = productData.product_url;
+              if (!tagsUrl.startsWith('http')) {
+                tagsUrl = new URL(tagsUrl, window.location.origin).toString();
+              }
+            } else if (productData.product_handle) {
+              // Construct from handle
+              tagsUrl = `${window.location.origin}/products/${productData.product_handle}`;
+            } else if (productId) {
+              // Last resort: try to find product card and get handle from there
+              const productCard = document.querySelector(`product-card[data-product-id="${productId}"]`);
+              if (productCard) {
+                const cardLink = productCard.querySelector('a[href*="/products/"]');
+                if (cardLink) {
+                  const urlMatch = cardLink.href.match(/\/products\/([^/?]+)/);
+                  if (urlMatch) {
+                    productData.product_handle = urlMatch[1];
+                    tagsUrl = `${window.location.origin}/products/${productData.product_handle}`;
+                  }
+                }
+              }
+            }
+            
+            if (tagsUrl) {
+              // Remove query parameters and hash before adding .json
+              try {
+                const urlObj = new URL(tagsUrl);
+                // Remove query parameters and hash
+                urlObj.search = '';
+                urlObj.hash = '';
+                // Add .json extension
+                tagsUrl = urlObj.toString() + '.json';
+              } catch (e) {
+                // If URL parsing fails, try simple string manipulation
+                const urlWithoutQuery = tagsUrl.split('?')[0].split('#')[0];
+                tagsUrl = urlWithoutQuery + '.json';
+              }
+              
+              // Fetch tags asynchronously (non-blocking) - no await, runs in background
+              fetch(tagsUrl)
+                .then(response => {
+                  if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                  }
+                  return response.json();
+                })
+                .then(data => {
+                  if (data.product && data.product.tags) {
+                    const tags = Array.isArray(data.product.tags) 
+                      ? data.product.tags 
+                      : data.product.tags.split(',').map(t => t.trim());
+                    
+                    // Update session storage with tags
+                    const storageKey = 'build-your-set-session-cart';
+                    try {
+                      const stored = sessionStorage.getItem(storageKey);
+                      if (stored) {
+                        const sessionCart = JSON.parse(stored);
+                        const existingIndex = sessionCart.findIndex(item => item.variant_id === variantId);
+                        if (existingIndex >= 0) {
+                          sessionCart[existingIndex].product_tags = tags;
+                          sessionStorage.setItem(storageKey, JSON.stringify(sessionCart));
+                          // Update button attribute with tags for future clicks
+                          productData.product_tags = tags;
+                          customButton.setAttribute('data-product-data', JSON.stringify(productData));
+                          // Dispatch event to update sticky bar
+                          document.dispatchEvent(new CustomEvent('build-your-set-updated', {
+                            bubbles: true,
+                            cancelable: true,
+                            detail: { productCount: sessionCart.length }
+                          }));
+                        }
+                      }
+                    } catch (error) {
+                      // Silently fail
+                    }
+                  }
+                })
+                .catch(() => {
+                  // Silently fail - tags will be fetched when needed
+                });
+            }
+          }
+        };
+        
+        // Get quantity from form
+        const quantityInput = form.querySelector('input[name="quantity"]');
+        const quantity = quantityInput ? Number(quantityInput.value) || 1 : 1;
         const storageKey = 'build-your-set-session-cart';
         let sessionCart = [];
         try {
@@ -1219,7 +1696,6 @@ export class QuickAddComponent extends Component {
             sessionCart = JSON.parse(stored);
           }
         } catch (error) {
-          console.error('Build Your Set: Error reading session storage', error);
           sessionCart = [];
         }
         
@@ -1240,7 +1716,7 @@ export class QuickAddComponent extends Component {
           const newProduct = {
             ...productData,
             variant_id: variantId,
-            product_id: productId,
+            product_id: productData.product_id,
             quantity: quantity,
             added_at: Date.now()
           };
@@ -1249,19 +1725,16 @@ export class QuickAddComponent extends Component {
         
         try {
           sessionStorage.setItem(storageKey, JSON.stringify(sessionCart));
-          console.log('Build Your Set: Product added to session', {
-            product_id: productId,
-            variant_id: variantId,
-            needs_personalization: productData.needs_personalization,
-            has_personalizations: !!productData.personalizations
-          });
           
-          // Dispatch event to update sticky bar
+          // Dispatch event to update sticky bar immediately
           document.dispatchEvent(new CustomEvent('build-your-set-updated', {
             bubbles: true,
             cancelable: true,
             detail: { productCount: sessionCart.length }
           }));
+          
+          // Fetch tags in background (non-blocking) and update session when ready
+          fetchTagsAndUpdate();
           
           // Close the modal
           const quickAddDialog = document.getElementById('quick-add-dialog');
@@ -1269,7 +1742,7 @@ export class QuickAddComponent extends Component {
             quickAddDialog.closeDialog();
           }
         } catch (error) {
-          console.error('Build Your Set: Error saving to session storage', error);
+          // Silently fail - error handling not critical for UX
         }
       });
       

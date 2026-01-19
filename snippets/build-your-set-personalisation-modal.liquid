@@ -58,10 +58,18 @@
         <div class="personalise-modal__actions">
           <button
             type="button"
-            class="button button--primary personalise-modal__save-button"
+            class="personalise-modal__save-button button button--primary"
             ref="saveButton"
           >
-            Save Personalisation
+            SAVE PERSONALISATION
+          </button>
+          <button
+            type="button"
+            data-personalise-close="true"
+            class="personalise-modal__cancel-button button button-unstyled"
+            ref="cancelButton"
+          >
+            CANCEL
           </button>
         </div>
       </div>
@@ -195,6 +203,115 @@
     margin-bottom: 20px;
   }
 
+  /* Name Tabs Styles */
+  .personalise-name-tabs {
+    margin-bottom: var(--margin-lg);
+  }
+
+  .personalise-name-tabs__tablist {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #D0D0D0;
+    margin-bottom: var(--margin-lg);
+    justify-content: space-between;
+  }
+
+  .personalise-name-tabs__tab {
+    position: relative;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 6px 20px;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    color: #999999;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--padding-xs);
+    transition: all 0.2s ease;
+  }
+
+  .personalise-name-tabs__tab:hover {
+    color: #333333;
+  }
+
+  .personalise-name-tabs__tab.is-active {
+    color: #001D4A;
+    border-bottom-color: #001D4A;
+    font-weight: 500;
+  }
+
+  .personalise-name-tabs__tab-text {
+    line-height: 1.5;
+  }
+
+  .personalise-name-tabs__panels {
+    position: relative;
+  }
+
+  .personalise-name-tabs__panel {
+    display: none;
+  }
+
+  .personalise-name-tabs__panel.is-active {
+    display: block;
+  }
+
+  .personalise-name-tabs__panel-title {
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    color: #001D4A;
+    margin-bottom: var(--margin-md);
+    line-height: 1.5;
+  }
+
+  .personalise-name-tabs__input-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .personalise-name-tabs__input {
+    width: 100%;
+    padding: var(--padding-md);
+    border: 1px solid #D0D0D0;
+    border-radius: 0;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    background-color: #FFFFFF;
+    color: var(--color-foreground);
+    transition: border-color 0.2s ease;
+    line-height: 156%;
+  }
+
+  .personalise-name-tabs__input:focus {
+    outline: none;
+    border-color: #7295BB;
+  }
+
+  .personalise-name-tabs__input::placeholder {
+    color: #999999;
+  }
+
+  .personalise-name-tabs__counter {
+    margin-top: var(--padding-xs);
+    text-align: right;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 156%;
+    color: #7295BB;
+  }
+
+  .personalise-modal__info-text {
+    font-size: var(--font-size--sm);
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    margin-top: var(--padding-xs);
+  }
+
   .personalise-modal__field {
     margin-bottom: 20px;
   }
@@ -230,12 +347,145 @@
   }
 
   .personalise-modal__actions {
-    margin-top: auto;
-    padding-top: 20px;
+    display: flex;
+    gap: var(--gap-md);
+    margin-block-start: auto;
+    padding-block-start: var(--padding-xl);
   }
 
   .personalise-modal__save-button {
+    flex: 1;
+    background-color: #7295BB;
+    color: #ffffff;
+    border: none;
+    padding: var(--padding-md) var(--padding-lg);
+    border-radius: 0;
+    font-weight: 500;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .personalise-modal__save-button:hover:not(:disabled) {
+    background-color: #5a7a9a;
+  }
+
+  .personalise-modal__save-button:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+  }
+
+  .personalise-modal__cancel-button {
+    flex: 0 0 auto;
+    background-color: transparent;
+    border: 1px solid #7295BB;
+    color: #7295BB;
+    padding: var(--padding-md) var(--padding-lg);
+    border-radius: 0;
+    font-weight: 500;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .personalise-modal__cancel-button:hover {
+    border-color: #5a7a9a;
+    color: #5a7a9a;
+  }
+
+  .personalise-modal__color-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-block-start: var(--margin-sm);
+    flex-direction: row !important;
+  }
+
+  .personalise-modal__color-button {
+    padding: 2px;
+    border: none;
+    border-radius: 0;
+    overflow: hidden;
+    position: relative;
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    min-height: 64px;
+    flex: 0 0 auto;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .personalise-modal__color-button:hover {
+    outline: none;
+    border-color: transparent !important;
+    background-color: transparent !important;
+  }
+
+  .personalise-modal__color-button:has(:checked) {
+    border: 1px solid #7295BB;
+    outline: none;
+  }
+
+  .personalise-modal__color-button:has(:checked):hover {
+    border-color: #7295BB !important;
+    background-color: transparent !important;
+  }
+
+  .personalise-modal__color-button input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: pointer;
     width: 100%;
+    height: 100%;
+  }
+
+  .personalise-modal__color-button .variant-option__image-thumbnail {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border-radius: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .personalise-modal__color-button .swatch {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: var(--swatch-background);
+    border-radius: var(--variant-picker-swatch-radius, 0);
+  }
+
+  .personalise-modal__color-button:has(:focus-visible) {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  .personalise-modal__font-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .personalise-modal__font-button {
+    padding: 10px;
+    border: 1px solid var(--color-input-border);
+    border-radius: var(--style-border-radius-inputs);
+    background-color: var(--color-background);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+
+  .personalise-modal__font-button:hover {
+    background-color: var(--color-input-hover-background);
   }
 
   @media screen and (max-width: 749px) {
