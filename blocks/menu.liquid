@@ -132,6 +132,17 @@
     display: none;
   }
 
+  /* Footer menus should always use chevron icons (not plus) */
+  footer .menu--accordion .icon-plus,
+  .footer-content .menu--accordion .icon-plus {
+    display: none !important;
+  }
+
+  footer .menu--accordion .icon-caret,
+  .footer-content .menu--accordion .icon-caret {
+    display: inline-flex !important;
+  }
+
   /* Footer menu specific styles */
   footer .menu__heading,
   .footer-content .menu__heading {
@@ -193,6 +204,17 @@
     footer .menu--accordion .details-content,
     .footer-content .menu--accordion .details-content {
       margin-block-start: 3px;
+    }
+
+    /* Footer should only show chevron icons, not plus icons */
+    footer .menu--accordion .icon-plus,
+    .footer-content .menu--accordion .icon-plus {
+      display: none !important;
+    }
+
+    footer .menu--accordion .icon-caret,
+    .footer-content .menu--accordion .icon-caret {
+      display: inline-flex;
     }
   }
 {% endstylesheet %}
