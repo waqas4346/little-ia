@@ -82,9 +82,15 @@
   if has_baby_name or has_kid_name or has_mum_name
     assign show_name_tabs = true
   endif
+  
+  # Generate unique ID based on context
+  assign modal_id = 'personalise-dialog'
+  if context == 'cart-drawer'
+    assign modal_id = 'personalise-dialog-cart'
+  endif
 %}
 
-<personalise-dialog id="personalise-dialog">
+<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}">
   <dialog
     class="personalise-modal dialog-modal"
     ref="dialog"

@@ -323,7 +323,7 @@
   {%- endif -%}
   
   {%- comment -%} Personalise Modal {%- endcomment -%}
-  {% render 'personalise-modal', product: product, variant: variant %}
+  {% render 'personalise-modal', product: product, variant: variant, context: 'product-page' %}
   
   <script src="{{ 'personalise-modal.js' | asset_url }}" type="module"></script>
   <script>
@@ -346,9 +346,14 @@
             const maxAttempts = 40; // Increased for slower mobile devices
             
             try {
-              // Check if dialog element exists in DOM
-              const dialog = document.getElementById('personalise-dialog') || 
-                            document.querySelector('personalise-dialog');
+              // Check if dialog element exists in DOM - look for product page modal specifically
+              let dialog = document.getElementById('personalise-dialog');
+              
+              // If not found by ID, search for product page context
+              if (!dialog) {
+                dialog = document.querySelector('personalise-dialog[data-context="product-page"]') ||
+                         document.querySelector('personalise-dialog:not([data-context="cart-drawer"])');
+              }
               
               if (dialog) {
                 // Check if custom element class is defined
