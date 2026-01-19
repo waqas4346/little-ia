@@ -158,7 +158,7 @@
               {%- endif -%}
             {%- endfor -%}
             {%- if first_item_with_personalization -%}
-              {% render 'personalise-modal', product: first_item_with_personalization.product, variant: first_item_with_personalization.variant %}
+              {% render 'personalise-modal', product: first_item_with_personalization.product, variant: first_item_with_personalization.variant, context: 'cart-drawer' %}
               <script src="{{ 'personalise-modal.js' | asset_url }}" type="module"></script>
             {%- endif -%}
           {%- endif -%}

@@ -15,6 +15,9 @@
     <button class="build-your-set-sticky-bar__button build-your-set-sticky-bar__button--start-over" ref="startOverButton" type="button">
       Start Over
     </button>
+    <button class="build-your-set-sticky-bar__button build-your-set-sticky-bar__button--personalise-all" ref="personaliseAllButton" type="button">
+      Personalise All
+    </button>
     <button class="build-your-set-sticky-bar__button build-your-set-sticky-bar__button--add-all" ref="addAllButton" type="button">
       <span class="build-your-set-sticky-bar__button-text">Add All to Cart</span>
       <span class="build-your-set-sticky-bar__total-price" ref="totalPrice"></span>
@@ -31,7 +34,7 @@
     background: #FFFFFF;
     border-top: 1px solid #D0D0D0;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-    z-index: var(--layer-floating);
+    z-index: var(--layer-window-overlay);
     padding: 16px 20px;
     max-height: 50vh;
     display: none !important; /* Hidden by default, shown only when items are in session */
@@ -101,6 +104,42 @@
     background: #FFFFFF;
   }
 
+  .build-your-set-sticky-bar__product-remove {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 1px solid #D0D0D0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    padding: 0;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .build-your-set-sticky-bar__product-remove:hover {
+    background: #F5F5F5;
+    border-color: #1D425A;
+    transform: scale(1.1);
+  }
+
+  .build-your-set-sticky-bar__product-remove:active {
+    transform: scale(0.95);
+  }
+
+  .build-your-set-sticky-bar__product-remove-icon {
+    width: 12px;
+    height: 12px;
+    color: #1D425A;
+    pointer-events: none;
+  }
+
   .build-your-set-sticky-bar__product-image {
     width: 100%;
     height: 100px;
@@ -136,6 +175,28 @@
     color: #7295BB;
   }
 
+  .build-your-set-sticky-bar__product-add-personalisation {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 10px;
+    line-height: 140%;
+    color: #7295BB;
+    background: transparent;
+    border: 1px solid #7295BB;
+    padding: 4px 8px;
+    margin-top: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    width: 100%;
+  }
+
+  .build-your-set-sticky-bar__product-add-personalisation:hover {
+    background: #7295BB;
+    color: #FFFFFF;
+  }
+
   .build-your-set-sticky-bar__product-personalisation {
     font-family: 'Outfit', sans-serif;
     font-style: normal;
@@ -144,11 +205,42 @@
     line-height: 140%;
     color: #777777;
     margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .build-your-set-sticky-bar__personalisation-text {
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+  }
+
+  .build-your-set-sticky-bar__product-edit-personalisation {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border-radius: 2px;
+  }
+
+  .build-your-set-sticky-bar__product-edit-personalisation:hover {
+    background: #F5F5F5;
+  }
+
+  .build-your-set-sticky-bar__product-edit-personalisation svg {
+    width: 14px;
+    height: 14px;
   }
 
   .build-your-set-sticky-bar__actions {
@@ -157,6 +249,7 @@
     flex-shrink: 0;
     padding-top: 8px;
     border-top: 1px solid #E0E0E0;
+    justify-content: center;
   }
 
   .build-your-set-sticky-bar__button {
@@ -180,14 +273,19 @@
     color: #FFFFFF;
   }
 
+  .build-your-set-sticky-bar__button--personalise-all {
+    flex: 0 0 auto;
+  }
+
   .build-your-set-sticky-bar__button--add-all {
-    flex: 1;
+    flex: 0 0 auto;
     background: #7295BB;
     color: #FFFFFF;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    min-width: fit-content;
   }
 
   .build-your-set-sticky-bar__button--add-all:hover {

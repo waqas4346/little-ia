@@ -1,0 +1,522 @@
+{%- doc -%}
+  Renders a personalisation modal specifically for Build Your Set feature.
+  This is a simplified version that works independently with product data from session storage.
+{%- enddoc -%}
+
+<build-your-set-personalise-dialog id="build-your-set-personalise-dialog" hidden>
+  <dialog
+    class="personalise-modal dialog-modal"
+    ref="dialog"
+    scroll-lock
+  >
+    <button
+      ref="closeButton"
+      data-personalise-close="true"
+      class="button button-unstyled close-button personalise-modal__close"
+      aria-label="{{ 'accessibility.close_dialog' | t }}"
+    >
+      {{- 'icon-close.svg' | inline_asset_content -}}
+    </button>
+
+    <div class="personalise-modal__content">
+      <!-- Left Section: Product Preview (40%) -->
+      <div class="personalise-modal__preview">
+        <img
+          ref="productImage"
+          src=""
+          alt=""
+          class="personalise-modal__preview-image"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        >
+        <div class="personalise-modal__preview-placeholder" ref="productPlaceholder" style="display: none;">
+          <span ref="productTitle"></span>
+        </div>
+      </div>
+
+      <!-- Right Section: Personalisation Form (60%) -->
+      <div class="personalise-modal__form">
+        <h2 class="personalise-modal__title">
+          <span class="personalise-modal__title-icon">
+            <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+              <rect width="17" height="17" fill="url(#pattern0_860_36427)"/>
+              <defs>
+              <pattern id="pattern0_860_36427" patternContentUnits="objectBoundingBox" width="1" height="1">
+              <use xlink:href="#image0_860_36427" transform="scale(0.00195312)"/>
+              </pattern>
+              <image id="image0_860_36427" width="512" height="512" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAQAElEQVR4AezdC3Bc133f8XMXJCWSIkCRAAmSoB61FNt62KmVZJLUznTGDmk7sTJ95dFJk0zapp1pHKczSe24j9id1I7bZFI77nSazjRNPJ0m7bRNY2ecyrVkObFUS9a0TV152mpaSlhSIhZ8YKFHRAJ7ey6AJYHFPu4995xzzzn/r2YvAezee885n/8d/X+7WAAtxX8IIIAAAgggIE6AACCu5CwYAQQQQAABpQgAXAUIIIAAAggIFCAACCw6S0YAAQQQkC1QrJ4AUCiwIYAAAgggIEyAACCs4CwXAQQQQEC6wOb6CQCbDvyLAAIIIICAKAECgKhys1gEEEAAAekC/fUTAPoSfEQAAQQQQECQAAFAULFZKgIIIICAdIFb6ycA3LTgMwQQQAABBMQIEADElJqFIoAAAghIF9i+fgLAdg0+RwABBBAwErjrrrtu3X904dTMsdNvmJk98dChoyffdPjEiTtnZ994yOiEHORcgADgnJgBEEAAgbQEjhw5Mj09e+p7ZmYX/tHM7OkvTB9beP7yK2uv7m2pdp7nz+XZ1NeyVusbvbWpc9eyV7ozcwvLenvi0LGFX5s+duovHTlyaiEtkVhWs3OeBICdHnyFAAIIIDBE4Pjx4wd1o//h6bmFz69NHbiksuxzeaZ+Js/yd6lc3aEPyfQ29JYrdVRv35Hl6q+qPPvNtals8dDcwn+fObbwtwgDQ8m83EkA8MLMIAgggECcArfNz8/pxv+R13p7F1WuPqNX8W697dFbrZtOC2/Jc/UJHQaen55b+Oz00YVvq3VCDp4oMLgDAWBQhK8RQAABBFTxjF8/S//41Pqe53Xj/3lNcrveXNyKPvS9qqW+Oj278Dszx+74Ey4G4Zy7BQr43fdyDwIIIICAWIFDs6cffi3f+6x+lv4h/dL9fm8Qmfo+lfe+roPA31Pqob3exhUx0O5FEgB2m3APAgggIFPgnntu0S/HfzLL8t9Rm9/X9+6QK7VfZeqj03MXv8KrAW75CQBufTk7AgggEIXA7Ozpk9Mrrz+hJ/tTetNP/vW/zd6+Nc97X5s5dvJdzU4jjdGHrYIAMEyF+xBAAAFBAsUz7WtZ/rhS+dsCW/btuWr93vTs6R8MbF5JTIcAkEQZWQQCCCBgJnDw+MKD+pn2k/roe/QW3i1X+1SW/6uZ2VN/LbzJxTKj4fMkAAx34V4EEEAgeYHbjt755qmeekQv9JjeQr618iz7p9Nzp/9GyJOMbW4EgNgqxnwRQAABCwyFEQAAAABJRU5ErkJggg=="/>
+              </defs>
+            </svg>
+          </span>
+          <span>Personalise Your Product</span>
+        </h2>
+
+        <div ref="formContainer">
+          <!-- Form fields will be dynamically generated here -->
+        </div>
+
+        <div class="personalise-modal__actions">
+          <button
+            type="button"
+            class="personalise-modal__save-button button button--primary"
+            ref="saveButton"
+          >
+            SAVE PERSONALISATION
+          </button>
+          <button
+            type="button"
+            data-personalise-close="true"
+            class="personalise-modal__cancel-button button button-unstyled"
+            ref="cancelButton"
+          >
+            CANCEL
+          </button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</build-your-set-personalise-dialog>
+
+{% stylesheet %}
+  build-your-set-personalise-dialog {
+    display: block;
+  }
+
+  build-your-set-personalise-dialog[hidden] {
+    display: none !important;
+  }
+
+  .personalise-modal {
+    padding: 20px;
+    border: var(--style-border-popover);
+    max-width: 90vw;
+    width: 79.86vw;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 5px 30px rgb(0 0 0 / var(--opacity-15));
+    background-color: var(--color-background);
+  }
+
+  @media screen and (min-width: 1440px) {
+    .personalise-modal {
+      width: 1150px;
+    }
+  }
+
+  @media screen and (max-width: 1439px) {
+    .personalise-modal {
+      width: 79.86vw;
+    }
+  }
+
+  .personalise-modal[open] {
+    display: flex;
+    flex-direction: column;
+    animation: modalSlideInTop var(--animation-speed) var(--animation-easing) forwards;
+  }
+
+  .personalise-modal.dialog-closing {
+    animation: modalSlideOutTop var(--animation-speed) var(--animation-easing) forwards;
+  }
+
+  .personalise-modal__close {
+    position: absolute;
+    top: var(--margin-md);
+    right: var(--margin-md);
+    z-index: var(--layer-raised);
+    transition: transform 0.15s var(--animation-timing-bounce);
+  }
+
+  .personalise-modal__close:active {
+    transform: scale(0.8);
+  }
+
+  .personalise-modal__content {
+    display: flex;
+    height: 100%;
+    min-height: 500px;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .personalise-modal__preview {
+    flex: 0 0 45.65%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
+    position: relative;
+    overflow: hidden;
+  }
+
+  @media screen and (min-width: 1440px) {
+    .personalise-modal__preview {
+      flex: 0 0 525px;
+    }
+  }
+
+  .personalise-modal__preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .personalise-modal__preview-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-50));
+  }
+
+  .personalise-modal__form {
+    flex: 0 0 46.09%;
+    display: flex;
+    flex-direction: column;
+    padding-left: 20px;
+    overflow-y: auto;
+  }
+
+  @media screen and (min-width: 1440px) {
+    .personalise-modal__form {
+      flex: 0 0 530px;
+    }
+  }
+
+  .personalise-modal__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .personalise-modal__instructions {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 156%;
+    color: #777777;
+    margin: 0;
+    margin-top: 6px;
+    margin-bottom: 20px;
+  }
+
+  /* Name Tabs Styles */
+  .personalise-name-tabs {
+    margin-bottom: var(--margin-lg);
+  }
+
+  .personalise-name-tabs__tablist {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid #D0D0D0;
+    margin-bottom: var(--margin-lg);
+    justify-content: space-between;
+  }
+
+  .personalise-name-tabs__tab {
+    position: relative;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 6px 20px;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    color: #999999;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--padding-xs);
+    transition: all 0.2s ease;
+  }
+
+  .personalise-name-tabs__tab:hover {
+    color: #333333;
+  }
+
+  .personalise-name-tabs__tab.is-active {
+    color: #001D4A;
+    border-bottom-color: #001D4A;
+    font-weight: 500;
+  }
+
+  .personalise-name-tabs__tab-text {
+    line-height: 1.5;
+  }
+
+  .personalise-name-tabs__panels {
+    position: relative;
+  }
+
+  .personalise-name-tabs__panel {
+    display: none;
+  }
+
+  .personalise-name-tabs__panel.is-active {
+    display: block;
+  }
+
+  .personalise-name-tabs__panel-title {
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    color: #001D4A;
+    margin-bottom: var(--margin-md);
+    line-height: 1.5;
+  }
+
+  .personalise-name-tabs__input-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .personalise-name-tabs__input {
+    width: 100%;
+    padding: var(--padding-md);
+    border: 1px solid #D0D0D0;
+    border-radius: 0;
+    font-size: 14px;
+    font-family: 'Outfit', sans-serif;
+    background-color: #FFFFFF;
+    color: var(--color-foreground);
+    transition: border-color 0.2s ease;
+    line-height: 156%;
+  }
+
+  .personalise-name-tabs__input:focus {
+    outline: none;
+    border-color: #7295BB;
+  }
+
+  .personalise-name-tabs__input::placeholder {
+    color: #999999;
+  }
+
+  .personalise-name-tabs__counter {
+    margin-top: var(--padding-xs);
+    text-align: right;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 156%;
+    color: #7295BB;
+  }
+
+  .personalise-modal__info-text {
+    font-size: var(--font-size--sm);
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    margin-top: var(--padding-xs);
+  }
+
+  .personalise-modal__field {
+    margin-bottom: 20px;
+  }
+
+  .personalise-modal__label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .personalise-modal__input-wrapper {
+    position: relative;
+  }
+
+  .personalise-modal__input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--color-input-border);
+    border-radius: var(--style-border-radius-inputs);
+  }
+
+  .personalise-modal__input--textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  .personalise-modal__counter {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    font-size: 12px;
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-60));
+  }
+
+  .personalise-modal__actions {
+    display: flex;
+    gap: var(--gap-md);
+    margin-block-start: auto;
+    padding-block-start: var(--padding-xl);
+  }
+
+  .personalise-modal__save-button {
+    flex: 1;
+    background-color: #7295BB;
+    color: #ffffff;
+    border: none;
+    padding: var(--padding-md) var(--padding-lg);
+    border-radius: 0;
+    font-weight: 500;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .personalise-modal__save-button:hover:not(:disabled) {
+    background-color: #5a7a9a;
+  }
+
+  .personalise-modal__save-button:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+  }
+
+  .personalise-modal__cancel-button {
+    flex: 0 0 auto;
+    background-color: transparent;
+    border: 1px solid #7295BB;
+    color: #7295BB;
+    padding: var(--padding-md) var(--padding-lg);
+    border-radius: 0;
+    font-weight: 500;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .personalise-modal__cancel-button:hover {
+    border-color: #5a7a9a;
+    color: #5a7a9a;
+  }
+
+  .personalise-modal__color-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-block-start: var(--margin-sm);
+    flex-direction: row !important;
+  }
+
+  .personalise-modal__color-button {
+    padding: 2px;
+    border: none;
+    border-radius: 0;
+    overflow: hidden;
+    position: relative;
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    min-height: 64px;
+    flex: 0 0 auto;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .personalise-modal__color-button:hover {
+    outline: none;
+    border-color: transparent !important;
+    background-color: transparent !important;
+  }
+
+  .personalise-modal__color-button:has(:checked) {
+    border: 1px solid #7295BB;
+    outline: none;
+  }
+
+  .personalise-modal__color-button:has(:checked):hover {
+    border-color: #7295BB !important;
+    background-color: transparent !important;
+  }
+
+  .personalise-modal__color-button input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .personalise-modal__color-button .variant-option__image-thumbnail {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border-radius: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .personalise-modal__color-button .swatch {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: var(--swatch-background);
+    border-radius: var(--variant-picker-swatch-radius, 0);
+  }
+
+  .personalise-modal__color-button:has(:focus-visible) {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  .personalise-modal__font-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .personalise-modal__font-button {
+    padding: 10px;
+    border: 1px solid var(--color-input-border);
+    border-radius: var(--style-border-radius-inputs);
+    background-color: var(--color-background);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+
+  .personalise-modal__font-button:hover {
+    background-color: var(--color-input-hover-background);
+  }
+
+  @media screen and (max-width: 749px) {
+    .personalise-modal {
+      width: 100%;
+      max-width: 100vw;
+      max-height: 100vh;
+      border-radius: 0;
+      min-height: unset;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: 0;
+    }
+
+    .personalise-modal__content {
+      flex-direction: column;
+      min-height: unset;
+    }
+
+    .personalise-modal__preview {
+      flex: 0 0 40%;
+    }
+
+    .personalise-modal__form {
+      flex: 1;
+      padding-left: 0;
+      padding-top: 20px;
+    }
+  }
+{% endstylesheet %}

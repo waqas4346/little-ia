@@ -1074,39 +1074,38 @@
         const key = `personalisation_${productId}`;
         sessionStorage.setItem(key, JSON.stringify(personalisationData));
         
-        // Find and open the personalisation modal
+        // Find and open the personalisation modal - look for cart drawer modal specifically
         function tryOpenModal(attempts) {
           attempts = attempts || 0;
           const maxAttempts = 50;
           
           try {
-            // Try multiple selectors to find the modal
-            let dialog = document.getElementById('personalise-dialog');
-            if (!dialog) {
-              dialog = document.querySelector('personalise-dialog');
-            }
-            // Also check inside cart drawer - search more thoroughly
+            // First, try to find the cart drawer modal specifically by ID
+            let dialog = document.getElementById('personalise-dialog-cart');
+            
+            // If not found by ID, search inside cart drawer component
             if (!dialog) {
               const cartDrawer = document.querySelector('cart-drawer-component');
               if (cartDrawer) {
-                // Search inside the cart drawer dialog
-                const drawerDialog = cartDrawer.querySelector('dialog');
-                if (drawerDialog) {
-                  dialog = drawerDialog.querySelector('personalise-dialog') || 
-                           drawerDialog.querySelector('#personalise-dialog');
-                }
-                // Also check in the entire cart drawer component
+                // Search for modal with cart-drawer context attribute
+                dialog = cartDrawer.querySelector('personalise-dialog[data-context="cart-drawer"]') ||
+                         cartDrawer.querySelector('#personalise-dialog-cart');
+                
+                // Also check inside the cart drawer dialog
                 if (!dialog) {
-                  dialog = cartDrawer.querySelector('personalise-dialog') || 
-                           cartDrawer.querySelector('#personalise-dialog');
+                  const drawerDialog = cartDrawer.querySelector('dialog');
+                  if (drawerDialog) {
+                    dialog = drawerDialog.querySelector('personalise-dialog[data-context="cart-drawer"]') || 
+                             drawerDialog.querySelector('#personalise-dialog-cart');
+                  }
                 }
               }
             }
-            // Check globally in document
+            
+            // Fallback: search globally for cart drawer modal
             if (!dialog) {
-              dialog = document.querySelector('body > personalise-dialog') ||
-                       document.querySelector('main personalise-dialog') ||
-                       document.querySelector('personalise-dialog');
+              dialog = document.querySelector('personalise-dialog[data-context="cart-drawer"]') ||
+                       document.querySelector('#personalise-dialog-cart');
             }
             
             if (dialog) {
