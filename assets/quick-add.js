@@ -934,33 +934,34 @@ export class QuickAddComponent extends Component {
       }
     }
 
-    // Get price information - get regular price (not discounted)
+    // Get price information - get actual selling price (the price that will be added to cart)
     const priceElement = modalContent.querySelector('product-price');
     if (priceElement) {
-      // First try to get compare_at_price (regular price if on sale)
-      const compareAtPriceElement = priceElement.querySelector('.compare-at-price');
-      if (compareAtPriceElement) {
-        productData.price = compareAtPriceElement.textContent?.trim() || '';
-        // Try to get numeric price value from compare_at_price
-        const priceMatch = productData.price.match(/[\d,]+\.?\d*/);
-        if (priceMatch) {
-          productData.price_value = parseFloat(priceMatch[0].replace(/,/g, ''));
-        }
+      // Get the actual selling price (current price, not compare-at-price)
+      // The selling price is the price without .compare-at-price class
+      const sellingPriceElement = priceElement.querySelector('.price:not(.compare-at-price), .price-snippet .price:not(.compare-at-price)');
+      if (sellingPriceElement) {
+        productData.price = sellingPriceElement.textContent?.trim() || '';
       } else {
-        // No compare_at_price, so current price is the regular price
-        const priceValue = priceElement.querySelector('.price:not(.compare-at-price), .price-snippet .price');
-        if (priceValue) {
-          productData.price = priceValue.textContent?.trim() || '';
-        } else {
-          const priceText = priceElement.textContent?.trim() || '';
-          productData.price = priceText;
+        // Fallback: get all price text and extract the selling price
+        const allPrices = priceElement.querySelectorAll('.price');
+        // Find the price that's not compare-at-price
+        for (const priceEl of allPrices) {
+          if (!priceEl.classList.contains('compare-at-price')) {
+            productData.price = priceEl.textContent?.trim() || '';
+            break;
+          }
         }
-        
-        // Try to get numeric price value
-        const priceMatch = productData.price.match(/[\d,]+\.?\d*/);
-        if (priceMatch) {
-          productData.price_value = parseFloat(priceMatch[0].replace(/,/g, ''));
+        // If still no price, get all text content
+        if (!productData.price) {
+          productData.price = priceElement.textContent?.trim() || '';
         }
+      }
+      
+      // Try to get numeric price value from selling price
+      const priceMatch = productData.price.match(/[\d,]+\.?\d*/);
+      if (priceMatch) {
+        productData.price_value = parseFloat(priceMatch[0].replace(/,/g, ''));
       }
     }
 
@@ -1403,12 +1404,7 @@ export class QuickAddComponent extends Component {
       // Get the text from the original button if available
       const originalButton = modalContent.querySelector('button[type="submit"][name="add"]');
       let buttonText = 'Add to Set';
-      if (originalButton) {
-        const textElement = originalButton.querySelector('.add-to-cart-text, .add-to-cart-text__content');
-        if (textElement) {
-          buttonText = textElement.textContent.trim() || 'Add to Set';
-        }
-      }
+    
       
       customButton.innerHTML = `
         <span class="add-to-cart-text">
@@ -1432,11 +1428,51 @@ export class QuickAddComponent extends Component {
         }
         
         let productData = JSON.parse(productDataJson);
-        const variantId = productData.variant_id;
         
-        // Collect fresh personalizations from the modal at click time
         // Get modal content fresh from DOM (may have changed since button creation)
         const currentModalContent = document.getElementById('quick-add-modal-content') || modalContent;
+        
+        // Get fresh variant ID from form at click time (user may have changed variant)
+        const currentForm = currentModalContent.querySelector('form[data-type="add-to-cart-form"]');
+        let variantId = productData.variant_id;
+        if (currentForm) {
+          const variantIdInput = currentForm.querySelector('input[name="id"][ref="variantId"]');
+          if (variantIdInput && variantIdInput.value) {
+            variantId = variantIdInput.value;
+            // Update variant ID in product data
+            productData.variant_id = variantId;
+          }
+        }
+        
+        // Collect fresh price information at click time (may have changed with variant)
+        const currentPriceElement = currentModalContent.querySelector('product-price');
+        if (currentPriceElement) {
+          // Get the actual selling price (current price, not compare-at-price)
+          const sellingPriceElement = currentPriceElement.querySelector('.price:not(.compare-at-price), .price-snippet .price:not(.compare-at-price)');
+          if (sellingPriceElement) {
+            productData.price = sellingPriceElement.textContent?.trim() || '';
+          } else {
+            // Fallback: get all price text and extract the selling price
+            const allPrices = currentPriceElement.querySelectorAll('.price');
+            for (const priceEl of allPrices) {
+              if (!priceEl.classList.contains('compare-at-price')) {
+                productData.price = priceEl.textContent?.trim() || '';
+                break;
+              }
+            }
+            if (!productData.price) {
+              productData.price = currentPriceElement.textContent?.trim() || '';
+            }
+          }
+          
+          // Update numeric price value
+          const priceMatch = productData.price.match(/[\d,]+\.?\d*/);
+          if (priceMatch) {
+            productData.price_value = parseFloat(priceMatch[0].replace(/,/g, ''));
+          }
+        }
+        
+        // Collect fresh personalizations from the modal at click time
         const personalizations = {};
         const personaliseModal = currentModalContent.querySelector('personalise-dialog') || 
                                  document.querySelector('personalise-dialog');
@@ -1699,25 +1735,25 @@ export class QuickAddComponent extends Component {
           sessionCart = [];
         }
         
-        // Check if variant already exists, update quantity, otherwise add new
+        // Check if variant already exists - if exists, update product data but keep quantity at 1
+        // If not exists, add new product with quantity 1
         const existingIndex = sessionCart.findIndex(item => item.variant_id === variantId);
         
         if (existingIndex >= 0) {
-          // Update quantity and refresh product data
-          sessionCart[existingIndex].quantity += quantity;
-          // Update product data in case it changed (e.g., personalizations)
+          // Product already exists - update product data but keep quantity at 1 (single quantity only)
           sessionCart[existingIndex] = {
             ...sessionCart[existingIndex],
             ...productData,
-            quantity: sessionCart[existingIndex].quantity
+            quantity: 1, // Always keep quantity at 1, don't increment
+            variant_id: variantId
           };
         } else {
-          // Add new product to session cart
+          // Add new product to session cart with quantity 1
           const newProduct = {
             ...productData,
             variant_id: variantId,
             product_id: productData.product_id,
-            quantity: quantity,
+            quantity: 1, // Single quantity only
             added_at: Date.now()
           };
           sessionCart.push(newProduct);

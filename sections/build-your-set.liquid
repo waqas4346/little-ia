@@ -116,7 +116,7 @@
     {% endif %}
 
     {% comment %} Product grids for each collection {% endcomment %}
-    <div class="build-your-set-products-wrapper" data-products-wrapper>
+    <div class="build-your-set-products-wrapper" data-products-wrapper data-show-view-product-button="{{ section.settings.show_view_product_button }}">
       {% for block in section.blocks %}
         {% liquid
           assign collection = block.settings.collection
@@ -124,35 +124,44 @@
           assign is_first = forloop.first
         %}
         {% if collection != blank and collection.products_count > 0 %}
-          <div
-            class="build-your-set-product-grid-wrapper {% unless is_first %}hidden{% endunless %}"
-            data-collection-id="{{ collection.id }}"
-            data-block-id="{{ block_id }}"
-            data-collection-handle="{{ collection.handle }}"
-            {% unless is_first %}style="display: none;"{% endunless %}
-          >
-            {% capture list_items %}
-              {% for product in collection.products %}
-                <li class="product-grid__item" data-product-id="{{ product.id }}" data-product-handle="{{ product.handle }}" data-collection-handle="{{ collection.handle }}">
-                  {% comment %} Product card will be loaded via JavaScript {% endcomment %}
-                  <div style="min-height: 300px; display: flex; align-items: center; justify-content: center; padding: 2rem;">
-                    <span style="opacity: 0.5;">Loading product...</span>
-                  </div>
-                </li>
-              {% endfor %}
-            {% endcapture %}
-
-            <ul
-              class="product-grid product-grid--{{ section.id }} product-grid--{{ section.settings.layout_type }}"
-              data-testid="build-your-set-product-grid"
-              product-grid-view="default"
-              role="list"
-              data-product-card-size="{{ section.settings.product_card_size }}"
-              style="--mobile-columns: {% if section.settings.mobile_product_card_size == 'large' %}1{% else %}2{% endif %};"
+          {% paginate collection.products by 24 %}
+            <div
+              class="build-your-set-product-grid-wrapper {% unless is_first %}hidden{% endunless %}"
+              data-collection-id="{{ collection.id }}"
+              data-block-id="{{ block_id }}"
+              data-collection-handle="{{ collection.handle }}"
+              {% unless is_first %}style="display: none;"{% endunless %}
             >
-              {{ list_items }}
-            </ul>
-          </div>
+              {% capture list_items %}
+                {% for product in collection.products %}
+                  <li class="product-grid__item" data-product-id="{{ product.id }}" data-product-handle="{{ product.handle }}" data-collection-handle="{{ collection.handle }}" data-page="{{ paginate.current_page }}">
+                    {% comment %} Product card will be loaded via JavaScript {% endcomment %}
+                    <div style="min-height: 300px; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+                      <span style="opacity: 0.5;">Loading product...</span>
+                    </div>
+                  </li>
+                {% endfor %}
+              {% endcapture %}
+
+              <ul
+                class="product-grid product-grid--{{ section.id }} product-grid--{{ section.settings.layout_type }}"
+                data-testid="build-your-set-product-grid"
+                product-grid-view="default"
+                role="list"
+                data-product-card-size="{{ section.settings.product_card_size }}"
+                style="--mobile-columns: {% if section.settings.mobile_product_card_size == 'large' %}1{% else %}2{% endif %};"
+              >
+                {{ list_items }}
+              </ul>
+              
+              {% comment %} Pagination controls {% endcomment %}
+              {% if paginate.pages > 1 %}
+                <div class="build-your-set-pagination-wrapper" data-pagination-wrapper data-collection-handle="{{ collection.handle }}">
+                  {% render 'pagination-controls', paginate: paginate, on_click_handler: 'handleBuildYourSetPagination' %}
+                </div>
+              {% endif %}
+            </div>
+          {% endpaginate %}
         {% endif %}
       {% endfor %}
     </div>
@@ -507,6 +516,47 @@
     }
   }
 
+  /* When show_view_product_button is false: Show quick add on hover, hide product-card-actions */
+  /* Set CSS variable to ensure quick add is displayed */
+  .build-your-set-products-wrapper[data-show-view-product-button="false"] product-card[data-build-your-set="true"] {
+    --quick-add-display: flex !important;
+    --quick-add-mobile-display: flex !important;
+    --quick-add-mobile-opacity: 1 !important;
+  }
+
+  .build-your-set-products-wrapper[data-show-view-product-button="false"] product-card[data-build-your-set="true"] .quick-add__button {
+    display: flex !important;
+  }
+
+  .build-your-set-products-wrapper[data-show-view-product-button="false"] product-card[data-build-your-set="true"]:is(:hover, :focus-within) .quick-add__button {
+    opacity: 1 !important;
+    pointer-events: all !important;
+    visibility: visible !important;
+    display: flex !important;
+  }
+
+  .build-your-set-products-wrapper[data-show-view-product-button="false"] product-card[data-build-your-set="true"] .product-card-actions {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .build-your-set-products-wrapper[data-show-view-product-button="false"] product-card[data-build-your-set="true"]:is(:hover, :focus-within) .product-card-actions,
+  .build-your-set-products-wrapper[data-show-view-product-button="false"] product-card[data-build-your-set="true"]:is(:hover, :focus-within) .product-card-actions__view-product-button,
+  .build-your-set-products-wrapper[data-show-view-product-button="false"] product-card[data-build-your-set="true"]:is(:hover, :focus-within) .product-card-actions__quick-add-wrapper {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+  }
+
+  /* When show_view_product_button is true: Hide quick add, show product-card-actions (collection page behavior) */
+  .build-your-set-products-wrapper[data-show-view-product-button="true"] product-card[data-build-your-set="true"]:is(:hover, :focus-within) .quick-add__button {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
   @media screen and (min-width: 750px) {
     .build-your-set-header {
       margin-bottom: 24px;
@@ -632,6 +682,133 @@
       }
     }
 
+    // Handle pagination clicks for Build Your Set
+    window.handleBuildYourSetPagination = function(eventOrParams) {
+      // Parse params - could be an event object or params string from URL
+      let page = '1';
+      if (typeof eventOrParams === 'string') {
+        // URL search params string (e.g., "page=2")
+        const urlParams = new URLSearchParams(eventOrParams);
+        page = urlParams.get('page') || '1';
+      } else if (eventOrParams && typeof eventOrParams === 'object') {
+        // Params object or event
+        if (eventOrParams.preventDefault) {
+          // It's an event, prevent default
+          eventOrParams.preventDefault();
+          // Try to get page from href or dataset
+          const target = eventOrParams.currentTarget || eventOrParams.target;
+          if (target && target.href) {
+            const url = new URL(target.href);
+            page = url.searchParams.get('page') || '1';
+          }
+        } else {
+          // It's a params object
+          page = eventOrParams.page || '1';
+        }
+      }
+      
+      // Find the active product grid wrapper
+      const activeWrapper = section.querySelector('.build-your-set-product-grid-wrapper:not(.hidden)');
+      if (!activeWrapper) return;
+      
+      const collectionHandle = activeWrapper.dataset.collectionHandle;
+      if (!collectionHandle) return;
+      
+      // Construct URL for the paginated collection page
+      const url = page === '1' 
+        ? `/collections/${collectionHandle}` 
+        : `/collections/${collectionHandle}?page=${page}`;
+      
+      // Fetch the collection page with pagination
+      fetch(url)
+        .then(function(response) {
+          return response.text();
+        })
+        .then(function(html) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          
+          // Find the build-your-set section in the fetched HTML
+          const fetchedSection = doc.querySelector('[data-testid="build-your-set"]');
+          if (!fetchedSection) return;
+          
+          // Find the product grid wrapper for this collection in the fetched HTML
+          const fetchedWrapper = Array.from(fetchedSection.querySelectorAll('.build-your-set-product-grid-wrapper')).find(function(w) {
+            return w.dataset.collectionHandle === collectionHandle;
+          });
+          
+          if (!fetchedWrapper) return;
+          
+          // Get the product grid and pagination from fetched content
+          const fetchedProductGrid = fetchedWrapper.querySelector('.product-grid');
+          const fetchedPagination = fetchedWrapper.querySelector('.build-your-set-pagination-wrapper');
+          
+          if (!fetchedProductGrid) return;
+          
+          // Update the current product grid
+          const currentProductGrid = activeWrapper.querySelector('.product-grid');
+          if (currentProductGrid) {
+            currentProductGrid.innerHTML = fetchedProductGrid.innerHTML;
+          }
+          
+          // Update pagination
+          const currentPaginationWrapper = activeWrapper.querySelector('.build-your-set-pagination-wrapper');
+          if (fetchedPagination) {
+            if (currentPaginationWrapper) {
+              currentPaginationWrapper.innerHTML = fetchedPagination.innerHTML;
+            } else {
+              activeWrapper.insertAdjacentHTML('beforeend', fetchedPagination.outerHTML);
+            }
+          } else if (currentPaginationWrapper) {
+            // No pagination in fetched content (last page), remove it
+            currentPaginationWrapper.remove();
+          }
+          
+          // Reload product cards for the new page
+          loadProductCards(activeWrapper);
+          
+          // Scroll to top of product grid
+          activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        })
+        .catch(function(error) {
+          console.error('Error loading paginated products:', error);
+        });
+      
+      return false; // Prevent default link behavior
+    };
+    
+    // Also attach click listeners to pagination links as fallback
+    function setupPaginationClickListeners() {
+      const paginationLinks = section.querySelectorAll('.build-your-set-pagination-wrapper a.pagination__link');
+      paginationLinks.forEach(function(link) {
+        // Remove existing listener if any
+        const newLink = link.cloneNode(true);
+        link.parentNode.replaceChild(newLink, link);
+        
+        // Add click listener
+        newLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          const href = newLink.href;
+          if (href) {
+            const url = new URL(href);
+            const page = url.searchParams.get('page') || '1';
+            window.handleBuildYourSetPagination({ page: page });
+          }
+        });
+      });
+    }
+    
+    // Setup pagination listeners after initial load
+    setTimeout(setupPaginationClickListeners, 100);
+    
+    // Re-setup pagination listeners when pagination is updated
+    const originalLoadProductCards = loadProductCards;
+    loadProductCards = function(wrapper) {
+      const result = originalLoadProductCards(wrapper);
+      setTimeout(setupPaginationClickListeners, 200);
+      return result;
+    };
+    
     // Function to load product cards from collection page
     function loadProductCards(wrapper) {
       const productItems = wrapper.querySelectorAll('.product-grid__item[data-product-handle]');
@@ -655,10 +832,19 @@
 
       if (productHandles.length === 0) {
         // All products already loaded, just set attributes
+        const productsWrapper = section.querySelector('[data-products-wrapper]');
+        const showViewProductButton = productsWrapper?.dataset.showViewProductButton === 'true';
+        
         const productCards = wrapper.querySelectorAll('product-card, product-card-link');
         productCards.forEach(function(card) {
-          card.setAttribute('data-collection-page', 'true');
+          // Don't set data-collection-page - it hides quick add on hover
           card.setAttribute('data-build-your-set', 'true');
+          // Set data-view-product-button-setting based on section setting
+          if (showViewProductButton) {
+            card.setAttribute('data-view-product-button-setting', 'true');
+          } else {
+            card.removeAttribute('data-view-product-button-setting');
+          }
         });
         return;
       }
@@ -732,11 +918,21 @@
                 if (skuComponent) {
                   skuComponent.remove();
                 }
-                // Ensure data-collection-page and data-build-your-set attributes are set
+                // Ensure data-build-your-set attribute is set (NOT data-collection-page - it hides quick add)
                 const productCard = clonedCard.querySelector('product-card, product-card-link');
                 if (productCard) {
-                  productCard.setAttribute('data-collection-page', 'true');
+                  const productsWrapper = section.querySelector('[data-products-wrapper]');
+                  const showViewProductButton = productsWrapper?.dataset.showViewProductButton === 'true';
+                  
                   productCard.setAttribute('data-build-your-set', 'true');
+                  // Remove data-collection-page if present - it hides quick add on hover
+                  productCard.removeAttribute('data-collection-page');
+                  // Set data-view-product-button-setting based on section setting
+                  if (showViewProductButton) {
+                    productCard.setAttribute('data-view-product-button-setting', 'true');
+                  } else {
+                    productCard.removeAttribute('data-view-product-button-setting');
+                  }
                 }
                 item.element.innerHTML = clonedCard.innerHTML;
                 return Promise.resolve();
@@ -847,8 +1043,19 @@
                 skuComponent.remove();
               }
               
-              productCard.setAttribute('data-collection-page', 'true');
+              const productsWrapper = section.querySelector('[data-products-wrapper]');
+              const showViewProductButton = productsWrapper?.dataset.showViewProductButton === 'true';
+              
+              // Don't set data-collection-page - it hides quick add on hover
               productCard.setAttribute('data-build-your-set', 'true');
+              // Remove data-collection-page if present
+              productCard.removeAttribute('data-collection-page');
+              // Set data-view-product-button-setting based on section setting
+              if (showViewProductButton) {
+                productCard.setAttribute('data-view-product-button-setting', 'true');
+              } else {
+                productCard.removeAttribute('data-view-product-button-setting');
+              }
               
               // Get the outerHTML including wrapper if present
               const wrapper = productCard.parentElement;
@@ -939,8 +1146,19 @@
               const clonedCard = productCard.cloneNode(true);
               const productCardElement = clonedCard.querySelector('product-card, product-card-link');
               if (productCardElement) {
-                productCardElement.setAttribute('data-collection-page', 'true');
+                const productsWrapper = section.querySelector('[data-products-wrapper]');
+                const showViewProductButton = productsWrapper?.dataset.showViewProductButton === 'true';
+                
+                // Don't set data-collection-page - it hides quick add on hover
                 productCardElement.setAttribute('data-build-your-set', 'true');
+                // Remove data-collection-page if present
+                productCardElement.removeAttribute('data-collection-page');
+                // Set data-view-product-button-setting based on section setting
+                if (showViewProductButton) {
+                  productCardElement.setAttribute('data-view-product-button-setting', 'true');
+                } else {
+                  productCardElement.removeAttribute('data-view-product-button-setting');
+                }
               }
               
               // Remove SKU
@@ -1196,6 +1414,13 @@
     {
       "type": "header",
       "content": "Product Grid Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_product_button",
+      "label": "Show View Product Button",
+      "default": false,
+      "info": "When enabled, shows the View Product button and + icon on hover (collection page behavior). When disabled, shows the quick add button on hover."
     },
     {
       "type": "select",

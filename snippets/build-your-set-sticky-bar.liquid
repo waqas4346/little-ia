@@ -34,7 +34,7 @@
     background: #FFFFFF;
     border-top: 1px solid #D0D0D0;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-    z-index: var(--layer-floating);
+    z-index: var(--layer-window-overlay);
     padding: 16px 20px;
     max-height: 50vh;
     display: none !important; /* Hidden by default, shown only when items are in session */
@@ -184,7 +184,6 @@
     color: #7295BB;
     background: transparent;
     border: 1px solid #7295BB;
-    border-radius: 4px;
     padding: 4px 8px;
     margin-top: 4px;
     cursor: pointer;
@@ -250,6 +249,7 @@
     flex-shrink: 0;
     padding-top: 8px;
     border-top: 1px solid #E0E0E0;
+    justify-content: center;
   }
 
   .build-your-set-sticky-bar__button {
@@ -278,13 +278,14 @@
   }
 
   .build-your-set-sticky-bar__button--add-all {
-    flex: 1;
+    flex: 0 0 auto;
     background: #7295BB;
     color: #FFFFFF;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    min-width: fit-content;
   }
 
   .build-your-set-sticky-bar__button--add-all:hover {

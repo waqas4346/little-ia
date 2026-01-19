@@ -505,11 +505,63 @@ export class BuildYourSetStickyBarComponent extends Component {
 
   /**
    * Handles "Personalise All" button click
-   * Placeholder - functionality to be implemented later
+   * Opens personalization modal with union of all product tags
    */
-  handlePersonaliseAll() {
-    // TODO: Implement personalise all functionality
-    console.log('Build Your Set: Personalise All clicked');
+  async handlePersonaliseAll() {
+    const sessionCart = this.getSessionCart();
+    if (!sessionCart || sessionCart.length === 0) {
+      console.warn('Build Your Set: No products in bundle to personalise');
+      return;
+    }
+
+    // Collect all products that need personalization
+    const productsNeedingPersonalization = sessionCart.filter(item => item.needs_personalization === true);
+    if (productsNeedingPersonalization.length === 0) {
+      console.warn('Build Your Set: No products in bundle need personalization');
+      return;
+    }
+
+    // Collect union of all product tags
+    const allTagsSet = new Set();
+    productsNeedingPersonalization.forEach(product => {
+      if (product.product_tags && Array.isArray(product.product_tags)) {
+        product.product_tags.forEach(tag => allTagsSet.add(tag));
+      }
+    });
+    const unionTags = Array.from(allTagsSet);
+
+    if (unionTags.length === 0) {
+      console.warn('Build Your Set: No tags found in products');
+      return;
+    }
+
+    // Find the personalization dialog
+    let personaliseDialogElement = document.getElementById('build-your-set-personalise-dialog');
+    if (!personaliseDialogElement) {
+      personaliseDialogElement = document.querySelector('build-your-set-personalise-dialog');
+    }
+    
+    if (!personaliseDialogElement) {
+      console.error('Build Your Set: Personalization dialog element not found');
+      return;
+    }
+
+    // Wait for custom element to be defined
+    await customElements.whenDefined('build-your-set-personalise-dialog');
+    
+    const personaliseDialog = /** @type {any} */ (personaliseDialogElement);
+    
+    // Wait for component to initialize
+    if (!personaliseDialog.refs || !personaliseDialog.refs.dialog) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    // Open dialog with all products mode
+    if (typeof personaliseDialog.openForAllProducts === 'function') {
+      personaliseDialog.openForAllProducts(productsNeedingPersonalization, unionTags);
+    } else {
+      console.error('Build Your Set: openForAllProducts method not found on dialog');
+    }
   }
 
   /**

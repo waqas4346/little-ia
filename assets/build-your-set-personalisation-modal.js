@@ -15,6 +15,10 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     this.productData = null;
     this.productIndex = null;
     this.personalisationData = {};
+    this.isAllProductsMode = false;
+    this.allProducts = [];
+    this.unionTags = [];
+    this._savedScrollPosition = 0; // Store scroll position before opening modal
     
     console.log('Build Your Set: Personalization dialog component connected', {
       hasDialog: !!this.refs.dialog,
@@ -28,10 +32,71 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
   }
 
   /**
-   * Opens the dialog with product data
-   * @param {Object} productData - Product data from session storage
-   * @param {number} index - Index of product in session cart
+   * Opens the modal for personalizing all products at once
+   * @param {Array} products - Array of all products that need personalization
+   * @param {Array} unionTags - Union of all product tags
    */
+  async openForAllProducts(products, unionTags) {
+    if (!products || products.length === 0) {
+      console.error('Build Your Set: No products provided for personalise all');
+      return;
+    }
+
+    this.isAllProductsMode = true;
+    this.allProducts = products;
+    this.unionTags = unionTags || [];
+    this.productData = null; // Not a single product
+    this.productIndex = null; // Not a single product index
+
+    // Collect existing personalizations from all products (merge common values)
+    this.personalisationData = {};
+    products.forEach(product => {
+      if (product.personalizations) {
+        Object.keys(product.personalizations).forEach(key => {
+          const value = product.personalizations[key];
+          // If multiple products have the same value, use it; otherwise keep first non-empty
+          if (value && value.toString().trim()) {
+            if (!this.personalisationData[key] || this.personalisationData[key] === value) {
+              this.personalisationData[key] = value;
+            }
+          }
+        });
+      }
+    });
+
+    // Remove hidden attribute from parent element
+    if (this.hasAttribute('hidden')) {
+      this.removeAttribute('hidden');
+    }
+
+    // Ensure refs are available
+    if (!this.refs) {
+      setTimeout(() => this.openForAllProducts(products, unionTags), 100);
+      return;
+    }
+
+    // Set a generic title/image for "all products" mode
+    if (this.refs.productImage) {
+      this.refs.productImage.style.display = 'none';
+      if (this.refs.productPlaceholder && this.refs.productTitle) {
+        this.refs.productTitle.textContent = `Personalise All Products (${products.length} items)`;
+        this.refs.productPlaceholder.style.display = 'flex';
+      }
+    }
+
+    // Open the dialog first for immediate visual feedback
+    this.showDialog();
+    
+    // Generate form fields based on union tags
+    requestAnimationFrame(() => {
+      if (this.unionTags && this.unionTags.length > 0) {
+        this.generateFormFieldsFromTags(this.unionTags, []);
+      } else {
+        this.refs.formContainer.innerHTML = '<p>No personalization options available for these products.</p>';
+      }
+    });
+  }
+
   async openWithProduct(productData, index) {
     console.log('Build Your Set: openWithProduct called', { productData, index });
     
@@ -40,6 +105,9 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
       return;
     }
     
+    this.isAllProductsMode = false;
+    this.allProducts = [];
+    this.unionTags = [];
     this.productData = productData;
     this.productIndex = index;
     
@@ -840,44 +908,170 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
    * Handles save button click
    */
   handleSave() {
-    if (!this.productData || this.productIndex === null) {
-      console.error('Build Your Set: Missing product data or index');
-      return;
-    }
-
     // Collect personalization data
     const personalisations = this.collectPersonalisationData();
 
-    // Update product data in session storage
-    const sessionCart = this.getSessionCart();
-    if (sessionCart && sessionCart[this.productIndex]) {
-      sessionCart[this.productIndex].personalizations = personalisations;
-      
-      // Save back to session storage
-      try {
-        sessionStorage.setItem('build-your-set-session-cart', JSON.stringify(sessionCart));
-        
-        // Dispatch event to update sticky bar
-        document.dispatchEvent(new CustomEvent('build-your-set-updated', {
-          bubbles: true,
-          cancelable: true
-        }));
+    if (this.isAllProductsMode) {
+      // Save personalizations to all products that support the fields
+      const sessionCart = this.getSessionCart();
+      if (!sessionCart) {
+        console.error('Build Your Set: Session cart not found');
+        return;
+      }
 
-        // Dispatch personalisation saved event
-        document.dispatchEvent(new CustomEvent('personalisation-saved', {
-          bubbles: true,
-          cancelable: true,
-          detail: {
-            productId: this.productData.product_id,
-            index: this.productIndex,
-            personalisations: personalisations
+      // Apply personalizations to each product based on its tags
+      let updated = false;
+      this.allProducts.forEach(product => {
+        // Find the product in session cart by variant_id
+        const productIndex = sessionCart.findIndex(item => item.variant_id === product.variant_id);
+        if (productIndex >= 0) {
+          // Only apply personalizations that are relevant to this product's tags
+          const productPersonalizations = {};
+          const productTags = product.product_tags || [];
+          const tagsLowercase = productTags.map(t => String(t).toLowerCase());
+
+          // Check each personalization field and see if this product supports it
+          Object.keys(personalisations).forEach(key => {
+            const value = personalisations[key];
+            if (value && value.toString().trim()) {
+              // Determine if this field is relevant to this product
+              let isRelevant = false;
+
+              // Name field
+              if (key === 'personalise-name' && (tagsLowercase.includes('personalized_name') || tagsLowercase.includes('cust_personalized'))) {
+                isRelevant = true;
+              }
+              // Color field
+              else if (key === 'personalise-color' && tagsLowercase.some(t => t.includes('personalized_textcolor'))) {
+                isRelevant = true;
+              }
+              // Font field
+              else if (key === 'personalise-font' && tagsLowercase.some(t => t.includes('font_'))) {
+                isRelevant = true;
+              }
+              // Date of Birth
+              else if (key === 'properties[Date of Birth]' && tagsLowercase.some(t => t.includes('personalized_dob'))) {
+                isRelevant = true;
+              }
+              // Textbox
+              else if (key === 'properties[Personalisation:]' && tagsLowercase.some(t => t.includes('personalise_textbox'))) {
+                isRelevant = true;
+              }
+              // Baby/Kid/Mum names
+              else if (key === "properties[Baby's Name]" && tagsLowercase.includes('baby_name')) {
+                isRelevant = true;
+              }
+              else if (key === "properties[Kid's Name]" && tagsLowercase.includes('kid_name')) {
+                isRelevant = true;
+              }
+              else if (key === "properties[Mum's Name]" && tagsLowercase.includes('mum_name')) {
+                isRelevant = true;
+              }
+              // Name 1-4
+              else if (key === 'properties[Name 1]' && tagsLowercase.includes('name1')) {
+                isRelevant = true;
+              }
+              else if (key === 'properties[Name 2]' && tagsLowercase.includes('name2')) {
+                isRelevant = true;
+              }
+              else if (key === 'properties[Name 3]' && tagsLowercase.includes('name3')) {
+                isRelevant = true;
+              }
+              else if (key === 'properties[Name 4]' && tagsLowercase.includes('name4')) {
+                isRelevant = true;
+              }
+              // School Year
+              else if (key === 'properties[School Year]' && tagsLowercase.includes('school_year')) {
+                isRelevant = true;
+              }
+              // Message
+              else if (key === 'properties[Message]' && tagsLowercase.includes('create_20')) {
+                isRelevant = true;
+              }
+              // Optional fields
+              else if ((key === 'optionalDob' || key === 'properties[Time]' || key === 'properties[Weight]') && tagsLowercase.includes('optional_fields')) {
+                isRelevant = true;
+              }
+
+              if (isRelevant) {
+                productPersonalizations[key] = value;
+              }
+            }
+          });
+
+          // Update product personalizations
+          if (Object.keys(productPersonalizations).length > 0) {
+            sessionCart[productIndex].personalizations = {
+              ...(sessionCart[productIndex].personalizations || {}),
+              ...productPersonalizations
+            };
+            updated = true;
           }
-        }));
+        }
+      });
 
-        // Close the dialog
-        this.hideDialog();
-      } catch (error) {
-        console.error('Build Your Set: Error saving personalization', error);
+      if (updated) {
+        try {
+          sessionStorage.setItem('build-your-set-session-cart', JSON.stringify(sessionCart));
+          
+          // Dispatch event to update sticky bar
+          document.dispatchEvent(new CustomEvent('build-your-set-updated', {
+            bubbles: true,
+            cancelable: true
+          }));
+
+          // Dispatch personalisation saved event for each product
+          this.allProducts.forEach((product) => {
+            document.dispatchEvent(new CustomEvent('personalisation-saved', {
+              bubbles: true,
+              cancelable: true
+            }));
+          });
+
+          // Hide dialog
+          this.hideDialog();
+        } catch (error) {
+          console.error('Build Your Set: Error saving personalizations to all products:', error);
+        }
+      }
+    } else {
+      // Single product mode (existing behavior)
+      if (!this.productData || this.productIndex === null) {
+        console.error('Build Your Set: Missing product data or index');
+        return;
+      }
+
+      // Update product data in session storage
+      const sessionCart = this.getSessionCart();
+      if (sessionCart && sessionCart[this.productIndex]) {
+        sessionCart[this.productIndex].personalizations = personalisations;
+        
+        // Save back to session storage
+        try {
+          sessionStorage.setItem('build-your-set-session-cart', JSON.stringify(sessionCart));
+          
+          // Dispatch event to update sticky bar
+          document.dispatchEvent(new CustomEvent('build-your-set-updated', {
+            bubbles: true,
+            cancelable: true
+          }));
+
+          // Dispatch personalisation saved event
+          document.dispatchEvent(new CustomEvent('personalisation-saved', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+              productId: this.productData.product_id,
+              index: this.productIndex,
+              personalisations: personalisations
+            }
+          }));
+
+          // Close the dialog
+          this.hideDialog();
+        } catch (error) {
+          console.error('Build Your Set: Error saving personalization', error);
+        }
       }
     }
   }
@@ -923,13 +1117,14 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
       dialog.style.opacity = '';
     }
 
-    const scrollY = window.scrollY;
+    // Save current scroll position before opening modal
+    this._savedScrollPosition = window.scrollY || window.pageYOffset || 0;
 
     requestAnimationFrame(() => {
       try {
         document.body.style.width = '100%';
         document.body.style.position = 'fixed';
-        document.body.style.top = `-${scrollY}px`;
+        document.body.style.top = `-${this._savedScrollPosition}px`;
 
         console.log('Build Your Set: Opening dialog modal');
         dialog.showModal();
@@ -988,14 +1183,24 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     const { dialog } = this.refs;
     if (!dialog || !dialog.open) return;
 
-    const scrollY = document.body.style.top;
+    // Restore scroll position smoothly without causing jump
+    const savedScrollPosition = this._savedScrollPosition || 0;
+    
     dialog.close();
     this.dispatchEvent(new DialogCloseEvent());
 
+    // Restore body styles
     document.body.style.width = '';
     document.body.style.position = '';
     document.body.style.top = '';
-    window.scrollTo(0, parseInt(scrollY || '0') * -1);
+    
+    // Restore scroll position without animation to prevent visible scrolling
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: savedScrollPosition,
+        behavior: 'instant' // Use 'instant' to prevent smooth scrolling
+      });
+    });
     
     // Add hidden attribute back to parent element
     this.setAttribute('hidden', '');
