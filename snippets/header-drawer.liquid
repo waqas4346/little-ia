@@ -688,24 +688,73 @@
         class="menu-drawer__utility-links menu-drawer__animated-element"
         style="--menu-drawer-animation-index: {{ linklist.links.size }};"
       >
-        {% liquid
-          assign show_language = section.settings.show_language
-          if localization.available_languages.size <= 1
-            assign show_language = false
-          endif
+        {% if data_header_drawer_type == 'mobile-drawer' %}
+          {% comment %} Utility Links {% endcomment %}
+          {% if section.settings.utility_link_1_text != blank or section.settings.utility_link_2_text != blank or section.settings.utility_link_3_text != blank %}
+            <div class="menu-drawer__utility-links-list">
+              {% if section.settings.utility_link_1_text != blank %}
+                <a href="{{ section.settings.utility_link_1_url }}" class="menu-drawer__utility-link">
+                  {{ section.settings.utility_link_1_text }}
+                </a>
+              {% endif %}
+              {% if section.settings.utility_link_2_text != blank %}
+                <a href="{{ section.settings.utility_link_2_url }}" class="menu-drawer__utility-link">
+                  {{ section.settings.utility_link_2_text }}
+                </a>
+              {% endif %}
+              {% if section.settings.utility_link_3_text != blank %}
+                <a href="{{ section.settings.utility_link_3_url }}" class="menu-drawer__utility-link">
+                  {{ section.settings.utility_link_3_text }}
+                </a>
+              {% endif %}
+            </div>
+          {% endif %}
 
-          assign show_country = section.settings.show_country
-          if localization.available_countries.size <= 1
-            assign show_country = false
-          endif
-        %}
-        {% if data_header_drawer_type == 'mobile-drawer' and show_country or show_language %}
-          {% render 'drawer-localization',
-            show_country: show_country,
-            show_language: show_language,
-            country_style: section.settings.country_selector_style
+          {% comment %} Login/Signup Button {% endcomment %}
+          {% liquid
+            assign show_login_btn = section.settings.show_login_button
+            if show_login_btn == blank
+              assign show_login_btn = true
+            endif
           %}
-        {%- endif -%}
+          {% if show_login_btn and shop.customer_accounts_enabled %}
+            {% unless customer %}
+              <a
+                href="{% if request.design_mode %}{{ routes.account_url }}{% else %}{{ routes.storefront_login_url }}{% endif %}"
+                class="menu-drawer__login-button button"
+              >
+                <span class="menu-drawer__login-icon">
+                  <img
+                    src="{{ 'login-signup-white.png' | asset_url }}"
+                    alt=""
+                    aria-hidden="true"
+                  >
+                </span>
+                {{ 'actions.log_in' | t }} / {{ 'actions.sign_up' | t }}
+              </a>
+            {% endunless %}
+          {% endif %}
+
+          {% comment %} Localization {% endcomment %}
+          {% liquid
+            assign show_language = section.settings.show_language
+            if localization.available_languages.size <= 1
+              assign show_language = false
+            endif
+
+            assign show_country = section.settings.show_country
+            if localization.available_countries.size <= 1
+              assign show_country = false
+            endif
+          %}
+          {% if show_country or show_language %}
+            {% render 'drawer-localization',
+              show_country: show_country,
+              show_language: show_language,
+              country_style: section.settings.country_selector_style
+            %}
+          {% endif %}
+        {% endif %}
       </div>
 
       {% liquid
@@ -1316,10 +1365,58 @@
   .menu-drawer__utility-links {
     display: flex;
     flex-direction: column;
-    padding: 0;
+    gap: 24px;
+    padding: var(--padding-md) var(--padding-xl);
     margin-block: auto var(--padding-sm);
-    margin-inline-start: var(--padding-xl);
+    margin-inline-start: 0;
     background-color: rgb(var(--color-foreground) 0.03);
+    margin-bottom: 18px;
+  }
+
+  .menu-drawer__utility-links-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: #F8F3ED;
+    padding: 8px;
+    border-radius: 8px;
+  }
+
+  .menu-drawer__utility-link {
+    color: var(--color-foreground);
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 100%;
+    padding: 14px 0;
+    border-bottom: 0.5px solid #00000026;
+    transition: opacity var(--animation-speed) var(--animation-easing);
+  }
+
+  .menu-drawer__utility-links-list .menu-drawer__utility-link:last-child {
+    border-bottom: 0;
+  }
+
+  .menu-drawer__utility-link:hover {
+    opacity: var(--opacity-subdued-text);
+  }
+
+  .menu-drawer__login-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .menu-drawer__login-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .menu-drawer__login-icon img {
+    display: block;
+    width: 16px;
+    height: 16px;
   }
 
   .menu-drawer__account {

@@ -114,6 +114,8 @@
               {% render 'cart-products', drawer_context: 'drawer' %}
             </scroll-hint>
 
+            {% render 'cart-drawer-recommendations' %}
+
             <div
               class="cart-drawer__summary"
             >
@@ -122,6 +124,39 @@
               </div>
             </div>
           </div>
+          
+          {%- comment -%} Personalise Modal for cart editing {%- endcomment -%}
+          {%- if cart.items.size > 0 -%}
+            {%- assign first_item_with_personalization = null -%}
+            {%- for item in cart.items -%}
+              {%- liquid
+                assign has_personalization = false
+                assign personalization_keys = "Name,Name 1,Name 2,Name 3,Name 4,Baby's Name,Kid's Name,Mum's Name,Date of Birth,Personalise Date of Birth,Text Color,Text Font,School Year,Personalisation:,Message,Time,Weight" | split: ','
+                for property in item.properties
+                  assign property_first_char = property.first | slice: 0
+                  if property.last != blank and property_first_char != '_'
+                    for key in personalization_keys
+                      if property.first == key
+                        assign has_personalization = true
+                        break
+                      endif
+                    endfor
+                  endif
+                  if has_personalization
+                    break
+                  endif
+                endfor
+              -%}
+              {%- if has_personalization and first_item_with_personalization == null -%}
+                {%- assign first_item_with_personalization = item -%}
+                {%- break -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- if first_item_with_personalization -%}
+              {% render 'personalise-modal', product: first_item_with_personalization.product, variant: first_item_with_personalization.variant %}
+              <script src="{{ 'personalise-modal.js' | asset_url }}" type="module"></script>
+            {%- endif -%}
+          {%- endif -%}
         {%- endif -%}
       </cart-items-component>
     </div>

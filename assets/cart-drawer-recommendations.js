@@ -1,0 +1,1017 @@
+/**
+ * A custom element that manages product recommendations in the cart drawer.
+ * Tries complementary products first, then falls back to related products.
+ */
+
+class CartDrawerRecommendations extends HTMLElement {
+  /**
+   * The observer for the recommendations
+   * @type {IntersectionObserver}
+   */
+  #intersectionObserver = new IntersectionObserver(
+    (entries, observer) => {
+      if (!entries[0]?.isIntersecting) return;
+
+      observer.disconnect();
+      // Only load if not already loaded (avoid duplicate loads)
+      if (!this.#recommendationsLoaded) {
+        this.#loadRecommendations();
+      }
+    },
+    { rootMargin: '0px 0px 200px 0px' }
+  );
+
+  /**
+   * The cached recommendations
+   * @type {Record<string, string>}
+   */
+  #cachedRecommendations = {};
+
+  /**
+   * An abort controller for the active fetch (if there is one)
+   * @type {AbortController | null}
+   */
+  #activeFetch = null;
+
+  /**
+   * Whether recommendations have been loaded
+   * @type {boolean}
+   */
+  #recommendationsLoaded = false;
+
+  /**
+   * The product ID from the most recent cart update event
+   * @type {string | null}
+   */
+  #lastAddedProductId = null;
+
+  /**
+   * The product ID of the first item in cart (used for recommendations)
+   * @type {string | null}
+   */
+  #firstProductId = null;
+
+  /**
+   * Flag to track if a reload was requested but couldn't happen (element not in DOM)
+   * @type {boolean}
+   */
+  #pendingReload = false;
+
+  /**
+   * Stored recommendations content HTML to restore after morphing
+   * @type {string | null}
+   */
+  #storedContentHTML = null;
+
+  /**
+   * MutationObserver to detect when morphing replaces content
+   * @type {MutationObserver | null}
+   */
+  #mutationObserver = null;
+
+  /**
+   * Bound cart update handler for event listener (to ensure correct 'this' context)
+   * @type {((event: Event) => Promise<void>) | null}
+   */
+  #boundHandleCartUpdate = null;
+
+  connectedCallback() {
+    console.log('[Cart Recommendations] connectedCallback called', {
+      recommendationsLoaded: this.#recommendationsLoaded,
+      firstProductId: this.#firstProductId,
+      lastAddedProductId: this.#lastAddedProductId,
+      isConnected: document.contains(this)
+    });
+    
+    // Start observing for intersection
+    this.#intersectionObserver.observe(this);
+    
+    // Listen for cart updates to reload recommendations
+    // Use bound function to ensure 'this' context is preserved
+    this.#boundHandleCartUpdate = this.#handleCartUpdate.bind(this);
+    document.addEventListener('cart:update', this.#boundHandleCartUpdate);
+    
+    // Test listener to verify event is being caught
+    document.addEventListener('cart:update', function() { 
+      console.log('[Cart Recommendations] TEST: cart:update event detected on document!'); 
+    });
+    console.log('[Cart Recommendations] Event listener attached to cart:update', {
+      hasListener: document.addEventListener.toString().includes('cart:update')
+    });
+    
+    // Test if we can manually trigger it
+    console.log('[Cart Recommendations] Testing event listener - listening for cart:update on document');
+    
+    // Set up MutationObserver to watch for content changes (morphing)
+    // This allows us to restore recommendations when morphing replaces them
+    if (!this.#mutationObserver) {
+      this.#mutationObserver = new MutationObserver((mutations) => {
+        // Only act if recommendations were already loaded
+        if (!this.#recommendationsLoaded || !this.#storedContentHTML) {
+          return;
+        }
+
+        // Check if skeleton appeared (morphing replaced content)
+        const hasSkeleton = this.querySelector('.cart-drawer-recommendations__loading');
+        const hasContent = this.querySelector('.cart-drawer-recommendations__scroll-container') || 
+                          this.querySelector('.cart-items__table') ||
+                          this.querySelector('.resource-list');
+
+        // If skeleton appeared and no content, restore stored content
+        if (hasSkeleton && !hasContent && this.#storedContentHTML) {
+          // Use requestAnimationFrame to restore after morph completes
+          requestAnimationFrame(() => {
+            const loading = this.querySelector('.cart-drawer-recommendations__loading');
+            if (loading) {
+              loading.remove();
+            }
+            this.innerHTML = this.#storedContentHTML;
+          });
+        }
+      });
+
+      this.#mutationObserver.observe(this, {
+        childList: true,
+        subtree: true
+      });
+    }
+    
+    // Check if recommendations content already exists
+    const hasExistingContent = this.querySelector('.cart-drawer-recommendations__scroll-container') || 
+                                this.querySelector('.cart-items__table') ||
+                                this.querySelector('.resource-list');
+    
+    // Restore stored content if it exists and no current content (from morphing during quantity updates)
+    if (this.#storedContentHTML && !hasExistingContent) {
+      const loading = this.querySelector('.cart-drawer-recommendations__loading');
+      if (loading) {
+        loading.remove();
+      }
+      this.innerHTML = this.#storedContentHTML;
+      this.#recommendationsLoaded = true;
+    } else if (hasExistingContent && this.#recommendationsLoaded) {
+      // Recommendations already loaded - hide skeleton if it exists (quantity update scenario)
+      const loading = this.querySelector('.cart-drawer-recommendations__loading');
+      if (loading) {
+        loading.remove();
+      }
+      // Update first product ID if not set
+      if (!this.#firstProductId) {
+        this.#getFirstProductIdFromCart().then(id => {
+          this.#firstProductId = id;
+        });
+      }
+    } else {
+      // No content yet OR has existing content but #recommendationsLoaded is false
+      // This happens when:
+      // 1. Element is first connected (cart was empty, now has product)
+      // 2. Element was disconnected and reconnected (cart morphing)
+      // Try loading when connected - wait multiple frames to ensure cart state is ready
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setTimeout(async () => {
+            if (!this.#recommendationsLoaded && document.contains(this)) {
+              console.log('[Cart Recommendations] connectedCallback: Checking if recommendations need to load');
+              
+              // Check if cart has products (element was just added because cart was empty)
+              const currentFirstProductId = await this.#getFirstProductIdFromCart();
+              
+              console.log('[Cart Recommendations] connectedCallback: Cart check', {
+                currentFirstProductId,
+                previousFirstProductId: this.#firstProductId,
+                hasProducts: currentFirstProductId !== null
+              });
+              
+              // If cart has products (currentFirstProductId is not null), we need to load
+              // This handles the case when element was just added to DOM (cart went from empty to having products)
+              if (currentFirstProductId) {
+                // Update first product ID if changed or was null
+                if (this.#firstProductId !== currentFirstProductId) {
+                  // First product changed or was null - product was added
+                  this.#firstProductId = currentFirstProductId;
+                  this.#storedContentHTML = null;
+                  // Clear old content if it exists (stale recommendations)
+                  if (hasExistingContent) {
+                    this.innerHTML = '';
+                  }
+                }
+                
+                // Load recommendations immediately - this handles case where event fired before element was in DOM
+                console.log('[Cart Recommendations] connectedCallback: Loading recommendations (element just added to DOM)');
+                this.#loadRecommendations();
+              } else {
+                console.log('[Cart Recommendations] connectedCallback: Cart is empty, not loading');
+              }
+            }
+          }, 200);
+        });
+      });
+    }
+  }
+
+  disconnectedCallback() {
+    this.#intersectionObserver.disconnect();
+    if (this.#boundHandleCartUpdate) {
+      document.removeEventListener('cart:update', this.#boundHandleCartUpdate);
+    } else {
+      document.removeEventListener('cart:update', this.#handleCartUpdate);
+    }
+    
+    if (this.#mutationObserver) {
+      this.#mutationObserver.disconnect();
+      this.#mutationObserver = null;
+    }
+    
+    // Store recommendations content as HTML before disconnection (during morphing)
+    // This allows us to restore it after reconnection during quantity updates
+    if (this.#recommendationsLoaded && !this.#storedContentHTML) {
+      const content = this.querySelector('.cart-drawer-recommendations__scroll-container') || 
+                      this.querySelector('.cart-items__table') ||
+                      this.querySelector('.resource-list');
+      if (content) {
+        // Store as HTML string to preserve it even after DOM removal
+        this.#storedContentHTML = content.outerHTML;
+      }
+    }
+  }
+
+  /**
+   * Handles cart update events
+   * STEP 1: Listen for cart:update event
+   * STEP 2: Check if this is a product ADD (not quantity change)
+   * STEP 3: If product add, fetch recommendations and show them
+   */
+  #handleCartUpdate = async (event) => {
+    console.log('[Cart Recommendations] Step 1: handleCartUpdate called', {
+      source: event?.detail?.data?.source,
+      productId: event?.detail?.data?.productId,
+      isConnected: document.contains(this)
+    });
+    
+    const eventSource = event?.detail?.data?.source;
+    
+    // STEP 2: Check if this is a product ADD or quantity CHANGE
+    // Product adds have sources like 'product-form-component', 'quick-add-component'
+    // Quantity changes have source: 'cart-items-component'
+    
+    if (eventSource === 'cart-items-component') {
+      // This is a quantity change or deletion from cart drawer
+      // Check if the first product in cart changed (it might have been deleted)
+      const currentFirstProductId = await this.#getFirstProductIdFromCart();
+      
+      // If first product changed, reload recommendations (the product we base recommendations on changed)
+      if (currentFirstProductId !== this.#firstProductId && this.#firstProductId !== null) {
+        console.log('[Cart Recommendations] Step 2: First product deleted, reloading');
+        // First product was deleted or changed - reload recommendations
+        this.#firstProductId = currentFirstProductId;
+        this.#recommendationsLoaded = false;
+        this.#cachedRecommendations = {};
+        this.#storedContentHTML = null;
+        
+        // Load new recommendations
+        queueMicrotask(() => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              if (document.contains(this) && !this.#recommendationsLoaded) {
+                console.log('[Cart Recommendations] Step 3: Loading recommendations after deletion');
+                this.#loadRecommendations();
+              }
+            });
+          });
+        });
+        return;
+      }
+      
+      // Update first product ID for next comparison
+      this.#firstProductId = currentFirstProductId;
+      
+      // This is just a quantity change - store content before morphing removes it
+      if (this.#recommendationsLoaded && !this.#storedContentHTML) {
+        const content = this.querySelector('.cart-drawer-recommendations__scroll-container') || 
+                        this.querySelector('.cart-items__table') ||
+                        this.querySelector('.resource-list');
+        if (content) {
+          this.#storedContentHTML = content.outerHTML;
+        }
+      }
+      // Ignore quantity changes - don't reload
+      return;
+    }
+    
+    // STEP 2: This is a PRODUCT ADD (source is 'product-form-component', 'quick-add-component', etc.)
+    console.log('[Cart Recommendations] Step 2: Product ADD detected');
+    
+    // Store product ID from event (most reliable - use this first!)
+    const productIdFromEvent = event?.detail?.data?.productId;
+    if (productIdFromEvent) {
+      this.#lastAddedProductId = productIdFromEvent.toString();
+      console.log('[Cart Recommendations] Step 2: Stored productId from event:', this.#lastAddedProductId);
+    }
+    
+    // Reset state - we need fresh recommendations
+    this.#recommendationsLoaded = false;
+    this.#cachedRecommendations = {};
+    this.#storedContentHTML = null;
+    
+    // Update first product ID (new product becomes first in cart)
+    // For first product in empty cart, cart API might not be updated immediately
+    // So we use productId from event if available, otherwise fetch from cart
+    if (productIdFromEvent) {
+      // Use productId from event (most reliable, especially for first product)
+      this.#firstProductId = productIdFromEvent.toString();
+      console.log('[Cart Recommendations] Step 2: Using productId from event for firstProductId:', this.#firstProductId);
+    } else {
+      // Fallback: fetch from cart (might be delayed for first product)
+      this.#firstProductId = await this.#getFirstProductIdFromCart();
+      console.log('[Cart Recommendations] Step 2: Fetched firstProductId from cart:', this.#firstProductId);
+    }
+    
+    console.log('[Cart Recommendations] Step 3: Scheduling loadRecommendations');
+    
+    // STEP 3: Fetch recommendations and show them
+    // Wait a bit longer for first product to ensure cart API is updated
+    // But prioritize productId from event which should be immediately available
+    queueMicrotask(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            if (!this.#recommendationsLoaded && document.contains(this)) {
+              console.log('[Cart Recommendations] Step 3: Calling loadRecommendations');
+              this.#loadRecommendations();
+            } else {
+              console.log('[Cart Recommendations] Step 3: Skipping loadRecommendations', {
+                recommendationsLoaded: this.#recommendationsLoaded,
+                isConnected: document.contains(this)
+              });
+            }
+          }, 100); // Small delay to ensure cart API is ready (especially for first product)
+        });
+      });
+    });
+  };
+
+  /**
+   * Gets the product ID of the first item in cart (used for recommendations)
+   * @returns {Promise<string | null>}
+   */
+  async #getFirstProductIdFromCart() {
+    try {
+      const response = await fetch('/cart.js');
+      if (!response.ok) return null;
+
+      const cart = await response.json();
+      if (!cart.items || cart.items.length === 0) return null;
+
+      // The first item in the array is the most recently added (used for recommendations)
+      const firstItem = cart.items[0];
+      return firstItem.product_id?.toString() || null;
+    } catch (error) {
+      console.error('Failed to fetch cart for first product ID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Gets the most recent cart item's product ID
+   * @returns {Promise<string | null>}
+   */
+  async #getMostRecentProductId() {
+    // First, try using product ID from the cart update event (most reliable)
+    if (this.#lastAddedProductId) {
+      return this.#lastAddedProductId;
+    }
+
+    // Fallback: Get the first item in cart array (most recent items appear first)
+    try {
+      const response = await fetch('/cart.js');
+      if (!response.ok) return null;
+
+      const cart = await response.json();
+      if (!cart.items || cart.items.length === 0) return null;
+
+      // The first item in the array is the most recently added
+      const mostRecentItem = cart.items[0];
+      return mostRecentItem.product_id?.toString() || null;
+    } catch (error) {
+      console.error('Failed to fetch cart:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Load the product recommendations with fallback logic
+   */
+  async #loadRecommendations() {
+    console.log('[Cart Recommendations] loadRecommendations called', {
+      recommendationsLoaded: this.#recommendationsLoaded,
+      isConnected: document.contains(this)
+    });
+    
+    if (this.#recommendationsLoaded) {
+      console.log('[Cart Recommendations] loadRecommendations: Already loaded, returning');
+      return;
+    }
+
+    // Ensure element is visible when starting to load
+    this.classList.remove('hidden');
+
+    // Try to get product ID with retry in case cart isn't ready yet
+    // IMPORTANT: Use #lastAddedProductId if available (set by #handleCartUpdate from event)
+    let productId = await this.#getMostRecentProductId();
+    
+    console.log('[Cart Recommendations] loadRecommendations: Got productId (first try)', {
+      productId,
+      lastAddedProductId: this.#lastAddedProductId
+    });
+    
+    // If no productId, wait a bit and retry (cart might be updating, especially for first product)
+    if (!productId) {
+      console.log('[Cart Recommendations] loadRecommendations: No productId, waiting 300ms and retrying...');
+      await new Promise(resolve => setTimeout(resolve, 300));
+      productId = await this.#getMostRecentProductId();
+      console.log('[Cart Recommendations] loadRecommendations: Got productId (after retry)', {
+        productId,
+        lastAddedProductId: this.#lastAddedProductId
+      });
+    }
+    
+    // Clear stored product ID AFTER we successfully got a productId
+    // Keep it if we still don't have one (might need it for next retry)
+    if (productId) {
+      this.#lastAddedProductId = null;
+    }
+    
+    if (!productId) {
+      this.classList.add('hidden');
+      return;
+    }
+
+    const maxProducts = this.dataset.maxProducts || '4';
+
+    console.log('[Cart Recommendations] About to fetch recommendations', {
+      productId,
+      maxProducts,
+      intent: 'complementary'
+    });
+
+    // Try complementary first
+    let result = await this.#fetchRecommendationsJSON(productId, maxProducts, 'complementary');
+    
+    console.log('[Cart Recommendations] Fetch result (complementary)', {
+      success: result?.success,
+      dataType: typeof result?.data,
+      dataLength: result?.data?.length || 0
+    });
+
+    // If no complementary products, fallback to related
+    if (!result.success || !this.#hasProducts(result.data)) {
+      console.log('[Cart Recommendations] No complementary products, trying related...');
+      result = await this.#fetchRecommendationsJSON(productId, maxProducts, 'related');
+      console.log('[Cart Recommendations] Fetch result (related)', {
+        success: result?.success,
+        dataType: typeof result?.data,
+        dataLength: result?.data?.length || 0
+      });
+    }
+
+    const hasProducts = result.success && this.#hasProducts(result.data);
+    
+    console.log('[Cart Recommendations] Final result', {
+      success: result?.success,
+      hasProducts,
+      willRender: hasProducts
+    });
+    
+    if (hasProducts) {
+      this.#renderRecommendations(result.data);
+      this.#recommendationsLoaded = true;
+      
+      // Update first product ID after loading recommendations
+      this.#firstProductId = await this.#getFirstProductIdFromCart();
+      
+      // Store the content HTML to restore it after morphing (quantity updates)
+      const content = this.querySelector('.cart-drawer-recommendations__scroll-container') || 
+                      this.querySelector('.cart-items__table') ||
+                      this.querySelector('.resource-list');
+      if (content) {
+        this.#storedContentHTML = content.outerHTML;
+      }
+    } else {
+      this.classList.add('hidden');
+    }
+  }
+
+  /**
+   * Checks if the recommendations HTML contains products
+   * @param {string} html - The HTML response
+   * @returns {boolean}
+   */
+  #hasProducts(html) {
+    if (!html || !html.trim()) {
+      return false;
+    }
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Check for scroll container or cart-items__table (from our JSON rendering)
+    const scrollContainer = tempDiv.querySelector('.cart-drawer-recommendations__scroll-container');
+    const table = tempDiv.querySelector('.cart-items__table');
+    if (scrollContainer || table) {
+      const rows = (scrollContainer || tempDiv).querySelectorAll('.cart-items__table-row');
+      return rows.length > 0;
+    }
+    
+    // Fallback: Check for resource-list (from Section Rendering API)
+    let resourceList = tempDiv.querySelector('.resource-list');
+    if (!resourceList) {
+      const recommendations = tempDiv.querySelector('product-recommendations');
+      if (recommendations) {
+        resourceList = recommendations.querySelector('.resource-list');
+      }
+    }
+    
+    if (!resourceList) {
+      return false;
+    }
+    
+    const items = resourceList.querySelectorAll('.resource-list__item, product-card');
+    const itemCount = items.length;
+    const hasRecommendations = resourceList.getAttribute('data-has-recommendations') !== 'false';
+    const hasProducts = itemCount > 0;
+    
+    return hasProducts && hasRecommendations;
+  }
+
+  /**
+   * Fetches recommendations from the Product Recommendations API
+   * @param {string} productId
+   * @param {string | undefined} sectionId
+   * @param {string} intent
+   * @param {string} baseUrl
+   * @returns {Promise<{ success: true, data: string } | { success: false, status: number }>}
+   */
+  async #fetchRecommendations(productId, sectionId, intent, baseUrl) {
+    // First, try with section_id (Section Rendering API - returns HTML)
+    // If that fails, fall back to JSON API (returns JSON, we'll render manually)
+    const sectionIdParam = sectionId || 'product-recommendations';
+    
+    // Parse the base URL to get the limit
+    let limit = '4';
+    try {
+      const urlObj = new URL(baseUrl, window.location.origin);
+      limit = urlObj.searchParams.get('limit') || '4';
+    } catch (e) {
+      // If baseUrl parsing fails, extract limit manually
+      const limitMatch = baseUrl.match(/[?&]limit=(\d+)/);
+      if (limitMatch) limit = limitMatch[1];
+    }
+    
+    // Build the recommendations API URL with section_id (for HTML response)
+    // Parse the base URL properly to avoid malformed URLs
+    let url;
+    try {
+      const urlObj = new URL(baseUrl, window.location.origin);
+      // Clear existing params and set new ones
+      urlObj.searchParams.set('product_id', productId);
+      urlObj.searchParams.set('limit', limit);
+      urlObj.searchParams.set('section_id', sectionIdParam);
+      urlObj.searchParams.set('intent', intent);
+      url = urlObj.toString();
+    } catch (e) {
+      // Fallback: manual URL construction
+      const basePath = baseUrl.split('?')[0] || '/recommendations/products.json';
+      url = `${basePath}?product_id=${productId}&limit=${limit}&section_id=${sectionIdParam}&intent=${intent}`;
+      if (!url.startsWith('http')) {
+        url = new URL(url, window.location.origin).toString();
+      }
+    }
+    
+    // Ensure URL is absolute
+    if (!url.startsWith('http')) {
+      url = new URL(url, window.location.origin).toString();
+    }
+    
+    const cacheKey = url;
+
+    // Check cache
+    if (this.#cachedRecommendations[cacheKey]) {
+      return { success: true, data: this.#cachedRecommendations[cacheKey] };
+    }
+
+    // Abort any active fetch
+    this.#activeFetch?.abort();
+    this.#activeFetch = new AbortController();
+
+    try {
+      console.log('[Cart Recommendations] Fetching from URL:', url);
+      const response = await fetch(url, { signal: this.#activeFetch.signal });
+      console.log('[Cart Recommendations] Fetch response:', {
+        ok: response.ok,
+        status: response.status,
+        url: response.url
+      });
+      
+      if (!response.ok) {
+        // If 404, try fetching JSON directly (without section_id)
+        if (response.status === 404) {
+          return this.#fetchRecommendationsJSON(productId, limit, intent);
+        }
+        return { success: false, status: response.status };
+      }
+
+      const text = await response.text();
+      
+      // Check if response is JSON (could be sections object or error)
+      if (text.trim().startsWith('{')) {
+        try {
+          const json = JSON.parse(text);
+          
+          // Check if it's an error response
+          if (json.status || json.message) {
+            return { success: false, status: json.status || 422 };
+          }
+          
+          // Check if it's a sections object (Section Rendering API format)
+          if (json.sections && json.sections[sectionIdParam]) {
+            this.#cachedRecommendations[cacheKey] = json.sections[sectionIdParam];
+            return { success: true, data: json.sections[sectionIdParam] };
+          }
+        } catch (e) {
+          // Not valid JSON, continue with HTML parsing
+        }
+      }
+      
+      // Assume it's HTML
+      this.#cachedRecommendations[cacheKey] = text;
+      return { success: true, data: text };
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return { success: false, status: 0 };
+      }
+      console.error('Cart drawer recommendations: Fetch error:', error);
+      return { success: false, status: 0 };
+    } finally {
+      this.#activeFetch = null;
+    }
+  }
+
+  /**
+   * Fetches recommendations as JSON (fallback when section_id doesn't work)
+   * @param {string} productId
+   * @param {string} limit
+   * @param {string} intent
+   * @returns {Promise<{ success: true, data: string } | { success: false, status: number }>}
+   */
+  async #fetchRecommendationsJSON(productId, limit, intent) {
+    // Fetch JSON directly from recommendations API (no section_id)
+    const jsonUrl = new URL('/recommendations/products.json', window.location.origin);
+    jsonUrl.searchParams.set('product_id', productId);
+    jsonUrl.searchParams.set('limit', limit);
+    jsonUrl.searchParams.set('intent', intent);
+    
+    const url = jsonUrl.toString();
+    const cacheKey = `json:${url}`;
+
+    // Check cache
+    if (this.#cachedRecommendations[cacheKey]) {
+      console.log('[Cart Recommendations] Using cached recommendations for:', cacheKey);
+      return { success: true, data: this.#cachedRecommendations[cacheKey] };
+    }
+
+    console.log('[Cart Recommendations] Fetching recommendations JSON from:', url);
+
+    try {
+      const response = await fetch(url, { signal: this.#activeFetch?.signal });
+      console.log('[Cart Recommendations] JSON fetch response:', {
+        ok: response.ok,
+        status: response.status,
+        url: response.url
+      });
+      if (!response.ok) {
+        return { success: false, status: response.status };
+      }
+
+      const json = await response.json();
+      
+      // Check if we got products
+      if (!json.products || json.products.length === 0) {
+        return { success: false, status: 404 };
+      }
+
+      // Render products manually
+      const html = this.#renderProductsFromJSON(json.products);
+      this.#cachedRecommendations[cacheKey] = html;
+      return { success: true, data: html };
+    } catch (error) {
+      console.error('Cart drawer recommendations: JSON fetch error:', error);
+      return { success: false, status: 0 };
+    }
+  }
+
+  /**
+   * Formats money using Shopify's money format (simplified version)
+   * @param {number} moneyValueInCents - The money value in cents
+   * @param {string} currency - The currency code (e.g., 'USD', 'EUR')
+   * @returns {string} Formatted money string
+   */
+  #formatMoney(moneyValueInCents, currency = 'USD') {
+    const amount = moneyValueInCents / 100;
+    
+    // Try to get money format template from page if available
+    const moneyFormatElement = document.querySelector('template[ref="moneyFormat"]');
+    const moneyFormatTemplate = (moneyFormatElement instanceof HTMLTemplateElement && moneyFormatElement.content?.textContent) || '{{amount}}';
+    
+    // Get currency decimals (default 2 for most currencies)
+    const CURRENCY_DECIMALS = {
+      BHD: 3, BIF: 0, BYR: 0, CLF: 4, CLP: 0, DJF: 0, GNF: 0, ISK: 0, 
+      IQD: 3, JOD: 3, JPY: 0, KMF: 0, KRW: 0, KWD: 3, LYD: 3, OMR: 3, 
+      PYG: 0, RWF: 0, TND: 3, UGX: 0, UYI: 0, VND: 0, VUV: 0, XAF: 0, 
+      XOF: 0, XPF: 0, ZMK: 0, ZWD: 0
+    };
+    const currencyUpper = currency.toUpperCase();
+    const precision = (currencyUpper in CURRENCY_DECIMALS ? CURRENCY_DECIMALS[currencyUpper] : undefined) ?? 2;
+    
+    // Format the amount
+    const formattedAmount = amount.toFixed(precision).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    
+    // Replace template placeholders
+    return moneyFormatTemplate
+      .replace(/{{\s*amount\s*}}/g, formattedAmount)
+      .replace(/{{\s*currency\s*}}/g, currency);
+  }
+
+  /**
+   * Renders product cards from JSON product data
+   * @param {Array} products - Array of product objects from API
+   * @returns {string} HTML string
+   */
+  #renderProductsFromJSON(products) {
+    // Render product cards matching the cart drawer's horizontal layout
+    const items = products.map((product, index) => {
+      // Get the first available variant
+      const variant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
+      const variantUrl = variant ? variant.url : product.url;
+      
+      // Get featured image - request 86x86 size
+      const featuredImage = product.featured_image || (product.images && product.images.length > 0 ? product.images[0] : null);
+      let imageUrl = '';
+      if (featuredImage) {
+        const baseUrl = typeof featuredImage === 'string' ? featuredImage : featuredImage.src;
+        if (baseUrl) {
+          // Shopify image URLs can be modified to request specific size
+          // Try to add or replace width parameter
+          if (baseUrl.includes('cdn.shopify.com')) {
+            // Shopify CDN URL - modify to request 86x86
+            imageUrl = baseUrl.replace(/(\?|&)width=\d+/, '$1width=86');
+            if (!imageUrl.includes('width=')) {
+              const separator = imageUrl.includes('?') ? '&' : '?';
+              imageUrl = `${imageUrl}${separator}width=86`;
+            }
+            // Also set height
+            imageUrl = imageUrl.replace(/(\?|&)height=\d+/, '$1height=86');
+            if (!imageUrl.includes('height=')) {
+              imageUrl = `${imageUrl}&height=86`;
+            }
+          } else {
+            imageUrl = baseUrl;
+          }
+        }
+      }
+      
+      // Format prices using Shopify's money format
+      // Get currency from product or use default, and format using Shopify's format
+      const currency = product.currency || 'USD';
+      const priceInCents = product.price;
+      const compareAtPriceInCents = product.compare_at_price || null;
+      
+      // Use Shopify money format helper
+      const priceFormatted = this.#formatMoney(priceInCents, currency);
+      const compareAtPriceFormatted = compareAtPriceInCents ? this.#formatMoney(compareAtPriceInCents, currency) : null;
+      
+      // Calculate percentage off if on sale
+      let percentageOff = null;
+      if (compareAtPriceInCents && compareAtPriceInCents > priceInCents) {
+        const priceDifference = compareAtPriceInCents - priceInCents;
+        percentageOff = Math.floor((priceDifference / compareAtPriceInCents) * 100);
+      }
+      
+      return `
+        <tr class="cart-items__table-row cart-drawer-recommendations__item" role="row">
+          <td class="cart-items__media" role="cell">
+            ${imageUrl ? `
+              <a
+                href="${variantUrl || product.url}"
+                class="cart-items__media-container"
+                style="--ratio: 1;"
+              >
+                <img
+                  src="${imageUrl}"
+                  alt="${this.#escapeHtml(product.title)}"
+                  class="cart-items__media-image border-style"
+                  loading="lazy"
+                  width="86"
+                  height="86"
+                />
+              </a>
+            ` : ''}
+          </td>
+          <td class="cart-items__details cart-primary-typography" role="cell">
+            <p>
+              <a href="${variantUrl || product.url}" class="cart-items__title">
+                ${this.#escapeHtml(product.title)}
+              </a>
+            </p>
+            <div>
+              ${compareAtPriceFormatted && compareAtPriceInCents > priceInCents ? `
+                <span class="visually-hidden">Sale price</span>
+                <span>${priceFormatted}</span>
+                <span class="visually-hidden">Regular price</span>
+                <s class="compare-at-price">${compareAtPriceFormatted}</s>
+                ${percentageOff ? `<span class="cart-items__percentage-off">${percentageOff}% OFF</span>` : ''}
+              ` : `
+                <span class="visually-hidden">Price</span>
+                <span>${priceFormatted}</span>
+              `}
+            </div>
+          </td>
+          <td class="cart-items__quick-add" role="cell">
+            <div onclick="event.stopPropagation();" class="product-card-actions__quick-add-wrapper">
+              <quick-add-component
+                class="quick-add product-card-actions__quick-add"
+                ref="quickAdd"
+                data-product-title="${this.#escapeHtml(product.title)}"
+                data-product-url="${variantUrl || product.url}"
+                data-product-handle="${product.handle || ''}"
+                data-quick-add-button="choose"
+                data-product-options-count="${product.options ? product.options.length : 0}"
+              >
+                <product-form-component
+                  data-section-id="cart-drawer-recommendations"
+                  data-product-id="${product.id}"
+                  on:submit="/handleSubmit"
+                  class="quick-add__product-form-component"
+                >
+                  <form id="ProductCardActions-ProductForm-${product.id}-cart-drawer-recommendations" novalidate="novalidate" data-type="add-to-cart-form">
+                    <input
+                      type="hidden"
+                      name="id"
+                      ref="variantId"
+                      value="${variant ? variant.id : ''}"
+                      ${variant && !variant.available ? 'disabled' : ''}
+                    >
+                    <input
+                      type="hidden"
+                      name="quantity"
+                      value="${variant && variant.quantity_rule && variant.quantity_rule.min ? variant.quantity_rule.min : 1}"
+                    >
+                    <button
+                      class="button product-card-actions__quick-add-button"
+                      type="button"
+                      name="add"
+                      on:click="quick-add-component/handleClick"
+                      onclick="event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();"
+                      data-quick-add-trigger="true"
+                      data-no-navigation="true"
+                    >
+                      <span class="product-card-actions__quick-add-plus">+</span>
+                    </button>
+                  </form>
+                </product-form-component>
+              </quick-add-component>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    return `
+      <div class="cart-drawer-recommendations__scroll-container">
+        <table class="cart-items__table" role="table">
+          <tbody role="rowgroup">
+            ${items}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  /**
+   * Escapes HTML to prevent XSS
+   * @param {string} text
+   * @returns {string}
+   */
+  #escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  /**
+   * Renders the recommendations HTML
+   * @param {string} html - The HTML response
+   */
+  #renderRecommendations(html) {
+    if (!html || !html.trim()) {
+      this.classList.add('hidden');
+      return;
+    }
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Try to find scroll container or cart-items__table (from our JSON rendering)
+    let scrollContainer = tempDiv.querySelector('.cart-drawer-recommendations__scroll-container');
+    let table = tempDiv.querySelector('.cart-items__table');
+    
+    // If not found, try to find resource-list (from Section Rendering API fallback)
+    let resourceList = tempDiv.querySelector('.resource-list');
+    if (!resourceList) {
+      let recommendations = tempDiv.querySelector(`product-recommendations[id="${this.id}"]`);
+      if (!recommendations) {
+        recommendations = tempDiv.querySelector('product-recommendations');
+      }
+      if (recommendations) {
+        resourceList = recommendations.querySelector('.resource-list');
+      }
+    }
+    
+    // If still not found, check if the HTML itself is a scroll container, table or resource-list
+    if (!scrollContainer && tempDiv.firstElementChild) {
+      if (tempDiv.firstElementChild.classList.contains('cart-drawer-recommendations__scroll-container')) {
+        scrollContainer = tempDiv.firstElementChild;
+      } else if (tempDiv.firstElementChild.classList.contains('cart-items__table')) {
+        table = tempDiv.firstElementChild;
+      } else if (tempDiv.firstElementChild.classList.contains('resource-list')) {
+        resourceList = tempDiv.firstElementChild;
+      }
+    }
+
+    // Clear loading state
+    const loading = this.querySelector('.cart-drawer-recommendations__loading');
+    if (loading) {
+      loading.remove();
+    }
+
+    if (scrollContainer && scrollContainer.innerHTML.trim()) {
+      // Insert the scroll container directly (from JSON rendering)
+      this.innerHTML = '';
+      this.appendChild(scrollContainer.cloneNode(true));
+      this.classList.remove('hidden');
+    } else if (table && table.innerHTML.trim()) {
+      // Wrap table in scroll container if it's not already wrapped
+      const newScrollContainer = document.createElement('div');
+      newScrollContainer.className = 'cart-drawer-recommendations__scroll-container';
+      newScrollContainer.appendChild(table.cloneNode(true));
+      this.innerHTML = '';
+      this.appendChild(newScrollContainer);
+      this.classList.remove('hidden');
+    } else if (resourceList && resourceList.innerHTML.trim()) {
+      // Fallback: Insert resource-list (from Section Rendering API)
+      const resourceListClone = resourceList.cloneNode(true);
+      resourceListClone.classList.remove('resource-list--grid');
+      
+      const items = Array.from(resourceListClone.querySelectorAll('.resource-list__item'));
+      const newResourceList = document.createElement('div');
+      newResourceList.className = 'resource-list';
+      newResourceList.setAttribute('data-has-recommendations', 'true');
+      
+      items.forEach((item) => {
+        newResourceList.appendChild(item.cloneNode(true));
+      });
+      
+      this.innerHTML = '';
+      this.appendChild(newResourceList);
+      this.classList.remove('hidden');
+    } else {
+      this.classList.add('hidden');
+      return;
+    }
+    
+    // Force layout recalculation
+    this.offsetHeight; // Trigger reflow
+  }
+}
+
+// Register the custom element
+try {
+  if (!customElements.get('cart-drawer-recommendations')) {
+    customElements.define('cart-drawer-recommendations', CartDrawerRecommendations);
+    console.log('[Cart Recommendations] Custom element registered successfully');
+  } else {
+    console.log('[Cart Recommendations] Custom element already registered');
+  }
+  
+  // Add a persistent listener to document to catch ALL cart:update events
+  // This helps debug if the event is firing before the element is connected
+  document.addEventListener('cart:update', function(event) {
+    console.log('[Cart Recommendations] PERSISTENT LISTENER: cart:update event caught on document!', {
+      source: event?.detail?.data?.source,
+      productId: event?.detail?.data?.productId,
+      target: event.target,
+      currentTarget: event.currentTarget
+    });
+  });
+} catch (error) {
+  console.error('Cart drawer recommendations: Error registering custom element:', error);
+}

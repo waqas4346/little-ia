@@ -1,6 +1,7 @@
 import { DialogComponent, DialogOpenEvent, DialogCloseEvent } from '@theme/dialog';
 import { Component } from '@theme/component';
 import { onAnimationEnd } from '@theme/utilities';
+import { morphSection } from '@theme/section-renderer';
 
 /**
  * A custom element that manages the personalisation modal.
@@ -1019,88 +1020,96 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (kidNameValue !== null) this.personalisationData.kidName = kidNameValue;
     if (mumNameValue !== null) this.personalisationData.mumName = mumNameValue;
 
-    // Store in sessionStorage with product ID as key (clears on page reload)
-    let productId = this.closest('product-form-component')?.dataset?.productId;
+     // Check if we're editing from cart context
+    const cartContext = window.cartPersonalizationContext;
     
-    // If not found, check if we're in a quick-add modal context
-    if (!productId) {
-      const quickAddModal = document.querySelector('#quick-add-modal-content');
-      if (quickAddModal) {
-        const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
-        productId = quickAddFormComponent?.dataset?.productId;
-      }
-    }
-    
-    // If not found, try to get from sticky-add-to-cart
-    if (!productId) {
-      productId = document.querySelector('sticky-add-to-cart')?.dataset?.productId;
-    }
-    
-    // If still not found, try to get from the form
-    if (!productId) {
-      // First try quick-add modal form
-      const quickAddModal = document.querySelector('#quick-add-modal-content');
-      if (quickAddModal) {
-        const form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
-        if (form) {
-          const formComponent = form.closest('product-form-component');
-          productId = formComponent?.dataset?.productId;
-        }
-      }
+    if (cartContext && cartContext.cartLine) {
+      // Update cart item properties
+      this.#updateCartItemProperties(cartContext, personalisation);
+    } else {
+      // Store in sessionStorage with product ID as key (clears on page reload)
+      let productId = this.closest('product-form-component')?.dataset?.productId;
       
-      // Fallback to any form
+      // If not found, check if we're in a quick-add modal context
       if (!productId) {
-        const form = document.querySelector('form[data-type="add-to-cart-form"]');
-        if (form) {
-          const formComponent = form.closest('product-form-component');
-          productId = formComponent?.dataset?.productId;
+        const quickAddModal = document.querySelector('#quick-add-modal-content');
+        if (quickAddModal) {
+          const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
+          productId = quickAddFormComponent?.dataset?.productId;
         }
       }
-    }
-    
-    if (productId) {
-      // Ensure productId is a string to match sessionStorage key format
-      productId = String(productId);
-      const key = `personalisation_${productId}`;
       
-      sessionStorage.setItem(key, JSON.stringify(personalisation));
+      // If not found, try to get from sticky-add-to-cart
+      if (!productId) {
+        productId = document.querySelector('sticky-add-to-cart')?.dataset?.productId;
+      }
       
-      // Trigger update of button text - with multiple retries to ensure buttons are in DOM
-      const updateButtonWithRetry = (attempts = 0) => {
-        if (typeof window.updatePersonaliseButtonText === 'function') {
-          window.updatePersonaliseButtonText();
-          
-          // Check if buttons were updated, if not retry
-          const buttons = document.querySelectorAll('[data-personalise-button]');
-          let anyButtonUpdated = false;
-          buttons.forEach((button) => {
-            const textSpan = button.querySelector('[data-personalise-text]');
-            if (textSpan && textSpan.textContent === 'EDIT') {
-              anyButtonUpdated = true;
+      // If still not found, try to get from the form
+      if (!productId) {
+        // First try quick-add modal form
+        const quickAddModal = document.querySelector('#quick-add-modal-content');
+        if (quickAddModal) {
+          const form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+          if (form) {
+            const formComponent = form.closest('product-form-component');
+            productId = formComponent?.dataset?.productId;
+          }
+        }
+        
+        // Fallback to any form
+        if (!productId) {
+          const form = document.querySelector('form[data-type="add-to-cart-form"]');
+          if (form) {
+            const formComponent = form.closest('product-form-component');
+            productId = formComponent?.dataset?.productId;
+          }
+        }
+      }
+      
+      if (productId) {
+        // Ensure productId is a string to match sessionStorage key format
+        productId = String(productId);
+        const key = `personalisation_${productId}`;
+        
+        sessionStorage.setItem(key, JSON.stringify(personalisation));
+        
+        // Trigger update of button text - with multiple retries to ensure buttons are in DOM
+        const updateButtonWithRetry = (attempts = 0) => {
+          if (typeof window.updatePersonaliseButtonText === 'function') {
+            window.updatePersonaliseButtonText();
+            
+            // Check if buttons were updated, if not retry
+            const buttons = document.querySelectorAll('[data-personalise-button]');
+            let anyButtonUpdated = false;
+            buttons.forEach((button) => {
+              const textSpan = button.querySelector('[data-personalise-text]');
+              if (textSpan && textSpan.textContent === 'EDIT') {
+                anyButtonUpdated = true;
+              }
+            });
+            
+            // If no buttons were updated and we haven't exceeded retries, try again
+            if (!anyButtonUpdated && attempts < 10) {
+              setTimeout(() => updateButtonWithRetry(attempts + 1), 200);
             }
-          });
-          
-          // If no buttons were updated and we haven't exceeded retries, try again
-          if (!anyButtonUpdated && attempts < 10) {
+          } else if (attempts < 10) {
+            // Function not defined yet, retry
             setTimeout(() => updateButtonWithRetry(attempts + 1), 200);
           }
-        } else if (attempts < 10) {
-          // Function not defined yet, retry
-          setTimeout(() => updateButtonWithRetry(attempts + 1), 200);
-        }
-      };
-      
-      // Start with immediate call, then retry if needed
-      setTimeout(() => updateButtonWithRetry(0), 100);
-    } else {
-      console.error('Product ID not found when saving personalisation');
+        };
+        
+        // Start with immediate call, then retry if needed
+        setTimeout(() => updateButtonWithRetry(0), 100);
+      } else {
+        console.error('Product ID not found when saving personalisation');
+      }
+
+      // Also store globally for the current product
+      window.currentPersonalisation = personalisation;
+
+      // Update hidden form fields if they exist
+      this.updateFormFields(personalisation);
     }
-
-    // Also store globally for the current product
-    window.currentPersonalisation = personalisation;
-
-    // Update hidden form fields if they exist
-    this.updateFormFields(personalisation);
 
     // Dispatch custom event for other components to listen to
     const customEvent = new CustomEvent('personalisation-saved', {
@@ -1116,8 +1125,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Close the dialog
     this.closeDialog();
     
-    // Update buttons after a short delay to ensure sessionStorage is set and DOM is updated
-    // Use multiple retries to ensure buttons in quick-add modal are found
+    // Clear cart context after save
+    if (cartContext) {
+      window.cartPersonalizationContext = null;
+    }
     const updateButtonWithRetry2 = (attempts = 0) => {
       if (typeof window.updatePersonaliseButtonText === 'function') {
         window.updatePersonaliseButtonText();
@@ -1144,6 +1155,118 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     setTimeout(() => updateButtonWithRetry2(0), 300);
   };
+
+  /**
+   * Updates cart item properties using cart/change.js
+   * @param {Object} cartContext - The cart context with cartLine, productId, variantId
+   * @param {Object} personalisation - The personalisation data
+   * @private
+   */
+  async #updateCartItemProperties(cartContext, personalisation) {
+    try {
+      // First, fetch current cart to get the existing quantity for this line item
+      const cartResponse = await fetch('/cart.js');
+      const currentCart = await cartResponse.json();
+      
+      // Find the line item by line index (1-based)
+      const lineIndex = parseInt(cartContext.cartLine) - 1; // Convert to 0-based index
+      const currentCartItem = currentCart.items[lineIndex];
+      
+      if (!currentCartItem) {
+        throw new Error('Cart item not found');
+      }
+      
+      // Get the current quantity to preserve it
+      const currentQuantity = currentCartItem.quantity || 1;
+      
+      // Convert personalisation object to properties format for cart API
+      const properties = {};
+      
+      if (personalisation.name) properties['Name'] = personalisation.name;
+      if (personalisation.name1) properties['Name 1'] = personalisation.name1;
+      if (personalisation.name2) properties['Name 2'] = personalisation.name2;
+      if (personalisation.name3) properties['Name 3'] = personalisation.name3;
+      if (personalisation.name4) properties['Name 4'] = personalisation.name4;
+      if (personalisation.babyName) properties['Baby\'s Name'] = personalisation.babyName;
+      if (personalisation.kidName) properties['Kid\'s Name'] = personalisation.kidName;
+      if (personalisation.mumName) properties['Mum\'s Name'] = personalisation.mumName;
+      if (personalisation.dob) properties['Date of Birth'] = personalisation.dob;
+      if (personalisation.optionalDob) properties['Personalise Date of Birth'] = personalisation.optionalDob;
+      if (personalisation.schoolYear) properties['School Year'] = personalisation.schoolYear;
+      if (personalisation.color) properties['Text Color'] = personalisation.color;
+      if (personalisation.font) properties['Text Font'] = personalisation.font;
+      if (personalisation.textbox) properties['Personalisation:'] = personalisation.textbox;
+      if (personalisation.message) properties['Message'] = personalisation.message;
+      if (personalisation.time) properties['Time'] = personalisation.time;
+      if (personalisation.weight) properties['Weight'] = personalisation.weight;
+      
+      // Get cart sections to update - find all cart-items-components
+      const cartItemsComponents = document.querySelectorAll('cart-items-component');
+      const sectionIdSet = new Set();
+      cartItemsComponents.forEach(comp => {
+        if (comp.dataset?.sectionId) {
+          sectionIdSet.add(comp.dataset.sectionId);
+        }
+      });
+      const sectionIds = Array.from(sectionIdSet).join(',');
+      
+      // Build request body - include quantity to preserve it
+      const body = {
+        line: cartContext.cartLine,
+        quantity: currentQuantity,
+        properties: properties
+      };
+      
+      // Add sections parameter if we have section IDs (comma-separated string)
+      if (sectionIds) {
+        body.sections = sectionIds;
+        // Also include sections_url for proper section rendering
+        body.sections_url = window.location.pathname;
+      }
+      
+      // Update cart via AJAX
+      const response = await fetch('/cart/change.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Cart update failed: ${response.statusText}`);
+      }
+      
+      const cart = await response.json();
+      
+      // If cart API returned sections, use them to update the DOM
+      if (cart.sections) {
+        // Update each section
+        Object.keys(cart.sections).forEach(sectionId => {
+          if (cart.sections[sectionId]) {
+            morphSection(sectionId, cart.sections[sectionId]);
+          }
+        });
+      } else if (sectionIds) {
+        // Fetch updated cart sections manually
+        const sectionsResponse = await fetch(`/?sections=${sectionIds}`);
+        const sectionsData = await sectionsResponse.json();
+        
+        Object.keys(sectionsData).forEach(sectionId => {
+          if (sectionsData[sectionId]) {
+            morphSection(sectionId, sectionsData[sectionId]);
+          }
+        });
+      } else {
+        // Fallback: reload the page
+        window.location.reload();
+      }
+      
+    } catch (error) {
+      console.error('Error updating cart item properties:', error);
+      alert('Failed to update personalization. Please try again.');
+    }
+  }
 
   /**
    * Updates form fields with personalisation data
