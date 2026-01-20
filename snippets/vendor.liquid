@@ -1,0 +1,20 @@
+{%- doc -%}
+  This snippet is used to render a product vendor.
+  It is used in the product-vendor block.
+
+  @param {product} product_resource - The product to render
+{%- enddoc -%}
+
+{%- liquid
+  assign vendor = product_resource.vendor
+-%}
+
+<div ref="vendorContainer">
+  <span
+    class="vendor"
+    ref="vendor"
+    data-testid="product-vendor"
+  >
+    {{- vendor -}}
+  </span>
+</div>
