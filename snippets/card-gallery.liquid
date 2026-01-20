@@ -13,6 +13,28 @@
   assign block_settings = block.settings
   assign image_sizes = '(min-width: 750px) 50vw, 100vw'
 
+  # Build product URL - include collection path if on collection page
+  assign product_url = ''
+  if product != blank
+    assign variant_to_link = product.selected_or_first_available_variant
+    assign product_url = variant_to_link.url
+    if template.name == 'collection' and collection.handle != blank
+      # Extract variant ID from URL if present
+      assign url_parts = variant_to_link.url | split: '?'
+      assign base_url = url_parts[0]
+      assign query_string = ''
+      if url_parts.size > 1
+        assign query_string = url_parts[1]
+      endif
+      
+      # Build collection-aware URL: /collections/collection-handle/products/product-handle
+      assign product_url = '/collections/' | append: collection.handle | append: '/products/' | append: product.handle
+      if query_string != blank
+        assign product_url = product_url | append: '?' | append: query_string
+      endif
+    endif
+  endif
+
   # Check if product has badges and determine position
   assign has_badges = false
   assign badge_position = null
@@ -206,7 +228,9 @@
     <a
       class="contents"
       ref="cardGalleryLink"
-      href="{{ product.selected_or_first_available_variant.url }}"
+      {% if product_url != blank %}
+        href="{{ product_url }}"
+      {% endif %}
       aria-label="{{- product.title -}}"
     >
       {% render 'slideshow',
@@ -264,7 +288,9 @@
       <a
         class="contents"
         ref="productTitleLink"
-        href="{{ product.selected_or_first_available_variant.url }}"
+        {% if product_url != blank %}
+          href="{{ product_url }}"
+        {% endif %}
         aria-hidden="true"
       >
         <span class="title-text">{{- product.title -}}</span>

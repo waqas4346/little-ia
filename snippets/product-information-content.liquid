@@ -123,15 +123,19 @@
   }
 
   .product-breadcrumbs-wrapper {
-    margin-bottom: var(--margin-md);
     width: 100%;
   }
 
-  .section--page-width .product-breadcrumbs-wrapper {
-    
+  .product-breadcrumbs-wrapper .blog-breadcrumbs {
+    margin-top: 19px;
   }
 
   @media screen and (min-width: 750px) {
+    .product-breadcrumbs-wrapper .blog-breadcrumbs {
+      margin-top: 22px;
+      margin-bottom: 18px;
+    }
+    
     .section--page-width .product-breadcrumbs-wrapper {
       max-width: var(--page-content-width);
       margin-left: auto;
@@ -156,6 +160,17 @@
     order: 0;
     width: 0;
     min-width: 100%;
+  }
+
+  /* Mobile: Reset order values for flexbox */
+  @media screen and (max-width: 749px) {
+    .product-details {
+      order: unset;
+    }
+
+    .product-information__media {
+      order: unset;
+    }
   }
 
   .product-information__media .placeholder-image {
@@ -183,24 +198,34 @@
       display: contents;
     }
 
-    /* Title and price group appears before media - must be first */
-    .product-details > .group-block > .group-block-content > .group-block:first-child {
-      order: -2 !important;
-      width: 100%;
-      padding-inline: var(--padding-lg);
-      margin-bottom: 16px;
-      display: block;
+    /* Header block (title and price) appears BEFORE media - must be first */
+    /* Target the first group block that contains product title and price */
+    .product-details > .group-block > .group-block-content > .group-block:first-child,
+    .product-details > .group-block > .group-block-content > .group-block:has(h1):has(product-price),
+    .product-details > .group-block > .group-block-content > .group-block:has(.text-block h1):has(product-price),
+    .product-information__grid > .group-block:first-child,
+    .product-information__grid > .group-block:has(h1):has(product-price),
+    .product-information__grid > .group-block:has(.text-block h1):has(product-price) {
+      order: -10 !important;
+      width: 100% !important;
+      padding-inline: var(--padding-lg) !important;
+      margin-bottom: 16px !important;
+      display: block !important;
+      position: relative;
+      z-index: 1;
     }
 
-    /* Media appears after title/price */
+    /* Media appears AFTER header block */
     .product-information__media {
-      order: -1 !important;
+      order: -5 !important;
       grid-column: 1 / -1;
+      width: 100%;
+      min-width: 100%;
     }
 
     /* Variant picker appears after media */
     .product-details > .group-block > .group-block-content > *:has(variant-picker) {
-      order: 0 !important;
+      order: -1 !important;
       width: 100%;
       padding-inline: var(--padding-lg);
       margin-top: 16px;
@@ -209,7 +234,7 @@
 
     /* Other product details appear after variant picker */
     .product-details > .group-block > .group-block-content > *:not(:first-child):not(:has(variant-picker)) {
-      order: 1 !important;
+      order: 0 !important;
       width: 100%;
       padding-inline: var(--padding-lg);
       display: block;

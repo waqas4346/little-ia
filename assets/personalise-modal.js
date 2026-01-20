@@ -10,6 +10,7 @@ import { morphSection } from '@theme/section-renderer';
  */
 export class PersonaliseDialogComponent extends DialogComponent {
   requiredRefs = ['dialog', 'saveButton', 'closeButton'];
+  #previousScrollY = 0;
 
   connectedCallback() {
     super.connectedCallback();
@@ -301,6 +302,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (dialog.open) return;
 
     const scrollY = window.scrollY;
+    this.#previousScrollY = scrollY;
 
     // Set up close button handlers BEFORE opening dialog
     // This ensures they're ready when the dialog opens
@@ -526,13 +528,8 @@ export class PersonaliseDialogComponent extends DialogComponent {
       document.body.style.width = '';
       document.body.style.position = '';
       document.body.style.top = '';
-      // Get scroll position from body style or use 0
-      const topValue = document.body.style.top;
-      let savedScrollY = 0;
-      if (topValue && topValue.startsWith('-')) {
-        savedScrollY = parseInt(topValue.substring(1), 10) || 0;
-      }
-      window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+      // Restore scroll position using saved value
+      window.scrollTo({ top: this.#previousScrollY, behavior: 'instant' });
     }
 
     try {

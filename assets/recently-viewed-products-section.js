@@ -1740,14 +1740,11 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     addButton.setAttribute('onclick', 'event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();');
     addButton.setAttribute('data-quick-add-trigger', 'true');
     addButton.setAttribute('data-no-navigation', 'true');
-    // Force visibility with inline styles
-    addButton.style.cssText = 'width: 32px !important; height: 32px !important; min-width: 32px !important; min-height: 32px !important; max-width: 32px !important; max-height: 32px !important; padding: 0 !important; margin: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; opacity: 1 !important; visibility: visible !important; border-radius: 50% !important; border: 1px solid #1D425A !important; background: transparent !important; cursor: pointer !important; position: relative !important; z-index: 1 !important; pointer-events: auto !important;';
 
     // Create + span
     const plusSpan = document.createElement('span');
     plusSpan.className = 'product-card-actions__quick-add-plus';
     plusSpan.textContent = '+';
-    plusSpan.style.cssText = 'font-family: "Geologica", sans-serif; font-style: normal; font-weight: 100; font-size: 19.5279px; line-height: 24px; display: flex; align-items: center; justify-content: center; text-align: center; color: #1D425A; margin: 0; padding: 0; height: 100%; width: 100%; position: relative; top: -1px;';
     addButton.appendChild(plusSpan);
 
     form.appendChild(addButton);

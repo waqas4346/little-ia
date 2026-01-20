@@ -1027,6 +1027,12 @@
     gap: var(--gap-sm);
   }
 
+  @media screen and (max-width: 749px) {
+    .product-form-buttons {
+      margin-bottom: 24px;
+    }  
+  }
+
   .product-form-buttons:not(:has(.quantity-rules)) {
     gap: var(--gap-sm);
   }
@@ -1518,6 +1524,11 @@
     flex-wrap: wrap;
     gap: var(--gap-md);
     width: 100%;
+  }
+  @media screen and (max-width: 749px) {
+    .product-shipping-messages {
+      margin-top: 16px;
+    }
   }
   @media screen and (min-width: 1400px) {
     .product-shipping-messages {

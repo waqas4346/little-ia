@@ -412,13 +412,15 @@
   .header__row--top:not(.divider--page-width),
   .header__row--top.divider--page-width .header__columns,
   .header__row--bottom {
-    border-bottom: var(--border-bottom-width) solid var(--color-border);
+    /* border-bottom: var(--border-bottom-width) solid var(--color-border); */
+    border-bottom: 0.5px solid #E2E2E2;
   }
 
   @media screen and (max-width: 749px) {
     .header__row--top:not(.divider--page-width),
     .header__row--top.divider--page-width .header__columns {
-      border-bottom-width: var(--border-bottom-width-mobile);
+      /* border-bottom-width: var(--border-bottom-width-mobile); */
+      border-bottom: 0.5px solid #E2E2E2;
     }
   }
 
