@@ -20,6 +20,8 @@
     assign ratio = block_settings.featured_collections_aspect_ratio
   elsif block_settings.menu_style == 'featured_products'
     assign ratio = block_settings.featured_products_aspect_ratio
+  elsif block_settings.menu_style == 'collection_image'
+    assign ratio = block_settings.collection_image_aspect_ratio
   endif
 %}
 

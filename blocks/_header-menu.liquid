@@ -617,6 +617,20 @@
     /* preserves the inherited grid layout when this submenu wrapper is used */
     display: contents;
   }
+
+  /* Make the collection image wrapper transparent to the section grid layout */
+  mega-menu-collection-image {
+    display: contents;
+  }
+
+  /* Hide text content and overlay for collection images in mega menu */
+  [data-collection-image-container="true"] .resource-card__content {
+    display: none;
+  }
+
+  [data-collection-image-container="true"] .resource-card--overlay::before {
+    display: none;
+  }
 {% endstylesheet %}
 
 {% schema %}
@@ -753,6 +767,10 @@
         {
           "value": "featured_collections",
           "label": "t:options.featured_collections"
+        },
+        {
+          "value": "collection_image",
+          "label": "t:options.collection_image"
         }
       ],
       "default": "collection_images"
@@ -798,6 +816,27 @@
       ],
       "default": "16 / 9",
       "visible_if": "{{ block.settings.menu_style == 'featured_collections' }}"
+    },
+    {
+      "type": "select",
+      "id": "collection_image_aspect_ratio",
+      "label": "t:settings.image_ratio",
+      "options": [
+        {
+          "value": "adapt",
+          "label": "t:options.auto"
+        },
+        {
+          "value": "16 / 9",
+          "label": "t:options.landscape"
+        },
+        {
+          "value": "1 / 1",
+          "label": "t:options.square"
+        }
+      ],
+      "default": "16 / 9",
+      "visible_if": "{{ block.settings.menu_style == 'collection_image' }}"
     },
     {
       "type": "range",

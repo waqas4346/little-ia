@@ -61,6 +61,26 @@
     endfor
   endif
 
+  if menu_content_type == 'collection_image'
+    if parent_link.type == 'collection_link'
+      assign first_collection_handle = parent_link.object.handle
+    elsif parent_link.type == 'catalog_link' or parent_link.type == 'collections_link'
+      assign collection_links = parent_link.links | where: 'type', 'collection_link'
+      if collection_links.size > 0
+        assign first_collection_handle = collection_links.first.object.handle
+      else
+        assign first_collection_handle = 'all'
+      endif
+    else
+      assign collection_links = parent_link.links | where: 'type', 'collection_link'
+      if collection_links.size > 0
+        assign first_collection_handle = collection_links.first.object.handle
+      else
+        assign menu_content_type = 'text'
+      endif
+    endif
+  endif
+
   if menu_content_type == 'featured_products'
     if parent_link.type == 'collection_link'
       assign collection_object = parent_link.object
@@ -100,6 +120,9 @@
           else
             assign span_class = 'mega-menu__column--span-1'
           endif
+        elsif menu_content_type == 'collection_image'
+          # For collection_image mode, use normal column span logic
+          assign span_class = 'mega-menu__column--span-' | append: column_span
         else
           # For all other modes, column span is determined by the number of links in the parent link
           assign span_class = 'mega-menu__column--span-' | append: column_span
@@ -111,6 +134,24 @@
       <a
         href="{{ link.url }}"
         class="mega-menu__link {% if link.links != blank %}mega-menu__link--parent{% endif %}"
+          {% if menu_content_type == 'collection_image' and link.type == 'collection_link' %}
+            data-collection-handle="{{ link.object.handle }}"
+            data-collection-image-link="true"
+            {% liquid
+              assign collection_image_url = ''
+              if link.object.featured_image
+                assign collection_image_url = link.object.featured_image | image_url: width: 1200
+              elsif link.object.products.size > 0
+                assign product_with_image = link.object.products | where: 'featured_image' | first
+                if product_with_image.featured_image
+                  assign collection_image_url = product_with_image.featured_image | image_url: width: 1200
+                endif
+              endif
+            %}
+            {% if collection_image_url != blank %}
+              data-collection-image-url="{{ collection_image_url }}"
+            {% endif %}
+          {% endif %}
       >
         {% if menu_content_type == 'collection_images' %}
           {%- capture collection_image_sizes -%}
@@ -147,14 +188,32 @@
         >
           {% for childLink in link.links %}
             {% assign break_after_modulo = forloop.index | modulo: links_before_wrap %}
-            <li
-              {% if break_after_modulo == 0 and should_break_columns %}
-                style="break-after: column;"
-              {% endif %}
-            >
+          <li
+            {% if break_after_modulo == 0 and should_break_columns %}
+              style="break-after: column;"
+            {% endif %}
+          >
               <a
                 href="{{ childLink.url }}"
                 class="mega-menu__link"
+                {% if menu_content_type == 'collection_image' and childLink.type == 'collection_link' %}
+                  data-collection-handle="{{ childLink.object.handle }}"
+                  data-collection-image-link="true"
+                    {% liquid
+                      assign child_collection_image_url = ''
+                      if childLink.object.featured_image
+                        assign child_collection_image_url = childLink.object.featured_image | image_url: width: 1200
+                      elsif childLink.object.products.size > 0
+                        assign child_product_with_image = childLink.object.products | where: 'featured_image' | first
+                        if child_product_with_image.featured_image
+                          assign child_collection_image_url = child_product_with_image.featured_image | image_url: width: 1200
+                        endif
+                      endif
+                    %}
+                  {% if child_collection_image_url != blank %}
+                    data-collection-image-url="{{ child_collection_image_url }}"
+                  {% endif %}
+                {% endif %}
               >
                 <span class="mega-menu__link-title wrap-text">{{- childLink.title -}}</span>
               </a>
@@ -240,6 +299,28 @@
     endif
 
     assign max_featured_collections = max_collection_columns | divided_by: 2 | floor
+    assign max_menu_columns = max_menu_columns | minus: max_collection_columns
+
+    # tablet breakpoint
+    assign max_collection_columns_tablet = 2
+    assign max_featured_collections_tablet = 1
+    assign max_menu_columns_tablet = max_menu_columns_tablet | minus: max_collection_columns_tablet
+  endif
+
+  if menu_content_type == 'collection_image'
+    # Use the same column calculation as featured_collections
+    # desktop breakpoint
+    assign min_featured_collection_columns = min_collections | times: 2
+    assign temp_column_count = column_count | plus: min_featured_collection_columns
+
+    if temp_column_count > max_menu_columns
+      assign max_collection_columns = 2
+    else
+      assign max_collection_columns = max_menu_columns | minus: column_count
+    endif
+
+    # For collection_image, we always show 1 image, so set max_featured_collections to 1
+    assign max_featured_collections = 1
     assign max_menu_columns = max_menu_columns | minus: max_collection_columns
 
     # tablet breakpoint
@@ -343,6 +424,57 @@
             %}
           </li>
         {% endfor %}
+      </ul>
+    </span>
+  {% when 'collection_image' %}
+    {%- capture image_sizes -%}
+      {%- render 'util-mega-menu-img-sizes-attr',
+        menu_content_type: 'featured_collections',
+        settings: settings
+      -%}
+    {%- endcapture -%}
+
+    {% liquid
+      if first_collection_handle == 'all'
+        assign initial_collection = collections.all
+      else
+        assign initial_collection = collections[first_collection_handle]
+      endif
+      
+      # Determine the initial image URL for JavaScript
+      assign initial_image_url = ''
+      if initial_collection.featured_image
+        assign initial_image_url = initial_collection.featured_image | image_url: width: 1200
+      elsif initial_collection.products.size > 0
+        assign product_with_image = initial_collection.products | where: 'featured_image' | first
+        if product_with_image.featured_image
+          assign initial_image_url = product_with_image.featured_image | image_url: width: 1200
+        endif
+      endif
+    %}
+
+    <span
+      class="mega-menu__content"
+      style="--menu-content-columns-desktop: {{ max_collection_columns }}; --menu-content-columns-tablet: {{ max_collection_columns_tablet }}; --resource-card-corner-radius: {{ image_border_radius }}px;"
+      data-collection-image-container="true"
+      data-menu-list-id="{{ id }}"
+      {% if initial_image_url != blank %}
+        data-initial-collection-image-url="{{ initial_image_url }}"
+      {% endif %}
+    >
+      <ul
+        class="mega-menu__content-list mega-menu__content-list--collections list-unstyled"
+        style="--menu-content-columns-desktop: {{ max_featured_collections }}; --menu-content-columns-tablet: {{ max_featured_collections_tablet }};"
+      >
+        <li class="mega-menu__content-list-item">
+          {% render 'resource-card',
+            resource: initial_collection,
+            resource_type: 'collection',
+            style: 'overlay',
+            image_aspect_ratio: content_aspect_ratio,
+            image_sizes: image_sizes
+          %}
+        </li>
       </ul>
     </span>
 {% endcase %}
