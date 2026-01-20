@@ -63,7 +63,7 @@
                   {% for product in collection.products limit: max_items %}
                     <div class="resource-list__item">
                       {% # theme-check-disable UniqueStaticBlockId %}
-                        {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+                        {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: product %}
                       {% # theme-check-enable UniqueStaticBlockId %}
                     </div>
                     {% unless forloop.last %}<!--@list/split-->{% endunless %}
@@ -165,7 +165,7 @@
               class="resource-list__item"
             >
               {% # theme-check-disable UniqueStaticBlockId %}
-                {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+                {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: product %}
               {% # theme-check-enable UniqueStaticBlockId %}
             </div>
 
@@ -180,7 +180,7 @@
             class="resource-list__item"
           >
             {% # theme-check-disable UniqueStaticBlockId %}
-              {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: null %}
+              {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: null %}
             {% # theme-check-enable UniqueStaticBlockId %}
           </div>
 
@@ -377,9 +377,6 @@
 
   /* Enable product card image slider on mobile */
   @media screen and (max-width: 749px) {
-    [data-testid="product-list"] .card-gallery slideshow-component {
-      --cursor: grab;
-    }
 
     [data-testid="product-list"] .card-gallery slideshow-component[disabled='true'] slideshow-slides {
       overflow-x: auto !important;
@@ -403,7 +400,6 @@
   /* Enable product card image slider on desktop */
   @media screen and (min-width: 750px) {
     [data-testid="product-list"] .card-gallery slideshow-component {
-      --cursor: grab;
       pointer-events: auto !important;
     }
 
@@ -1451,6 +1447,9 @@
     },
     {
       "type": "_divider"
+    },
+    {
+      "type": "_product-card"
     }
   ],
   "disabled_on": {
@@ -1824,7 +1823,7 @@
           },
           "block_order": ["product_list_text", "product_list_button"]
         },
-        "static-product-card": {
+        "product-card": {
           "type": "_product-card",
           "name": "t:names.product_card",
           "static": true,
@@ -1839,7 +1838,8 @@
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-inline-end": 0,
+            "show_view_product_button": true
           },
           "blocks": {
             "product-card-gallery": {
@@ -2001,7 +2001,7 @@
           },
           "block_order": ["product_list_text", "product_list_button"]
         },
-        "static-product-card": {
+        "product-card": {
           "type": "_product-card",
           "name": "t:names.product_card",
           "static": true,
@@ -2016,7 +2016,8 @@
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-inline-end": 0,
+            "show_view_product_button": true
           },
           "blocks": {
             "product-card-gallery": {
@@ -2183,7 +2184,7 @@
           },
           "block_order": ["product_list_text", "product_list_button"]
         },
-        "static-product-card": {
+        "product-card": {
           "type": "_product-card",
           "name": "t:names.product_card",
           "static": true,
@@ -2198,7 +2199,8 @@
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-inline-end": 0,
+            "show_view_product_button": true
           },
           "blocks": {
             "product-card-gallery": {

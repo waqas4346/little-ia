@@ -51,7 +51,7 @@
         {% for product in selected_collection.products limit: max_items %}
           <div class="resource-list__item" data-product-slider-item="true" data-product-id="{{ product.id }}">
             {% # theme-check-disable UniqueStaticBlockId %}
-              {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+              {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: product %}
             {% # theme-check-enable UniqueStaticBlockId %}
             {% comment %} Add View Product and + buttons using unified component {% endcomment %}
             {% comment %} Setting is controlled by the product-card block settings {% endcomment %}
@@ -69,7 +69,7 @@
       {% for product in product_list limit: max_items %}
         <div class="resource-list__item" data-product-slider-item="true" data-product-id="{{ product.id }}">
           {% # theme-check-disable UniqueStaticBlockId %}
-            {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+            {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: product %}
           {% # theme-check-enable UniqueStaticBlockId %}
           {% comment %} Add View Product and + buttons using unified component {% endcomment %}
           {% comment %} Setting is controlled by the product-card block settings {% endcomment %}
@@ -87,7 +87,7 @@
       {% for i in (1..max_items) %}
         <div class="resource-list__item" data-product-slider-item="true">
           {% # theme-check-disable UniqueStaticBlockId %}
-            {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: null %}
+            {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: null %}
           {% # theme-check-enable UniqueStaticBlockId %}
         </div>
         {% unless forloop.last %}
@@ -555,6 +555,9 @@
     },
     {
       "type": "_divider"
+    },
+    {
+      "type": "_product-card"
     }
   ],
   "disabled_on": {
@@ -763,7 +766,7 @@
         "padding-block-end": 48
       },
       "blocks": {
-        "static-product-card": {
+        "product-card": {
           "type": "_product-card",
           "name": "Product Card",
           "static": true,
@@ -778,7 +781,8 @@
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-inline-end": 0,
+            "show_view_product_button": true
           },
           "blocks": {
             "product-card-gallery": {
