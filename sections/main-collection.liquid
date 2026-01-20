@@ -673,7 +673,7 @@
     }
   }
 
-  @media screen and (max-width: 1023px) {
+  @media screen and (max-width: 1024px) {
     .collection-filters-button-wrapper {
       display: none;
     }
@@ -706,6 +706,11 @@
 
   .main-collection-grid {
     grid-column: var(--grid-column--mobile);
+
+    /* On tablets, ensure full width utilization */
+    @media screen and (min-width: 750px) and (max-width: 1024px) {
+      grid-column: var(--full-width);
+    }
 
     @media screen and (min-width: 1024px) {
       grid-column: var(--grid-column--desktop);
@@ -752,7 +757,7 @@
   :is(.collection-wrapper--full-width, .collection-wrapper--full-width-on-mobile)
     [product-grid-view='default']
     .product-grid__card {
-    @media screen and (max-width: 1023px) {
+    @media screen and (max-width: 1024px) {
       padding-inline-start: max(var(--padding-xs), var(--padding-inline-start));
       padding-inline-end: max(var(--padding-xs), var(--padding-inline-end));
     }
@@ -761,7 +766,7 @@
   :is(.collection-wrapper--full-width, .collection-wrapper--full-width-on-mobile)
     [product-grid-view='mobile-single']
     .product-grid__card {
-    @media screen and (max-width: 1023px) {
+    @media screen and (max-width: 1024px) {
       padding-inline-start: max(var(--padding-xs), var(--padding-inline-start));
       padding-inline-end: max(var(--padding-xs), var(--padding-inline-end));
     }
@@ -770,7 +775,7 @@
   /* Make product media go edge-to-edge by using negative margins */
   :is(.collection-wrapper--full-width) .card-gallery,
   :is(.collection-wrapper--full-width-on-mobile) .card-gallery {
-    @media screen and (max-width: 1023px) {
+    @media screen and (max-width: 1024px) {
       margin-inline-start: calc(-1 * max(var(--padding-xs), var(--padding-inline-start)));
       margin-inline-end: calc(-1 * max(var(--padding-xs), var(--padding-inline-end)));
     }
@@ -796,7 +801,7 @@
   }
 
   /* Keep filters hidden on mobile even when filters-visible class is present */
-  @media screen and (max-width: 1023px) {
+  @media screen and (max-width: 1024px) {
     .filters-visible .facets-block-wrapper:not(#filters-drawer),
     .filters-visible .facets-controls-wrapper {
       display: none !important;
@@ -834,24 +839,25 @@
     }
   }
 
-  /* Set product card and image to 324px on desktop */
+  /* Desktop: Use responsive widths that adapt to available space */
   @media screen and (min-width: 1367px) {
-    /* Ensure product grid items are exactly 324px on large desktop */
+    /* Let grid items fill available space */
     .product-grid__item {
-      width: 324px;
+      width: 100%;
+      max-width: 100%;
     }
 
-    /* Set product image container to 324px x 324px */
+    /* Set product image container to match column width with aspect ratio */
     .product-grid .card-gallery .product-media-container {
-      width: 324px;
-      height: 324px;
+      width: 100%;
+      aspect-ratio: 1;
     }
 
     .product-grid .card-gallery .product-media-container img,
     .product-grid .card-gallery .product-media-container picture,
     .product-grid .card-gallery .product-media-container video {
-      width: 324px;
-      height: 324px;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
     }
   }
@@ -904,66 +910,55 @@
     }
   }
 
-  /* Set product card and image to 175px on mobile with 2 products per row */
+  /* Mobile: Use responsive widths that adapt to available space */
   @media screen and (max-width: 767px) {
-    /* Ensure product grid shows 2 columns on mobile with 175px each */
-    .product-grid:not(.product-grid-mobile--large) {
-      grid-template-columns: repeat(2, 175px) !important;
-      justify-content: center !important;
-      gap: 5px !important;
-    }
-
-    /* Set product grid items to 175px on mobile */
-    .product-grid__item {
-      width: 175px;
-      max-width: 175px;
-    }
-
-    /* Set product image container to 175px x 175px on mobile */
-    .product-grid .card-gallery .product-media-container {
-      width: 175px !important;
-      height: 175px !important;
-      max-width: 175px !important;
-    }
-
-    .product-grid .card-gallery .product-media-container img,
-    .product-grid .card-gallery .product-media-container picture,
-    .product-grid .card-gallery .product-media-container video {
-      width: 175px !important;
-      height: 175px !important;
-      max-width: 175px !important;
-      object-fit: cover !important;
-    }
-  }
-
-  /* Set product card and image for iPad mini/tablet with 3 products per row */
-  @media screen and (min-width: 768px) and (max-width: 1023px) {
-    /* Ensure product grid shows 3 columns on tablet */
-    .product-grid:not(.product-grid-mobile--large) {
-      grid-template-columns: repeat(3, 1fr) !important;
-      gap: 8px !important;
-    }
-
-    /* Set product grid items to flexible width for 3 columns */
+    /* Let grid items fill available space - grid columns are handled by product-grid.liquid */
     .product-grid__item {
       width: 100%;
       max-width: 100%;
     }
 
-    /* Set product image container to match column width on tablet */
+    /* Set product image container to match column width with aspect ratio */
     .product-grid .card-gallery .product-media-container {
-      width: 100% !important;
-      aspect-ratio: 1 !important;
-      max-width: 100% !important;
+      width: 100%;
+      aspect-ratio: 1;
     }
 
     .product-grid .card-gallery .product-media-container img,
     .product-grid .card-gallery .product-media-container picture,
     .product-grid .card-gallery .product-media-container video {
-      width: 100% !important;
-      height: 100% !important;
-      max-width: 100% !important;
-      object-fit: cover !important;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  /* Tablet: Use responsive widths that adapt to available space */
+  @media screen and (min-width: 768px) and (max-width: 1024px) {
+    /* Ensure product grid container expands to use full width on tablets */
+    .main-collection-grid > div {
+      width: 100%;
+      max-width: 100%;
+    }
+    
+    /* Let grid items fill available space - grid columns are handled by product-grid.liquid */
+    .product-grid__item {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    /* Set product image container to match column width with aspect ratio */
+    .product-grid .card-gallery .product-media-container {
+      width: 100%;
+      aspect-ratio: 1;
+    }
+
+    .product-grid .card-gallery .product-media-container img,
+    .product-grid .card-gallery .product-media-container picture,
+    .product-grid .card-gallery .product-media-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
   }
 
@@ -979,7 +974,7 @@
     border-top: 0.5px solid #D4D4D4;
   }
 
-  @media screen and (max-width: 1023px) {
+  @media screen and (max-width: 1024px) {
     .collection-mobile-sticky-bar {
       display: flex;
       align-items: center;
@@ -1080,7 +1075,7 @@
     left: auto;
   }
 
-  @media screen and (min-width: 1024px) {
+  @media screen and (min-width: 1025px) {
     .mobile-sort-modal__dialog {
       display: none;
     }
@@ -1229,7 +1224,7 @@
     opacity: 0.7;
   }
 
-  @media screen and (min-width: 1024px) {
+  @media screen and (min-width: 1025px) {
     .mobile-sort-modal__dialog {
       display: none;
     }

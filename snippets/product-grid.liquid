@@ -19,13 +19,13 @@
   @media (min-width: 1024px) {
     {% case section.settings.layout_type %}
       {% when 'grid' %}
-        /* Keep existing fallback for older browsers */
+        /* Use flexible grid that adapts to available space */
         .product-grid--{{ section.id }}:is(.product-grid--grid) {
-          --product-grid-columns-desktop: repeat(4, 324px);
+          --product-grid-columns-desktop: repeat(4, 1fr);
         }
         
         .filters-visible .product-grid--{{ section.id }}:is(.product-grid--grid) {
-          --product-grid-columns-desktop: repeat(3, 324px);
+          --product-grid-columns-desktop: repeat(3, 1fr);
         }
 
 
@@ -86,6 +86,19 @@
     }
   }
 
+  /* Tablet (iPad mini/Air): 2-3 columns depending on screen size */
+  @media (min-width: 750px) and (max-width: 1023px) {
+    {% case section.settings.layout_type %}
+      {% when 'grid' %}
+        /* iPad Air (820px+): Show 3 columns */
+        @media (min-width: 750px) {
+          .product-grid--{{ section.id }}:is(.product-grid--grid) {
+            --product-grid-columns-desktop: repeat(3, 1fr);
+          }
+        }
+    {% endcase %}
+  }
+
   /* iPad Pro: 3 columns default, 2 columns when filters are visible */
   @media (min-width: 1024px) and (max-width: 1366px) {
     {% case section.settings.layout_type %}
@@ -122,7 +135,7 @@
   <div
     style="
       grid-column: var(--full-width);
-      --product-grid-gap-mobile: {{ section.settings.columns_gap_vertical | at_most: 12 }}px {{ section.settings.columns_gap_horizontal | at_most: 12 }}px;
+      --product-grid-gap-mobile: 22px {{ section.settings.columns_gap_horizontal | at_most: 12 }}px;
       --product-grid-gap-desktop: {{ section.settings.columns_gap_vertical }}px {{ section.settings.columns_gap_horizontal }}px;
       container-type: inline-size;
       container-name: product-grid;
@@ -247,7 +260,9 @@
   }
 
   .main-collection-grid {
-    padding: var(--grid--margin--mobile);
+    @media screen and (max-width: 749px) {
+      padding: var(--grid--margin--mobile);
+    }
 
     @media screen and (min-width: 1024px) {
       padding: var(--padding-block-start) var(--padding-inline-end) var(--padding-block-end) var(--padding-inline-start);
