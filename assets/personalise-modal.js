@@ -1101,7 +1101,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
    * Saves the personalisation
    * @param {Event} event - The click event
    */
-  savePersonalisation = (event) => {
+  savePersonalisation = async (event) => {
     event.preventDefault();
     console.log('savePersonalisation called');
     
@@ -1199,9 +1199,11 @@ export class PersonaliseDialogComponent extends DialogComponent {
     let form = null;
     
     if (cartContext && cartContext.cartLine) {
-      // Update cart item properties
-      this.#updateCartItemProperties(cartContext, personalisation);
-      // Still try to find form for event detail
+      // Update cart item properties ONLY - do NOT update product page form
+      // The product page form should keep its original personalization
+      await this.#updateCartItemProperties(cartContext, personalisation);
+      
+      // Find form only for event detail, but don't modify it
       form = this.closest('product-form-component')?.querySelector('form[data-type="add-to-cart-form"]');
       if (!form) {
         const quickAddModal = document.querySelector('#quick-add-modal-content');
@@ -1212,6 +1214,8 @@ export class PersonaliseDialogComponent extends DialogComponent {
       if (!form) {
         form = document.querySelector('form[data-type="add-to-cart-form"]');
       }
+      
+      console.log('Cart item updated, product page form NOT modified (preserving original personalization)');
     } else {
       // Write personalisation directly to form inputs (not to storage)
       form = this.closest('product-form-component')?.querySelector('form[data-type="add-to-cart-form"]');
@@ -1395,35 +1399,46 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Close the dialog
     this.closeDialog();
     
+    // Only update button text if NOT saving from cart context
+    // When saving from cart context, product page form should remain unchanged
+    if (!cartContext || !cartContext.cartLine) {
+      // Update button text for product page personalization
+      const updateButtonWithRetry2 = (attempts = 0) => {
+        if (typeof window.updatePersonaliseButtonText === 'function') {
+          window.updatePersonaliseButtonText(form);
+          
+          // Check if buttons were updated, if not retry
+          setTimeout(() => {
+            const buttons = document.querySelectorAll('[data-personalise-button]');
+            let anyButtonUpdated = false;
+            buttons.forEach((button) => {
+              const textSpan = button.querySelector('[data-personalise-text]');
+              if (textSpan && (textSpan.textContent === 'EDIT' || textSpan.textContent.includes('Personalised:'))) {
+                anyButtonUpdated = true;
+              }
+            });
+            
+            // If no buttons were updated and we haven't exceeded retries, try again
+            if (!anyButtonUpdated && attempts < 15) {
+              setTimeout(() => updateButtonWithRetry2(attempts + 1), 200);
+            }
+          }, 100);
+        } else if (attempts < 15) {
+          // Function not defined yet, retry
+          setTimeout(() => updateButtonWithRetry2(attempts + 1), 200);
+        }
+      };
+      
+      // Start button update immediately, with multiple retries
+      requestAnimationFrame(() => {
+        updateButtonWithRetry2(0);
+      });
+    }
+    
     // Clear cart context after save
     if (cartContext) {
       window.cartPersonalizationContext = null;
     }
-    const updateButtonWithRetry2 = (attempts = 0) => {
-      if (typeof window.updatePersonaliseButtonText === 'function') {
-        window.updatePersonaliseButtonText();
-        
-        // Check if buttons were updated, if not retry
-        const buttons = document.querySelectorAll('[data-personalise-button]');
-        let anyButtonUpdated = false;
-        buttons.forEach((button) => {
-          const textSpan = button.querySelector('[data-personalise-text]');
-          if (textSpan && textSpan.textContent === 'EDIT') {
-            anyButtonUpdated = true;
-          }
-        });
-        
-        // If no buttons were updated and we haven't exceeded retries, try again
-        if (!anyButtonUpdated && attempts < 10) {
-          setTimeout(() => updateButtonWithRetry2(attempts + 1), 200);
-        }
-      } else if (attempts < 10) {
-        // Function not defined yet, retry
-        setTimeout(() => updateButtonWithRetry2(attempts + 1), 200);
-      }
-    };
-    
-    setTimeout(() => updateButtonWithRetry2(0), 300);
   };
 
   /**
