@@ -37,11 +37,12 @@
   .quick-add-modal {
     padding: 0;
     border: var(--style-border-popover);
-    height: fit-content;
     max-height: 90vh;
     overflow: hidden;
     min-height: 500px;
     box-shadow: 0 5px 30px rgb(0 0 0 / var(--opacity-15));
+    display: flex;
+    flex-direction: column;
 
     @media screen and (max-width: 749px) {
       width: 100%;
@@ -97,22 +98,22 @@
   .quick-add-modal__content {
     width: 100%;
     display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
     height: 100%;
-    min-height: 500px;
-    max-height: 90vh;
     overflow: hidden;
     padding: 20px;
+    /* Ensure flex children can shrink and scroll */
+    align-items: stretch;
 
     @media screen and (min-width: 750px) {
-      height: 90vh;
-      max-height: 90vh;
+      /* No additional constraints needed */
     }
 
     @media screen and (max-width: 749px) {
       flex-direction: column;
       min-height: unset;
       height: 100%;
-      max-height: 100vh;
       padding: 0;
       gap: 0;
       overflow-y: auto;
@@ -125,16 +126,19 @@
     display: flex !important;
     flex-direction: row;
     width: 100% !important;
-    height: 100% !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
     gap: 0;
     grid-template-columns: none !important;
-    min-height: 500px;
+    /* Ensure flex children can shrink and scroll properly */
+    align-items: stretch;
+    overflow: hidden !important; /* Prevent overflow from parent */
 
     @media screen and (max-width: 749px) {
       flex-direction: column;
       min-height: 0;
-      height: 100%;
-      max-height: 100vh;
+      height: auto;
     }
   }
 
@@ -240,17 +244,20 @@
     flex: 1 1 auto !important; /* Take all available space */
     display: flex !important;
     flex-direction: column;
-    justify-content: stretch;
-    height: 100%;
-    min-height: 0;
-    max-height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
+    justify-content: flex-start;
+    min-height: 0 !important; /* Critical: allow flex item to shrink below content size */
+    height: 100% !important; /* Fill available height */
+    max-height: 100% !important; /* Constrain to parent height */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
     padding-left: 20px;
     order: 1 !important;
     width: auto !important;
     max-width: none !important;
     visibility: visible !important;
+    /* Ensure scrolling works properly */
+    position: relative;
+    -webkit-overflow-scrolling: touch;
 
     dialog[open] & {
       animation: fadeSlideIn 0.3s var(--animation-timing-fade-in) both;
@@ -270,15 +277,20 @@
       padding-inline: var(--padding-xl);
       padding-top: 0;
       padding-bottom: var(--padding-xl);
-      height: auto;
-      min-height: 0;
-      overflow: visible;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: 60vh !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
       order: 1 !important;
     }
   }
 
   .quick-add-modal__content .product-details > .group-block {
     flex-grow: 1;
+    min-height: 0; /* Allow shrinking */
+    display: flex;
+    flex-direction: column;
 
     @media screen and (max-width: 749px) {
       /* Ensure group-blocks containing essential elements are visible on mobile */
@@ -308,7 +320,7 @@
     flex: 0 0 auto;
   }
   .quick-add-modal__content .product-details :is(.buy-buttons-block) {
-    margin-top: auto;
+    /* margin-top: auto; */
   }
 
   .quick-add-modal__content .product-details .variant-picker {
@@ -470,8 +482,8 @@
   }
 
   .quick-add-modal__content .product-information__media {
-    flex: 0 0 45.65% !important; /* Similar to personalisation modal preview */
-    display: flex !important;
+    flex: 0 0 52%; /* Similar to personalisation modal preview */
+    display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
@@ -479,17 +491,11 @@
     overflow: hidden;
     /* Remove animation to match personalize modal - no fade in */
     animation: none !important;
-    width: 45.65% !important;
-    max-width: 45.65% !important;
     min-width: 0 !important;
     order: 0 !important;
+    height: 100%;
 
-    @media screen and (min-width: 1400px) {
-      flex: 0 0 525px !important;
-      width: 525px !important;
-      max-width: 525px !important;
-    }
-
+  
     @media screen and (max-width: 749px) {
       flex: 0 0 auto !important;
       width: 100% !important;
