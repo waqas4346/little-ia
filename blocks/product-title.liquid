@@ -5,11 +5,34 @@
   {% assign product_title = '<p>' | append: text | append: '</p>' %}
   {% render 'text', fallback_text: product_title, block: block, class: 'product-title-text' %}
 {% else %}
-  {% assign product_title = '<p>' | append: closest.product.title | append: '</p>' %}
+  {% liquid
+    assign product = closest.product
+    assign variant_to_link = product.selected_or_first_available_variant
+    
+    # Build product URL - include collection path if on collection page
+    assign product_url = variant_to_link.url
+    if template.name == 'collection' and collection.handle != blank
+      # Extract variant ID from URL if present
+      assign url_parts = variant_to_link.url | split: '?'
+      assign base_url = url_parts[0]
+      assign query_string = ''
+      if url_parts.size > 1
+        assign query_string = url_parts[1]
+      endif
+      
+      # Build collection-aware URL: /collections/collection-handle/products/product-handle
+      assign product_url = '/collections/' | append: collection.handle | append: '/products/' | append: product.handle
+      if query_string != blank
+        assign product_url = product_url | append: '?' | append: query_string
+      endif
+    endif
+    
+    assign product_title = '<p>' | append: product.title | append: '</p>'
+  %}
   <a
     class="contents user-select-text"
     ref="productTitleLink"
-    href="{{ closest.product.selected_or_first_available_variant.url }}"
+    href="{{ product_url }}"
   >
     {% render 'text', fallback_text: product_title, block: block, class: 'product-title-text' %}
   </a>
