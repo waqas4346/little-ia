@@ -322,6 +322,9 @@
     container-name: card-gallery-container; /* Optional: name the container */
     background-color: #F7F7F7;
     position: relative;
+    /* Create isolation context to prevent conflicts with parent carousels */
+    isolation: isolate;
+    z-index: 1;
   }
 
   .card-gallery slideshow-component,
@@ -502,6 +505,69 @@
   .card-gallery slideshow-arrows .slideshow-control--style-blue_arrows .svg-wrapper svg {
     width: 28px;
     height: 28px;
+  }
+
+  /* Card Gallery Arrows - Always isolated from parent carousels */
+  /* Ensure card-gallery arrows always work independently and never conflict */
+  .card-gallery slideshow-arrows {
+    /* Create new stacking context for card-gallery arrows */
+    position: absolute !important;
+    z-index: calc(var(--layer-heightened) + 100) !important;
+    pointer-events: none !important;
+    /* Maintain flexbox layout for proper arrow positioning */
+    display: flex !important;
+    /* Preserve flexbox alignment - don't override justify-content or align-items */
+    /* Ensure proper positioning */
+    inset: 0 !important;
+    /* Override any parent carousel arrow styles that might interfere */
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    /* Hide arrows by default, show on hover */
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.2s ease, visibility 0.2s ease !important;
+  }
+
+  /* Ensure center positioning works correctly */
+  .card-gallery slideshow-arrows[position='center'] {
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  /* Show arrows even when slideshow is disabled (common in carousel contexts) */
+  .card-gallery slideshow-component[disabled='true'] slideshow-arrows {
+    display: flex !important;
+  }
+
+  /* Card gallery arrow controls - always clickable and above everything */
+  /* Don't override position/transform - let base.css handle positioning */
+  .card-gallery slideshow-arrows .slideshow-control {
+    pointer-events: auto !important;
+    z-index: calc(var(--layer-heightened) + 101) !important;
+    /* Ensure controls are visible when arrows are shown */
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Show arrows on hover of card-gallery or slideshow-component */
+  .card-gallery:hover slideshow-arrows,
+  .card-gallery:focus-within slideshow-arrows,
+  .card-gallery slideshow-component:hover slideshow-arrows,
+  .card-gallery slideshow-component:focus-within slideshow-arrows {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+  }
+
+  /* Also show when hovering the product card that contains the gallery */
+  product-card:hover .card-gallery slideshow-arrows,
+  product-card:focus-within .card-gallery slideshow-arrows,
+  product-card-link:hover .card-gallery slideshow-arrows,
+  product-card-link:focus-within .card-gallery slideshow-arrows {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
   }
 
   /* Product Tag Badge */
