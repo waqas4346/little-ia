@@ -71,7 +71,25 @@ class StickyAddToCartComponent extends Component {
   connectedCallback() {
     super.connectedCallback();
 
-    this.#setupIntersectionObserver();
+    // Set up intersection observer - with retry if it fails
+    try {
+      this.#setupIntersectionObserver();
+    } catch (error) {
+      console.warn('Sticky add to cart: Failed to set up intersection observer, retrying...', error);
+      // Retry after a short delay
+      setTimeout(() => {
+        try {
+          this.#setupIntersectionObserver();
+        } catch (retryError) {
+          console.error('Sticky add to cart: Failed to set up intersection observer after retry', retryError);
+          // Fallback: use scroll listener if intersection observer fails
+          this.#setupScrollFallback();
+        }
+      }, 500);
+    }
+
+    // Also set up a scroll fallback as backup
+    this.#setupScrollFallback();
 
     const { signal } = this.#abortController;
     const target = this.closest('.shopify-section');
@@ -100,7 +118,10 @@ class StickyAddToCartComponent extends Component {
    */
   #setupIntersectionObserver() {
     const productForm = this.#getProductForm();
-    if (!productForm) return;
+    if (!productForm) {
+      console.warn('Sticky add to cart: Product form not found');
+      return;
+    }
 
     // Try to find buy-buttons-block - it could be a parent of product-form or in the same section
     let buyButtonsBlock = productForm.closest('.buy-buttons-block');
@@ -111,7 +132,10 @@ class StickyAddToCartComponent extends Component {
         buyButtonsBlock = sectionElement.querySelector('.buy-buttons-block');
       }
     }
-    if (!buyButtonsBlock) return;
+    if (!buyButtonsBlock) {
+      console.warn('Sticky add to cart: Buy buttons block not found');
+      return;
+    }
 
     // Observer for buy buttons visibility
     this.#buyButtonsIntersectionObserver = new IntersectionObserver((entries) => {
@@ -162,12 +186,24 @@ class StickyAddToCartComponent extends Component {
 
     this.#buyButtonsIntersectionObserver.observe(buyButtonsBlock);
     // this.#mainBottomObserver.observe(footer);
-    this.#targetAddToCartButton = productForm.querySelector('[ref="addToCartButton"]');
+    
+    // Find the target add to cart button - try multiple selectors
+    this.#targetAddToCartButton = productForm.querySelector('[ref="addToCartButton"]') ||
+                                   productForm.querySelector('add-to-cart-component [ref="addToCartButton"]') ||
+                                   productForm.querySelector('.add-to-cart-button');
 
     // Check initial state - if buy buttons are already out of view, show sticky bar immediately
     const rect = buyButtonsBlock.getBoundingClientRect();
     if (rect.bottom < 0 || rect.top < 0) {
       this.#showStickyBar();
+    } else {
+      // Also check after a short delay in case the page is still loading
+      setTimeout(() => {
+        const rectAfterDelay = buyButtonsBlock.getBoundingClientRect();
+        if (rectAfterDelay.bottom < 0 || rectAfterDelay.top < 0) {
+          this.#showStickyBar();
+        }
+      }, 100);
     }
   }
 
@@ -176,9 +212,43 @@ class StickyAddToCartComponent extends Component {
    * Handles the add to cart button click in the sticky bar
    */
   handleAddToCartClick = async () => {
-    if (!this.#targetAddToCartButton) return;
-    this.#targetAddToCartButton.dataset.puppet = 'true';
-    this.#targetAddToCartButton.click();
+    // First check if the sticky button itself is disabled
+    if (this.refs.addToCartButton.disabled) {
+      return;
+    }
+    
+    // Get the form to check if we can submit
+    const productForm = this.#getProductForm();
+    const form = productForm?.querySelector('form');
+    
+    if (!form) return;
+    
+    // Check form validity before proceeding
+    if (!form.checkValidity()) {
+      // Show validation message if form is invalid
+      form.reportValidity();
+      return;
+    }
+    
+    // If target button exists and is enabled, use it (for animations)
+    if (this.#targetAddToCartButton && !this.#targetAddToCartButton.disabled) {
+      this.#targetAddToCartButton.dataset.puppet = 'true';
+      // Try clicking the button first (this triggers animations and form submission)
+      this.#targetAddToCartButton.click();
+      
+      // If clicking didn't work, submit the form directly as fallback
+      setTimeout(() => {
+        // Check if form was already submitted by checking if button still has puppet flag
+        if (this.#targetAddToCartButton && this.#targetAddToCartButton.dataset.puppet === 'true') {
+          // Form might not have submitted, try submitting directly
+          form.requestSubmit();
+        }
+      }, 100);
+    } else {
+      // Target button doesn't exist or is disabled, submit form directly
+      // This ensures the form submits even if the main button is disabled
+      form.requestSubmit();
+    }
     const cartIcon = document.querySelector('.header-actions__cart-icon');
 
     if (this.refs.addToCartButton.dataset.added !== 'true') {
@@ -304,10 +374,55 @@ class StickyAddToCartComponent extends Component {
   };
 
   /**
+   * Sets up a scroll-based fallback to show/hide sticky bar
+   */
+  #setupScrollFallback() {
+    const { signal } = this.#abortController;
+    let scrollTimeout;
+    
+    const handleScroll = () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        const productForm = this.#getProductForm();
+        if (!productForm) return;
+        
+        // Try to find buy-buttons-block
+        let buyButtonsBlock = productForm.closest('.buy-buttons-block');
+        if (!buyButtonsBlock) {
+          const sectionElement = this.closest('.shopify-section');
+          if (sectionElement) {
+            buyButtonsBlock = sectionElement.querySelector('.buy-buttons-block');
+          }
+        }
+        
+        if (buyButtonsBlock) {
+          const rect = buyButtonsBlock.getBoundingClientRect();
+          if (rect.bottom < 0 || rect.top < 0) {
+            // Buy buttons are out of view, show sticky bar
+            if (!this.#isStuck) {
+              this.#showStickyBar();
+            }
+          } else if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+            // Buy buttons are in view, hide sticky bar
+            if (this.#isStuck) {
+              this.#hideStickyBar();
+            }
+          }
+        }
+      }, 50);
+    };
+    
+    window.addEventListener('scroll', handleScroll, { signal, passive: true });
+    // Check initial state
+    handleScroll();
+  }
+
+  /**
    * Shows the sticky bar with animation
    */
   #showStickyBar() {
     const { stickyBar } = this.refs;
+    if (!stickyBar) return;
     this.#isStuck = true;
     stickyBar.dataset.stuck = 'true';
   }
@@ -328,15 +443,47 @@ class StickyAddToCartComponent extends Component {
    */
   #getProductForm() {
     const productId = this.dataset.productId;
-    if (!productId) return null;
+    if (!productId) {
+      console.warn('Sticky add to cart: No product ID found on sticky-add-to-cart element');
+      return null;
+    }
 
     const sectionElement = this.closest('.shopify-section');
-    if (!sectionElement) return null;
+    if (!sectionElement) {
+      console.warn('Sticky add to cart: No section element found');
+      return null;
+    }
 
     const sectionId = sectionElement.id.replace('shopify-section-', '');
-    return document.querySelector(
+    
+    // Try multiple selectors to find the product form
+    let productForm = document.querySelector(
       `#shopify-section-${sectionId} product-form-component[data-product-id="${productId}"]`
     );
+    
+    // Fallback: search without section ID
+    if (!productForm) {
+      productForm = document.querySelector(
+        `product-form-component[data-product-id="${productId}"]`
+      );
+    }
+    
+    // Another fallback: search within the section
+    if (!productForm) {
+      productForm = sectionElement.querySelector(
+        `product-form-component[data-product-id="${productId}"]`
+      );
+    }
+    
+    if (!productForm) {
+      console.warn('Sticky add to cart: Product form component not found', {
+        productId,
+        sectionId,
+        sectionElement: sectionElement.id
+      });
+    }
+    
+    return productForm;
   }
 
   /**

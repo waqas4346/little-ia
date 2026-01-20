@@ -119,18 +119,6 @@
             <span class="personalise-button__text" data-personalise-text>PERSONALISE IT</span>
            </div>
           </button>
-          
-          {%- comment -%} Personalisation Confirmation Checkbox {%- endcomment -%}
-          <div class="personalise-confirmation" data-personalise-confirmation style="display: none;">
-            <label class="personalise-confirmation__label">
-              <input 
-                type="checkbox" 
-                class="personalise-confirmation__checkbox"
-                data-personalise-confirm-checkbox
-              >
-              <span class="personalise-confirmation__text" data-personalise-confirm-text></span>
-            </label>
-          </div>
           {% endif %}
           
           <button
@@ -459,13 +447,12 @@
             confirmationContainer = button.parentElement?.querySelector('[data-personalise-confirmation]');
           }
           if (!confirmationContainer) {
-            // Try finding in the sticky add to cart container
-            const stickyContainer = button.closest('.sticky-add-to-cart__bar');
-            if (stickyContainer) {
-              confirmationContainer = stickyContainer.querySelector('[data-personalise-confirmation]');
+            // Try finding in the product form buttons container (product page)
+            const formButtons = button.closest('.product-form-buttons');
+            if (formButtons) {
+              confirmationContainer = formButtons.querySelector('[data-personalise-confirmation]');
             }
           }
-          console.log('Confirmation container found:', confirmationContainer ? 'YES' : 'NO');
           
           if (textSpan) {
             if (hasPersonalisation) {
@@ -898,53 +885,6 @@
     white-space: nowrap;
   }
 
-  /* Personalisation Confirmation Checkbox */
-  .sticky-add-to-cart .personalise-confirmation {
-    margin-top: var(--margin-md);
-    width: 100%;
-  }
-
-  .sticky-add-to-cart .personalise-confirmation__label {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--gap-sm);
-    cursor: pointer;
-  }
-
-  .sticky-add-to-cart .personalise-confirmation__checkbox {
-    margin: 0;
-    margin-block-start: 2px;
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    border: 1.5px solid #7295BB !important;
-    border-radius: 0px;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-color: #FFFFFF;
-    box-sizing: border-box;
-  }
-
-  .sticky-add-to-cart .personalise-confirmation__checkbox:checked {
-    background-color: #7295BB;
-    border-color: #7295BB !important;
-    background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.3333 4L6 11.3333L2.66667 8' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 14px 14px;
-  }
-
-  .sticky-add-to-cart .personalise-confirmation__text {
-    flex: 1;
-    font-family: 'Outfit', sans-serif;
-    font-style: normal;
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 140%;
-    color: #1D425A;
-  }
 
   /* Mobile adjustments */
   @media screen and (max-width: 749px) {

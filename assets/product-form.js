@@ -184,6 +184,9 @@ class ProductFormComponent extends Component {
 
   /** @type {number | undefined} */
   #timeout;
+  
+  /** @type {boolean | undefined} */
+  #variantAvailable = true;
 
   connectedCallback() {
     super.connectedCallback();
@@ -195,6 +198,15 @@ class ProductFormComponent extends Component {
 
     // Listen for cart updates to sync data-cart-quantity
     document.addEventListener(ThemeEvents.cartUpdate, this.#onCartUpdate, { signal });
+    
+    // Listen for personalization checkbox changes (use document to catch events from anywhere)
+    document.addEventListener('change', this.#onPersonalisationCheckboxChange, { signal });
+    
+    // Listen for personalization saved event
+    document.addEventListener('personalisation-saved', this.#onPersonalisationSaved, { signal });
+    
+    // Initial button state check
+    setTimeout(() => this.#updateAddToCartButtonState(), 100);
   }
 
   disconnectedCallback() {
@@ -202,6 +214,92 @@ class ProductFormComponent extends Component {
 
     this.#abortController.abort();
   }
+
+  /**
+   * Checks if personalization confirmation checkbox is required and checked
+   * @returns {boolean} true if personalization is confirmed or not required, false if required but not checked
+   */
+  #isPersonalisationConfirmed() {
+    const form = this.querySelector('form');
+    if (!form) return true; // No form, assume confirmed
+    
+    const personalisationConfirmation = this.querySelector('[data-personalise-confirmation]');
+    const personalisationCheckbox = personalisationConfirmation?.querySelector('[data-personalise-confirm-checkbox]');
+    
+    if (!personalisationConfirmation || !personalisationCheckbox) return true; // No personalization, assume confirmed
+    
+    // Check if confirmation container is visible
+    const isVisible = personalisationConfirmation.offsetParent !== null || 
+                      personalisationConfirmation.style.display !== 'none' ||
+                      window.getComputedStyle(personalisationConfirmation).display !== 'none';
+    
+    if (!isVisible) return true; // Not visible, personalization not present
+    
+    // If visible, checkbox must be checked
+    return personalisationCheckbox.checked;
+  }
+
+  /**
+   * Updates the add to cart button state based on variant availability and personalization confirmation
+   */
+  #updateAddToCartButtonState() {
+    const { addToCartButtonContainer } = this.refs;
+    if (!addToCartButtonContainer) return;
+    
+    // Use stored variant availability (defaults to true if not set yet)
+    const variantAvailable = this.#variantAvailable !== false;
+    
+    // Check personalization confirmation
+    const personalisationConfirmed = this.#isPersonalisationConfirmed();
+    
+    // Disable if variant not available OR personalization not confirmed
+    if (!variantAvailable || !personalisationConfirmed) {
+      addToCartButtonContainer.disable();
+    } else {
+      addToCartButtonContainer.enable();
+    }
+    
+    // Also update sticky bar button if it exists
+    const productId = this.dataset.productId;
+    if (productId) {
+      const stickyBar = document.querySelector(`sticky-add-to-cart[data-product-id="${productId}"]`);
+      if (stickyBar) {
+        // Try to access via component refs first (if component is defined)
+        let stickyButton = null;
+        if (stickyBar.refs && stickyBar.refs.addToCartButton) {
+          stickyButton = stickyBar.refs.addToCartButton;
+        } else {
+          // Fallback to class selector
+          stickyButton = stickyBar.querySelector('.sticky-add-to-cart__button');
+        }
+        
+        if (stickyButton) {
+          if (!variantAvailable || !personalisationConfirmed) {
+            stickyButton.disabled = true;
+          } else {
+            stickyButton.disabled = false;
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Handles personalization checkbox change events
+   * @param {Event} event - The change event
+   */
+  #onPersonalisationCheckboxChange = (event) => {
+    if (event.target?.matches('[data-personalise-confirm-checkbox]')) {
+      this.#updateAddToCartButtonState();
+    }
+  };
+
+  /**
+   * Handles personalization saved events
+   */
+  #onPersonalisationSaved = () => {
+    setTimeout(() => this.#updateAddToCartButtonState(), 200);
+  };
 
   /**
    * Updates quantity selector with cart data for current variant
@@ -297,6 +395,15 @@ class ProductFormComponent extends Component {
     const form = this.querySelector('form');
 
     if (!form) throw new Error('Product form element missing');
+
+    // Check if personalization confirmation is required and checked
+    if (!this.#isPersonalisationConfirmed()) {
+      // Disable all add to cart buttons and return early
+      for (const container of allAddToCartContainers) {
+        container.disable();
+      }
+      return;
+    }
 
     if (this.refs.quantitySelector?.canAddToCart) {
       const validation = this.refs.quantitySelector.canAddToCart();
@@ -721,12 +828,11 @@ class ProductFormComponent extends Component {
     // Update state and text for add-to-cart button
     if (!currentAddToCartButtonContainer || (!currentAddToCartButton && !acceleratedCheckoutButtonContainer)) return;
 
-    // Update the button state
-    if (event.detail.resource == null || event.detail.resource.available == false) {
-      currentAddToCartButtonContainer.disable();
-    } else {
-      currentAddToCartButtonContainer.enable();
-    }
+    // Update the button state - check both variant availability and personalization confirmation
+    this.#variantAvailable = event.detail.resource != null && event.detail.resource.available !== false;
+    
+    // Update button state (this will handle both main button and sticky bar button)
+    this.#updateAddToCartButtonState();
 
     const newAddToCartButton = event.detail.data.html.querySelector('product-form-component [ref="addToCartButton"]');
     if (newAddToCartButton && currentAddToCartButton) {

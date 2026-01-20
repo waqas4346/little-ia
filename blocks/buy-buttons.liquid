@@ -881,6 +881,10 @@
                   if (fields.length > 0) {
                     confirmTextSpan.textContent = `I confirm my ${fields.join(', ')} personalisation`;
                     confirmationContainer.style.display = '';
+                    // Update add to cart button state after showing confirmation
+                    if (window.updateAddToCartButtonState) {
+                      setTimeout(window.updateAddToCartButtonState, 50);
+                    }
                   }
                 }
               }
@@ -893,6 +897,10 @@
               textSpan.textContent = 'PERSONALISE IT';
               if (confirmationContainer) {
                 confirmationContainer.style.display = 'none';
+                // Update add to cart button state after hiding confirmation
+                if (window.updateAddToCartButtonState) {
+                  setTimeout(window.updateAddToCartButtonState, 50);
+                }
               }
             }
           }
@@ -1011,6 +1019,83 @@
   } catch (error) {
     console.error('Error setting up personalise button listeners:', error);
   }
+  </script>
+  
+  <script>
+    // Handle personalization confirmation checkbox - enable/disable add to cart button
+    (function() {
+      'use strict';
+      
+      // Expose function globally so it can be called from updatePersonaliseButtonText
+      window.updateAddToCartButtonState = function() {
+        try {
+          const productFormComponent = document.querySelector('product-form-component[data-product-id="{{ product.id }}"]');
+          if (!productFormComponent) return;
+          
+          const form = productFormComponent.querySelector('form[data-type="add-to-cart-form"]');
+          if (!form) return;
+          
+          const personalisationConfirmation = productFormComponent.querySelector('[data-personalise-confirmation]');
+          const personalisationCheckbox = personalisationConfirmation?.querySelector('[data-personalise-confirm-checkbox]');
+          
+          if (!personalisationConfirmation || !personalisationCheckbox) return;
+          
+          // Check if confirmation container is visible
+          const isVisible = personalisationConfirmation.offsetParent !== null || 
+                            personalisationConfirmation.style.display !== 'none' ||
+                            window.getComputedStyle(personalisationConfirmation).display !== 'none';
+          
+          if (!isVisible) {
+            // If not visible, personalization not present - don't interfere with button state
+            return;
+          }
+          
+          // If visible, enable/disable based on checkbox state
+          const addToCartButtons = productFormComponent.querySelectorAll('add-to-cart-component');
+          addToCartButtons.forEach(container => {
+            if (container.refs?.addToCartButton) {
+              if (personalisationCheckbox.checked) {
+                container.enable();
+              } else {
+                container.disable();
+              }
+            }
+          });
+        } catch (error) {
+          // Silently handle errors
+        }
+      }
+      
+      // Initialize on page load
+      function init() {
+        try {
+          // Wait for DOM to be ready
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+              setTimeout(window.updateAddToCartButtonState, 100);
+            });
+          } else {
+            setTimeout(window.updateAddToCartButtonState, 100);
+          }
+          
+          // Listen for checkbox changes
+          document.addEventListener('change', function(e) {
+            if (e.target && e.target.matches('[data-personalise-confirm-checkbox]')) {
+              window.updateAddToCartButtonState();
+            }
+          });
+          
+          // Also listen for personalisation-saved event to update button state
+          document.addEventListener('personalisation-saved', function() {
+            setTimeout(window.updateAddToCartButtonState, 200);
+          });
+        } catch (error) {
+          // Silently handle errors
+        }
+      }
+      
+      init();
+    })();
   </script>
 </span>
 
