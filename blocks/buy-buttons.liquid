@@ -1035,10 +1035,24 @@
           const form = productFormComponent.querySelector('form[data-type="add-to-cart-form"]');
           if (!form) return;
           
-          const personalisationConfirmation = productFormComponent.querySelector('[data-personalise-confirmation]');
+          // Try to find confirmation checkbox - it might be in product-form-component or in buy-buttons-block
+          let personalisationConfirmation = productFormComponent.querySelector('[data-personalise-confirmation]');
+          if (!personalisationConfirmation) {
+            // Try finding in buy-buttons-block
+            const buyButtonsBlock = productFormComponent.closest('.buy-buttons-block') || 
+                                    document.querySelector('.buy-buttons-block');
+            if (buyButtonsBlock) {
+              personalisationConfirmation = buyButtonsBlock.querySelector('[data-personalise-confirmation]');
+            }
+          }
+          
           const personalisationCheckbox = personalisationConfirmation?.querySelector('[data-personalise-confirm-checkbox]');
           
-          if (!personalisationConfirmation || !personalisationCheckbox) return;
+          if (!personalisationConfirmation || !personalisationCheckbox) {
+            // No confirmation checkbox found - personalization might not be present or not yet loaded
+            // Don't interfere with button state
+            return;
+          }
           
           // Check if confirmation container is visible
           const isVisible = personalisationConfirmation.offsetParent !== null || 
@@ -1061,6 +1075,20 @@
               }
             }
           });
+          
+          // Also handle sticky bar add to cart button
+          const stickyBar = document.querySelector('sticky-add-to-cart');
+          if (stickyBar?.refs?.addToCartButton) {
+            const stickyButton = stickyBar.refs.addToCartButton;
+            // Only disable if variant is available (don't override unavailable state)
+            if (stickyBar.dataset.variantAvailable === 'true') {
+              if (personalisationCheckbox.checked) {
+                stickyButton.disabled = false;
+              } else {
+                stickyButton.disabled = true;
+              }
+            }
+          }
         } catch (error) {
           // Silently handle errors
         }

@@ -318,6 +318,25 @@ class StickyAddToCartComponent extends Component {
     }
     // Restore the current quantity display if needed
     this.#updateButtonText();
+    
+    // Update personalization button text after variant change
+    // Wait a bit for DOM to settle after morphing
+    setTimeout(() => {
+      if (window.updatePersonaliseButtonText) {
+        // Get the form to pass to the update function
+        const productForm = this.#getProductForm();
+        const form = productForm?.querySelector('form[data-type="add-to-cart-form"]');
+        window.updatePersonaliseButtonText(form);
+        
+        // Also update add to cart button state after updating personalization button
+        // This ensures the button is disabled if personalization is present but not confirmed
+        if (window.updateAddToCartButtonState) {
+          setTimeout(() => {
+            window.updateAddToCartButtonState();
+          }, 50);
+        }
+      }
+    }, 100);
   };
 
   /**

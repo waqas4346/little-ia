@@ -629,9 +629,49 @@
     }, 200);
   }
   
+  // Handle variant update - update personalization button text after variant changes
+  function handleVariantUpdate(event) {
+    // Wait a bit for DOM to update after variant change
+    setTimeout(() => {
+      if (window.updatePersonaliseButtonText) {
+        // Get the form that might have been updated
+        const productId = event.detail?.data?.productId;
+        let form = null;
+        
+        if (productId) {
+          const productFormComponent = document.querySelector(`product-form-component[data-product-id="${productId}"]`);
+          if (productFormComponent) {
+            form = productFormComponent.querySelector('form[data-type="add-to-cart-form"]');
+          }
+        }
+        
+        // Fallback: find any form
+        if (!form) {
+          form = document.querySelector('form[data-type="add-to-cart-form"]');
+        }
+        
+        window.updatePersonaliseButtonText(form);
+        
+        // Also update add to cart button state after updating personalization button
+        // This ensures the button is disabled if personalization is present but not confirmed
+        if (window.updateAddToCartButtonState) {
+          setTimeout(() => {
+            window.updateAddToCartButtonState();
+          }, 100);
+        }
+      }
+    }, 150);
+  }
+  
   // Set up event listeners
   try {
     document.addEventListener('personalisation-saved', handlePersonalisationSaved);
+    
+    // Listen for variant updates to update personalization button text
+    const sectionElement = document.querySelector('.shopify-section');
+    if (sectionElement) {
+      sectionElement.addEventListener('variant:update', handleVariantUpdate);
+    }
     
     // Also try to listen on the dialog element directly (wait for it to be available)
     function setupDialogListener() {
