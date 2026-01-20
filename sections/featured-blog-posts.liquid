@@ -69,6 +69,21 @@
     content_type: 'articles',
     test_id: 'featured-blog-posts'
   %}
+
+  {% if section.settings.button_text != blank and section.settings.blog != blank %}
+    {% liquid
+      assign button_url = section.settings.blog.url
+      assign button_class = 'button'
+      if section.settings.button_style == 'secondary'
+        assign button_class = 'button-secondary'
+      endif
+    %}
+    <div class="featured-blog-posts__button-wrapper">
+      <a href="{{ button_url }}" class="{{ button_class }}">
+        {{ section.settings.button_text }}
+      </a>
+    </div>
+  {% endif %}
 </div>
 
 {% stylesheet %}
@@ -118,6 +133,19 @@
     }
     .featured-blog-posts-subheading {
       font-size: 32px;
+    }
+  }
+
+  .featured-blog-posts__button-wrapper {
+    margin-top: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .featured-blog-posts__button-wrapper {
+      margin-top: 32px;
     }
   }
 {% endstylesheet %}
@@ -365,6 +393,32 @@
       "id": "color_scheme",
       "label": "t:settings.color_scheme",
       "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Button"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button text",
+      "info": "Button will only appear if text is provided"
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "Button style",
+      "options": [
+        {
+          "value": "primary",
+          "label": "t:options.primary"
+        },
+        {
+          "value": "secondary",
+          "label": "t:options.secondary"
+        }
+      ],
+      "default": "primary"
     },
     {
       "type": "header",
