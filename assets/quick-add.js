@@ -472,19 +472,7 @@ export class QuickAddComponent extends Component {
     const wasBuildYourSet = modalContent.hasAttribute('data-build-your-set');
     
     // If this is a build-your-set product, clear any existing personalisation data
-    // so it starts fresh each time the modal opens
-    if (wasBuildYourSet) {
-      const productFormComponent = modalContent.querySelector('product-form-component');
-      const productId = productFormComponent?.dataset?.productId;
-      if (productId) {
-        const personalisationKey = `personalisation_${String(productId)}`;
-        try {
-          sessionStorage.removeItem(personalisationKey);
-        } catch (error) {
-          // Silently fail if sessionStorage is not available
-        }
-      }
-    }
+    // Personalization is now read directly from form inputs, no storage needed
 
     // Check if the request was aborted before updating
     if (this.#abortController?.signal.aborted) {
@@ -1259,21 +1247,7 @@ export class QuickAddComponent extends Component {
       }
     }
     
-    // If no personalizations found in modal, try sessionStorage as fallback
-    if (Object.keys(personalizations).length === 0 && productId) {
-      const personalisationKey = `personalisation_${String(productId)}`;
-      try {
-        const personalisationData = sessionStorage.getItem(personalisationKey);
-        if (personalisationData) {
-          const parsed = JSON.parse(personalisationData);
-          if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-            Object.assign(personalizations, parsed);
-          }
-        }
-      } catch (error) {
-        // Silently fail - personalization data not critical
-      }
-    }
+    // Personalization is read directly from form inputs, no storage fallback needed
     
     if (Object.keys(personalizations).length > 0) {
       productData.personalizations = personalizations;
@@ -1597,21 +1571,8 @@ export class QuickAddComponent extends Component {
         // If personalizations found, update productData
         if (Object.keys(personalizations).length > 0) {
           productData.personalizations = personalizations;
-        } else if (!productData.personalizations) {
-          // Fallback to sessionStorage if no personalizations in modal
-          const personalisationKey = `personalisation_${String(productId)}`;
-          try {
-            const personalisationData = sessionStorage.getItem(personalisationKey);
-            if (personalisationData) {
-              const parsed = JSON.parse(personalisationData);
-              if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-                productData.personalizations = parsed;
-              }
-            }
-          } catch (error) {
-            // Silently fail
-          }
         }
+        // Personalization is read directly from form inputs, no storage fallback needed
         
         // Prepare tag fetching function (will run in background after saving)
         const fetchTagsAndUpdate = () => {

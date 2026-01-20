@@ -1071,9 +1071,7 @@
           weight: properties['Weight'] || null
         };
         
-        // Save to sessionStorage with product ID
-        const key = `personalisation_${productId}`;
-        sessionStorage.setItem(key, JSON.stringify(personalisationData));
+        // Personalization is now stored in form inputs, no storage needed
         
         // Find and open the personalisation modal - look for cart drawer modal specifically
         function tryOpenModal(attempts) {

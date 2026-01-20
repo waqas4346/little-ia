@@ -427,8 +427,11 @@
   <script>
     // Function to update button text - only define if not already defined (to avoid conflicts)
   if (!window.updatePersonaliseButtonText) {
-    window.updatePersonaliseButtonText = function() {
+    window.updatePersonaliseButtonText = function(updatedFormFromEvent) {
       try {
+        // If a form was passed from the event, use it
+        let eventForm = updatedFormFromEvent;
+        
         // Try multiple ways to get product ID
         let productId = document.querySelector('product-form-component')?.dataset?.productId;
         
@@ -467,9 +470,8 @@
           // Try to extract product ID from variant or other sources
         }
         
-        // Try to find saved personalisation - use first available if productId not found
-        let savedPersonalisation = null;
-        let usedKey = null;
+        // Find the form to read personalisation from
+        let form = null;
         
         // First, try to get product ID from buttons if not found yet
         if (!productId) {
@@ -481,6 +483,7 @@
               const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
               if (quickAddFormComponent?.dataset?.productId) {
                 productId = quickAddFormComponent.dataset.productId;
+                form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
                 break;
               }
             }
@@ -489,23 +492,23 @@
             const formComponent = button.closest('product-form-component');
             if (formComponent?.dataset?.productId) {
               productId = formComponent.dataset.productId;
+              form = formComponent.querySelector('form[data-type="add-to-cart-form"]');
               break;
             }
           }
         }
         
-        if (productId) {
-          // Convert to string to match sessionStorage key format
-          productId = String(productId);
-          const key = `personalisation_${productId}`;
-          savedPersonalisation = sessionStorage.getItem(key);
-          usedKey = key;
-        } else {
-          // If productId not found, try to use the first available personalisation key
-          const allPersonalisationKeys = Object.keys(sessionStorage).filter(k => k.startsWith('personalisation_'));
-          if (allPersonalisationKeys.length > 0) {
-            usedKey = allPersonalisationKeys[0];
-            savedPersonalisation = sessionStorage.getItem(usedKey);
+        // If form not found yet, try to find it
+        if (!form) {
+          // Try quick-add modal form
+          const quickAddModal = document.querySelector('#quick-add-modal-content');
+          if (quickAddModal) {
+            form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+          }
+          
+          // Fallback to any form
+          if (!form) {
+            form = document.querySelector('form[data-type="add-to-cart-form"]');
           }
         }
         
@@ -552,73 +555,132 @@
             }
           }
           
-          // Get personalization for THIS button's product
-          let buttonPersonalisation = savedPersonalisation;
-          if (buttonProductId && (!buttonPersonalisation || buttonProductId !== productId)) {
-            const buttonKey = `personalisation_${String(buttonProductId)}`;
-            const buttonSaved = sessionStorage.getItem(buttonKey);
-            if (buttonSaved) {
-              buttonPersonalisation = buttonSaved;
-              console.log('updatePersonaliseButtonText: Found personalisation for button product ID:', buttonProductId);
+          // Find ALL forms that might contain personalization for this product
+          const allForms = [];
+          
+          // First, try to find form by traversing from the button
+          const buttonFormComponent = button.closest('product-form-component');
+          if (buttonFormComponent) {
+            const btnForm = buttonFormComponent.querySelector('form[data-type="add-to-cart-form"]');
+            if (btnForm) allForms.push(btnForm);
+          }
+          
+          // Find all product form components and their forms
+          const allProductForms = document.querySelectorAll('product-form-component');
+          allProductForms.forEach(formComponent => {
+            if (buttonProductId) {
+              const compProductId = formComponent.dataset?.productId || formComponent.dataset?.productId;
+              if (compProductId === buttonProductId || compProductId === String(buttonProductId)) {
+                const compForm = formComponent.querySelector('form[data-type="add-to-cart-form"]');
+                if (compForm && !allForms.includes(compForm)) {
+                  allForms.push(compForm);
+                }
+              }
+            } else {
+              const compForm = formComponent.querySelector('form[data-type="add-to-cart-form"]');
+              if (compForm && !allForms.includes(compForm)) {
+                allForms.push(compForm);
+              }
             }
+          });
+          
+          // Also check quick-add modal
+          const quickAddModal = document.querySelector('#quick-add-modal-content');
+          if (quickAddModal) {
+            const quickAddForms = quickAddModal.querySelectorAll('form[data-type="add-to-cart-form"]');
+            quickAddForms.forEach(qForm => {
+              if (!allForms.includes(qForm)) {
+                allForms.push(qForm);
+              }
+            });
+          }
+          
+          // Fallback to the form we found earlier
+          if (form && !allForms.includes(form)) {
+            allForms.push(form);
+          }
+          
+          // If we have a form from the event, prioritize it
+          if (eventForm && !allForms.includes(eventForm)) {
+            allForms.unshift(eventForm); // Add to beginning to check first
           }
           
           if (textSpan) {
-            // Prioritize sessionStorage as the source of truth, especially when modal is closed
-            const form = document.querySelector('form[data-type="add-to-cart-form"]');
             const modalDialog = document.querySelector('personalise-dialog');
             
             const parts = [];
             let colorText = '';
             
-            // First, try to read from sessionStorage (most reliable when modal is closed)
-            if (buttonPersonalisation) {
-              try {
-                const personalisation = JSON.parse(buttonPersonalisation);
-                
-                // Always read baby/kid/mum names from sessionStorage if they exist
-                if (personalisation.babyName && typeof personalisation.babyName === 'string' && personalisation.babyName.trim()) {
-                  parts.push('Baby: ' + personalisation.babyName);
-                }
-                if (personalisation.kidName && typeof personalisation.kidName === 'string' && personalisation.kidName.trim()) {
-                  parts.push('Kid: ' + personalisation.kidName);
-                }
-                if (personalisation.mumName && typeof personalisation.mumName === 'string' && personalisation.mumName.trim()) {
-                  parts.push('Mum: ' + personalisation.mumName);
-                }
-                
-                // Read other fields from sessionStorage
-                if (personalisation.name) {
-                  parts.push(personalisation.name);
-                }
-                if (personalisation.name1) {
-                  parts.push(personalisation.name1);
-                }
-                if (personalisation.name2) {
-                  parts.push(personalisation.name2);
-                }
-                if (personalisation.name3) {
-                  parts.push(personalisation.name3);
-                }
-                if (personalisation.name4) {
-                  parts.push(personalisation.name4);
-                }
-                if (personalisation.dob) {
-                  parts.push(personalisation.dob);
-                }
-                if (personalisation.optionalDob) {
-                  parts.push(personalisation.optionalDob);
-                }
-                if (personalisation.schoolYear) {
-                  parts.push(personalisation.schoolYear);
-                }
-                
-                // Read color from sessionStorage
-                if (personalisation.color) {
-                  colorText = personalisation.color;
-                }
-              } catch (e) {
-                console.error('Error parsing personalisation from sessionStorage:', e);
+            // Read personalisation directly from form inputs - check ALL forms
+            for (const buttonForm of allForms) {
+              if (!buttonForm) continue;
+              // Read baby/kid/mum names from form
+              const babyNameInput = buttonForm.querySelector('input[name="properties[Baby\'s Name]"]');
+              if (babyNameInput && babyNameInput.value.trim()) {
+                parts.push('Baby: ' + babyNameInput.value.trim());
+              }
+              
+              const kidNameInput = buttonForm.querySelector('input[name="properties[Kid\'s Name]"]');
+              if (kidNameInput && kidNameInput.value.trim()) {
+                parts.push('Kid: ' + kidNameInput.value.trim());
+              }
+              
+              const mumNameInput = buttonForm.querySelector('input[name="properties[Mum\'s Name]"]');
+              if (mumNameInput && mumNameInput.value.trim()) {
+                parts.push('Mum: ' + mumNameInput.value.trim());
+              }
+              
+              // Read other fields from form
+              const nameInput = buttonForm.querySelector('input[name="properties[Name]"]');
+              if (nameInput && nameInput.value.trim()) {
+                parts.push(nameInput.value.trim());
+              }
+              
+              const name1Input = buttonForm.querySelector('input[name="properties[Name 1]"]');
+              if (name1Input && name1Input.value.trim()) {
+                parts.push(name1Input.value.trim());
+              }
+              
+              const name2Input = buttonForm.querySelector('input[name="properties[Name 2]"]');
+              if (name2Input && name2Input.value.trim()) {
+                parts.push(name2Input.value.trim());
+              }
+              
+              const name3Input = buttonForm.querySelector('input[name="properties[Name 3]"]');
+              if (name3Input && name3Input.value.trim()) {
+                parts.push(name3Input.value.trim());
+              }
+              
+              const name4Input = buttonForm.querySelector('input[name="properties[Name 4]"]');
+              if (name4Input && name4Input.value.trim()) {
+                parts.push(name4Input.value.trim());
+              }
+              
+              const dobInput = buttonForm.querySelector('input[name="properties[Date of Birth]"]');
+              if (dobInput && dobInput.value.trim()) {
+                parts.push(dobInput.value.trim());
+              }
+              
+              const optionalDobInput = buttonForm.querySelector('input[name="properties[Personalise Date of Birth]"]');
+              if (optionalDobInput && optionalDobInput.value.trim()) {
+                parts.push(optionalDobInput.value.trim());
+              }
+              
+              const schoolYearInput = buttonForm.querySelector('input[name="properties[School Year]"]');
+              if (schoolYearInput && schoolYearInput.value.trim()) {
+                parts.push(schoolYearInput.value.trim());
+              }
+              
+              // Read color from form
+              const colorInput = buttonForm.querySelector('input[name="properties[Text Color]"]:checked') || 
+                                 buttonForm.querySelector('input[name="properties[Text Color]"]');
+              if (colorInput && colorInput.value.trim()) {
+                colorText = colorInput.value.trim();
+              }
+              
+              // If we found any personalization in this form, we can stop checking
+              if (parts.length > 0 || colorText) {
+                break;
               }
             }
             
@@ -733,8 +795,27 @@
               }
             }
             
-            // Check if we have personalisation data (from sessionStorage or form inputs)
-            const hasPersonalisation = buttonPersonalisation || parts.length > 0;
+            // Check if we have personalisation data (from form inputs)
+            const hasPersonalisation = parts.length > 0 || colorText;
+            
+            // Debug logging
+            console.log('Button update check:', {
+              hasPersonalisation: hasPersonalisation,
+              parts: parts,
+              colorText: colorText,
+              formsChecked: allForms.length,
+              buttonProductId: buttonProductId,
+              formInputs: allForms.map(f => {
+                if (!f) return null;
+                const inputs = f.querySelectorAll('input[name^="properties["]');
+                return {
+                  formId: f.id,
+                  inputCount: inputs.length,
+                  inputNames: Array.from(inputs).map(i => i.name),
+                  inputValues: Array.from(inputs).map(i => i.value).filter(v => v.trim())
+                };
+              })
+            });
             
             if (hasPersonalisation) {
               // Build summary text - prefer sessionStorage data, fallback to form inputs
@@ -783,15 +864,17 @@
                     if (activeForm.querySelector('input[name="properties[Mum\'s Name]"]')) fields.push('mum name');
                   }
                   
-                  // Also check sessionStorage if form didn't have all fields
-                  if (buttonPersonalisation) {
-                    try {
-                      const personalisation = JSON.parse(buttonPersonalisation);
-                      if (personalisation.babyName && !fields.includes('baby name')) fields.push('baby name');
-                      if (personalisation.kidName && !fields.includes('kid name')) fields.push('kid name');
-                      if (personalisation.mumName && !fields.includes('mum name')) fields.push('mum name');
-                    } catch (e) {
-                      // Error parsing personalisation - continue without it
+                  // Also check form inputs if not already checked - check all forms
+                  for (const checkForm of allForms) {
+                    if (!checkForm) continue;
+                    if (checkForm.querySelector('input[name="properties[Baby\'s Name]"]') && !fields.includes('baby name')) {
+                      fields.push('baby name');
+                    }
+                    if (checkForm.querySelector('input[name="properties[Kid\'s Name]"]') && !fields.includes('kid name')) {
+                      fields.push('kid name');
+                    }
+                    if (checkForm.querySelector('input[name="properties[Mum\'s Name]"]') && !fields.includes('mum name')) {
+                      fields.push('mum name');
                     }
                   }
                   
@@ -841,33 +924,62 @@
   
   // Listen for personalisation-saved event to update button
   function handlePersonalisationSaved(event) {
-    // Use multiple retries to ensure buttons are updated
-    const updateWithRetry = (attempts = 0) => {
-      if (window.updatePersonaliseButtonText) {
-        window.updatePersonaliseButtonText();
-        
-        // Check if buttons were updated
-        setTimeout(() => {
-          const buttons = document.querySelectorAll('[data-personalise-button]');
-          let anyUpdated = false;
-          buttons.forEach(button => {
-            const textSpan = button.querySelector('[data-personalise-text]');
-            if (textSpan && textSpan.textContent === 'EDIT') {
-              anyUpdated = true;
-            }
-          });
-          
-          // If buttons exist but weren't updated, retry
-          if (buttons.length > 0 && !anyUpdated && attempts < 10) {
-            setTimeout(() => updateWithRetry(attempts + 1), 200);
-          }
-        }, 100);
-      } else if (attempts < 10) {
-        setTimeout(() => updateWithRetry(attempts + 1), 200);
-      }
-    };
+    console.log('personalisation-saved event received', event.detail);
     
-    updateWithRetry(0);
+    // Get the form that was updated from event detail
+    const updatedForm = event.detail?.form;
+    const productId = event.detail?.productId;
+    
+    // Wait a bit for DOM to update after inputs are added
+    setTimeout(() => {
+      // Use multiple retries to ensure buttons are updated
+      const updateWithRetry = (attempts = 0) => {
+        if (window.updatePersonaliseButtonText) {
+          // Pass the updated form to the function if available
+          if (updatedForm) {
+            // Verify the form still has the inputs
+            const inputs = updatedForm.querySelectorAll('input[name^="properties["]');
+            console.log('Checking updated form for inputs:', inputs.length, 'attempt:', attempts);
+            
+            if (inputs.length === 0 && attempts < 5) {
+              // Inputs might not be in DOM yet, retry
+              setTimeout(() => updateWithRetry(attempts + 1), 100);
+              return;
+            }
+          }
+          
+          // Pass the updated form to the button update function
+          window.updatePersonaliseButtonText(updatedForm);
+          
+          // Check if buttons were updated
+          setTimeout(() => {
+            const buttons = document.querySelectorAll('[data-personalise-button]');
+            let anyUpdated = false;
+            buttons.forEach(button => {
+              const textSpan = button.querySelector('[data-personalise-text]');
+              if (textSpan && textSpan.textContent === 'EDIT') {
+                anyUpdated = true;
+              }
+            });
+            
+            console.log('Button update result:', {
+              buttonsFound: buttons.length,
+              anyUpdated: anyUpdated,
+              attempt: attempts
+            });
+            
+            // If buttons exist but weren't updated, retry
+            if (buttons.length > 0 && !anyUpdated && attempts < 15) {
+              setTimeout(() => updateWithRetry(attempts + 1), 200);
+            }
+          }, 100);
+        } else if (attempts < 15) {
+          setTimeout(() => updateWithRetry(attempts + 1), 200);
+        }
+      };
+      
+      updateWithRetry(0);
+    }, 200); // Small delay to ensure DOM has updated
   }
   
   // Set up event listeners

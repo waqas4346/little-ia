@@ -269,6 +269,14 @@ class ProductFormComponent extends Component {
    */
   handleSubmit(event) {
     const { addToCartTextError } = this.refs;
+    
+    console.log('ProductFormComponent.handleSubmit called', {
+      productId: this.dataset.productId,
+      hasPersonalisationFunction: !!this._addPersonalisationFields,
+      hasPersonalisationForm: !!this._personalisationForm,
+      windowCurrentPersonalisation: window.currentPersonalisation ? 'exists' : 'missing'
+    });
+    
     // Stop default behaviour from the browser
     event.preventDefault();
 
@@ -333,73 +341,214 @@ class ProductFormComponent extends Component {
       }
     }
 
-    // Add personalisation fields to form before creating FormData
-    // This ensures personalisation data is included in the cart request
-    // Uses sessionStorage (current session only, clears on reload)
-    const productId = this.dataset.productId;
-    if (productId) {
-      const key = `personalisation_${String(productId)}`;
-      const saved = sessionStorage.getItem(key);
-      if (saved) {
-        try {
-          const personalisation = JSON.parse(saved);
-          
-          // Remove existing personalisation properties (but keep gift message and other non-personalisation properties)
-          const existingProps = form.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
-          existingProps.forEach(input => {
-            const name = input.name;
-            // Only remove personalisation-related properties, not gift message or other properties
-            if ((name === 'properties[Name]' || name.includes('[Name 1]') || name.includes('[Name 2]') || name.includes('[Name 3]') || name.includes('[Name 4]')) ||
-                name.includes('[Text Font]') || 
-                name.includes('[Text Color]') || 
-                (name.includes('[Date of Birth]') && !name.includes('[Gift Message]')) || 
-                name.includes('[School Year]') || 
-                name.includes('[Personalisation:]') || 
-                name.includes('[Personalise Date of Birth]') || 
-                name.includes('[Time]') || 
-                name.includes('[Weight]') ||
-                name.includes('[Baby\'s Name]') ||
-                name.includes('[Kid\'s Name]') ||
-                name.includes('[Mum\'s Name]')) {
-              input.remove();
-            }
-          });
-          
-          // Add personalisation properties
-          const addProperty = (name, value) => {
-            if (value && value.toString().trim() !== '') {
-              const input = document.createElement('input');
-              input.type = 'hidden';
-              input.name = name;
-              input.value = value.toString().trim();
-              form.appendChild(input);
-            }
-          };
-          
-          if (personalisation.name) addProperty('properties[Name]', personalisation.name);
-          if (personalisation.font) addProperty('properties[Text Font]', personalisation.font);
-          if (personalisation.color) addProperty('properties[Text Color]', personalisation.color);
-          if (personalisation.dob) addProperty('properties[Date of Birth]', personalisation.dob);
-          if (personalisation.schoolYear) addProperty('properties[School Year]', personalisation.schoolYear);
-          if (personalisation.name1) addProperty('properties[Name 1]', personalisation.name1);
-          if (personalisation.name2) addProperty('properties[Name 2]', personalisation.name2);
-          if (personalisation.name3) addProperty('properties[Name 3]', personalisation.name3);
-          if (personalisation.name4) addProperty('properties[Name 4]', personalisation.name4);
-          if (personalisation.textbox) addProperty('properties[Personalisation:]', personalisation.textbox);
-          if (personalisation.message) addProperty('properties[Message]', personalisation.message);
-          if (personalisation.optionalDob) addProperty('properties[Personalise Date of Birth]', personalisation.optionalDob);
-          if (personalisation.time) addProperty('properties[Time]', personalisation.time);
-          if (personalisation.weight) addProperty('properties[Weight]', personalisation.weight);
-          if (personalisation.babyName) addProperty('properties[Baby\'s Name]', personalisation.babyName);
-          if (personalisation.kidName) addProperty('properties[Kid\'s Name]', personalisation.kidName);
-          if (personalisation.mumName) addProperty('properties[Mum\'s Name]', personalisation.mumName);
-        } catch (e) {
-          console.error('Error adding personalisation fields to form:', e);
+    // Ensure personalisation fields are in the form before creating FormData
+    // Check if there's a function to add personalisation fields
+    if (this._addPersonalisationFields && this._personalisationForm) {
+      console.log('ProductFormComponent: Adding personalisation fields before FormData creation');
+      this._addPersonalisationFields(this._personalisationForm);
+    } else if (window.currentPersonalisation) {
+      // Fallback: directly add personalisation fields if function not available
+      console.log('ProductFormComponent: Direct fallback - adding personalisation fields from window.currentPersonalisation');
+      
+      // Try to get personalisation by product ID first
+      const productId = this.dataset.productId;
+      let personalisation = null;
+      
+      if (productId && window.currentPersonalisation[productId]) {
+        personalisation = { ...window.currentPersonalisation[productId] };
+        console.log('Found personalisation for product ID:', productId);
+      } else if (window.currentPersonalisation._latest) {
+        personalisation = { ...window.currentPersonalisation._latest };
+        console.log('Using latest personalisation as fallback');
+      } else if (typeof window.currentPersonalisation === 'object' && !Array.isArray(window.currentPersonalisation)) {
+        // Check if it's a direct object (old format)
+        const hasProductKeys = Object.keys(window.currentPersonalisation).some(key => key.startsWith('_') || /^\d+$/.test(key));
+        if (!hasProductKeys) {
+          personalisation = { ...window.currentPersonalisation };
+          console.log('Using direct personalisation object');
         }
       }
+      
+      if (!personalisation) {
+        console.warn('ProductFormComponent: window.currentPersonalisation exists but no valid personalisation found');
+        personalisation = {};
+      }
+      
+      // Remove existing personalisation inputs first
+      const existingProps = form.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
+      existingProps.forEach(input => {
+        const name = input.name;
+        const isPersonalisation = 
+          name === 'properties[Name]' ||
+          name === 'properties[Name 1]' ||
+          name === 'properties[Name 2]' ||
+          name === 'properties[Name 3]' ||
+          name === 'properties[Name 4]' ||
+          name.includes('[Text Font]') || 
+          name.includes('[Text Color]') || 
+          (name.includes('[Date of Birth]') && !name.includes('Gift')) || 
+          name.includes('[School Year]') || 
+          name.includes('[Personalisation:]') || 
+          name.includes('[Personalise Date of Birth]') || 
+          name.includes('[Time]') || 
+          name.includes('[Weight]') ||
+          name.includes('[Baby\'s Name]') ||
+          name.includes('[Kid\'s Name]') ||
+          name.includes('[Mum\'s Name]') ||
+          (name === 'properties[Message]' && !name.includes('Gift'));
+        
+        if (isPersonalisation) {
+          input.remove();
+        }
+      });
+      
+      // Add personalisation properties
+      const addProperty = (name, value) => {
+        if (value && value.toString().trim() !== '') {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value.toString().trim();
+          const variantInput = form.querySelector('input[name="id"]');
+          if (variantInput) {
+            variantInput.parentNode.insertBefore(input, variantInput.nextSibling);
+          } else {
+            form.appendChild(input);
+          }
+          console.log('Added personalisation property (fallback):', name, '=', input.value);
+        }
+      };
+      
+      if (personalisation.name) addProperty('properties[Name]', personalisation.name);
+      if (personalisation.font) addProperty('properties[Text Font]', personalisation.font);
+      if (personalisation.color) addProperty('properties[Text Color]', personalisation.color);
+      if (personalisation.dob) addProperty('properties[Date of Birth]', personalisation.dob);
+      if (personalisation.schoolYear) addProperty('properties[School Year]', personalisation.schoolYear);
+      if (personalisation.name1) addProperty('properties[Name 1]', personalisation.name1);
+      if (personalisation.name2) addProperty('properties[Name 2]', personalisation.name2);
+      if (personalisation.name3) addProperty('properties[Name 3]', personalisation.name3);
+      if (personalisation.name4) addProperty('properties[Name 4]', personalisation.name4);
+      if (personalisation.textbox) addProperty('properties[Personalisation:]', personalisation.textbox);
+      if (personalisation.message) addProperty('properties[Message]', personalisation.message);
+      if (personalisation.optionalDob) addProperty('properties[Personalise Date of Birth]', personalisation.optionalDob);
+      if (personalisation.time) addProperty('properties[Time]', personalisation.time);
+      if (personalisation.weight) addProperty('properties[Weight]', personalisation.weight);
+      if (personalisation.babyName) addProperty('properties[Baby\'s Name]', personalisation.babyName);
+      if (personalisation.kidName) addProperty('properties[Kid\'s Name]', personalisation.kidName);
+      if (personalisation.mumName) addProperty('properties[Mum\'s Name]', personalisation.mumName);
+    }
+    
+    // Also check if form has personalisation inputs
+    const personalisationInputs = form.querySelectorAll('input[name^="properties["]');
+    const actualPersonalisationInputs = Array.from(personalisationInputs).filter(input => {
+      const name = input.name;
+      return name === 'properties[Name]' ||
+             name.includes('[Text Font]') || 
+             name.includes('[Text Color]') || 
+             name.includes('[Date of Birth]') || 
+             name.includes('[School Year]') || 
+             name.includes('[Name 1]') || 
+             name.includes('[Name 2]') || 
+             name.includes('[Name 3]') || 
+             name.includes('[Name 4]') || 
+             name.includes('[Personalisation:]') || 
+             name.includes('[Personalise Date of Birth]') || 
+             name.includes('[Time]') || 
+             name.includes('[Weight]') ||
+             name.includes('[Baby\'s Name]') ||
+             name.includes('[Kid\'s Name]') ||
+             name.includes('[Mum\'s Name]') ||
+             name === 'properties[Message]';
+    });
+    console.log('ProductFormComponent: Found', actualPersonalisationInputs.length, 'personalisation inputs in form before FormData');
+    if (actualPersonalisationInputs.length > 0) {
+      actualPersonalisationInputs.forEach(input => {
+        console.log('  - Personalisation input:', input.name, '=', input.value);
+      });
+    } else {
+      console.warn('ProductFormComponent: WARNING - No personalisation inputs found in form!');
     }
 
+    // Create FormData and manually ensure personalisation is included
     const formData = new FormData(form);
+    
+    // Double-check: if no personalisation in FormData, add it directly
+    const formDataEntries = Array.from(formData.entries());
+    const personalisationEntries = formDataEntries.filter(([key]) => {
+      const name = key;
+      return name === 'properties[Name]' ||
+             name.includes('[Text Font]') || 
+             name.includes('[Text Color]') || 
+             name.includes('[Date of Birth]') || 
+             name.includes('[School Year]') || 
+             name.includes('[Name 1]') || 
+             name.includes('[Name 2]') || 
+             name.includes('[Name 3]') || 
+             name.includes('[Name 4]') || 
+             name.includes('[Personalisation:]') || 
+             name.includes('[Personalise Date of Birth]') || 
+             name.includes('[Time]') || 
+             name.includes('[Weight]') ||
+             name.includes('[Baby\'s Name]') ||
+             name.includes('[Kid\'s Name]') ||
+             name.includes('[Mum\'s Name]') ||
+             name === 'properties[Message]';
+    });
+    
+    console.log('ProductFormComponent: FormData contains', personalisationEntries.length, 'personalisation properties');
+    if (personalisationEntries.length > 0) {
+      personalisationEntries.forEach(([key, value]) => {
+        console.log('  - FormData personalisation property:', key, '=', value);
+      });
+    } else {
+      // No personalisation in FormData - try to add it directly
+      console.warn('ProductFormComponent: WARNING - No personalisation in FormData, attempting to add directly');
+      
+      const productId = this.dataset.productId;
+      let personalisation = null;
+      
+      if (productId && window.currentPersonalisation?.[productId]) {
+        personalisation = { ...window.currentPersonalisation[productId] };
+      } else if (window.currentPersonalisation?._latest) {
+        personalisation = { ...window.currentPersonalisation._latest };
+      } else if (window.currentPersonalisation && typeof window.currentPersonalisation === 'object' && !Array.isArray(window.currentPersonalisation)) {
+        const hasProductKeys = Object.keys(window.currentPersonalisation).some(key => key.startsWith('_') || /^\d+$/.test(key));
+        if (!hasProductKeys) {
+          personalisation = { ...window.currentPersonalisation };
+        }
+      }
+      
+      if (personalisation) {
+        const addToFormData = (name, value) => {
+          if (value && value.toString().trim() !== '') {
+            formData.append(name, value.toString().trim());
+            console.log('Added to FormData directly:', name, '=', value);
+          }
+        };
+        
+        if (personalisation.name) addToFormData('properties[Name]', personalisation.name);
+        if (personalisation.font) addToFormData('properties[Text Font]', personalisation.font);
+        if (personalisation.color) addToFormData('properties[Text Color]', personalisation.color);
+        if (personalisation.dob) addToFormData('properties[Date of Birth]', personalisation.dob);
+        if (personalisation.schoolYear) addToFormData('properties[School Year]', personalisation.schoolYear);
+        if (personalisation.name1) addToFormData('properties[Name 1]', personalisation.name1);
+        if (personalisation.name2) addToFormData('properties[Name 2]', personalisation.name2);
+        if (personalisation.name3) addToFormData('properties[Name 3]', personalisation.name3);
+        if (personalisation.name4) addToFormData('properties[Name 4]', personalisation.name4);
+        if (personalisation.textbox) addToFormData('properties[Personalisation:]', personalisation.textbox);
+        if (personalisation.message) addToFormData('properties[Message]', personalisation.message);
+        if (personalisation.optionalDob) addToFormData('properties[Personalise Date of Birth]', personalisation.optionalDob);
+        if (personalisation.time) addToFormData('properties[Time]', personalisation.time);
+        if (personalisation.weight) addToFormData('properties[Weight]', personalisation.weight);
+        if (personalisation.babyName) addToFormData('properties[Baby\'s Name]', personalisation.babyName);
+        if (personalisation.kidName) addToFormData('properties[Kid\'s Name]', personalisation.kidName);
+        if (personalisation.mumName) addToFormData('properties[Mum\'s Name]', personalisation.mumName);
+        
+        console.log('Added personalisation directly to FormData');
+      } else {
+        console.error('ProductFormComponent: ERROR - No personalisation data available to add to FormData');
+      }
+    }
 
     const cartItemsComponents = document.querySelectorAll('cart-items-component');
     let cartItemComponentsSectionIds = [];

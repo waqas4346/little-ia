@@ -462,15 +462,7 @@ export class BuildYourSetStickyBarComponent extends Component {
       variant_id: removedProduct?.variant_id
     });
 
-    // Clear personalisation data from sessionStorage for this product
-    if (removedProduct?.product_id) {
-      const personalisationKey = `personalisation_${String(removedProduct.product_id)}`;
-      try {
-        sessionStorage.removeItem(personalisationKey);
-      } catch (error) {
-        // Silently fail if sessionStorage is not available
-      }
-    }
+    // Personalization is now stored in form inputs, no storage cleanup needed
 
     // Remove the product at the specified index
     sessionCart.splice(index, 1);

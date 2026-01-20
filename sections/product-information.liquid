@@ -119,6 +119,18 @@
             <span class="personalise-button__text" data-personalise-text>PERSONALISE IT</span>
            </div>
           </button>
+          
+          {%- comment -%} Personalisation Confirmation Checkbox {%- endcomment -%}
+          <div class="personalise-confirmation" data-personalise-confirmation style="display: none;">
+            <label class="personalise-confirmation__label">
+              <input 
+                type="checkbox" 
+                class="personalise-confirmation__checkbox"
+                data-personalise-confirm-checkbox
+              >
+              <span class="personalise-confirmation__text" data-personalise-confirm-text></span>
+            </label>
+          </div>
           {% endif %}
           
           <button
@@ -276,7 +288,7 @@
   // Function to update button text based on personalization state
   // Only define once to avoid conflicts
   if (!window.updatePersonaliseButtonText) {
-    window.updatePersonaliseButtonText = function() {
+    window.updatePersonaliseButtonText = function(updatedFormFromEvent) {
       try {
         // Try multiple ways to get product ID
         let productId = document.querySelector('product-form-component')?.dataset?.productId;
@@ -292,20 +304,148 @@
           }
         }
         
-        if (!productId) {
-          console.log('updatePersonaliseButtonText: Product ID not found');
-          return;
+        // Find all forms that might contain personalization
+        const allForms = [];
+        
+        // Find form by product ID
+        if (productId) {
+          const productFormComponents = document.querySelectorAll('product-form-component');
+          productFormComponents.forEach(formComponent => {
+            const compProductId = formComponent.dataset?.productId || formComponent.dataset?.productId;
+            if (compProductId === productId || compProductId === String(productId)) {
+              const compForm = formComponent.querySelector('form[data-type="add-to-cart-form"]');
+              if (compForm && !allForms.includes(compForm)) {
+                allForms.push(compForm);
+              }
+            }
+          });
         }
         
-        // Convert to string to match sessionStorage key format
-        productId = String(productId);
-        const key = `personalisation_${productId}`;
+        // Also check sticky-add-to-cart
+        const stickyCart = document.querySelector('sticky-add-to-cart');
+        if (stickyCart) {
+          const stickyForm = stickyCart.querySelector('form[data-type="add-to-cart-form"]');
+          if (stickyForm && !allForms.includes(stickyForm)) {
+            allForms.push(stickyForm);
+          }
+        }
         
-        // Use sessionStorage (current session only, clears on reload)
-        const savedPersonalisation = sessionStorage.getItem(key);
+        // Fallback: find any form
+        if (allForms.length === 0) {
+          const anyForm = document.querySelector('form[data-type="add-to-cart-form"]');
+          if (anyForm) {
+            allForms.push(anyForm);
+          }
+        }
+        
+        // If we have a form from the event, prioritize it
+        if (updatedFormFromEvent && !allForms.includes(updatedFormFromEvent)) {
+          allForms.unshift(updatedFormFromEvent); // Add to beginning to check first
+        }
+        
+        // Read personalisation from form inputs
+        const personalisation = {};
+        for (const form of allForms) {
+          if (!form) continue;
+          
+          // Read all personalisation fields
+          const nameInput = form.querySelector('input[name="properties[Name]"]');
+          if (nameInput && nameInput.value.trim()) {
+            personalisation.name = nameInput.value.trim();
+          }
+          
+          const name1Input = form.querySelector('input[name="properties[Name 1]"]');
+          if (name1Input && name1Input.value.trim()) {
+            personalisation.name1 = name1Input.value.trim();
+          }
+          
+          const name2Input = form.querySelector('input[name="properties[Name 2]"]');
+          if (name2Input && name2Input.value.trim()) {
+            personalisation.name2 = name2Input.value.trim();
+          }
+          
+          const name3Input = form.querySelector('input[name="properties[Name 3]"]');
+          if (name3Input && name3Input.value.trim()) {
+            personalisation.name3 = name3Input.value.trim();
+          }
+          
+          const name4Input = form.querySelector('input[name="properties[Name 4]"]');
+          if (name4Input && name4Input.value.trim()) {
+            personalisation.name4 = name4Input.value.trim();
+          }
+          
+          const dobInput = form.querySelector('input[name="properties[Date of Birth]"]');
+          if (dobInput && dobInput.value.trim()) {
+            personalisation.dob = dobInput.value.trim();
+          }
+          
+          const optionalDobInput = form.querySelector('input[name="properties[Personalise Date of Birth]"]');
+          if (optionalDobInput && optionalDobInput.value.trim()) {
+            personalisation.optionalDob = optionalDobInput.value.trim();
+          }
+          
+          const schoolYearInput = form.querySelector('input[name="properties[School Year]"]');
+          if (schoolYearInput && schoolYearInput.value.trim()) {
+            personalisation.schoolYear = schoolYearInput.value.trim();
+          }
+          
+          const babyNameInput = form.querySelector('input[name="properties[Baby\'s Name]"]');
+          if (babyNameInput && babyNameInput.value.trim()) {
+            personalisation.babyName = babyNameInput.value.trim();
+          }
+          
+          const kidNameInput = form.querySelector('input[name="properties[Kid\'s Name]"]');
+          if (kidNameInput && kidNameInput.value.trim()) {
+            personalisation.kidName = kidNameInput.value.trim();
+          }
+          
+          const mumNameInput = form.querySelector('input[name="properties[Mum\'s Name]"]');
+          if (mumNameInput && mumNameInput.value.trim()) {
+            personalisation.mumName = mumNameInput.value.trim();
+          }
+          
+          const colorInput = form.querySelector('input[name="properties[Text Color]"]:checked') || 
+                             form.querySelector('input[name="properties[Text Color]"]');
+          if (colorInput && colorInput.value.trim()) {
+            personalisation.color = colorInput.value.trim();
+          }
+          
+          const fontInput = form.querySelector('input[name="properties[Text Font]"]:checked') || 
+                            form.querySelector('input[name="properties[Text Font]"]');
+          if (fontInput && fontInput.value.trim()) {
+            personalisation.font = fontInput.value.trim();
+          }
+          
+          const textboxInput = form.querySelector('textarea[name="properties[Personalisation:]"]');
+          if (textboxInput && textboxInput.value.trim()) {
+            personalisation.textbox = textboxInput.value.trim();
+          }
+          
+          const messageInput = form.querySelector('textarea[name="properties[Message]"]');
+          if (messageInput && messageInput.value.trim()) {
+            personalisation.message = messageInput.value.trim();
+          }
+          
+          const timeInput = form.querySelector('input[name="properties[Time]"]');
+          if (timeInput && timeInput.value.trim()) {
+            personalisation.time = timeInput.value.trim();
+          }
+          
+          const weightInput = form.querySelector('input[name="properties[Weight]"]');
+          if (weightInput && weightInput.value.trim()) {
+            personalisation.weight = weightInput.value.trim();
+          }
+          
+          // If we found any personalization, we can stop checking
+          if (Object.keys(personalisation).length > 0) {
+            break;
+          }
+        }
+        
+        const hasPersonalisation = Object.keys(personalisation).length > 0;
         
         const buttons = document.querySelectorAll('[data-personalise-button]');
-        console.log('Found buttons:', buttons.length);
+        console.log('Found buttons:', buttons.length, 'Has personalisation:', hasPersonalisation);
         
         buttons.forEach(button => {
           const textSpan = button.querySelector('[data-personalise-text]');
@@ -328,9 +468,8 @@
           console.log('Confirmation container found:', confirmationContainer ? 'YES' : 'NO');
           
           if (textSpan) {
-            if (savedPersonalisation) {
+            if (hasPersonalisation) {
               try {
-                const personalisation = JSON.parse(savedPersonalisation);
                 
                 // Format the summary: "Personalised: {name} | {date} ({color})"
                 // Include all active personalization fields
@@ -359,7 +498,7 @@
                 if (personalisation.schoolYear) {
                   parts.push(personalisation.schoolYear);
                 }
-                // Add baby/kid/mum names from sessionStorage
+                // Add baby/kid/mum names
                 if (personalisation.babyName && typeof personalisation.babyName === 'string' && personalisation.babyName.trim()) {
                   parts.push('Baby: ' + personalisation.babyName);
                 }
@@ -488,12 +627,19 @@
   }
   
   // Listen for personalisation-saved event to update button
-  function handlePersonalisationSaved() {
+  function handlePersonalisationSaved(event) {
+    console.log('personalisation-saved event received in product-information', event.detail);
+    
+    // Get the form that was updated from event detail
+    const updatedForm = event.detail?.form;
+    
+    // Wait a bit for DOM to update after inputs are added
     setTimeout(function() {
       if (window.updatePersonaliseButtonText) {
-        window.updatePersonaliseButtonText();
+        // Pass the updated form to the function if available
+        window.updatePersonaliseButtonText(updatedForm);
       }
-    }, 100);
+    }, 200);
   }
   
   // Set up event listeners
