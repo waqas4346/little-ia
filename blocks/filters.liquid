@@ -448,24 +448,6 @@
           </scroll-hint>
         </form>
       </facets-form-component>
-
-      <div class="facets-drawer__sticky-bar">
-        <button 
-          type="button" 
-          class="facets-drawer__sticky-button facets-drawer__sticky-button--sort"
-          id="filters-drawer-sort-button"
-        >
-          <span class="facets-drawer__sticky-label">Sort By</span>
-        </button>
-        <div class="facets-drawer__sticky-divider"></div>
-        <button 
-          type="button" 
-          class="facets-drawer__sticky-button facets-drawer__sticky-button--filter facets-drawer__sticky-button--active"
-          on:click="#filters-drawer/showDialog"
-        >
-          <span class="facets-drawer__sticky-label">Filter</span>
-        </button>
-      </div>
     </dialog>
   </dialog-component>
 {% endif %}
@@ -792,20 +774,7 @@
       display: none !important;
     }
 
-    /* Sticky bar in filter drawer */
-    .facets-drawer__sticky-bar {
-      position: sticky;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      display: flex;
-      align-items: center;
-      background-color: #F8F3ED;
-      border-top: 0.5px solid #D4D4D4;
-      z-index: 100;
-      gap: 0;
-      flex-shrink: 0;
-    }
+    
 
     .facets-drawer__sticky-button {
       flex: 1;
