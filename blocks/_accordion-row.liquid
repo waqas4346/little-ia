@@ -1,6 +1,19 @@
 
-{% assign block_settings = block.settings %}
+{% liquid
+  assign block_settings = block.settings
+  assign should_show = true
+  
+  # Check if this is the Highlights accordion by checking the heading
+  # If so, check if product has the required tag
+  if block_settings.heading == 'Highlights'
+    assign product = closest.product
+    unless product.tags contains 'custom_fabric_size_care'
+      assign should_show = false
+    endunless
+  endif
+%}
 
+{% if should_show %}
 <accordion-custom
   {% if block_settings.open_by_default %}
     open-by-default-on-desktop
@@ -36,6 +49,7 @@
     </div>
   </details>
 </accordion-custom>
+{% endif %}
 
 {% stylesheet %}
   .details__icon {

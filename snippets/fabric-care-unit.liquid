@@ -1,0 +1,50 @@
+{% assign icon1 = product.metafields.my_fields.icon1 %}
+{% assign icon2 = product.metafields.my_fields.icon2 %}
+{% assign icon3 = product.metafields.my_fields.icon3 %}
+{% assign icon4 = product.metafields.my_fields.icon4 %}
+{% assign icon5 = product.metafields.my_fields.icon5 %}
+{% assign icon6 = product.metafields.my_fields.icon6 %}
+
+<div class="fabric-size-care">
+  {% if icon1 != blank %}
+    <div class="item item1">
+      {{ product.metafields.my_fields.icon1.value | img_tag }}
+      <p>{{ product.metafields.my_fields.icon1_text }}</p>
+    </div>
+  {% endif %}
+  {% if icon2 != blank %}
+    <div class="item item1">
+      {{ product.metafields.my_fields.icon2.value | img_tag }}
+      <p>{{ product.metafields.my_fields.icon2_text }}</p>
+    </div>
+  {% endif %}
+  {% if icon3 != blank %}
+    <div class="item item1">
+      {{ product.metafields.my_fields.icon3.value | img_tag }}
+      <p>{{ product.metafields.my_fields.icon3_text }}</p>
+    </div>
+  {% endif %}
+  {% if icon4 != blank %}
+    <div class="item item1">
+      {{ product.metafields.my_fields.icon4.value | img_tag }}
+      <p>{{ product.metafields.my_fields.icon4_text }}</p>
+    </div>
+  {% endif %}
+  {% if icon5 != blank %}
+    <div class="item item1">
+      {{ product.metafields.my_fields.icon5.value | img_tag }}
+      <p>{{ product.metafields.my_fields.icon5_text }}</p>
+    </div>
+  {% endif %}
+  {% if icon6 != blank %}
+    <div class="item item1">
+      {{ product.metafields.my_fields.icon6.value | img_tag }}
+      <p>{{ product.metafields.my_fields.icon6_text }}</p>
+    </div>
+  {% endif %}
+  {% if product.metafields.custom.care_instruction != blank %}
+    <div class="item item1">
+      <p>{{ product.metafields.custom.care_instruction.value }}</p>
+    </div>
+  {% endif %}
+</div>

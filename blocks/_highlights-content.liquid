@@ -1,0 +1,49 @@
+{% liquid
+  assign product = closest.product
+  assign show_highlights = false
+  if product.tags contains 'custom_fabric_size_care'
+    assign show_highlights = true
+  endif
+%}
+
+{% if show_highlights %}
+  {% render 'fabric-care-unit', product: product %}
+{% endif %}
+
+{% stylesheet %}
+  .fabric-size-care {
+    width: 100%;
+  }
+  
+  .fabric-size-care .item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .fabric-size-care .item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .fabric-size-care .item img {
+    width: auto;
+    height: auto;
+    max-width: 40px;
+    max-height: 40px;
+    object-fit: contain;
+  }
+  
+  .fabric-size-care .item p {
+    margin: 0;
+    flex: 1;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Highlights Content",
+  "tag": null,
+  "blocks": []
+}
+{% endschema %}
