@@ -81,7 +81,7 @@
       {% capture list_items %}
         {% for product in products limit: section.settings.max_products %}
           <div class="resource-list__item">
-            {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product %}
+            {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: product %}
           </div>
           {% unless forloop.last %}
             <!--@list/split-->
@@ -202,6 +202,9 @@
     },
     {
       "type": "text"
+    },
+    {
+      "type": "_product-card"
     },
     {
       "type": "icon"
@@ -485,12 +488,13 @@
             "text": "t:html_defaults.related_product"
           }
         },
-        "static-product-card": {
+        "product-card": {
           "type": "_product-card",
           "name": "t:names.product_card",
           "static": true,
           "settings": {
-            "product_card_gap": 4
+            "product_card_gap": 4,
+            "show_view_product_button": true
           },
           "blocks": {
             "product-card-gallery": {

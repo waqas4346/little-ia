@@ -645,14 +645,14 @@
   .personalise-modal__content {
     display: flex;
     height: 100%;
-    min-height: 500px;
+    /* min-height: 500px; */
     overflow: hidden;
     padding: 0;
   }
 
   /* Left Section: Preview */
   .personalise-modal__preview {
-    flex: 0 0 45.65%; /* 525px / 1150px = 45.65% for proportional scaling */
+    flex: 0 0 52%; /* 525px / 1150px = 45.65% for proportional scaling */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -958,7 +958,8 @@
   .personalise-modal__actions {
     display: flex;
     gap: var(--gap-md);
-    margin-block-start: auto;
+    /* margin-block-start: auto; */
+    flex-wrap: wrap;
     padding-block-start: var(--padding-xl);
   }
 

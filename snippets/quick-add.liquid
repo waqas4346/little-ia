@@ -145,9 +145,16 @@
   }
 
   /* Hide quick add on hover in collection pages (but keep in product-list) */
+  /* UNLESS view product button is disabled - then show quick-add on hover */
   product-card[data-collection-page="true"]:is(:hover, :focus-within) .quick-add__button {
     opacity: 0;
     pointer-events: none;
+  }
+
+  /* Show quick-add on hover when View Product button is disabled */
+  product-card[data-view-product-button-enabled="false"]:is(:hover, :focus-within) .quick-add__button {
+    opacity: 1 !important;
+    pointer-events: auto !important;
   }
 
   /* Hide quick add on hover when View Product button setting is enabled */

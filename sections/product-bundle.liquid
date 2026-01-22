@@ -87,7 +87,7 @@
         {% if displayed_count < max_items %}
           <div class="resource-list__item" data-product-bundle-item="true" data-product-id="{{ product_item.id }}">
             {% # theme-check-disable UniqueStaticBlockId %}
-              {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product_item %}
+              {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: product_item %}
             {% # theme-check-enable UniqueStaticBlockId %}
             {% comment %} Add View Product and + buttons using unified component {% endcomment %}
             {% render 'product-card-actions', 
@@ -658,6 +658,9 @@
     },
     {
       "type": "_divider"
+    },
+    {
+      "type": "_product-card"
     }
   ],
   "disabled_on": {
@@ -861,7 +864,7 @@
         "padding-block-end": 48
       },
       "blocks": {
-        "static-product-card": {
+        "product-card": {
           "type": "_product-card",
           "name": "Product Card",
           "static": true,
@@ -876,7 +879,8 @@
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-inline-end": 0,
+            "show_view_product_button": true
           },
           "blocks": {
             "product-card-gallery": {

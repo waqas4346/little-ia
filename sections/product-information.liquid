@@ -276,7 +276,7 @@
   // Function to update button text based on personalization state
   // Only define once to avoid conflicts
   if (!window.updatePersonaliseButtonText) {
-    window.updatePersonaliseButtonText = function() {
+    window.updatePersonaliseButtonText = function(updatedFormFromEvent) {
       try {
         // Try multiple ways to get product ID
         let productId = document.querySelector('product-form-component')?.dataset?.productId;
@@ -292,20 +292,148 @@
           }
         }
         
-        if (!productId) {
-          console.log('updatePersonaliseButtonText: Product ID not found');
-          return;
+        // Find all forms that might contain personalization
+        const allForms = [];
+        
+        // Find form by product ID
+        if (productId) {
+          const productFormComponents = document.querySelectorAll('product-form-component');
+          productFormComponents.forEach(formComponent => {
+            const compProductId = formComponent.dataset?.productId || formComponent.dataset?.productId;
+            if (compProductId === productId || compProductId === String(productId)) {
+              const compForm = formComponent.querySelector('form[data-type="add-to-cart-form"]');
+              if (compForm && !allForms.includes(compForm)) {
+                allForms.push(compForm);
+              }
+            }
+          });
         }
         
-        // Convert to string to match sessionStorage key format
-        productId = String(productId);
-        const key = `personalisation_${productId}`;
+        // Also check sticky-add-to-cart
+        const stickyCart = document.querySelector('sticky-add-to-cart');
+        if (stickyCart) {
+          const stickyForm = stickyCart.querySelector('form[data-type="add-to-cart-form"]');
+          if (stickyForm && !allForms.includes(stickyForm)) {
+            allForms.push(stickyForm);
+          }
+        }
         
-        // Use sessionStorage (current session only, clears on reload)
-        const savedPersonalisation = sessionStorage.getItem(key);
+        // Fallback: find any form
+        if (allForms.length === 0) {
+          const anyForm = document.querySelector('form[data-type="add-to-cart-form"]');
+          if (anyForm) {
+            allForms.push(anyForm);
+          }
+        }
+        
+        // If we have a form from the event, prioritize it
+        if (updatedFormFromEvent && !allForms.includes(updatedFormFromEvent)) {
+          allForms.unshift(updatedFormFromEvent); // Add to beginning to check first
+        }
+        
+        // Read personalisation from form inputs
+        const personalisation = {};
+        for (const form of allForms) {
+          if (!form) continue;
+          
+          // Read all personalisation fields
+          const nameInput = form.querySelector('input[name="properties[Name]"]');
+          if (nameInput && nameInput.value.trim()) {
+            personalisation.name = nameInput.value.trim();
+          }
+          
+          const name1Input = form.querySelector('input[name="properties[Name 1]"]');
+          if (name1Input && name1Input.value.trim()) {
+            personalisation.name1 = name1Input.value.trim();
+          }
+          
+          const name2Input = form.querySelector('input[name="properties[Name 2]"]');
+          if (name2Input && name2Input.value.trim()) {
+            personalisation.name2 = name2Input.value.trim();
+          }
+          
+          const name3Input = form.querySelector('input[name="properties[Name 3]"]');
+          if (name3Input && name3Input.value.trim()) {
+            personalisation.name3 = name3Input.value.trim();
+          }
+          
+          const name4Input = form.querySelector('input[name="properties[Name 4]"]');
+          if (name4Input && name4Input.value.trim()) {
+            personalisation.name4 = name4Input.value.trim();
+          }
+          
+          const dobInput = form.querySelector('input[name="properties[Date of Birth]"]');
+          if (dobInput && dobInput.value.trim()) {
+            personalisation.dob = dobInput.value.trim();
+          }
+          
+          const optionalDobInput = form.querySelector('input[name="properties[Personalise Date of Birth]"]');
+          if (optionalDobInput && optionalDobInput.value.trim()) {
+            personalisation.optionalDob = optionalDobInput.value.trim();
+          }
+          
+          const schoolYearInput = form.querySelector('input[name="properties[School Year]"]');
+          if (schoolYearInput && schoolYearInput.value.trim()) {
+            personalisation.schoolYear = schoolYearInput.value.trim();
+          }
+          
+          const babyNameInput = form.querySelector('input[name="properties[Baby\'s Name]"]');
+          if (babyNameInput && babyNameInput.value.trim()) {
+            personalisation.babyName = babyNameInput.value.trim();
+          }
+          
+          const kidNameInput = form.querySelector('input[name="properties[Kid\'s Name]"]');
+          if (kidNameInput && kidNameInput.value.trim()) {
+            personalisation.kidName = kidNameInput.value.trim();
+          }
+          
+          const mumNameInput = form.querySelector('input[name="properties[Mum\'s Name]"]');
+          if (mumNameInput && mumNameInput.value.trim()) {
+            personalisation.mumName = mumNameInput.value.trim();
+          }
+          
+          const colorInput = form.querySelector('input[name="properties[Text Color]"]:checked') || 
+                             form.querySelector('input[name="properties[Text Color]"]');
+          if (colorInput && colorInput.value.trim()) {
+            personalisation.color = colorInput.value.trim();
+          }
+          
+          const fontInput = form.querySelector('input[name="properties[Text Font]"]:checked') || 
+                            form.querySelector('input[name="properties[Text Font]"]');
+          if (fontInput && fontInput.value.trim()) {
+            personalisation.font = fontInput.value.trim();
+          }
+          
+          const textboxInput = form.querySelector('textarea[name="properties[Personalisation:]"]');
+          if (textboxInput && textboxInput.value.trim()) {
+            personalisation.textbox = textboxInput.value.trim();
+          }
+          
+          const messageInput = form.querySelector('textarea[name="properties[Message]"]');
+          if (messageInput && messageInput.value.trim()) {
+            personalisation.message = messageInput.value.trim();
+          }
+          
+          const timeInput = form.querySelector('input[name="properties[Time]"]');
+          if (timeInput && timeInput.value.trim()) {
+            personalisation.time = timeInput.value.trim();
+          }
+          
+          const weightInput = form.querySelector('input[name="properties[Weight]"]');
+          if (weightInput && weightInput.value.trim()) {
+            personalisation.weight = weightInput.value.trim();
+          }
+          
+          // If we found any personalization, we can stop checking
+          if (Object.keys(personalisation).length > 0) {
+            break;
+          }
+        }
+        
+        const hasPersonalisation = Object.keys(personalisation).length > 0;
         
         const buttons = document.querySelectorAll('[data-personalise-button]');
-        console.log('Found buttons:', buttons.length);
+        console.log('Found buttons:', buttons.length, 'Has personalisation:', hasPersonalisation);
         
         buttons.forEach(button => {
           const textSpan = button.querySelector('[data-personalise-text]');
@@ -319,18 +447,16 @@
             confirmationContainer = button.parentElement?.querySelector('[data-personalise-confirmation]');
           }
           if (!confirmationContainer) {
-            // Try finding in the sticky add to cart container
-            const stickyContainer = button.closest('.sticky-add-to-cart__bar');
-            if (stickyContainer) {
-              confirmationContainer = stickyContainer.querySelector('[data-personalise-confirmation]');
+            // Try finding in the product form buttons container (product page)
+            const formButtons = button.closest('.product-form-buttons');
+            if (formButtons) {
+              confirmationContainer = formButtons.querySelector('[data-personalise-confirmation]');
             }
           }
-          console.log('Confirmation container found:', confirmationContainer ? 'YES' : 'NO');
           
           if (textSpan) {
-            if (savedPersonalisation) {
+            if (hasPersonalisation) {
               try {
-                const personalisation = JSON.parse(savedPersonalisation);
                 
                 // Format the summary: "Personalised: {name} | {date} ({color})"
                 // Include all active personalization fields
@@ -359,7 +485,7 @@
                 if (personalisation.schoolYear) {
                   parts.push(personalisation.schoolYear);
                 }
-                // Add baby/kid/mum names from sessionStorage
+                // Add baby/kid/mum names
                 if (personalisation.babyName && typeof personalisation.babyName === 'string' && personalisation.babyName.trim()) {
                   parts.push('Baby: ' + personalisation.babyName);
                 }
@@ -488,17 +614,64 @@
   }
   
   // Listen for personalisation-saved event to update button
-  function handlePersonalisationSaved() {
+  function handlePersonalisationSaved(event) {
+    console.log('personalisation-saved event received in product-information', event.detail);
+    
+    // Get the form that was updated from event detail
+    const updatedForm = event.detail?.form;
+    
+    // Wait a bit for DOM to update after inputs are added
     setTimeout(function() {
       if (window.updatePersonaliseButtonText) {
-        window.updatePersonaliseButtonText();
+        // Pass the updated form to the function if available
+        window.updatePersonaliseButtonText(updatedForm);
       }
-    }, 100);
+    }, 200);
+  }
+  
+  // Handle variant update - update personalization button text after variant changes
+  function handleVariantUpdate(event) {
+    // Wait a bit for DOM to update after variant change
+    setTimeout(() => {
+      if (window.updatePersonaliseButtonText) {
+        // Get the form that might have been updated
+        const productId = event.detail?.data?.productId;
+        let form = null;
+        
+        if (productId) {
+          const productFormComponent = document.querySelector(`product-form-component[data-product-id="${productId}"]`);
+          if (productFormComponent) {
+            form = productFormComponent.querySelector('form[data-type="add-to-cart-form"]');
+          }
+        }
+        
+        // Fallback: find any form
+        if (!form) {
+          form = document.querySelector('form[data-type="add-to-cart-form"]');
+        }
+        
+        window.updatePersonaliseButtonText(form);
+        
+        // Also update add to cart button state after updating personalization button
+        // This ensures the button is disabled if personalization is present but not confirmed
+        if (window.updateAddToCartButtonState) {
+          setTimeout(() => {
+            window.updateAddToCartButtonState();
+          }, 100);
+        }
+      }
+    }, 150);
   }
   
   // Set up event listeners
   try {
     document.addEventListener('personalisation-saved', handlePersonalisationSaved);
+    
+    // Listen for variant updates to update personalization button text
+    const sectionElement = document.querySelector('.shopify-section');
+    if (sectionElement) {
+      sectionElement.addEventListener('variant:update', handleVariantUpdate);
+    }
     
     // Also try to listen on the dialog element directly (wait for it to be available)
     function setupDialogListener() {
@@ -752,53 +925,6 @@
     white-space: nowrap;
   }
 
-  /* Personalisation Confirmation Checkbox */
-  .sticky-add-to-cart .personalise-confirmation {
-    margin-top: var(--margin-md);
-    width: 100%;
-  }
-
-  .sticky-add-to-cart .personalise-confirmation__label {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--gap-sm);
-    cursor: pointer;
-  }
-
-  .sticky-add-to-cart .personalise-confirmation__checkbox {
-    margin: 0;
-    margin-block-start: 2px;
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    border: 1.5px solid #7295BB !important;
-    border-radius: 0px;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-color: #FFFFFF;
-    box-sizing: border-box;
-  }
-
-  .sticky-add-to-cart .personalise-confirmation__checkbox:checked {
-    background-color: #7295BB;
-    border-color: #7295BB !important;
-    background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.3333 4L6 11.3333L2.66667 8' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 14px 14px;
-  }
-
-  .sticky-add-to-cart .personalise-confirmation__text {
-    flex: 1;
-    font-family: 'Outfit', sans-serif;
-    font-style: normal;
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 140%;
-    color: #1D425A;
-  }
 
   /* Mobile adjustments */
   @media screen and (max-width: 749px) {
@@ -830,30 +956,28 @@
     .sticky-add-to-cart__personalise-button {
       flex: 0 1 auto;
       min-width: 0;
-      max-width: 160px;
       width: auto;
-      overflow: hidden;
+      padding-left: 8px;
+      padding-right: 8px;
+      font-size: 16px;
     }
 
     .sticky-add-to-cart__personalise-button .icon-tex-container {
-      overflow: hidden;
       min-width: 0;
       flex: 1 1 auto;
     }
 
     .sticky-add-to-cart__personalise-button .personalise-button__text,
     .sticky-add-to-cart__personalise-button .personalise-button__summary {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
       display: inline-block;
-      max-width: 100%;
+      white-space: normal;
     }
 
     .sticky-add-to-cart__button {
       flex: 1 1 0;
       min-width: 0;
       width: auto;
+      font-size: 16px;
     }
 
     .add-to-cart-text__content {

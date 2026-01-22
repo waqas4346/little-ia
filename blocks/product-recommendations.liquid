@@ -87,7 +87,7 @@
           <div class="resource-list__item">
             {% content_for 'block',
               type: '_product-card',
-              id: 'static-product-card',
+              id: 'product-card',
               closest.product: product
             %}
           </div>
@@ -205,6 +205,9 @@
     },
     {
       "type": "@app"
+    },
+    {
+      "type": "_product-card"
     }
   ],
   "settings": [
@@ -448,11 +451,12 @@
             "text": "t:html_defaults.may_also_like"
           }
         },
-        "static-product-card": {
+        "product-card": {
           "type": "_product-card",
           "static": true,
           "settings": {
-            "product_card_gap": 4
+            "product_card_gap": 4,
+            "show_view_product_button": true
           },
           "blocks": {
             "product-card-gallery": {

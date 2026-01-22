@@ -49,7 +49,12 @@
     elsif more_products_metaobject.subheading != blank
       assign section_subheading = more_products_metaobject.subheading.value | default: more_products_metaobject.subheading
     endif
-    assign products_collection = more_products_metaobject.collection.value | default: more_products_metaobject.collection
+    # Try multiple ways to access the collection from metaobject
+    if more_products_metaobject.collection.value != blank
+      assign products_collection = more_products_metaobject.collection.value
+    elsif more_products_metaobject.collection != blank
+      assign products_collection = more_products_metaobject.collection
+    endif
   endif
   
   # If no heading/subheading from metaobject, use section settings as fallback
@@ -94,21 +99,16 @@
 
   {% comment %} Filter products to exclude current viewing product and build list {% endcomment %}
   {% capture list_items %}
-    {% if products_collection.products_count > 0 %}
+    {% if products_collection != blank and products_collection.products_count > 0 %}
       {% assign displayed_count = 0 %}
       {% for product_item in products_collection.products %}
         {% comment %} Skip the current viewing product {% endcomment %}
         {% if current_product_id == blank or product_item.id != current_product_id %}
           {% if displayed_count < max_items %}
             <div class="resource-list__item" data-explore-more-item="true" data-product-id="{{ product_item.id }}">
-              {% # theme-check-disable UniqueStaticBlockId %}
-                {% content_for 'block', type: '_product-card', id: 'static-product-card', closest.product: product_item %}
-              {% # theme-check-enable UniqueStaticBlockId %}
-              {% comment %} Add View Product and + buttons using unified component {% endcomment %}
-              {% render 'product-card-actions', 
-                product: product_item, 
-                section_id: section.id
-              %}
+              {% # theme-check-disable %}
+                {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: product_item %}
+              {% # theme-check-enable %}
             </div>
             {% assign displayed_count = displayed_count | plus: 1 %}
             {% comment %} Add split marker after each item except potentially the last {% endcomment %}
@@ -124,6 +124,11 @@
   {% liquid
     assign list_items_array = list_items | strip | split: '<!--@list/split-->'
     
+    # Debug: Check if we have items
+    # Remove this after debugging
+    # assign debug_count = list_items_array.size
+    # assign debug_stripped = list_items | strip
+    
     # Prepare carousel settings - remove gutters to allow full width
     assign slideshow_gutters = null
     assign gutter_style = '--gutter-slide-width: 0px;'
@@ -136,11 +141,14 @@
 
   {% capture slides %}
     {% for item in list_items_array %}
-      {% render 'slideshow-slide'
-        index : forloop.index0,
-        children : item,
-        class : 'resource-list__slide explore-more-products-slide'
-      %}
+      {% assign item_stripped = item | strip %}
+      {% if item_stripped != blank and item_stripped != '' %}
+        {% render 'slideshow-slide'
+          index : forloop.index0,
+          children : item,
+          class : 'resource-list__slide explore-more-products-slide'
+        %}
+      {% endif %}
     {% endfor %}
   {% endcapture %}
 
@@ -370,6 +378,7 @@
     opacity: 1;
     top: 50%;
     transform: translateY(-50%);
+    z-index: var(--layer-heightened);
   }
 
   .explore-more-products-desktop slideshow-arrows .slideshow-control--previous {
@@ -379,6 +388,7 @@
   .explore-more-products-desktop slideshow-arrows .slideshow-control--next {
     right: 0;
   }
+
 
   /* Tablet (iPad) - Show 3 items per row - use flexible sizing */
   @media (min-width: 750px) and (max-width: 1023px) {
@@ -540,67 +550,9 @@
       });
     }
 
-    // Move product action buttons to be after the price block inside product-card
-    function positionProductActions() {
-      const productItems = desktopCarousel.querySelectorAll('[data-explore-more-item="true"]');
-      productItems.forEach(function(item) {
-        const actions = item.querySelector('.product-card-actions');
-        if (!actions) return;
-
-        // Find the product-card element
-        const productCard = item.querySelector('product-card');
-        if (!productCard) {
-          // If no product-card found yet, try again later
-          return;
-        }
-
-        // Find the product-card__content (where all blocks are)
-        const cardContent = productCard.querySelector('.product-card__content');
-        if (!cardContent) {
-          // If no cardContent found yet, try again later
-          return;
-        }
-
-        // Check if already inside cardContent
-        if (actions.parentNode === cardContent) {
-          // Already inside, check if position is correct
-          const priceBlock = cardContent.querySelector('product-price');
-          if (priceBlock && priceBlock.nextElementSibling === actions) {
-            return; // Already in correct position
-          }
-        }
-
-        // Find the price block (product-price element) inside cardContent
-        const priceBlock = cardContent.querySelector('product-price');
-        
-        if (priceBlock) {
-          // Remove from current position if needed
-          if (actions.parentNode && actions.parentNode !== cardContent) {
-            actions.remove();
-          }
-          // Insert after price block inside cardContent
-          if (priceBlock.nextSibling) {
-            cardContent.insertBefore(actions, priceBlock.nextSibling);
-          } else {
-            cardContent.appendChild(actions);
-          }
-        } else {
-          // If no price block found, append to end of cardContent
-          if (actions.parentNode !== cardContent) {
-            actions.remove();
-            cardContent.appendChild(actions);
-          }
-        }
-      });
-    }
-
-    // Setup product cards and position buttons
+    // Setup product cards
     function initializeExploreMoreProducts() {
       setupProductCards();
-      // Run multiple times to ensure it works
-      positionProductActions();
-      setTimeout(positionProductActions, 50);
-      setTimeout(positionProductActions, 200);
     }
 
     // Initialize after initial load - use multiple attempts
@@ -612,13 +564,13 @@
 
     // Also initialize after any dynamic updates
     const observer = new MutationObserver(function(mutations) {
-      let shouldReposition = false;
+      let shouldSetup = false;
       mutations.forEach(function(mutation) {
-        if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
-          shouldReposition = true;
+        if (mutation.addedNodes.length > 0) {
+          shouldSetup = true;
         }
       });
-      if (shouldReposition) {
+      if (shouldSetup) {
         setTimeout(initializeExploreMoreProducts, 50);
       }
     });
@@ -643,6 +595,9 @@
     },
     {
       "type": "_divider"
+    },
+    {
+      "type": "_product-card"
     }
   ],
   "disabled_on": {
@@ -846,7 +801,7 @@
         "padding-block-end": 48
       },
       "blocks": {
-        "static-product-card": {
+        "product-card": {
           "type": "_product-card",
           "name": "Product Card",
           "static": true,
@@ -861,14 +816,15 @@
             "padding-block-start": 0,
             "padding-block-end": 0,
             "padding-inline-start": 0,
-            "padding-inline-end": 0
+            "padding-inline-end": 0,
+            "show_view_product_button": true
           },
           "blocks": {
-            "product-card-gallery": {
+            "card-gallery": {
               "type": "_product-card-gallery",
               "name": "Product Card Media",
               "settings": {
-                "image_ratio": "adapt",
+                "image_ratio": "square",
                 "border": "none",
                 "border_width": 1,
                 "border_opacity": 100,
@@ -879,11 +835,11 @@
                 "padding-inline-end": 0
               }
             },
-            "product_title": {
+            "product_title_4nY4eT": {
               "type": "product-title",
-              "name": "Product Title",
+              "name": "t:names.product_title",
               "settings": {
-                "width": "fit-content",
+                "width": "100%",
                 "max_width": "normal",
                 "alignment": "left",
                 "type_preset": "rte",
@@ -903,7 +859,7 @@
                 "padding-inline-end": 0
               }
             },
-            "price": {
+            "price_EzJzMm": {
               "type": "price",
               "name": "Product Price",
               "settings": {
@@ -926,7 +882,7 @@
               }
             }
           },
-          "block_order": ["product-card-gallery", "product_title", "price"]
+          "block_order": ["card-gallery", "product_title_4nY4eT", "price_EzJzMm"]
         }
       },
       "block_order": []

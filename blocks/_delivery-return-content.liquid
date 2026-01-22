@@ -1,0 +1,44 @@
+<div class="delivery-return-content">
+  {% if closest.product.metafields.custom.delivery_tab != blank %}
+    {{ closest.product.metafields.custom.delivery_tab }}
+  {% endif %}
+  <p class="tab_desc_title"><span>Returns</span></p>
+  <p>We endeavor to keep all our customers happy and to provide the utmost best service. If you are unhappy with your purchase, please send an email to <a href="mailto:support@little-ia.com">support@little-ia.com</a> with as much information as possible. We will be able to offer you a refund as per our Refund Policy stated here. Due to the nature of personalised items, they are not eligible for refund or exchange, unless the personalisation has been done incorrectly.</p>
+</div>
+
+{% stylesheet %}
+  .delivery-return-content {
+    width: 100%;
+  }
+  
+  .delivery-return-content .tab_desc_title {
+    font-weight: 600;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+  .delivery-return-content .tab_desc_title img {
+    max-width: 30px;
+    display: inline-block;
+    margin-right: 8px;
+
+  }
+  .delivery-return-content .tab_desc_title:first-child {
+    margin-top: 0;
+  }
+  
+  .delivery-return-content p {
+    margin: 0 0 12px 0;
+  }
+  
+  .delivery-return-content p:last-child {
+    margin-bottom: 0;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Delivery & Return Content",
+  "tag": null,
+  "blocks": []
+}
+{% endschema %}

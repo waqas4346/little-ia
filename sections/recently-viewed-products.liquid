@@ -522,11 +522,7 @@
 
   /* Enable product card image slider on mobile */
   @media screen and (max-width: 749px) {
-    [data-testid="recently-viewed-products"] .card-gallery slideshow-component,
-    [data-testid="recently-viewed-products-grid"] .card-gallery slideshow-component {
-      --cursor: grab;
-    }
-
+   
     [data-testid="recently-viewed-products"] .card-gallery slideshow-component[disabled='true'] slideshow-slides,
     [data-testid="recently-viewed-products-grid"] .card-gallery slideshow-component[disabled='true'] slideshow-slides {
       overflow-x: auto !important;
@@ -642,6 +638,9 @@
     },
     {
       "type": "_divider"
+    },
+    {
+      "type": "_product-card"
     }
   ],
   "disabled_on": {
