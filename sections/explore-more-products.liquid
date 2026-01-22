@@ -224,53 +224,6 @@
     }
   }
 
-  /* Product card media sizing/background in slider */
-  [data-testid="explore-more-products-grid"] .card-gallery .product-media-container {
-    background: url("bg_removal [Background removed].png"), #F7F7F7;
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
-  }
-
-  [data-testid="explore-more-products-grid"] .card-gallery .product-media-container img,
-  [data-testid="explore-more-products-grid"] .card-gallery .product-media-container picture,
-  [data-testid="explore-more-products-grid"] .card-gallery .product-media-container video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  /* Hide sale/sold-out badge on slider images */
-  [data-testid="explore-more-products-grid"] .product-badges {
-    display: none !important;
-  }
-
-  /* Product title styling */
-  [data-testid="explore-more-products-grid"] .text-block--product_title,
-  [data-testid="explore-more-products-grid"] .text-block--product_title *,
-  [data-testid="explore-more-products-grid"] .text-block--product_title p {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 500;
-    font-style: normal;
-    font-size: 20px;
-    line-height: 140%;
-    letter-spacing: 0;
-    color: #1D425A;
-  }
-
-  /* Explicit class injected on product title block */
-  [data-testid="explore-more-products-grid"] .product-title-text,
-  [data-testid="explore-more-products-grid"] .product-title-text *,
-  [data-testid="explore-more-products-grid"] .product-title-text p {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 500;
-    font-style: normal;
-    font-size: 20px;
-    line-height: 140%;
-    letter-spacing: 0;
-    color: #1D425A;
-  }
-
   /* Product slider carousel container */
   .explore-more-products-carousel {
     position: relative;
@@ -290,12 +243,6 @@
     --peek-next-slide-size: 0px;
     --gutter-slide-width: 0px !important;
     overflow: visible;
-  }
-
-  @media (max-width: 767px) {
-    [data-testid="explore-more-products-grid"] {
-      overflow: hidden;
-    }
   }
 
   /* Mobile (max-width: 749px): Show 2 columns like collection pages */
@@ -330,16 +277,6 @@
   /* Ensure product cards use responsive sizing like collection pages */
   [data-testid="explore-more-products-grid"] .resource-list__item {
     min-width: 0;
-  }
-
-  [data-testid="explore-more-products-grid"] product-card,
-  [data-testid="explore-more-products-grid"] product-card-link {
-    width: 100%;
-  }
-
-  [data-testid="explore-more-products-grid"] .card-gallery {
-    width: 100%;
-    aspect-ratio: 1;
   }
 
   /* Position arrows outside the carousel on desktop */
@@ -392,10 +329,6 @@
 
   /* Tablet (iPad) - Show 3 items per row - use flexible sizing */
   @media (min-width: 750px) and (max-width: 1023px) {
-    [data-testid="explore-more-products-grid"] {
-      overflow: hidden;
-    }
-
     /* Use generic carousel slide sizing - let base.css handle it with --slide-width */
     .explore-more-products-desktop .resource-list__slide {
       min-width: 0;
@@ -414,11 +347,6 @@
     }
   }
 
-  /* Hide default quick-add on hover for product slider (same as collection page) */
-  [data-testid="explore-more-products"] product-card[data-collection-page="true"]:is(:hover, :focus-within) .quick-add__button:not(.product-slider-quick-add-button) {
-    opacity: 0 !important;
-    pointer-events: none !important;
-  }
 
 
   @media screen and (min-width: 750px) {
@@ -436,36 +364,13 @@
       margin-bottom: 16px;
     }
 
-    [data-testid="explore-more-products-grid"] .card-gallery .product-media-container {
-      background: url("bg_removal [Background removed].png"), #F7F7F7;
-    }
-
-    [data-testid="explore-more-products-grid"] .text-block--product_title,
-    [data-testid="explore-more-products-grid"] .text-block--product_title *,
-    [data-testid="explore-more-products-grid"] .text-block--product_title p {
-      font-size: 16px;
-      line-height: 140%;
-      color: #1D425A;
-    }
-
-    [data-testid="explore-more-products-grid"] .product-title-text,
-    [data-testid="explore-more-products-grid"] .product-title-text *,
-    [data-testid="explore-more-products-grid"] .product-title-text p {
-      font-size: 16px;
-      line-height: 140%;
-      letter-spacing: 0;
-      color: #1D425A;
-    }
-
     .explore-more-products-wrapper {
       padding: 0;
-      overflow: hidden;
       width: 100%;
       margin: 0 auto;
     }
 
     .explore-more-products-desktop slideshow-container {
-      overflow: hidden;
       width: 100%;
       margin: 0 auto;
     }
@@ -474,72 +379,14 @@
       display: none !important;
     }
 
-    /* Mobile: Product slider carousel items - use responsive sizing like collection pages */
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card .card-gallery .product-media-container,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container {
-      width: 100%;
-      aspect-ratio: 1;
-      max-width: 100%;
-    }
-
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card .card-gallery .product-media-container img,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card .card-gallery .product-media-container picture,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card .card-gallery .product-media-container video,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container img,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container picture,
-    [data-testid="explore-more-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container video {
-      width: 100%;
-      height: 100%;
-      max-width: 100%;
-      object-fit: cover !important;
+    /* Ensure card-gallery can scroll on mobile - allow overflow for product image scrolling */
+    [data-testid="explore-more-products-grid"] .card-gallery slideshow-slides {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
     }
   }
 </style>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const desktopCarousel = document.querySelector('[data-testid="explore-more-products-grid"]');
-    if (!desktopCarousel) return;
-
-    // Add data-collection-page attribute to product cards to hide default quick-add on hover
-    function setupProductCards() {
-      const productCards = desktopCarousel.querySelectorAll('product-card');
-      productCards.forEach(function(card) {
-        card.setAttribute('data-collection-page', 'true');
-      });
-    }
-
-    // Setup product cards
-    function initializeExploreMoreProducts() {
-      setupProductCards();
-    }
-
-    // Initialize after initial load - use multiple attempts
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeExploreMoreProducts);
-    } else {
-      initializeExploreMoreProducts();
-    }
-
-    // Also initialize after any dynamic updates
-    const observer = new MutationObserver(function(mutations) {
-      let shouldSetup = false;
-      mutations.forEach(function(mutation) {
-        if (mutation.addedNodes.length > 0) {
-          shouldSetup = true;
-        }
-      });
-      if (shouldSetup) {
-        setTimeout(initializeExploreMoreProducts, 50);
-      }
-    });
-
-    observer.observe(desktopCarousel, {
-      childList: true,
-      subtree: true
-    });
-  });
-</script>
 
 {% schema %}
 {
