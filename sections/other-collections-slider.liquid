@@ -640,52 +640,6 @@
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const desktopCarousel = document.querySelector('[data-testid="other-collections-slider-grid"]');
-    if (!desktopCarousel) return;
-
-    const itemsPerView = parseInt(desktopCarousel.getAttribute('data-items-per-view')) || 4;
-    const slideshow = desktopCarousel.querySelector('slideshow-component[ref="otherCollectionsSliderDesktop"]');
-    if (!slideshow) return;
-
-    const previousBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--previous');
-    const nextBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--next');
-    const slides = slideshow.querySelectorAll('slideshow-slide');
-
-    if (!previousBtn || !nextBtn || slides.length === 0) return;
-
-    let currentIndex = 0;
-    const totalSlides = slides.length;
-    const maxIndex = Math.max(0, totalSlides - itemsPerView);
-
-    // Override previous button
-    previousBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      currentIndex = Math.max(0, currentIndex - itemsPerView);
-      if (slides[currentIndex]) {
-        slideshow.select(currentIndex, e, { animate: true });
-      }
-    });
-
-    // Override next button
-    nextBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      currentIndex = Math.min(maxIndex, currentIndex + itemsPerView);
-      if (slides[currentIndex]) {
-        slideshow.select(currentIndex, e, { animate: true });
-      }
-    });
-
-    // Update current index when slideshow changes
-    slideshow.addEventListener('slideshow:select', function(event) {
-      currentIndex = event.detail.index || 0;
-    });
-  });
-
   // Custom scrollbar indicator for mobile
   document.addEventListener('DOMContentLoaded', function() {
     const mobileSlides = document.querySelector('.collection-slider-mobile slideshow-slides');
