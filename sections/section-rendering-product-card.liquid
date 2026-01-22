@@ -72,41 +72,125 @@
       </script>
     </variant-picker>
     
-    {% comment %} Product Card Gallery {% endcomment %}
+    {% comment %} Product Card Gallery - Match card-gallery snippet structure for proper hover and slider functionality {% endcomment %}
     {% if product.featured_media %}
       {% liquid
-        assign image_ratio = 'adapt'
         assign image_sizes = '(min-width: 750px) 50vw, 100vw'
-        assign first_media = product.featured_media
-        assign media_list = product.media | slice: 0, 2
+        
+        # Check if there are generic media that are not variant images
+        assign variant_images = product.images | where: 'attached_to_variant?', true | map: 'src'
+        assign generic_media_size = product.media.size | minus: variant_images.size
+        
+        # Sort media so product.featured_media.preview_image comes first
+        assign other_media = product.media | reject: 'src', product.featured_media
+        assign media_list_to_show = product.featured_media | concat: other_media
+        
+        # Determine if we should show arrows
+        assign show_arrows = false
+        if product.media.size > 2 and generic_media_size > 0
+          assign show_arrows = true
+        endif
+        
+        # Determine max visible slides based on settings
+        assign max_visible_slide_count = 1
+        if settings.product_card_carousel
+          assign max_visible_slide_count = 5
+        elsif settings.show_second_image_on_hover
+          assign max_visible_slide_count = 2
+        endif
+        
+        # Build slideshow attributes
+        assign slideshow_attributes = 'data-generic-media-size="' | append: generic_media_size | append: '"'
+        if settings.product_card_carousel == false
+          assign slideshow_attributes = slideshow_attributes | append: ' disabled="true"'
+        endif
+        
+        # Build slides
+        capture slides
+          for media in media_list_to_show
+            assign loading = 'lazy'
+            assign sizes = 'auto, ' | append: image_sizes
+            
+            assign hidden = false
+            assign attributes = ''
+            if variant_images contains media.src
+              assign attributes = 'variant-image'
+              if forloop.first == false
+                assign hidden = true
+              endif
+            endif
+            
+            # Count visible slides
+            if forloop.first
+              assign visible_slide_count = 0
+            endif
+            unless hidden
+              assign visible_slide_count = visible_slide_count | plus: 1
+            endunless
+            if hidden == false and visible_slide_count > max_visible_slide_count
+              continue
+            endif
+            
+            # Load first visible image eagerly
+            if forloop.first and hidden == false
+              assign loading = 'eager'
+              assign sizes = image_sizes
+            endif
+            
+            assign class = 'product-media-container media-fit product-media-container--' | append: media.media_type
+            
+            capture slideshow_children
+              render 'product-media', media: media, sizes: sizes, loading: loading, preview_image_only: true
+            endcapture
+            
+            render 'slideshow-slide', slide_id: media.id, index: forloop.index0, hidden: hidden, class: class, attributes: attributes, children: slideshow_children
+          endfor
+        endcapture
+        
+        # Build product URL for card gallery link
+        assign product_url = product.selected_or_first_available_variant.url
+        unless product_url
+          assign product_url = product.first_available_variant.url
+        endunless
+        unless product_url
+          assign product_url = product.url
+        endunless
       %}
-      <div class="card-gallery">
-        <slideshow-component ref="cardGallery" initial-slide="0" class="card-gallery__slideshow" disabled="true">
-          <a class="contents" ref="cardGalleryLink" href="{{ url }}" aria-label="{{ product.title }}">
-            <slideshow-container ref="slideshowContainer">
-              <slideshow-slides>
-                {% for media in media_list limit: 2 %}
-                  {% liquid
-                    assign loading = 'lazy'
-                    if forloop.first
-                      assign loading = 'eager'
-                    endif
-                  %}
-                  {% capture slide_content %}
-                    {% render 'product-media', media: media, sizes: image_sizes, loading: loading, preview_image_only: true %}
-                  {% endcapture %}
-                  {% render 'slideshow-slide',
-                    slide_id: media.id,
-                    index: forloop.index0,
-                    hidden: false,
-                    class: 'product-media-container media-fit product-media-container--' | append: media.media_type,
-                    children: slide_content
-                  %}
-                {% endfor %}
-              </slideshow-slides>
-            </slideshow-container>
-          </a>
-        </slideshow-component>
+      
+      <div
+        ref="cardGallery"
+        class="card-gallery card-gallery-{{ section.id }}-{{ product.id }} spacing-style border-style"
+        data-product-id="{{ product.id }}"
+        {% if settings.show_second_image_on_hover %}
+          on:pointerenter="/previewImage"
+          on:pointerleave="/resetImage"
+        {% endif %}
+        {% if settings.transition_to_main_product %}
+          data-view-transition-to-main-product
+        {% endif %}
+        data-image-ratio="adapt"
+      >
+        <a
+          class="contents"
+          ref="cardGalleryLink"
+          href="{{ product_url }}"
+          aria-label="{{ product.title }}"
+        >
+          {% render 'slideshow',
+            ref: 'slideshow',
+            initial_slide: 0,
+            slides: slides,
+            slide_count: media_list_to_show.size,
+            show_arrows: show_arrows,
+            attributes: slideshow_attributes
+          %}
+          {%- comment -%} Mobile scrollbar indicator {%- endcomment -%}
+          <div class="product-card-scrollbar-indicator">
+            <div class="product-card-scrollbar-track">
+              <div class="product-card-scrollbar-thumb"></div>
+            </div>
+          </div>
+        </a>
         
         {% render 'product-card-badges', product: product, settings: settings %}
         {% if settings.quick_add or settings.mobile_quick_add %}
