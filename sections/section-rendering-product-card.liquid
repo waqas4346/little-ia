@@ -72,6 +72,38 @@
       </script>
     </variant-picker>
     
+    {% comment %} Embed product JSON data for quick-add functionality - eliminates need for separate fetch {% endcomment %}
+    <script type="application/json" data-product-json>
+      {
+        "id": {{ product.id | json }},
+        "title": {{ product.title | json }},
+        "handle": {{ product.handle | json }},
+        "url": {{ product.url | json }},
+        "available": {{ product.available | json }},
+        "variants": [
+          {% for variant in product.variants %}
+            {
+              "id": {{ variant.id | json }},
+              "title": {{ variant.title | json }},
+              "available": {{ variant.available | json }},
+              "url": {{ variant.url | json }},
+              "quantity_rule": {
+                "min": {{ variant.quantity_rule.min | default: 1 | json }}
+              }
+            }{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        ],
+        "options": [
+          {% for option in product.options_with_values %}
+            {
+              "name": {{ option.name | json }},
+              "values": {{ option.values | json }}
+            }{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        ]
+      }
+    </script>
+    
     {% comment %} Product Card Gallery - Match card-gallery snippet structure for proper hover and slider functionality {% endcomment %}
     {% if product.featured_media %}
       {% liquid
@@ -204,8 +236,6 @@
         </div>
       </div>
     {% endif %}
-    
-    {% render 'variant-swatches', product_resource: product, has_option_selected: true %}
     
     {% comment %} Product Title - match product-title block structure {% endcomment %}
     {% assign product_title = '<p>' | append: product.title | append: '</p>' %}

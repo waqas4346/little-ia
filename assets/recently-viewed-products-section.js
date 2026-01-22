@@ -12,6 +12,27 @@ class RecentlyViewedProductsComponent extends HTMLElement {
   #productDataMap = new Map();
 
   /**
+   * Cache for search-results responses to avoid re-fetching
+   * @type {Map<string, {html: string, timestamp: number}>}
+   */
+  #searchResultsCache = new Map();
+
+  /**
+   * Cache TTL for search results (5 minutes)
+   */
+  static #CACHE_TTL = 5 * 60 * 1000;
+
+  /**
+   * Cache TTL for product data (24 hours)
+   */
+  static #PRODUCT_DATA_CACHE_TTL = 24 * 60 * 60 * 1000;
+
+  /**
+   * localStorage key for product data cache
+   */
+  static #PRODUCT_DATA_CACHE_KEY = 'recentlyViewedProductData';
+
+  /**
    * Get the current product ID if we're on a product page
    * @returns {string | null} The current product ID or null if not on a product page
    */
@@ -44,6 +65,9 @@ class RecentlyViewedProductsComponent extends HTMLElement {
    * @param {string[]} productIds - Array of product IDs in the exact order from localStorage
    */
   async #renderProductsFromMainCollection(productIds) {
+    // Load cached product data first
+    this.#loadCachedProductData(productIds);
+    
     const itemsPerView = parseInt(this.dataset.itemsPerView) || 4;
     const columnsGap = parseInt(this.dataset.columnsGap) || 8;
     const iconsStyle = this.dataset.iconsStyle || 'arrow';
@@ -51,36 +75,30 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     console.log('Product IDs to fetch (in exact localStorage order):', productIds);
     
     try {
-      // First, get product handles from search-results (quick way to get handles)
-      const searchUrl = new URL(Theme.routes.search_url, location.origin);
-      searchUrl.searchParams.set('q', productIds.map(id => `id:${id}`).join(' OR '));
-      searchUrl.searchParams.set('resources[type]', 'product');
-      
+      // First, try to get handles from localStorage cache
       let productHandlesMap = new Map();
-      try {
-        const searchSectionHTML = await sectionRenderer.getSectionHTML('search-results', false, searchUrl);
-        if (searchSectionHTML) {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(searchSectionHTML, 'text/html');
-          const productItems = Array.from(doc.querySelectorAll('.product-grid__item[data-product-id]'));
-          
-          productItems.forEach((item) => {
-            const id = item.dataset.productId || item.getAttribute('data-product-id');
-            const link = item.querySelector('a[href*="/products/"]');
-            if (link && id) {
-              const href = link.getAttribute('href');
-              const handle = href ? href.split('/products/')[1]?.split('?')[0] : null;
-              if (handle) {
-                productHandlesMap.set(String(id), handle);
-              }
-            }
-          });
-        }
-      } catch (error) {
-        console.warn('Error fetching product handles from search:', error);
+      const cachedHandles = this.#getCachedHandles(productIds);
+      const missingIds = productIds.filter(id => !cachedHandles.has(String(id)));
+      
+      console.log(`Found ${cachedHandles.size} cached handles, ${missingIds.length} missing`);
+      
+      // Only fetch from search-results if we have missing handles
+      if (missingIds.length > 0) {
+        // Get product handles from search-results (optimized with caching)
+        const handlesFromSearch = await this.#fetchHandlesFromSearch(missingIds);
+        handlesFromSearch.forEach((handle, id) => {
+          productHandlesMap.set(id, handle);
+          // Cache the handle for future use
+          this.#cacheHandle(id, handle);
+        });
       }
+      
+      // Merge cached and fetched handles
+      cachedHandles.forEach((handle, id) => {
+        productHandlesMap.set(id, handle);
+      });
     
-    console.log(`Found ${productHandlesMap.size} product handles`);
+    console.log(`Found ${productHandlesMap.size} product handles (${cachedHandles.size} cached, ${productHandlesMap.size - cachedHandles.size} fetched)`);
     
     // Fetch individual product cards using section-rendering-product-card
     // This section includes full content (gallery, title, price) without needing blocks
@@ -142,12 +160,69 @@ class RecentlyViewedProductsComponent extends HTMLElement {
         const link = productCard.querySelector('a[href*="/products/"]');
         const productUrlValue = link ? link.getAttribute('href') : null;
         
-        // Store in productDataMap
+        // Check cache first for product data
+        let productData = this.#getCachedProductData(productId);
+        
+        // If not in cache, extract from embedded script tag
+        if (!productData) {
+          const productJsonScript = doc.querySelector('script[type="application/json"][data-product-json]');
+          if (productJsonScript) {
+            try {
+              productData = JSON.parse(productJsonScript.textContent);
+              console.log(`[Recently Viewed] Extracted product data from HTML for ${productId}:`, {
+                id: productData.id,
+                title: productData.title,
+                available: productData.available,
+                variantsCount: productData.variants?.length || 0,
+                optionsCount: productData.options?.length || 0
+              });
+              // Cache the extracted data
+              this.#cacheProductData(productId, productData);
+            } catch (error) {
+              console.warn(`[Recently Viewed] Failed to parse product JSON for ${productId}:`, error);
+            }
+          } else {
+            console.log(`[Recently Viewed] No product JSON script found in HTML for ${productId}, will extract from card after render`);
+          }
+        } else {
+          console.log(`[Recently Viewed] Using cached product data for ${productId}`);
+        }
+        
+        // Extract product title from HTML as fallback (if JSON not available)
+        const productTitle = productCard.querySelector('.product-title-text, .text-block--product_title')?.textContent?.trim() || 
+                            productCard.querySelector('a[href*="/products/"]')?.getAttribute('aria-label') ||
+                            '';
+        
+        // Extract availability from price block or other indicators (if JSON not available)
+        const priceBlock = productCard.querySelector('product-price');
+        const isAvailable = productData ? productData.available : (priceBlock !== null);
+        
+        // Store in productDataMap with full product data
         if (!this.#productDataMap) {
           this.#productDataMap = new Map();
         }
         if (productId && handle) {
-          this.#productDataMap.set(String(productId), { id: String(productId), handle, url: productUrlValue });
+          const finalProductData = productData || {
+            id: String(productId),
+            title: productTitle,
+            handle: handle,
+            url: productUrlValue || `/products/${handle}`,
+            available: isAvailable,
+            variants: [],
+            options: []
+          };
+          
+          this.#productDataMap.set(String(productId), { 
+            id: String(productId), 
+            handle, 
+            url: productUrlValue,
+            product: finalProductData
+          });
+          
+          // Cache the product data if we have complete data
+          if (productData) {
+            this.#cacheProductData(productId, productData);
+          }
         }
         
         return { id: String(productId), html: productCard.outerHTML };
@@ -175,6 +250,153 @@ class RecentlyViewedProductsComponent extends HTMLElement {
       console.error('Error fetching product cards:', error);
       this.dataset.hasProducts = 'false';
     }
+  }
+
+  /**
+   * Get cached handles from localStorage
+   * @param {string[]} productIds - Array of product IDs
+   * @returns {Map<string, string>} Map of product ID to handle
+   */
+  #getCachedHandles(productIds) {
+    const handlesMap = new Map();
+    try {
+      const cacheKey = 'recentlyViewedProductHandles';
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const now = Date.now();
+        // Filter out expired entries (older than 24 hours)
+        const validEntries = Object.entries(parsed).filter(([_, data]) => {
+          return data.timestamp && (now - data.timestamp) < (24 * 60 * 60 * 1000);
+        });
+        
+        // Rebuild cache with only valid entries
+        const validCache = {};
+        validEntries.forEach(([id, data]) => {
+          validCache[id] = data;
+          if (productIds.includes(id)) {
+            handlesMap.set(id, data.handle);
+          }
+        });
+        
+        // Update cache if we removed expired entries
+        if (validEntries.length !== Object.keys(parsed).length) {
+          localStorage.setItem(cacheKey, JSON.stringify(validCache));
+        }
+      }
+    } catch (error) {
+      console.warn('Error reading cached handles:', error);
+    }
+    return handlesMap;
+  }
+
+  /**
+   * Cache a product handle in localStorage
+   * @param {string} productId - Product ID
+   * @param {string} handle - Product handle
+   */
+  #cacheHandle(productId, handle) {
+    try {
+      const cacheKey = 'recentlyViewedProductHandles';
+      const cached = localStorage.getItem(cacheKey);
+      const cache = cached ? JSON.parse(cached) : {};
+      cache[String(productId)] = {
+        handle: handle,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(cacheKey, JSON.stringify(cache));
+    } catch (error) {
+      console.warn('Error caching handle:', error);
+    }
+  }
+
+  /**
+   * Fetch product handles from search-results with caching and optimized parsing
+   * @param {string[]} productIds - Array of product IDs to fetch handles for
+   * @returns {Promise<Map<string, string>>} Map of product ID to handle
+   */
+  async #fetchHandlesFromSearch(productIds) {
+    const handlesMap = new Map();
+    
+    if (productIds.length === 0) {
+      return handlesMap;
+    }
+
+    try {
+      // Create search URL
+      const searchUrl = new URL(Theme.routes.search_url, location.origin);
+      searchUrl.searchParams.set('q', productIds.map(id => `id:${id}`).join(' OR '));
+      searchUrl.searchParams.set('resources[type]', 'product');
+      const searchUrlString = searchUrl.toString();
+      
+      // Check cache first
+      const cached = this.#searchResultsCache.get(searchUrlString);
+      const now = Date.now();
+      let searchSectionHTML = null;
+      
+      if (cached && (now - cached.timestamp) < RecentlyViewedProductsComponent.#CACHE_TTL) {
+        console.log('Using cached search-results response');
+        searchSectionHTML = cached.html;
+      } else {
+        // Fetch from API
+        console.log(`Fetching handles for ${productIds.length} products from search-results...`);
+        searchSectionHTML = await sectionRenderer.getSectionHTML('search-results', false, searchUrl);
+        
+        // Cache the response
+        if (searchSectionHTML) {
+          this.#searchResultsCache.set(searchUrlString, {
+            html: searchSectionHTML,
+            timestamp: now
+          });
+        }
+      }
+      
+      if (searchSectionHTML) {
+        // Optimized parsing: use regex to extract handles directly from HTML
+        // Pattern: data-product-id="ID" ... href="/products/handle" (within same product item)
+        // This regex looks for product ID followed by href within reasonable distance
+        const productItemPattern = /data-product-id="(\d+)"[^>]*>[\s\S]{0,2000}?href="([^"]*\/products\/([^"?#]+))/gi;
+        const matches = [...searchSectionHTML.matchAll(productItemPattern)];
+        
+        matches.forEach(match => {
+          const id = match[1];
+          const handle = match[3];
+          if (id && handle && productIds.includes(id)) {
+            handlesMap.set(String(id), handle);
+            this.#cacheHandle(id, handle);
+          }
+        });
+        
+        // Fallback to DOM parsing if regex didn't find all handles
+        if (handlesMap.size < productIds.length) {
+          const missingIds = productIds.filter(id => !handlesMap.has(String(id)));
+          console.log(`Regex found ${handlesMap.size}/${productIds.length} handles, using DOM parsing for ${missingIds.length} remaining...`);
+          
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(searchSectionHTML, 'text/html');
+          const productItems = Array.from(doc.querySelectorAll('.product-grid__item[data-product-id]'));
+          
+          productItems.forEach((item) => {
+            const id = item.dataset.productId || item.getAttribute('data-product-id');
+            if (missingIds.includes(String(id)) && !handlesMap.has(String(id))) {
+              const link = item.querySelector('a[href*="/products/"]');
+              if (link && id) {
+                const href = link.getAttribute('href');
+                const handle = href ? href.split('/products/')[1]?.split('?')[0] : null;
+                if (handle) {
+                  handlesMap.set(String(id), handle);
+                  this.#cacheHandle(id, handle);
+                }
+              }
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.warn('Error fetching product handles from search:', error);
+    }
+    
+    return handlesMap;
   }
 
   /**
@@ -232,6 +454,15 @@ class RecentlyViewedProductsComponent extends HTMLElement {
   connectedCallback() {
     this.#intersectionObserver.observe(this);
     
+    // Clean up old cache entries on connect
+    this.#cleanupCache();
+    
+    // Preload cached product data for recently viewed products
+    const viewedProducts = RecentlyViewed.getProducts();
+    if (viewedProducts.length > 0) {
+      this.#loadCachedProductData(viewedProducts);
+    }
+    
     // Initialize max products setting from section
     const maxProducts = this.dataset.maxProducts;
     if (maxProducts) {
@@ -250,6 +481,198 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     this.#intersectionObserver.disconnect();
     window.removeEventListener('storage', this.#handleStorageChange);
     document.removeEventListener('recently-viewed-updated', this.#handleRecentlyViewedUpdate);
+    
+    // Clean up cache when component is disconnected
+    this.#cleanupCache();
+  }
+
+  /**
+   * Clean up expired cache entries to prevent memory leaks
+   */
+  #cleanupCache() {
+    const now = Date.now();
+    const entriesToDelete = [];
+    
+    // Find expired entries
+    this.#searchResultsCache.forEach((value, key) => {
+      if ((now - value.timestamp) >= RecentlyViewedProductsComponent.#CACHE_TTL) {
+        entriesToDelete.push(key);
+      }
+    });
+    
+    // Remove expired entries
+    entriesToDelete.forEach(key => {
+      this.#searchResultsCache.delete(key);
+    });
+    
+    if (entriesToDelete.length > 0) {
+      console.log(`Cleaned up ${entriesToDelete.length} expired cache entries`);
+    }
+    
+    // Also clean up product data cache
+    this.#cleanupProductDataCache();
+  }
+
+  /**
+   * Load cached product data from localStorage for given product IDs
+   * @param {string[]} productIds - Array of product IDs to load
+   */
+  #loadCachedProductData(productIds) {
+    if (!this.#productDataMap) {
+      this.#productDataMap = new Map();
+    }
+    
+    try {
+      const cached = localStorage.getItem(RecentlyViewedProductsComponent.#PRODUCT_DATA_CACHE_KEY);
+      if (!cached) {
+        return;
+      }
+      
+      const parsed = JSON.parse(cached);
+      const now = Date.now();
+      let loadedCount = 0;
+      
+      productIds.forEach(productId => {
+        const cachedEntry = parsed[String(productId)];
+        if (cachedEntry && cachedEntry.timestamp) {
+          // Check if cache is still valid
+          if ((now - cachedEntry.timestamp) < RecentlyViewedProductsComponent.#PRODUCT_DATA_CACHE_TTL) {
+            const productData = cachedEntry.data;
+            if (productData) {
+              // Only load if we don't already have it (to avoid overwriting fresh data)
+              if (!this.#productDataMap.has(String(productId))) {
+                // We need handle and url, try to get from cache or construct
+                const handle = productData.handle || cachedEntry.handle;
+                const url = productData.url || (handle ? `/products/${handle}` : null);
+                
+                this.#productDataMap.set(String(productId), {
+                  id: String(productId),
+                  handle: handle,
+                  url: url,
+                  product: productData
+                });
+                loadedCount++;
+              }
+            }
+          }
+        }
+      });
+      
+      if (loadedCount > 0) {
+        console.log(`Loaded ${loadedCount} product data entries from cache`);
+      }
+    } catch (error) {
+      console.warn('Error loading cached product data:', error);
+    }
+  }
+
+  /**
+   * Get cached product data for a specific product ID
+   * @param {string} productId - Product ID
+   * @returns {object|null} Cached product data or null
+   */
+  #getCachedProductData(productId) {
+    try {
+      const cached = localStorage.getItem(RecentlyViewedProductsComponent.#PRODUCT_DATA_CACHE_KEY);
+      if (!cached) {
+        return null;
+      }
+      
+      const parsed = JSON.parse(cached);
+      const cachedEntry = parsed[String(productId)];
+      
+      if (cachedEntry && cachedEntry.timestamp) {
+        const now = Date.now();
+        // Check if cache is still valid
+        if ((now - cachedEntry.timestamp) < RecentlyViewedProductsComponent.#PRODUCT_DATA_CACHE_TTL) {
+          return cachedEntry.data;
+        }
+      }
+    } catch (error) {
+      console.warn(`Error getting cached product data for ${productId}:`, error);
+    }
+    
+    return null;
+  }
+
+  /**
+   * Cache product data in localStorage
+   * @param {string} productId - Product ID
+   * @param {object} productData - Product data object
+   */
+  #cacheProductData(productId, productData) {
+    try {
+      const cacheKey = RecentlyViewedProductsComponent.#PRODUCT_DATA_CACHE_KEY;
+      const cached = localStorage.getItem(cacheKey);
+      const cache = cached ? JSON.parse(cached) : {};
+      
+      // Only cache if we have complete data (with variants/options)
+      if (productData && (productData.variants || productData.options)) {
+        cache[String(productId)] = {
+          data: productData,
+          handle: productData.handle,
+          timestamp: Date.now()
+        };
+        
+        localStorage.setItem(cacheKey, JSON.stringify(cache));
+        console.log(`Cached product data for ${productId}`);
+      }
+    } catch (error) {
+      console.warn(`Error caching product data for ${productId}:`, error);
+      // If storage is full, try to clean up old entries
+      try {
+        this.#cleanupProductDataCache();
+        // Retry caching
+        const cacheKey = RecentlyViewedProductsComponent.#PRODUCT_DATA_CACHE_KEY;
+        const cached = localStorage.getItem(cacheKey);
+        const cache = cached ? JSON.parse(cached) : {};
+        cache[String(productId)] = {
+          data: productData,
+          handle: productData.handle,
+          timestamp: Date.now()
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(cache));
+      } catch (retryError) {
+        console.warn('Failed to cache product data after cleanup:', retryError);
+      }
+    }
+  }
+
+  /**
+   * Clean up expired product data cache entries
+   */
+  #cleanupProductDataCache() {
+    try {
+      const cacheKey = RecentlyViewedProductsComponent.#PRODUCT_DATA_CACHE_KEY;
+      const cached = localStorage.getItem(cacheKey);
+      if (!cached) {
+        return;
+      }
+      
+      const parsed = JSON.parse(cached);
+      const now = Date.now();
+      const validCache = {};
+      let removedCount = 0;
+      
+      // Keep only valid (non-expired) entries
+      Object.entries(parsed).forEach(([id, entry]) => {
+        if (entry && entry.timestamp) {
+          if ((now - entry.timestamp) < RecentlyViewedProductsComponent.#PRODUCT_DATA_CACHE_TTL) {
+            validCache[id] = entry;
+          } else {
+            removedCount++;
+          }
+        }
+      });
+      
+      // Update cache if we removed entries
+      if (removedCount > 0) {
+        localStorage.setItem(cacheKey, JSON.stringify(validCache));
+        console.log(`Cleaned up ${removedCount} expired product data cache entries`);
+      }
+    } catch (error) {
+      console.warn('Error cleaning up product data cache:', error);
+    }
   }
 
   /**
@@ -572,161 +995,482 @@ class RecentlyViewedProductsComponent extends HTMLElement {
         contentEl.appendChild(tempContainer.firstChild);
       }
       
-      // Check if slideshow was created and verify structure
-      setTimeout(() => {
-        const slideshow = contentEl.querySelector('slideshow-component[ref="recentlyViewedProductsSlider"]');
-        const scroller = contentEl.querySelector('slideshow-slides[ref="scroller"]');
-        const slides = contentEl.querySelectorAll('slideshow-slide');
-        const productCards = contentEl.querySelectorAll('product-card');
-        const resourceListItems = contentEl.querySelectorAll('.resource-list__item');
-        
-        console.log('After HTML insertion:');
-        console.log('- Slideshow found:', !!slideshow);
-        console.log('- Scroller found:', !!scroller);
-        console.log('- Slides count:', slides.length);
-        console.log('- Resource list items count:', resourceListItems.length);
-        console.log('- Product cards count:', productCards.length);
-        
-        // Debug: Check if product cards are visible and have content
-        productCards.forEach((card, index) => {
-          const styles = window.getComputedStyle(card);
-          const cardContent = card.querySelector('.product-card__content');
-          const cardGallery = card.querySelector('.card-gallery');
-          const cardTitle = card.querySelector('.product-title-text, .text-block--product_title, .resource-card__title');
+      // Use requestAnimationFrame to ensure DOM is ready, then process
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const slideshow = contentEl.querySelector('slideshow-component[ref="recentlyViewedProductsSlider"]');
+          const scroller = contentEl.querySelector('slideshow-slides[ref="scroller"]');
+          const slides = contentEl.querySelectorAll('slideshow-slide');
+          const productCards = contentEl.querySelectorAll('product-card');
+          const resourceListItems = contentEl.querySelectorAll('.resource-list__item');
           
-          // Check for actual rendered content
-          const hasImages = card.querySelector('img, picture, video') !== null;
-          const hasText = card.textContent.trim().length > 0;
-          const cardRect = card.getBoundingClientRect();
+          console.log('After HTML insertion:');
+          console.log('- Slideshow found:', !!slideshow);
+          console.log('- Scroller found:', !!scroller);
+          console.log('- Slides count:', slides.length);
+          console.log('- Resource list items count:', resourceListItems.length);
+          console.log('- Product cards count:', productCards.length);
           
-          console.log(`Product card ${index} (ID: ${card.dataset.productId}):`, {
-            display: styles.display,
-            visibility: styles.visibility,
-            opacity: styles.opacity,
-            height: styles.height,
-            width: styles.width,
-            boundingRect: { width: cardRect.width, height: cardRect.height, top: cardRect.top, left: cardRect.left },
-            hasContent: card.innerHTML.trim().length > 0,
-            hasCardContent: !!cardContent,
-            hasCardGallery: !!cardGallery,
-            hasTitle: !!cardTitle,
-            hasImages: hasImages,
-            hasText: hasText,
-            textContentLength: card.textContent.trim().length,
-            innerHTMLLength: card.innerHTML.trim().length,
-            contentHTML: cardContent ? cardContent.innerHTML.substring(0, 200) : 'NO CONTENT',
-            galleryHTML: cardGallery ? cardGallery.innerHTML.substring(0, 200) : 'NO GALLERY',
-            fullCardHTML: card.outerHTML.substring(0, 800)
-          });
-          
-          // If card has no visible dimensions, force it
-          if (cardRect.width === 0 || cardRect.height === 0) {
-            console.warn(`Product card ${index} has zero dimensions! Forcing display...`);
-            card.style.minHeight = '200px';
-            card.style.minWidth = '150px';
-          }
-        });
-        
-        // Ensure product cards are visible and properly initialized
-        productCards.forEach((card, index) => {
-          // Force visibility
-          card.style.display = '';
-          card.style.visibility = '';
-          card.style.opacity = '';
-          
-          // Ensure card content is visible
-          const cardContent = card.querySelector('.product-card__content');
-          if (cardContent) {
-            cardContent.style.display = '';
-            cardContent.style.visibility = '';
-          }
-          
-          // Ensure card gallery is visible
-          const cardGallery = card.querySelector('.card-gallery');
-          if (cardGallery) {
-            cardGallery.style.display = '';
-            cardGallery.style.visibility = '';
-          }
-          
-          // Ensure product-card custom element is properly initialized
-          if (card.tagName.toLowerCase() === 'product-card') {
-            // Check if it's a custom element instance
-            const isCustomElement = card.constructor.name !== 'HTMLElement';
-            console.log(`Product card ${index} custom element check:`, {
-              tagName: card.tagName,
-              constructor: card.constructor.name,
-              isCustomElement: isCustomElement,
-              hasConnectedCallback: typeof card.connectedCallback === 'function'
-            });
+          // Ensure product cards are visible and properly initialized
+          productCards.forEach((card, index) => {
+            // Force visibility
+            card.style.display = '';
+            card.style.visibility = '';
+            card.style.opacity = '';
             
-            // Force reconnection to trigger connectedCallback if needed
-            if (!isCustomElement && customElements.get('product-card')) {
-              console.log('Product card not upgraded, forcing reconnection...');
-              const parent = card.parentElement;
-              const nextSibling = card.nextSibling;
-              parent.removeChild(card);
-              parent.insertBefore(card, nextSibling);
+            // Ensure card content is visible
+            const cardContent = card.querySelector('.product-card__content');
+            if (cardContent) {
+              cardContent.style.display = '';
+              cardContent.style.visibility = '';
             }
             
-            // Ensure all child elements are visible
-            const allChildren = card.querySelectorAll('*');
-            allChildren.forEach(child => {
-              const childStyles = window.getComputedStyle(child);
-              if (childStyles.display === 'none' || childStyles.visibility === 'hidden') {
-                child.style.display = '';
-                child.style.visibility = '';
-                console.log(`Fixed hidden child element:`, child.tagName, child.className);
-              }
-            });
-          }
-        });
-        
-        // Also ensure resource-list__item containers are visible
-        resourceListItems.forEach((item) => {
-          item.style.display = '';
-          item.style.visibility = '';
-          const styles = window.getComputedStyle(item);
-          console.log('Resource list item styles:', {
-            display: styles.display,
-            visibility: styles.visibility,
-            height: styles.height,
-            width: styles.width,
-            hasProductCard: !!item.querySelector('product-card')
+            // Ensure card gallery is visible
+            const cardGallery = card.querySelector('.card-gallery');
+            if (cardGallery) {
+              cardGallery.style.display = '';
+              cardGallery.style.visibility = '';
+            }
           });
+          
+          // Also ensure resource-list__item containers are visible
+          resourceListItems.forEach((item) => {
+            item.style.display = '';
+            item.style.visibility = '';
+          });
+          
+          if (slideshow && scroller) {
+            console.log('Slideshow structure is correct');
+          } else {
+            console.error('Slideshow structure is missing required elements!');
+            console.log('Full HTML:', contentEl.innerHTML.substring(0, 1000));
+          }
+          
+          // Wait for custom elements to be connected using MutationObserver
+          // This will call #processAfterRender which handles all setup in one pass
+          this.#waitForCustomElementsAndProcess();
         });
-        
-        if (slideshow && scroller) {
-          console.log('Slideshow structure is correct');
-        } else {
-          console.error('Slideshow structure is missing required elements!');
-          console.log('Full HTML:', contentEl.innerHTML.substring(0, 1000));
-        }
-        
-        // Setup product cards first
-        this.#setupProductCards();
-        
-        // Wait for products to be fully rendered before adding actions
-        setTimeout(async () => {
-          // Run setup again to catch any dynamically added cards
-          this.#setupProductCards();
-          
-          await this.#enableProductCardImageSliders();
-          await this.#addProductActions();
-          
-          // Run setup one more time after adding actions to ensure attributes are set
-          setTimeout(() => {
-            this.#setupProductCards();
-          }, 100);
-          
-          // The slideshow component should auto-initialize, but we need to set up arrow handlers
-          // Wait a bit longer to ensure slideshow is fully initialized
-          setTimeout(() => {
-            this.#initializeSlideshow();
-          }, 200);
-        }, 300);
-      }, 300);
+      });
     } else {
       console.error('Content element not found!');
+    }
+  }
+
+  /**
+   * Wait for custom elements to be ready and process
+   */
+  #waitForCustomElementsAndProcess() {
+    const carousel = this.querySelector('[data-testid="recently-viewed-products-grid"]');
+    if (!carousel) return;
+    
+    // Use requestAnimationFrame to ensure DOM is ready, then check and process
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const productCards = carousel.querySelectorAll('product-card');
+        const slideshow = carousel.querySelector('slideshow-component[ref="recentlyViewedProductsSlider"]');
+        
+        // Check if we have product cards
+        if (productCards.length === 0) {
+          // Wait for product cards using MutationObserver
+          const observer = new MutationObserver(() => {
+            const cards = carousel.querySelectorAll('product-card');
+            if (cards.length > 0) {
+              observer.disconnect();
+              this.#processAfterRender();
+            }
+          });
+          
+          observer.observe(carousel, { childList: true, subtree: true });
+          
+          // Fallback: process after max 300ms (reduced from 500ms)
+          setTimeout(() => {
+            observer.disconnect();
+            this.#processAfterRender();
+          }, 300);
+        } else {
+          // Product cards exist, process immediately
+          this.#processAfterRender();
+        }
+      });
+    });
+  }
+
+  /**
+   * Process products after they're rendered
+   * Combined optimized version that does setup, slider enable, and actions in one pass
+   */
+  async #processAfterRender() {
+    // Wait for DOM to be ready
+    await new Promise(resolve => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(resolve);
+      });
+    });
+    
+    // Cache the carousel selector once
+    const carousel = this.querySelector('[data-testid="recently-viewed-products-grid"]');
+    if (!carousel) {
+      console.warn('[Recently Viewed] Carousel not found in #processAfterRender()');
+      return;
+    }
+    
+    // Cache all selectors once
+    const productCards = Array.from(carousel.querySelectorAll('product-card'));
+    const productItems = Array.from(carousel.querySelectorAll('[data-product-slider-item="true"]'));
+    const cardGalleries = Array.from(carousel.querySelectorAll('.card-gallery'));
+    
+    console.log(`[Recently Viewed] Processing ${productCards.length} product cards, ${productItems.length} items, ${cardGalleries.length} galleries`);
+    
+    // Process all products in one pass
+    await this.#processAllProductsInOnePass(carousel, productCards, productItems, cardGalleries);
+    
+    // Initialize slideshow
+    this.#initializeSlideshow();
+  }
+
+  /**
+   * Process all products in a single optimized pass
+   * Combines setupProductCards, enableProductCardImageSliders, and addProductActions
+   * @param {HTMLElement} carousel - The carousel container
+   * @param {HTMLElement[]} productCards - Array of product-card elements
+   * @param {HTMLElement[]} productItems - Array of product item elements
+   * @param {HTMLElement[]} cardGalleries - Array of card-gallery elements
+   */
+  async #processAllProductsInOnePass(carousel, productCards, productItems, cardGalleries) {
+    const quickAddEnabled = this.dataset.quickAdd !== 'false';
+    
+    // Create a map of productId -> {card, item, gallery} for efficient lookup
+    const productMap = new Map();
+    
+    // Map product cards by ID
+    productCards.forEach(card => {
+      const productId = card.getAttribute('data-product-id');
+      if (productId) {
+        if (!productMap.has(productId)) {
+          productMap.set(productId, {});
+        }
+        productMap.get(productId).card = card;
+      }
+    });
+    
+    // Map product items by ID
+    productItems.forEach(item => {
+      const productId = item.getAttribute('data-product-id');
+      if (productId) {
+        if (!productMap.has(productId)) {
+          productMap.set(productId, {});
+        }
+        productMap.get(productId).item = item;
+      }
+    });
+    
+    // Map card galleries by ID
+    cardGalleries.forEach(gallery => {
+      const productId = gallery.getAttribute('data-product-id');
+      if (productId) {
+        if (!productMap.has(productId)) {
+          productMap.set(productId, {});
+        }
+        productMap.get(productId).gallery = gallery;
+      }
+    });
+    
+    // Process all products in parallel
+    const processPromises = Array.from(productMap.entries()).map(async ([productId, elements]) => {
+      const { card, item, gallery } = elements;
+      
+      // 1. Setup product card attributes (from setupProductCards)
+      if (card) {
+        card.setAttribute('data-collection-page', 'true');
+        card.setAttribute('data-view-product-button-enabled', 'true');
+        card.setAttribute('data-view-product-button-setting', 'true');
+      }
+      
+      if (item) {
+        item.setAttribute('data-view-product-button-setting', 'true');
+        item.setAttribute('data-view-product-button-enabled', 'true');
+      }
+      
+      // 2. Enable product card image sliders (from enableProductCardImageSliders)
+      if (gallery) {
+        await this.#processCardGallery(gallery, productId);
+      }
+      
+      // 3. Add product actions (from addProductActions)
+      if (quickAddEnabled && item) {
+        await this.#processProductActions(item, productId, card);
+      }
+    });
+    
+    await Promise.all(processPromises);
+    console.log(`[Recently Viewed] Completed processing ${productMap.size} products in one pass`);
+  }
+
+  /**
+   * Process a single card gallery (slider enablement)
+   * @param {HTMLElement} cardGallery - The card-gallery element
+   * @param {string} productId - Product ID
+   */
+  async #processCardGallery(cardGallery, productId) {
+    const slideshowComponent = cardGallery.querySelector('slideshow-component');
+    if (!slideshowComponent) {
+      return;
+    }
+
+    const slides = slideshowComponent.querySelectorAll('slideshow-slide');
+    const slidesContainer = slideshowComponent.querySelector('slideshow-slides');
+    
+    if (!slidesContainer) {
+      return;
+    }
+
+    // Check if carousel is disabled
+    const isDisabled = slideshowComponent.hasAttribute('disabled') || slideshowComponent.getAttribute('disabled') === 'true';
+    
+    // If disabled, remove disabled attribute to enable scrolling
+    if (isDisabled) {
+      slideshowComponent.removeAttribute('disabled');
+    }
+
+    // Check visible slides count
+    const visibleSlides = Array.from(slides).filter(slide => {
+      const isHidden = slide.hasAttribute('hidden') || 
+                      slide.getAttribute('aria-hidden') === 'true' ||
+                      window.getComputedStyle(slide).display === 'none';
+      return !isHidden;
+    });
+
+    // If only 1 visible slide, try to make all slides visible or fetch additional images
+    if (visibleSlides.length <= 1 && slides.length > 1) {
+      // Make all hidden slides visible for scrolling
+      slides.forEach((slide, index) => {
+        if (index > 0 && (slide.hasAttribute('hidden') || slide.getAttribute('aria-hidden') === 'true')) {
+          slide.removeAttribute('hidden');
+          slide.setAttribute('aria-hidden', 'false');
+          slide.style.display = '';
+        }
+      });
+    } else if (visibleSlides.length === 1 && slides.length === 1 && productId) {
+      // Only 1 slide exists - fetch product media and add more slides
+      await this.#fetchAndAddProductImages(cardGallery, slideshowComponent, productId);
+    }
+
+    // Ensure scrolling is enabled on slides container
+    slidesContainer.style.overflowX = 'auto';
+    slidesContainer.style.scrollSnapType = 'x mandatory';
+    slidesContainer.style.webkitOverflowScrolling = 'touch';
+    slidesContainer.style.scrollBehavior = 'smooth';
+    
+    // Ensure all slides have proper width for scrolling
+    const allSlides = slideshowComponent.querySelectorAll('slideshow-slide');
+    allSlides.forEach((slide) => {
+      slide.style.flexShrink = '0';
+      slide.style.flexBasis = '100%';
+    });
+  }
+
+  /**
+   * Process product actions for a single product
+   * @param {HTMLElement} item - Product item element
+   * @param {string} productId - Product ID
+   * @param {HTMLElement|null} productCard - Product card element (optional, will be found if not provided)
+   */
+  async #processProductActions(item, productId, productCard = null) {
+    // Check if actions already exist
+    const existingActions = item.querySelector('.product-card-actions');
+    if (existingActions) {
+      return;
+    }
+
+    // Cache selectors - find card and content once
+    if (!productCard) {
+      productCard = item.querySelector('product-card');
+    }
+    
+    let cardContent = productCard?.querySelector('.product-card__content');
+    
+    // If no product-card element but content exists directly, look for content in item
+    if (!cardContent) {
+      cardContent = item.querySelector('.product-card__content');
+    }
+    
+    // Fallback: try resource-card structure
+    if (!cardContent) {
+      const resourceCard = item.querySelector('.resource-card');
+      if (resourceCard) {
+        cardContent = resourceCard.querySelector('.resource-card__content');
+      }
+    }
+
+    // Also check if item itself is the content container
+    if (!cardContent && item.classList.contains('product-card__content')) {
+      cardContent = item;
+    }
+
+    if (!cardContent) {
+      return;
+    }
+    
+    // If we found cardContent but no productCard, try to find parent product-card
+    if (!productCard && cardContent) {
+      productCard = cardContent.closest('product-card');
+    }
+
+    // Ensure productDataMap is initialized
+    if (!this.#productDataMap) {
+      this.#productDataMap = new Map();
+    }
+    
+    // Get product data from stored map (already extracted from HTML, no need to fetch)
+    const storedData = this.#productDataMap.get(String(productId));
+    let product = storedData?.product;
+    let handle = storedData?.handle;
+    
+    // If product data not in map, try to extract from card or item
+    if (!product || !handle) {
+      // Try to extract handle from card
+      if (!handle) {
+        handle = this.#extractHandleFromCard(productCard || item);
+      }
+      
+      // Try to extract product JSON from embedded script in the rendered HTML
+      if (!product && (productCard || item)) {
+        // Check cache first
+        product = this.#getCachedProductData(productId);
+        
+        if (!product) {
+          const cardElement = productCard || item;
+          const productJsonScript = cardElement.querySelector('script[type="application/json"][data-product-json]');
+          if (productJsonScript) {
+            try {
+              product = JSON.parse(productJsonScript.textContent);
+              // Cache the extracted data
+              if (product && product.variants) {
+                this.#cacheProductData(productId, product);
+              }
+            } catch (error) {
+              console.warn(`[Recently Viewed] Product ${productId}: Failed to parse product JSON:`, error);
+            }
+          }
+        }
+      }
+      
+      // If still no product data, construct minimal product object from available info
+      if (!product && handle) {
+        const link = (productCard || item).querySelector('a[href*="/products/"]');
+        const url = link ? link.getAttribute('href') : `/products/${handle}`;
+        const title = productCard?.querySelector('.product-title-text, .text-block--product_title')?.textContent?.trim() || '';
+        const priceBlock = productCard?.querySelector('product-price');
+        const available = priceBlock !== null;
+        
+        product = {
+          id: String(productId),
+          title: title,
+          handle: handle,
+          url: url,
+          available: available,
+          variants: [],
+          options: []
+        };
+      }
+      
+      // Update map with extracted data
+      if (product && handle) {
+        const link = (productCard || item).querySelector('a[href*="/products/"]');
+        const url = link ? link.getAttribute('href') : null;
+        this.#productDataMap.set(String(productId), { 
+          id: String(productId), 
+          handle, 
+          url,
+          product: product
+        });
+        
+        // Cache the product data if we have complete data
+        if (product.variants && product.variants.length > 0) {
+          this.#cacheProductData(productId, product);
+        }
+      }
+    }
+    
+    if (!product) {
+      return;
+    }
+    
+    // Check if product is available - actions only show for available products
+    if (!product.available) {
+      return;
+    }
+
+    if (!product.variants || product.variants.length === 0) {
+      return;
+    }
+
+    // Ensure product-card has the data-view-product-button-setting attribute BEFORE inserting actions
+    if (!productCard && cardContent) {
+      productCard = cardContent.closest('product-card');
+    }
+    
+    if (productCard) {
+      // Set attribute BEFORE inserting actions so CSS can match
+      productCard.setAttribute('data-view-product-button-setting', 'true');
+      productCard.setAttribute('data-view-product-button-enabled', 'true');
+      productCard.setAttribute('data-collection-page', 'true');
+      
+      // Ensure product-card has a link with ref="productCardLink" for quick-add to work
+      const productHandle = product.handle || this.#extractHandleFromCard(productCard) || '';
+      const productUrl = product.url || (productHandle ? `/products/${productHandle}` : '');
+      
+      let productCardLink = productCard.querySelector('a[ref="productCardLink"]') || 
+                            productCard.querySelector('a.product-card__link') ||
+                            productCard.querySelector('a[href*="/products/"]');
+      
+      if (!productCardLink && productUrl) {
+        // If no link exists, create one
+        productCardLink = document.createElement('a');
+        productCardLink.href = productUrl;
+        productCardLink.className = 'product-card__link';
+        productCardLink.setAttribute('ref', 'productCardLink');
+        productCardLink.innerHTML = '<span class="visually-hidden">' + (product.title || 'Product') + '</span>';
+        
+        // Insert at the beginning of the product-card (before cardContent)
+        if (cardContent && cardContent.parentElement === productCard) {
+          productCard.insertBefore(productCardLink, cardContent);
+        } else if (productCard.firstChild) {
+          productCard.insertBefore(productCardLink, productCard.firstChild);
+        } else {
+          productCard.appendChild(productCardLink);
+        }
+      } else if (productCardLink) {
+        // Ensure the link has the ref attribute if it doesn't
+        if (!productCardLink.hasAttribute('ref')) {
+          productCardLink.setAttribute('ref', 'productCardLink');
+        }
+        // Update href if it's empty or incorrect
+        if (productUrl && (!productCardLink.href || productCardLink.href === window.location.href)) {
+          productCardLink.href = productUrl;
+        }
+      }
+    } else {
+      // If no product-card element, set attribute on the item itself for CSS targeting
+      item.setAttribute('data-view-product-button-setting', 'true');
+      item.setAttribute('data-view-product-button-enabled', 'true');
+    }
+    
+    // Generate product-card-actions element
+    const sectionId = this.dataset.sectionId;
+    const actions = this.#generateProductCardActions(product, sectionId);
+    
+    if (!actions) {
+      return;
+    }
+    
+    // Find price block and insert after it
+    const priceBlock = cardContent.querySelector('product-price') || cardContent.querySelector('.price-snippet');
+    
+    if (priceBlock) {
+      priceBlock.insertAdjacentElement('afterend', actions);
+    } else {
+      cardContent.appendChild(actions);
     }
   }
 
@@ -746,10 +1490,25 @@ class RecentlyViewedProductsComponent extends HTMLElement {
       return;
     }
 
-    // Wait for slideshow to be fully connected and initialized
+    // Wait for slideshow to be fully connected and initialized using requestAnimationFrame
     if (!slideshow.isConnected || !slideshow.refs?.scroller) {
       console.log('Slideshow not ready yet, waiting...');
-      setTimeout(() => this.#initializeSlideshow(), 100);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (slideshow.isConnected && slideshow.refs?.scroller) {
+            this.#initializeSlideshow();
+          } else {
+            // Fallback: try once more using requestAnimationFrame
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                if (slideshow.isConnected && slideshow.refs?.scroller) {
+                  this.#initializeSlideshow();
+                }
+              });
+            });
+          }
+        });
+      });
       return;
     }
 
@@ -840,8 +1599,10 @@ class RecentlyViewedProductsComponent extends HTMLElement {
         behavior: 'smooth'
       });
 
-      // Update arrow visibility after scroll
-      setTimeout(updateArrowVisibility, 100);
+      // Update arrow visibility after scroll using requestAnimationFrame
+      requestAnimationFrame(() => {
+        requestAnimationFrame(updateArrowVisibility);
+      });
     }, true);
 
     // Override next button
@@ -861,8 +1622,10 @@ class RecentlyViewedProductsComponent extends HTMLElement {
         behavior: 'smooth'
       });
 
-      // Update arrow visibility after scroll
-      setTimeout(updateArrowVisibility, 100);
+      // Update arrow visibility after scroll using requestAnimationFrame
+      requestAnimationFrame(() => {
+        requestAnimationFrame(updateArrowVisibility);
+      });
     }, true);
 
     // Update arrow visibility on scroll
@@ -886,8 +1649,8 @@ class RecentlyViewedProductsComponent extends HTMLElement {
       return;
     }
 
-    // Wait a bit for product cards to be rendered
-    setTimeout(() => {
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
       const productCards = carousel.querySelectorAll('product-card');
       console.log(`[Recently Viewed] #setupProductCards: Found ${productCards.length} product cards`);
       
@@ -905,7 +1668,7 @@ class RecentlyViewedProductsComponent extends HTMLElement {
         item.setAttribute('data-view-product-button-setting', 'true');
         item.setAttribute('data-view-product-button-enabled', 'true');
       });
-    }, 50);
+    });
   }
 
   /**
@@ -920,8 +1683,12 @@ class RecentlyViewedProductsComponent extends HTMLElement {
       return;
     }
 
-    // Wait a bit for DOM to be fully ready and for product cards to be rendered
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // Wait for DOM to be ready using requestAnimationFrame
+    await new Promise(resolve => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(resolve);
+      });
+    });
 
     // Find all card-gallery elements in the recently viewed section
     const cardGalleries = carousel.querySelectorAll('.card-gallery');
@@ -1196,8 +1963,10 @@ class RecentlyViewedProductsComponent extends HTMLElement {
       return;
     }
 
-    // Wait a bit for products to be fully rendered
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait for DOM to be ready using requestAnimationFrame
+    await new Promise(resolve => {
+      requestAnimationFrame(resolve);
+    });
 
     const productItems = Array.from(carousel.querySelectorAll('[data-product-slider-item="true"]'));
     console.log(`[Recently Viewed] Found ${productItems.length} product items`);
@@ -1275,61 +2044,105 @@ class RecentlyViewedProductsComponent extends HTMLElement {
         this.#productDataMap = new Map();
       }
       
-      // Get product handle from stored data or extract from URL
-      const productData = this.#productDataMap.get(String(productId));
-      let handle = productData?.handle;
+      // Get product data from stored map (already extracted from HTML, no need to fetch)
+      const storedData = this.#productDataMap.get(String(productId));
+      let product = storedData?.product;
+      let handle = storedData?.handle;
       
-      // If handle not in map, try to extract from card or item
-      if (!handle) {
-        console.log(`[Recently Viewed] Product ${productId}: Handle not in map, extracting from card...`);
-        handle = this.#extractHandleFromCard(productCard || item);
-        if (handle) {
-          // Store it in the map for future use
+      // If product data not in map, try to extract from card or item
+      if (!product || !handle) {
+        console.log(`[Recently Viewed] Product ${productId}: Data not in map, extracting from card...`);
+        
+        // Try to extract handle from card
+        if (!handle) {
+          handle = this.#extractHandleFromCard(productCard || item);
+        }
+        
+        // Try to extract product JSON from embedded script in the rendered HTML
+        if (!product && (productCard || item)) {
+          // Check cache first
+          product = this.#getCachedProductData(productId);
+          
+          if (!product) {
+            const cardElement = productCard || item;
+            const productJsonScript = cardElement.querySelector('script[type="application/json"][data-product-json]');
+            if (productJsonScript) {
+              try {
+                product = JSON.parse(productJsonScript.textContent);
+                console.log(`[Recently Viewed] Product ${productId}: Extracted product JSON from card HTML`);
+                // Cache the extracted data
+                if (product && product.variants) {
+                  this.#cacheProductData(productId, product);
+                }
+              } catch (error) {
+                console.warn(`[Recently Viewed] Product ${productId}: Failed to parse product JSON from card:`, error);
+              }
+            }
+          } else {
+            console.log(`[Recently Viewed] Product ${productId}: Using cached product data`);
+          }
+        }
+        
+        // If still no product data, construct minimal product object from available info
+        if (!product && handle) {
+          const link = (productCard || item).querySelector('a[href*="/products/"]');
+          const url = link ? link.getAttribute('href') : `/products/${handle}`;
+          const title = productCard?.querySelector('.product-title-text, .text-block--product_title')?.textContent?.trim() || '';
+          const priceBlock = productCard?.querySelector('product-price');
+          const available = priceBlock !== null; // Assume available if price block exists
+          
+          product = {
+            id: String(productId),
+            title: title,
+            handle: handle,
+            url: url,
+            available: available,
+            variants: [],
+            options: []
+          };
+          
+          console.log(`[Recently Viewed] Product ${productId}: Constructed minimal product object (variants/options missing)`);
+        }
+        
+        // Update map with extracted data
+        if (product && handle) {
           const link = (productCard || item).querySelector('a[href*="/products/"]');
           const url = link ? link.getAttribute('href') : null;
-          this.#productDataMap.set(String(productId), { id: String(productId), handle, url });
-          console.log(`[Recently Viewed] Product ${productId}: Extracted and stored handle "${handle}"`);
+          this.#productDataMap.set(String(productId), { 
+            id: String(productId), 
+            handle, 
+            url,
+            product: product
+          });
+          
+          // Cache the product data if we have complete data (with variants/options)
+          if (product.variants && product.variants.length > 0) {
+            this.#cacheProductData(productId, product);
+          }
         }
       }
       
-      if (!handle) {
-        console.warn(`[Recently Viewed] Product ${productId}: No handle found`, {
+      if (!product) {
+        console.warn(`[Recently Viewed] Product ${productId}: No product data available`, {
           hasProductDataMap: !!this.#productDataMap,
           mapSize: this.#productDataMap?.size || 0,
           mapKeys: Array.from(this.#productDataMap?.keys() || []),
-          productData: productData,
+          storedData: storedData,
           hasProductCard: !!productCard,
-          hasItem: !!item,
-          cardHtml: (productCard || item)?.outerHTML?.substring(0, 500)
+          hasItem: !!item
         });
         return { productId, item, cardContent, product: null, productCard };
       }
       
-      console.log(`[Recently Viewed] Product ${productId}: Using handle "${handle}"`);
-
-      console.log(`[Recently Viewed] Fetching product data for ${handle} (ID: ${productId})`);
-
-      // Fetch product JSON data efficiently
-      try {
-        const productUrl = `/products/${handle}.js`;
-        const response = await fetch(productUrl);
-        if (!response.ok) {
-          console.error(`[Recently Viewed] Failed to fetch product data for ${handle}: ${response.status}`);
-          return { productId, item, cardContent, product: null, productCard };
-        }
-
-        const product = await response.json();
-        console.log(`[Recently Viewed] Successfully fetched product ${handle}:`, {
-          id: product.id,
-          title: product.title,
-          available: product.available,
-          variantsCount: product.variants?.length || 0
-        });
-        return { productId, item, cardContent, product, productCard };
-      } catch (error) {
-        console.error(`[Recently Viewed] Error fetching product data for ${handle}:`, error);
-        return { productId, item, cardContent, product: null, productCard };
-      }
+      console.log(`[Recently Viewed] Product ${productId}: Using product data from map (no fetch needed):`, {
+        id: product.id,
+        title: product.title,
+        available: product.available,
+        variantsCount: product.variants?.length || 0,
+        optionsCount: product.options?.length || 0
+      });
+      
+      return { productId, item, cardContent, product, productCard };
     });
 
     const productResults = await Promise.all(productPromises);
@@ -1460,8 +2273,12 @@ class RecentlyViewedProductsComponent extends HTMLElement {
         console.warn(`[Recently Viewed] Product ${productId}: No price block found, appended actions to end of content`);
       }
       
-      // Wait a bit for custom elements to initialize after DOM insertion
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // Wait for custom elements to initialize using requestAnimationFrame
+      await new Promise(resolve => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(resolve);
+        });
+      });
       
       // Verify actions were actually inserted
       const verifyActions = cardContent.querySelector('.product-card-actions');
@@ -1525,40 +2342,44 @@ class RecentlyViewedProductsComponent extends HTMLElement {
         // The on:click attribute should work with Shopify's declarative event system,
         // but we'll also add a standard event listener as fallback
         if (addButton && !addButton.hasAttribute('data-event-listener-added')) {
-          // Wait a bit more for custom element to be fully connected
-          setTimeout(() => {
-            addButton.addEventListener('click', async (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              e.stopImmediatePropagation();
-              
-              console.log(`[Recently Viewed] Quick add button clicked for product ${productId}`);
-              
-              // Verify product URL before opening modal
-              if (quickAddComponent) {
-                const productUrl = quickAddComponent.productPageUrl || quickAddComponent.getAttribute('data-product-url');
-                if (!productUrl) {
-                  console.error(`[Recently Viewed] Product ${productId}: Cannot open quick-add modal - no product URL found!`);
-                  return;
-                }
-                console.log(`[Recently Viewed] Product ${productId}: Opening quick-add modal with URL:`, productUrl);
-              }
-              
-              // Try to trigger quick-add component's handleClick method
-              if (quickAddComponent && typeof quickAddComponent.handleClick === 'function') {
-                await quickAddComponent.handleClick(e);
-              } else {
-                // Component might not be fully initialized yet, try again in a moment
-                setTimeout(async () => {
-                  if (quickAddComponent && typeof quickAddComponent.handleClick === 'function') {
-                    await quickAddComponent.handleClick(e);
-                  } else {
-                    console.warn(`[Recently Viewed] Quick-add component not fully initialized for product ${productId}`);
+          // Wait for custom element to be ready using requestAnimationFrame
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              addButton.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                console.log(`[Recently Viewed] Quick add button clicked for product ${productId}`);
+                
+                // Verify product URL before opening modal
+                if (quickAddComponent) {
+                  const productUrl = quickAddComponent.productPageUrl || quickAddComponent.getAttribute('data-product-url');
+                  if (!productUrl) {
+                    console.error(`[Recently Viewed] Product ${productId}: Cannot open quick-add modal - no product URL found!`);
+                    return;
                   }
-                }, 100);
-              }
-            }, { once: false, passive: false });
-          }, 200);
+                  console.log(`[Recently Viewed] Product ${productId}: Opening quick-add modal with URL:`, productUrl);
+                }
+                
+                // Try to trigger quick-add component's handleClick method
+                if (quickAddComponent && typeof quickAddComponent.handleClick === 'function') {
+                  await quickAddComponent.handleClick(e);
+                } else {
+                  // Component might not be fully initialized yet, wait and try again
+                  requestAnimationFrame(() => {
+                    requestAnimationFrame(async () => {
+                      if (quickAddComponent && typeof quickAddComponent.handleClick === 'function') {
+                        await quickAddComponent.handleClick(e);
+                      } else {
+                        console.warn(`[Recently Viewed] Quick-add component not fully initialized for product ${productId}`);
+                      }
+                    });
+                  });
+                }
+              }, { once: false, passive: false });
+            });
+          });
           addButton.setAttribute('data-event-listener-added', 'true');
         }
         
@@ -1799,16 +2620,47 @@ class RecentlyViewedProductsComponent extends HTMLElement {
         return null;
       }
 
-      // Try fetching from search-results with a different search approach
+      // Try fetching from search-results with caching
       const searchUrl = new URL('/search', location.origin);
       searchUrl.searchParams.set('q', `id:${productId}`);
       searchUrl.searchParams.set('resources[type]', 'product');
+      const searchUrlString = searchUrl.toString();
       
-      console.log(`Attempting to fetch product ${productId} from search-results with different approach...`);
+      console.log(`Attempting to fetch product ${productId} from search-results fallback...`);
       
-      const sectionHTML = await sectionRenderer.getSectionHTML('search-results', false, searchUrl);
+      // Check cache first
+      const cached = this.#searchResultsCache.get(searchUrlString);
+      const now = Date.now();
+      let sectionHTML = null;
+      
+      if (cached && (now - cached.timestamp) < RecentlyViewedProductsComponent.#CACHE_TTL) {
+        console.log('Using cached search-results response for fallback');
+        sectionHTML = cached.html;
+      } else {
+        sectionHTML = await sectionRenderer.getSectionHTML('search-results', false, searchUrl);
+        
+        // Cache the response
+        if (sectionHTML) {
+          this.#searchResultsCache.set(searchUrlString, {
+            html: sectionHTML,
+            timestamp: now
+          });
+        }
+      }
       
       if (sectionHTML) {
+        // Use optimized parsing: try regex first for faster extraction
+        const productIdMatch = sectionHTML.match(new RegExp(`data-product-id="${productId}"[^>]*>([\\s\\S]*?)</li>`, 'i'));
+        if (productIdMatch) {
+          const productCardHTML = productIdMatch[1];
+          // Quick check if it has card-gallery
+          if (productCardHTML.includes('card-gallery') && productCardHTML.includes('slideshow-component')) {
+            console.log(`Successfully fetched product ${productId} with full card-gallery structure from search-results fallback (regex)`);
+            return { id: productId, html: productCardHTML };
+          }
+        }
+        
+        // Fallback to DOM parsing if regex didn't work
         const parser = new DOMParser();
         const doc = parser.parseFromString(sectionHTML, 'text/html');
         const productItem = doc.querySelector(`.product-grid__item[data-product-id="${productId}"]`);
@@ -1821,7 +2673,7 @@ class RecentlyViewedProductsComponent extends HTMLElement {
           const slideshowComponent = tempDiv.querySelector('.card-gallery slideshow-component');
           
           if (cardGallery && slideshowComponent) {
-            console.log(`Successfully fetched product ${productId} with full card-gallery structure from search-results fallback`);
+            console.log(`Successfully fetched product ${productId} with full card-gallery structure from search-results fallback (DOM)`);
             return { id: productId, html: productCardHTML };
           }
         }
