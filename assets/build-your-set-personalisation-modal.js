@@ -19,16 +19,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     this.allProducts = [];
     this.unionTags = [];
     this._savedScrollPosition = 0; // Store scroll position before opening modal
-    
-    console.log('Build Your Set: Personalization dialog component connected', {
-      hasDialog: !!this.refs.dialog,
-      hasSaveButton: !!this.refs.saveButton,
-      hasCloseButton: !!this.refs.closeButton,
-      hasFormContainer: !!this.refs.formContainer,
-      hasProductImage: !!this.refs.productImage,
-      hasProductPlaceholder: !!this.refs.productPlaceholder,
-      hasProductTitle: !!this.refs.productTitle
-    });
   }
 
   /**
@@ -38,7 +28,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
    */
   async openForAllProducts(products, unionTags) {
     if (!products || products.length === 0) {
-      console.error('Build Your Set: No products provided for personalise all');
       return;
     }
 
@@ -98,10 +87,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
   }
 
   async openWithProduct(productData, index) {
-    console.log('Build Your Set: openWithProduct called', { productData, index });
-    
     if (!productData) {
-      console.error('Build Your Set: No product data provided');
       return;
     }
     
@@ -114,12 +100,10 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     // Remove hidden attribute from parent element
     if (this.hasAttribute('hidden')) {
       this.removeAttribute('hidden');
-      console.log('Build Your Set: Removed hidden attribute from dialog element');
     }
     
     // Ensure refs are available
     if (!this.refs) {
-      console.error('Build Your Set: Refs not available yet');
       setTimeout(() => this.openWithProduct(productData, index), 100);
       return;
     }
@@ -181,9 +165,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     // Clear existing fields
     this.refs.formContainer.innerHTML = '';
 
-    // Debug: Log tags to console
-    console.log('Build Your Set: Generating fields from tags:', tags);
-
     // Use exact tag matching - be strict about which tags exist
     const tagsLowercase = tags.map(t => String(t).toLowerCase().trim());
     const hasTag = (tagPattern) => {
@@ -223,16 +204,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     const has_name4 = hasTag('name4');
     const has_optional_fields = tagsLowercase.includes('optional_fields');
     const has_create_20 = tagsLowercase.includes('create_20');
-
-    // Debug: Log which fields will be shown
-    console.log('Build Your Set: Field flags:', {
-      personalized_name,
-      personalized_textcolour,
-      font_family_feild,
-      personalized_dob,
-      personalized_textbox,
-      show_name_tabs
-    });
     
     // Generate fields based on tags (same order as original modal)
     let fieldsHTML = '';
@@ -537,7 +508,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     // Don't fallback to collectedFields - they might contain incorrect data
     // Only use tags to determine which fields to show
     if (!fieldsHTML) {
-      console.warn('Build Your Set: No fields generated from tags. Tags were:', tags);
       this.refs.formContainer.innerHTML = '<p>No personalization options available for this product.</p>';
       return;
     }
@@ -915,7 +885,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
       // Save personalizations to all products that support the fields
       const sessionCart = this.getSessionCart();
       if (!sessionCart) {
-        console.error('Build Your Set: Session cart not found');
         return;
       }
 
@@ -1031,13 +1000,12 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
           // Hide dialog
           this.hideDialog();
         } catch (error) {
-          console.error('Build Your Set: Error saving personalizations to all products:', error);
+          // Error saving personalizations
         }
       }
     } else {
       // Single product mode (existing behavior)
       if (!this.productData || this.productIndex === null) {
-        console.error('Build Your Set: Missing product data or index');
         return;
       }
 
@@ -1070,7 +1038,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
           // Close the dialog
           this.hideDialog();
         } catch (error) {
-          console.error('Build Your Set: Error saving personalization', error);
+          // Error saving personalization
         }
       }
     }
@@ -1085,29 +1053,23 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
       const stored = sessionStorage.getItem('build-your-set-session-cart');
       return stored ? JSON.parse(stored) : null;
     } catch (error) {
-      console.error('Build Your Set: Error reading session cart', error);
       return null;
     }
   }
 
   showDialog() {
-    console.log('Build Your Set: showDialog called', { refs: this.refs });
-    
     const { dialog } = this.refs;
     if (!dialog) {
-      console.error('Build Your Set: Dialog ref not found', this.refs);
       return;
     }
     
     if (dialog.open) {
-      console.log('Build Your Set: Dialog already open');
       return;
     }
 
     // Remove hidden attribute from parent element to make it visible
     if (this.hasAttribute('hidden')) {
       this.removeAttribute('hidden');
-      console.log('Build Your Set: Removed hidden attribute');
     }
     
     // Ensure dialog element is visible
@@ -1126,7 +1088,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         document.body.style.position = 'fixed';
         document.body.style.top = `-${this._savedScrollPosition}px`;
 
-        console.log('Build Your Set: Opening dialog modal');
         dialog.showModal();
         this.dispatchEvent(new DialogOpenEvent());
 
@@ -1144,7 +1105,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         // Set up close button handler
         if (this.refs.closeButton) {
           const closeHandler = () => {
-            console.log('Build Your Set: Close button clicked');
             this.hideDialog();
           };
           if (this._closeHandler) {
@@ -1157,7 +1117,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         // Set up cancel button handler
         if (this.refs.cancelButton) {
           const cancelHandler = () => {
-            console.log('Build Your Set: Cancel button clicked');
             this.hideDialog();
           };
           if (this._cancelHandler) {
@@ -1166,15 +1125,8 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
           this._cancelHandler = cancelHandler;
           this.refs.cancelButton.addEventListener('click', cancelHandler);
         }
-        
-        console.log('Build Your Set: Dialog opened successfully', {
-          dialogOpen: dialog.open,
-          dialogDisplay: window.getComputedStyle(dialog).display,
-          dialogVisibility: window.getComputedStyle(dialog).visibility,
-          dialogOpacity: window.getComputedStyle(dialog).opacity
-        });
       } catch (error) {
-        console.error('Build Your Set: Error opening dialog', error);
+        // Error opening dialog
       }
     });
   }
