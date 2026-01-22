@@ -1,3 +1,12 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
     "main": {
@@ -126,7 +135,7 @@
                   "type": "text",
                   "name": "Product title",
                   "settings": {
-                    "text": "<h1>{{ closest.product.title }}<\/h1>",
+                    "text": "<h1>{{ closest.product.title }}</h1>",
                     "width": "100%",
                     "max_width": "normal",
                     "alignment": "left",
@@ -479,12 +488,11 @@
     "product_bundle_PdP8BC": {
       "type": "product-bundle",
       "blocks": {
-        "static-product-card": {
+        "product-card": {
           "type": "_product-card",
-          "name": "Product Card",
           "static": true,
           "settings": {
-            "product_card_gap": 4,
+            "product_card_gap": 16,
             "inherit_color_scheme": true,
             "color_scheme": "",
             "border": "none",
@@ -497,77 +505,7 @@
             "padding-inline-end": 0,
             "show_view_product_button": false
           },
-          "blocks": {
-            "product_card_gallery_PAXWzm": {
-              "type": "_product-card-gallery",
-              "name": "Product Card Media",
-              "settings": {
-                "image_ratio": "adapt",
-                "border": "none",
-                "border_width": 1,
-                "border_opacity": 100,
-                "border_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "product_title_cnjjYE": {
-              "type": "product-title",
-              "name": "Product Title",
-              "settings": {
-                "width": "fit-content",
-                "max_width": "normal",
-                "alignment": "left",
-                "type_preset": "rte",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "wrap": "pretty",
-                "color": "var(--color-foreground)",
-                "background": false,
-                "background_color": "#00000026",
-                "corner_radius": 0,
-                "padding-block-start": 4,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "price_NPEW89": {
-              "type": "price",
-              "name": "Product Price",
-              "settings": {
-                "show_sale_price_first": true,
-                "show_installments": false,
-                "show_tax_info": false,
-                "type_preset": "h6",
-                "width": "100%",
-                "alignment": "left",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "color": "var(--color-foreground)",
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            }
-          },
-          "block_order": [
-            "product_card_gallery_PAXWzm",
-            "product_title_cnjjYE",
-            "price_NPEW89"
-          ]
+          "blocks": {}
         }
       },
       "name": "Product Bundle",
@@ -633,10 +571,10 @@
         "padding-block-end": 48
       }
     },
-    "explore_more_products_dagaaj": {
+    "explore_more_products_gaPT6F": {
       "type": "explore-more-products",
       "blocks": {
-        "static-product-card": {
+        "product-card": {
           "type": "_product-card",
           "name": "Product Card",
           "static": true,
@@ -655,11 +593,11 @@
             "show_view_product_button": true
           },
           "blocks": {
-            "product_card_gallery_N3y6r3": {
+            "product_card_gallery_DxbJeW": {
               "type": "_product-card-gallery",
               "name": "Product Card Media",
               "settings": {
-                "image_ratio": "adapt",
+                "image_ratio": "square",
                 "border": "none",
                 "border_width": 1,
                 "border_opacity": 100,
@@ -671,11 +609,11 @@
               },
               "blocks": {}
             },
-            "product_title_PgBxLd": {
+            "product_title_idR9Me": {
               "type": "product-title",
-              "name": "Product Title",
+              "name": "t:names.product_title",
               "settings": {
-                "width": "fit-content",
+                "width": "100%",
                 "max_width": "normal",
                 "alignment": "left",
                 "type_preset": "rte",
@@ -696,7 +634,7 @@
               },
               "blocks": {}
             },
-            "price_LAchqw": {
+            "price_3cdMhe": {
               "type": "price",
               "name": "Product Price",
               "settings": {
@@ -721,9 +659,9 @@
             }
           },
           "block_order": [
-            "product_card_gallery_N3y6r3",
-            "product_title_PgBxLd",
-            "price_LAchqw"
+            "product_card_gallery_DxbJeW",
+            "product_title_idR9Me",
+            "price_3cdMhe"
           ]
         }
       },
@@ -733,7 +671,7 @@
         "section_title": "EXPLORE MORE PRODUCTS",
         "items_per_view": 4,
         "max_products": 8,
-        "columns_gap": 12,
+        "columns_gap": 8,
         "quick_add": true,
         "icons_style": "blue_arrows",
         "icons_shape": "none",
@@ -772,7 +710,7 @@
     "product_bundle_PdP8BC",
     "faqs_py4miA",
     "other_collections_slider_CXFbky",
-    "explore_more_products_dagaaj",
+    "explore_more_products_gaPT6F",
     "recently_viewed_products_89dBCW"
   ]
 }
