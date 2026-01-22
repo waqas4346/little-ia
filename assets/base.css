@@ -3485,7 +3485,6 @@ slideshow-slides {
   scrollbar-color: transparent transparent;
   scrollbar-width: none;
   gap: var(--slideshow-gap, 0);
-  cursor: var(--cursor);
   min-height: var(--slide-min-height);
 
   @media (prefers-reduced-motion) {

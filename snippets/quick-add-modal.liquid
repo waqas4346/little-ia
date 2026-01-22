@@ -333,6 +333,17 @@
 
     padding-block: min(var(--gap-2xl), var(--gap));
     margin-block-end: calc(var(--focus-outline-offset) + var(--focus-outline-width));
+    @media screen and (max-width: 749px) {
+      padding-inline: 0 !important;
+      padding: 0;
+    }
+
+  }
+  .quick-add-modal__content .product-details > .group-block > .group-block-content > *:not(:first-child):not(:has(variant-picker)) {
+    @media screen and (max-width: 749px) {
+      padding-inline: 0 !important;
+      padding: 0;
+    }
   }
 
   .quick-add-modal__content .variant-option--swatches {
@@ -368,14 +379,6 @@
     /* Prevent overlap between title and close button */
     padding-inline: 0 calc(var(--minimum-touch-target) / 2);
 
-    @media screen and (max-width: 749px) {
-      /* Ensure title is visible on mobile with proper spacing */
-      display: flex !important;
-      padding-inline: var(--padding-xl) calc(var(--minimum-touch-target) + var(--padding-xl));
-      padding-top: var(--padding-lg);
-      padding-bottom: var(--padding-md);
-      margin-bottom: var(--padding-md);
-    }
   }
 
   .quick-add-modal__content .view-product-title a {

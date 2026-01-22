@@ -1,0 +1,1211 @@
+{% liquid
+  assign section_heading = section.settings.heading | default: 'Party Favours'
+  assign section_subheading = section.settings.subheading | default: 'Select collections'
+  assign minimum_quantity = section.settings.minimum_quantity | default: 5
+%}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div
+  data-testid="party-favours"
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+    party-favours-section
+  "
+  style=" 
+    {% render 'spacing-style', settings: section.settings %}
+    {% render 'gap-style', value: section.settings.gap %}
+  "
+  data-minimum-quantity="{{ minimum_quantity }}"
+>
+  <div class="party-favours-header">
+    {% if section_heading != blank %}
+      <div class="party-favours-top-label">
+        <span class="party-favours-top-label-text">{{ section_heading }}</span>
+      </div>
+    {% endif %}
+    
+    {% if section_subheading != blank %}
+      <div class="party-favours-section-title">
+        <span class="party-favours-section-title-label">{{ section_subheading }}</span>
+      </div>
+    {% endif %}
+  </div>
+
+    {% comment %} Collection slider {% endcomment %}
+    {% if section.settings.collection_list != blank and section.settings.collection_list.count > 0 %}
+      <div class="party-favours-collection-slider-wrapper">
+        <button 
+          type="button"
+          class="party-favours-collection-arrow party-favours-collection-arrow--prev"
+          aria-label="Previous collections"
+          data-collection-arrow="prev"
+        >
+          <svg width="11" height="19" viewBox="0 0 11 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9.36328 2.31564L1.26025 9.83979L9.36328 17.364" stroke="#7295BB" stroke-width="2.31515" stroke-linecap="square" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="party-favours-collection-slider" data-collection-slider>
+          {% for collection in section.settings.collection_list %}
+            {% liquid
+              assign collection_name = collection.title | default: 'Collection'
+            %}
+            <button
+              type="button"
+              class="party-favours-collection-item {% if forloop.first %}active{% endif %}"
+              data-collection-id="{{ collection.id }}"
+              data-collection-handle="{{ collection.handle }}"
+              aria-label="{{ collection_name }}"
+            >
+              <div class="party-favours-collection-image-wrapper">
+                {% if collection.featured_image != blank %}
+                  {{
+                    collection.featured_image
+                    | image_url: width: 400
+                    | image_tag:
+                      loading: 'lazy',
+                      class: 'party-favours-collection-image',
+                      alt: collection.featured_image.alt | default: collection_name,
+                      width: 200,
+                      height: 200
+                  }}
+                {% else %}
+                  <div class="party-favours-collection-image-placeholder">
+                    {{ 'collection-1' | placeholder_svg_tag: 'placeholder' }}
+                  </div>
+                {% endif %}
+              </div>
+              <div class="party-favours-collection-label">{{ collection_name }}</div>
+            </button>
+          {% endfor %}
+        </div>
+        <button 
+          type="button"
+          class="party-favours-collection-arrow party-favours-collection-arrow--next"
+          aria-label="Next collections"
+          data-collection-arrow="next"
+        >
+          <svg width="11" height="19" viewBox="0 0 11 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1.63672 16.6844L9.73975 9.16021L1.63672 1.63596" stroke="#7295BB" stroke-width="2.31515" stroke-linecap="square" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+    {% comment %} Product grids for each collection {% endcomment %}
+    <div class="party-favours-products-wrapper" data-products-wrapper>
+      {% for collection in section.settings.collection_list %}
+        {% liquid
+          assign is_first = forloop.first
+        %}
+        {% if collection != blank and collection.products_count > 0 %}
+          {% paginate collection.products by 16 %}
+            <div
+              class="party-favours-product-grid-wrapper {% unless is_first %}hidden{% endunless %}"
+              data-collection-id="{{ collection.id }}"
+              data-collection-handle="{{ collection.handle }}"
+              {% unless is_first %}style="display: none;"{% endunless %}
+            >
+              {% capture list_items %}
+                {% for product in collection.products %}
+                  <li class="product-grid__item" data-product-id="{{ product.id }}" data-product-handle="{{ product.handle }}" data-collection-handle="{{ collection.handle }}" data-page="{{ paginate.current_page }}">
+                    {% # theme-check-disable UniqueStaticBlockId %}
+                      {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: product %}
+                    {% # theme-check-enable UniqueStaticBlockId %}
+                  </li>
+                {% endfor %}
+              {% endcapture %}
+
+              <ul
+                class="product-grid product-grid--{{ section.id }} product-grid--{{ section.settings.layout_type }}"
+                data-testid="party-favours-product-grid"
+                product-grid-view="default"
+                role="list"
+                data-product-card-size="{{ section.settings.product_card_size }}"
+                style="--mobile-columns: {% if section.settings.mobile_product_card_size == 'large' %}1{% else %}2{% endif %};"
+              >
+                {{ list_items }}
+              </ul>
+              
+              {% comment %} Pagination controls {% endcomment %}
+              {% if paginate.pages > 1 %}
+                <div class="party-favours-pagination-wrapper" data-pagination-wrapper data-collection-handle="{{ collection.handle }}">
+                  {% render 'pagination-controls', paginate: paginate, on_click_handler: 'handlePartyFavoursPagination' %}
+                </div>
+              {% endif %}
+            </div>
+          {% endpaginate %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+{% style %}
+  .party-favours-header {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .party-favours-top-label {
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  .party-favours-top-label-text {
+    margin: 0;
+    font-family: 'Sacramento', cursive, sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 100%;
+    color: #7295BB;
+    text-align: center;
+    text-transform: lowercase;
+    display: block;
+  }
+
+  .party-favours-section-title {
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  .party-favours-section-title-label {
+    margin: 0;
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 150%;
+    text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
+    display: block;
+  }
+
+  @media screen and (min-width: 750px) {
+    .party-favours-header {
+      margin-bottom: 24px;
+    }
+
+    .party-favours-top-label-text {
+      font-size: 38px;
+    }
+
+    .party-favours-section-title-label {
+      font-size: 32px;
+    }
+  }
+
+  .party-favours-collection-slider-wrapper {
+    margin: 32px 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .party-favours-collection-slider {
+    display: flex;
+    gap: 18px 24px;
+    padding: 0 16px;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .party-favours-collection-slider--has-overflow {
+    justify-content: flex-start;
+  }
+
+  .party-favours-collection-slider::-webkit-scrollbar {
+    display: none;
+  }
+
+  .party-favours-collection-arrow {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    min-width: 44px;
+    min-height: 44px;
+    z-index: 2;
+  }
+
+  .party-favours-collection-arrow:hover {
+    opacity: 0.7;
+  }
+
+  .party-favours-collection-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .party-favours-collection-arrow--hidden {
+    display: none !important;
+  }
+
+  .party-favours-collection-arrow svg {
+    width: 11px;
+    height: 19px;
+  }
+
+  .party-favours-collection-arrow--prev {
+    order: 1;
+  }
+
+  .party-favours-collection-slider {
+    order: 2;
+  }
+
+  .party-favours-collection-arrow--next {
+    order: 3;
+  }
+
+  .party-favours-collection-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s ease;
+    min-width: 62px;
+    flex-shrink: 0;
+    flex-basis: auto;
+    width: auto;
+    max-width: 120px;
+  }
+
+  .party-favours-collection-item:hover {
+    opacity: 0.8;
+  }
+
+  .party-favours-collection-image-wrapper {
+    width: 62px;
+    height: 62px;
+    border-radius: 100000px;
+    overflow: hidden;
+    border: none;
+    transition: border-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    position: relative;
+    box-sizing: border-box;
+    padding: 0;
+  }
+
+  .party-favours-collection-item.active .party-favours-collection-image-wrapper {
+    border: 1px solid #1D425A;
+    padding: 1px;
+    box-sizing: border-box;
+  }
+
+  .party-favours-collection-image,
+  .party-favours-collection-image-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 100000px;
+    box-sizing: border-box;
+  }
+
+  .party-favours-collection-item.active .party-favours-collection-image,
+  .party-favours-collection-item.active .party-favours-collection-image-placeholder {
+    width: calc(100% - 2px);
+    height: calc(100% - 2px);
+    margin: 1px;
+  }
+
+  .party-favours-collection-image-placeholder {
+    width: 62px;
+    height: 62px;
+  }
+
+  .party-favours-collection-image-placeholder svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .party-favours-collection-label {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 140%;
+    text-align: center;
+    text-transform: uppercase;
+    color: #787878;
+    margin-top: 5px;
+    pointer-events: none;
+    transition: color 0.2s ease;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow: visible;
+  }
+
+  .party-favours-collection-item.active .party-favours-collection-label {
+    color: #1D425A;
+  }
+
+  .party-favours-products-wrapper {
+    width: 100%;
+  }
+
+  .party-favours-product-grid-wrapper {
+    width: 100%;
+  }
+
+  .party-favours-product-grid-wrapper.hidden {
+    display: none !important;
+  }
+
+  /* Product grid styles matching collection page */
+  .party-favours-product-grid-wrapper {
+    width: 100%;
+    container-type: inline-size;
+    container-name: product-grid;
+  }
+
+  .party-favours-product-grid-wrapper .product-grid {
+    --product-grid-gap-mobile: {{ section.settings.columns_gap_vertical | at_most: 12 }}px {{ section.settings.columns_gap_horizontal | at_most: 12 }}px;
+    --product-grid-gap-desktop: {{ section.settings.columns_gap_vertical }}px {{ section.settings.columns_gap_horizontal }}px;
+    --product-grid-gap: var(--product-grid-gap-mobile);
+    --mobile-columns: {% if section.settings.mobile_product_card_size == 'large' %}1{% else %}2{% endif %};
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: repeat(var(--mobile-columns), 1fr);
+    gap: var(--product-grid-gap-mobile);
+    margin: auto;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Desktop styles - matching base.css pattern */
+  @media screen and (min-width: 750px) {
+    .party-favours-product-grid-wrapper .product-grid {
+      --product-grid-gap: var(--product-grid-gap-desktop);
+      gap: var(--product-grid-gap);
+    }
+
+    {% case section.settings.layout_type %}
+      {% when 'grid' %}
+        .party-favours-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--grid {
+          --product-grid-columns-desktop: repeat(4, minmax(0, 1fr));
+          grid-template-columns: var(--product-grid-columns-desktop);
+        }
+      {% when 'organic' %}
+        {% assign large_span = 2 %}
+        {% assign row_cycle = 3 %}
+        {% assign product_cycle = row_cycle | times: 2 %}
+        {% assign right_large_start_col = 3 %}
+        .party-favours-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--organic .product-grid__item:nth-of-type({{ product_cycle }}n + 1) {
+          grid-column: 1 / span {{ large_span }};
+        }
+
+        .party-favours-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--organic .product-grid__item:nth-of-type({{ product_cycle }}n + 2),
+        .party-favours-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--organic .product-grid__item:nth-of-type({{ product_cycle }}n + 5) {
+          align-self: end;
+        }
+
+        .party-favours-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--organic .product-grid__item:nth-of-type({{ product_cycle }}n + {{ product_cycle }}) {
+          grid-column: {{ right_large_start_col }} / span {{ large_span }};
+        }
+
+        .party-favours-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--organic {
+          --product-grid-columns-desktop: repeat(4, 1fr);
+          grid-template-columns: var(--product-grid-columns-desktop);
+        }
+    {% endcase %}
+  }
+
+  /* Small desktop/tablet: match collection behavior (3 columns, wrap instead of overflow) */
+  @media screen and (min-width: 750px) and (max-width: 1023px) {
+    {% case section.settings.layout_type %}
+      {% when 'grid' %}
+        .party-favours-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--grid {
+          --product-grid-columns-desktop: repeat(3, minmax(0, 1fr));
+          grid-template-columns: var(--product-grid-columns-desktop);
+        }
+    {% endcase %}
+  }
+
+  /* Tablet (iPad) - Show 3 columns default for grid layout */
+  @media (min-width: 1024px) and (max-width: 1366px) {
+    {% case section.settings.layout_type %}
+      {% when 'grid' %}
+        .party-favours-product-grid-wrapper .product-grid--{{ section.id }}.product-grid--grid {
+          --product-grid-columns-desktop: repeat(3, 1fr) !important;
+          grid-template-columns: var(--product-grid-columns-desktop) !important;
+        }
+    {% endcase %}
+  }
+
+  @media (max-width: 767px) {
+    .party-favours-header {
+      margin-bottom: 16px;
+    }
+
+    .party-favours-collection-slider-wrapper {
+      margin: 24px 0;
+    }
+
+    .party-favours-collection-slider {
+      padding: 0 16px;
+      gap: 18px;
+      justify-content: flex-start;
+    }
+
+    /* Hide arrows on mobile - allow touch scrolling */
+    .party-favours-collection-arrow {
+      display: none !important;
+    }
+  }
+{% endstyle %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const section = document.querySelector('[data-testid="party-favours"]');
+    if (!section) return;
+
+    const minimumQuantity = parseInt(section.dataset.minimumQuantity) || 5;
+    const collectionSlider = section.querySelector('[data-collection-slider]');
+    const collectionItems = section.querySelectorAll('.party-favours-collection-item');
+    const productsWrapper = section.querySelector('[data-products-wrapper]');
+    const productGridWrappers = section.querySelectorAll('.party-favours-product-grid-wrapper');
+    const prevArrow = section.querySelector('[data-collection-arrow="prev"]');
+    const nextArrow = section.querySelector('[data-collection-arrow="next"]');
+    
+    if (!collectionSlider || !productsWrapper) return;
+
+    // Setup collection slider scroll functionality
+    if (prevArrow && nextArrow && collectionSlider) {
+      setupCollectionSlider(collectionSlider, prevArrow, nextArrow);
+    }
+
+    // Function to enforce minimum quantity on quantity selectors
+    function enforceMinimumQuantity(wrapper) {
+      if (!wrapper) return;
+      
+      const quantitySelectors = wrapper.querySelectorAll('quantity-selector-component input[type="number"]');
+      quantitySelectors.forEach(function(input) {
+        const currentMin = parseInt(input.getAttribute('min')) || 1;
+        const newMin = Math.max(currentMin, minimumQuantity);
+        input.setAttribute('min', newMin.toString());
+        input.setAttribute('data-min', newMin.toString());
+        
+        // Update value if it's below minimum
+        const currentValue = parseInt(input.value) || 0;
+        if (currentValue < newMin) {
+          input.value = newMin.toString();
+        }
+        
+        // Update the component's constraints
+        const component = input.closest('quantity-selector-component');
+        if (component && component.updateConstraints) {
+          const max = input.getAttribute('max');
+          const step = input.getAttribute('step') || '1';
+          component.updateConstraints(newMin.toString(), max, step);
+        }
+      });
+      
+      // Also handle quantity selector components
+      const quantityComponents = wrapper.querySelectorAll('quantity-selector-component');
+      quantityComponents.forEach(function(component) {
+        if (component.updateConstraints) {
+          const input = component.querySelector('input[type="number"]');
+          if (input) {
+            const currentMin = parseInt(input.getAttribute('min')) || 1;
+            const newMin = Math.max(currentMin, minimumQuantity);
+            const max = input.getAttribute('max');
+            const step = input.getAttribute('step') || '1';
+            component.updateConstraints(newMin.toString(), max, step);
+          }
+        }
+      });
+    }
+
+    // Initialize product cards - set data attributes and enforce minimum quantity
+    function initializeProductCards(wrapper) {
+      if (!wrapper) return;
+      
+      const productCards = wrapper.querySelectorAll('product-card, product-card-link');
+      productCards.forEach(function(card) {
+        card.setAttribute('data-party-favours', 'true');
+        // Also set on quick-add components within the card
+        const quickAddComponents = card.querySelectorAll('quick-add-component');
+        quickAddComponents.forEach(function(quickAdd) {
+          quickAdd.setAttribute('data-party-favours', 'true');
+        });
+      });
+      
+      // Enforce minimum quantity after a short delay to ensure components are ready
+      setTimeout(function() {
+        enforceMinimumQuantity(wrapper);
+      }, 100);
+    }
+    
+    // Initialize first collection's product cards
+    if (productGridWrappers.length > 0) {
+      const firstWrapper = productGridWrappers[0];
+      if (!firstWrapper.classList.contains('hidden')) {
+        initializeProductCards(firstWrapper);
+      }
+    }
+
+    // Handle pagination clicks for Party Favours
+    window.handlePartyFavoursPagination = function(eventOrParams) {
+      let page = '1';
+      if (typeof eventOrParams === 'string') {
+        const urlParams = new URLSearchParams(eventOrParams);
+        page = urlParams.get('page') || '1';
+      } else if (eventOrParams && typeof eventOrParams === 'object') {
+        if (eventOrParams.preventDefault) {
+          eventOrParams.preventDefault();
+          const target = eventOrParams.currentTarget || eventOrParams.target;
+          if (target && target.href) {
+            const url = new URL(target.href);
+            page = url.searchParams.get('page') || '1';
+          }
+        } else {
+          page = eventOrParams.page || '1';
+        }
+      }
+      
+      const activeWrapper = section.querySelector('.party-favours-product-grid-wrapper:not(.hidden)');
+      if (!activeWrapper) return;
+      
+      const collectionHandle = activeWrapper.dataset.collectionHandle;
+      if (!collectionHandle) return;
+      
+      const url = page === '1' 
+        ? `/collections/${collectionHandle}` 
+        : `/collections/${collectionHandle}?page=${page}`;
+      
+      fetch(url)
+        .then(function(response) {
+          return response.text();
+        })
+        .then(function(html) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          
+          const fetchedSection = doc.querySelector('[data-testid="party-favours"]');
+          if (!fetchedSection) return;
+          
+          const fetchedWrapper = Array.from(fetchedSection.querySelectorAll('.party-favours-product-grid-wrapper')).find(function(w) {
+            return w.dataset.collectionHandle === collectionHandle;
+          });
+          
+          if (!fetchedWrapper) return;
+          
+          const fetchedProductGrid = fetchedWrapper.querySelector('.product-grid');
+          const fetchedPagination = fetchedWrapper.querySelector('.party-favours-pagination-wrapper');
+          
+          if (!fetchedProductGrid) return;
+          
+          const currentProductGrid = activeWrapper.querySelector('.product-grid');
+          if (currentProductGrid) {
+            currentProductGrid.innerHTML = fetchedProductGrid.innerHTML;
+          }
+          
+          const currentPaginationWrapper = activeWrapper.querySelector('.party-favours-pagination-wrapper');
+          if (fetchedPagination) {
+            if (currentPaginationWrapper) {
+              currentPaginationWrapper.innerHTML = fetchedPagination.innerHTML;
+            } else {
+              activeWrapper.insertAdjacentHTML('beforeend', fetchedPagination.outerHTML);
+            }
+          } else if (currentPaginationWrapper) {
+            currentPaginationWrapper.remove();
+          }
+          
+          initializeProductCards(activeWrapper);
+          
+          setTimeout(setupPaginationClickListeners, 100);
+          
+          activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        })
+        .catch(function(error) {
+          console.error('Error loading paginated products:', error);
+        });
+      
+      return false;
+    };
+    
+    function setupPaginationClickListeners() {
+      const paginationLinks = section.querySelectorAll('.party-favours-pagination-wrapper a.pagination__link');
+      paginationLinks.forEach(function(link) {
+        const newLink = link.cloneNode(true);
+        link.parentNode.replaceChild(newLink, link);
+        
+        newLink.addEventListener('click', function(e) {
+          e.preventDefault();
+          const href = newLink.href;
+          if (href) {
+            const url = new URL(href);
+            const page = url.searchParams.get('page') || '1';
+            window.handlePartyFavoursPagination({ page: page });
+          }
+        });
+      });
+    }
+    
+    setTimeout(setupPaginationClickListeners, 100);
+
+    // Handle collection item clicks
+    collectionItems.forEach(function(item) {
+      item.addEventListener('click', function() {
+        collectionItems.forEach(function(ci) {
+          ci.classList.remove('active');
+        });
+
+        item.classList.add('active');
+
+        const handle = item.dataset.collectionHandle;
+        const collectionId = item.dataset.collectionId;
+
+        productGridWrappers.forEach(function(wrapper) {
+          wrapper.classList.add('hidden');
+          wrapper.style.display = 'none';
+        });
+
+        const selectedWrapper = Array.from(productGridWrappers).find(function(wrapper) {
+          return wrapper.dataset.collectionHandle === handle ||
+                 wrapper.dataset.collectionId === collectionId;
+        });
+
+        if (selectedWrapper) {
+          selectedWrapper.classList.remove('hidden');
+          selectedWrapper.style.display = 'block';
+          
+          initializeProductCards(selectedWrapper);
+        }
+      });
+    });
+
+    // Function to setup collection slider with arrows
+    function setupCollectionSlider(slider, prevBtn, nextBtn) {
+      if (!slider || !prevBtn || !nextBtn) return;
+      
+      function getScrollAmount() {
+        const firstItem = slider.querySelector('.party-favours-collection-item');
+        if (!firstItem) return 80;
+        const itemWidth = firstItem.offsetWidth;
+        const gap = 24;
+        return itemWidth + gap;
+      }
+
+      const scrollAmount = getScrollAmount();
+      
+      function updateArrows() {
+        if (!slider || !prevBtn || !nextBtn) return;
+        
+        const scrollLeft = slider.scrollLeft;
+        const scrollWidth = slider.scrollWidth;
+        const clientWidth = slider.clientWidth;
+        
+        const hasOverflow = scrollWidth > clientWidth + 1;
+        
+        if (!hasOverflow) {
+          prevBtn.classList.add('party-favours-collection-arrow--hidden');
+          nextBtn.classList.add('party-favours-collection-arrow--hidden');
+          prevBtn.disabled = true;
+          nextBtn.disabled = true;
+          slider.classList.remove('party-favours-collection-slider--has-overflow');
+          return;
+        }
+        
+        prevBtn.classList.remove('party-favours-collection-arrow--hidden');
+        nextBtn.classList.remove('party-favours-collection-arrow--hidden');
+        slider.classList.add('party-favours-collection-slider--has-overflow');
+        
+        const isAtStart = scrollLeft <= 5;
+        const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 5;
+        
+        prevBtn.disabled = isAtStart;
+        nextBtn.disabled = isAtEnd;
+        
+        if (isAtStart) {
+          prevBtn.classList.add('party-favours-collection-arrow--hidden');
+        } else {
+          prevBtn.classList.remove('party-favours-collection-arrow--hidden');
+        }
+        
+        if (isAtEnd) {
+          nextBtn.classList.add('party-favours-collection-arrow--hidden');
+        } else {
+          nextBtn.classList.remove('party-favours-collection-arrow--hidden');
+        }
+      }
+
+      function initialCheck() {
+        requestAnimationFrame(function() {
+          updateArrows();
+          setTimeout(function() {
+            updateArrows();
+          }, 100);
+        });
+      }
+      
+      initialCheck();
+
+      prevBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (slider.scrollLeft <= 0) return;
+        
+        const amount = getScrollAmount();
+        slider.scrollBy({
+          left: -amount,
+          behavior: 'smooth'
+        });
+      });
+
+      nextBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const maxScroll = slider.scrollWidth - slider.clientWidth;
+        if (slider.scrollLeft >= maxScroll) return;
+        
+        const amount = getScrollAmount();
+        slider.scrollBy({
+          left: amount,
+          behavior: 'smooth'
+        });
+      });
+
+      slider.addEventListener('scroll', function() {
+        requestAnimationFrame(updateArrows);
+      });
+
+      let resizeTimer;
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+          updateArrows();
+        }, 100);
+      });
+
+      setTimeout(updateArrows, 200);
+      
+      const images = slider.querySelectorAll('.party-favours-collection-image');
+      images.forEach(function(img) {
+        if (img.complete) {
+          updateArrows();
+        } else {
+          img.addEventListener('load', function() {
+            updateArrows();
+          });
+        }
+      });
+    }
+
+    // Listen for quantity selector updates to enforce minimum
+    document.addEventListener('quantity-selector:update', function(event) {
+      const input = event.target?.querySelector('input[type="number"]');
+      if (input && input.closest('[data-party-favours="true"]')) {
+        const currentValue = parseInt(input.value) || 0;
+        if (currentValue < minimumQuantity) {
+          input.value = minimumQuantity.toString();
+          if (event.target.updateConstraints) {
+            const max = input.getAttribute('max');
+            const step = input.getAttribute('step') || '1';
+            event.target.updateConstraints(minimumQuantity.toString(), max, step);
+          }
+        }
+      }
+    });
+
+    // Also observe for dynamically added quantity selectors
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        mutation.addedNodes.forEach(function(node) {
+          if (node.nodeType === 1) {
+            const wrapper = node.closest ? node.closest('.party-favours-product-grid-wrapper') : null;
+            if (wrapper) {
+              setTimeout(function() {
+                enforceMinimumQuantity(wrapper);
+              }, 100);
+            }
+          }
+        });
+      });
+    });
+
+    productGridWrappers.forEach(function(wrapper) {
+      observer.observe(wrapper, { childList: true, subtree: true });
+    });
+
+    // Handle quick add modal for party favours section
+    function setupQuickAddModalForPartyFavours() {
+      // Check if modal content is from party favours and setup quantity
+      function checkAndSetupPartyFavoursQuantity() {
+        const modalContent = document.getElementById('quick-add-modal-content');
+        if (!modalContent) return;
+
+        // Check if this modal is for a party favours product
+        const isPartyFavours = modalContent.hasAttribute('data-party-favours');
+
+        if (!isPartyFavours) return;
+
+        // Find quantity selector in the modal
+        const quantitySelector = modalContent.querySelector('quantity-selector-component');
+        if (!quantitySelector) {
+          // Retry after a short delay if not found yet
+          setTimeout(checkAndSetupPartyFavoursQuantity, 200);
+          return;
+        }
+
+        const quantityInput = quantitySelector.querySelector('input[type="number"]');
+        const minusButton = quantitySelector.querySelector('.quantity-minus');
+        
+        if (!quantityInput || !minusButton) {
+          setTimeout(checkAndSetupPartyFavoursQuantity, 200);
+          return;
+        }
+
+        // Set minimum quantity
+        const currentMin = parseInt(quantityInput.getAttribute('min')) || 1;
+        const newMin = Math.max(currentMin, minimumQuantity);
+        quantityInput.setAttribute('min', newMin.toString());
+        quantityInput.setAttribute('data-min', newMin.toString());
+
+        // Set default value to minimum quantity
+        const currentValue = parseInt(quantityInput.value) || 1;
+        if (currentValue < newMin) {
+          quantityInput.value = newMin.toString();
+          // Trigger input event to update any listeners
+          quantityInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        // Update component constraints if method exists
+        if (quantitySelector.updateConstraints) {
+          const max = quantityInput.getAttribute('max');
+          const step = quantityInput.getAttribute('step') || '1';
+          quantitySelector.updateConstraints(newMin.toString(), max, step);
+        }
+
+        // Disable decrement button if at minimum
+        function updateDecrementButton() {
+          const currentValue = parseInt(quantityInput.value) || newMin;
+          minusButton.disabled = currentValue <= newMin;
+        }
+
+        // Initial update
+        updateDecrementButton();
+
+        // Listen for quantity changes
+        const handleQuantityChange = function() {
+          updateDecrementButton();
+        };
+        quantityInput.addEventListener('input', handleQuantityChange);
+        quantityInput.addEventListener('change', handleQuantityChange);
+
+        // Override decrease quantity method to prevent going below minimum
+        if (quantitySelector.decreaseQuantity) {
+          const originalDecrease = quantitySelector.decreaseQuantity.bind(quantitySelector);
+          quantitySelector.decreaseQuantity = function(event) {
+            const currentValue = parseInt(quantityInput.value) || newMin;
+            if (currentValue > newMin) {
+              originalDecrease(event);
+              updateDecrementButton();
+            }
+          };
+        }
+
+        // Also listen for quantity selector update events
+        quantitySelector.addEventListener('quantity-selector:update', function() {
+          setTimeout(updateDecrementButton, 10);
+        });
+
+        // Prevent manual input below minimum
+        quantityInput.addEventListener('blur', function() {
+          const currentValue = parseInt(quantityInput.value) || newMin;
+          if (currentValue < newMin) {
+            quantityInput.value = newMin.toString();
+            updateDecrementButton();
+          }
+        });
+      }
+
+      // Listen for dialog open events
+      document.addEventListener('dialog:open', function() {
+        setTimeout(checkAndSetupPartyFavoursQuantity, 100);
+      });
+
+      // Also check when modal content is updated (morphed)
+      const modalContent = document.getElementById('quick-add-modal-content');
+      if (modalContent) {
+        const contentObserver = new MutationObserver(function() {
+          setTimeout(checkAndSetupPartyFavoursQuantity, 100);
+        });
+        contentObserver.observe(modalContent, { childList: true, subtree: true });
+      }
+
+      // Periodic check (in case events don't fire)
+      setInterval(function() {
+        const modalContent = document.getElementById('quick-add-modal-content');
+        if (modalContent && modalContent.hasAttribute('data-party-favours')) {
+          const quantitySelector = modalContent.querySelector('quantity-selector-component');
+          if (quantitySelector) {
+            checkAndSetupPartyFavoursQuantity();
+          }
+        }
+      }, 500);
+    }
+
+    // Setup quick add modal handling
+    setupQuickAddModalForPartyFavours();
+
+    // Also mark quick-add components when they're created
+    document.addEventListener('DOMContentLoaded', function() {
+      const quickAddComponents = document.querySelectorAll('quick-add-component');
+      quickAddComponents.forEach(function(quickAdd) {
+        const productCard = quickAdd.closest('product-card');
+        if (productCard && productCard.hasAttribute('data-party-favours')) {
+          quickAdd.setAttribute('data-party-favours', 'true');
+        }
+      });
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Party Favours",
+  "class": "ui-test-party-favours",
+  "blocks": [
+    {
+      "type": "@theme"
+    },
+    {
+      "type": "@app"
+    },
+    {
+      "type": "_divider"
+    },
+    {
+      "type": "_product-card"
+    }
+  ],
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "collection_list",
+      "id": "collection_list",
+      "label": "Collections",
+      "limit": 10,
+      "info": "Select collections to display in the Party Favours section"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Party Favours"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Select collections"
+    },
+    {
+      "type": "range",
+      "id": "minimum_quantity",
+      "label": "Minimum Quantity",
+      "min": 5,
+      "max": 100,
+      "step": 1,
+      "default": 5,
+      "info": "Minimum quantity that can be selected for products. Users cannot select a quantity below this value."
+    },
+    {
+      "type": "header",
+      "content": "Product Grid Settings"
+    },
+    {
+      "type": "select",
+      "id": "layout_type",
+      "label": "Layout Type",
+      "options": [
+        {
+          "value": "grid",
+          "label": "Grid"
+        },
+        {
+          "value": "organic",
+          "label": "Organic"
+        }
+      ],
+      "default": "grid"
+    },
+    {
+      "type": "select",
+      "id": "product_card_size",
+      "label": "Product Card Size",
+      "options": [
+        {
+          "value": "small",
+          "label": "Small"
+        },
+        {
+          "value": "medium",
+          "label": "Medium"
+        },
+        {
+          "value": "large",
+          "label": "Large"
+        },
+        {
+          "value": "extra-large",
+          "label": "Extra Large"
+        }
+      ],
+      "default": "medium"
+    },
+    {
+      "type": "select",
+      "id": "mobile_product_card_size",
+      "label": "Mobile Product Card Size",
+      "options": [
+        {
+          "value": "small",
+          "label": "Small (2 columns)"
+        },
+        {
+          "value": "large",
+          "label": "Large (1 column)"
+        }
+      ],
+      "default": "small"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap_horizontal",
+      "label": "Horizontal Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "columns_gap_vertical",
+      "label": "Vertical Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "Section Layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page"
+        },
+        {
+          "value": "full-width",
+          "label": "Full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color Scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Party Favours",
+      "category": "Products",
+      "settings": {
+        "heading": "Party Favours",
+        "subheading": "Select collections",
+        "minimum_quantity": 5,
+        "layout_type": "grid",
+        "product_card_size": "medium",
+        "mobile_product_card_size": "small",
+        "columns_gap_horizontal": 8,
+        "columns_gap_vertical": 12,
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      },
+      "blocks": {},
+      "block_order": []
+    }
+  ]
+}
+{% endschema %}
