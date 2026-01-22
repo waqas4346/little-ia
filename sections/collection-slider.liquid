@@ -631,67 +631,6 @@
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const desktopCarousel = document.querySelector('[data-testid="collection-slider-grid"]');
-    if (!desktopCarousel) return;
-
-    const itemsPerView = parseInt(desktopCarousel.getAttribute('data-items-per-view')) || 4;
-    const slideshow = desktopCarousel.querySelector('slideshow-component[ref="collectionSliderDesktop"]');
-    if (!slideshow) return;
-
-    // Wait for slideshow to be fully initialized
-    const initSlider = () => {
-      const previousBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--previous');
-      const nextBtn = slideshow.querySelector('slideshow-arrows .slideshow-control--next');
-      const slides = slideshow.querySelectorAll('slideshow-slide');
-
-      if (!previousBtn || !nextBtn || slides.length === 0) {
-        // Retry if buttons aren't ready yet
-        setTimeout(initSlider, 100);
-        return;
-      }
-
-      // Remove the on:click attribute to prevent default slideshow behavior
-      previousBtn.removeAttribute('on:click');
-      nextBtn.removeAttribute('on:click');
-
-      let currentIndex = 0;
-      const totalSlides = slides.length;
-      const maxIndex = Math.max(0, totalSlides - itemsPerView);
-
-      // Override previous button - use capture phase to intercept before any other handlers
-      previousBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        
-        currentIndex = Math.max(0, currentIndex - itemsPerView);
-        if (slides[currentIndex]) {
-          slideshow.select(currentIndex, e, { animate: true });
-        }
-      }, true);
-
-      // Override next button - use capture phase to intercept before any other handlers
-      nextBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        
-        currentIndex = Math.min(maxIndex, currentIndex + itemsPerView);
-        if (slides[currentIndex]) {
-          slideshow.select(currentIndex, e, { animate: true });
-        }
-      }, true);
-
-      // Update current index when slideshow changes
-      slideshow.addEventListener('slideshow:select', function(event) {
-        currentIndex = event.detail.index || 0;
-      });
-    };
-
-    initSlider();
-  });
-
   // Custom scrollbar indicator for mobile
   document.addEventListener('DOMContentLoaded', function() {
     const mobileSlides = document.querySelector('.collection-slider-mobile slideshow-slides');

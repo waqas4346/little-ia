@@ -580,23 +580,6 @@
             </button>
           </div>
           
-          <div class="mobile-sort-modal__sticky-bar">
-            <button 
-              type="button" 
-              class="mobile-sort-modal__sticky-button mobile-sort-modal__sticky-button--sort mobile-sort-modal__sticky-button--active"
-              on:click="#mobile-sort-modal/showDialog"
-            >
-              <span class="mobile-sort-modal__sticky-label">Sort By</span>
-            </button>
-            <div class="mobile-sort-modal__sticky-divider"></div>
-            <button 
-              type="button" 
-              class="mobile-sort-modal__sticky-button mobile-sort-modal__sticky-button--filter"
-              id="mobile-sort-modal-filter-button"
-            >
-              <span class="mobile-sort-modal__sticky-label">Filter</span>
-            </button>
-          </div>
         </form>
       </div>
     </dialog>
@@ -1230,19 +1213,6 @@
     }
   }
 
-  /* Sticky bar in sort modal */
-  .mobile-sort-modal__sticky-bar {
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    background-color: #F8F3ED;
-    border-top: 0.5px solid #D4D4D4;
-    z-index: 100;
-    gap: 0;
-  }
 
   .mobile-sort-modal__sticky-button {
     flex: 1;
