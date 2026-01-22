@@ -385,6 +385,34 @@
       -webkit-overflow-scrolling: touch;
     }
   }
+
+  /* Ensure card-gallery slider works properly - enable hover and arrows */
+  [data-testid="explore-more-products-grid"] .card-gallery {
+    pointer-events: auto;
+  }
+
+  [data-testid="explore-more-products-grid"] .card-gallery slideshow-component {
+    pointer-events: auto;
+  }
+
+  /* Ensure slideshow slides can be scrolled even when disabled */
+  [data-testid="explore-more-products-grid"] .card-gallery slideshow-component[disabled='true'] slideshow-slides {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  /* Desktop: Enable hover image change and arrows */
+  @media screen and (min-width: 750px) {
+    [data-testid="explore-more-products-grid"] .card-gallery slideshow-component[disabled='true'] slideshow-slides {
+      overflow-x: auto !important;
+      cursor: grab;
+    }
+
+    [data-testid="explore-more-products-grid"] .card-gallery slideshow-component[disabled='true'] slideshow-slides:active {
+      cursor: grabbing;
+    }
+  }
 </style>
 
 
