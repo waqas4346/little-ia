@@ -102,18 +102,27 @@ export class QuickAddComponent extends Component {
     event.stopPropagation();
     event.stopImmediatePropagation();
 
-    // Check if this quick-add is from build-your-set and mark it
+    // Check if this quick-add is from build-your-set or party-favours and mark it
     const productCard = /** @type {import('./product-card').ProductCard | null} */ (this.closest('product-card'));
     const isFromBuildYourSet = productCard?.hasAttribute('data-build-your-set') || 
                                 productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
+    const isFromPartyFavours = this.hasAttribute('data-party-favours') ||
+                               productCard?.hasAttribute('data-party-favours') ||
+                               productCard?.closest('[data-testid="party-favours"], .party-favours-section') !== null;
     
-    // Mark the modal content element with a data attribute if from build-your-set
+    // Mark the modal content element with a data attribute if from build-your-set or party-favours
     const modalContent = document.getElementById('quick-add-modal-content');
     if (modalContent) {
       if (isFromBuildYourSet) {
         modalContent.setAttribute('data-build-your-set', 'true');
       } else {
         modalContent.removeAttribute('data-build-your-set');
+      }
+      
+      if (isFromPartyFavours) {
+        modalContent.setAttribute('data-party-favours', 'true');
+      } else {
+        modalContent.removeAttribute('data-party-favours');
       }
     }
 
@@ -335,8 +344,14 @@ export class QuickAddComponent extends Component {
         const productCard = /** @type {import('./product-card').ProductCard | null} */ (this.closest('product-card'));
         const isFromBuildYourSet = productCard?.hasAttribute('data-build-your-set') || 
                                     productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
+        const isFromPartyFavours = this.hasAttribute('data-party-favours') ||
+                                   productCard?.hasAttribute('data-party-favours') ||
+                                   productCard?.closest('[data-testid="party-favours"], .party-favours-section') !== null;
         if (isFromBuildYourSet) {
           modalContent.setAttribute('data-build-your-set', 'true');
+        }
+        if (isFromPartyFavours) {
+          modalContent.setAttribute('data-party-favours', 'true');
         }
       }
     });
@@ -468,8 +483,9 @@ export class QuickAddComponent extends Component {
 
     if (!productGrid || !modalContent) return;
     
-    // Preserve build-your-set marker if it was set before content update
+    // Preserve build-your-set and party-favours markers if they were set before content update
     const wasBuildYourSet = modalContent.hasAttribute('data-build-your-set');
+    const wasPartyFavours = modalContent.hasAttribute('data-party-favours');
     
     // If this is a build-your-set product, clear any existing personalisation data
     // Personalization is now read directly from form inputs, no storage needed
@@ -484,9 +500,12 @@ export class QuickAddComponent extends Component {
 
     morph(modalContent, productGrid);
     
-    // Restore build-your-set marker after morphing
+    // Restore markers after morphing
     if (wasBuildYourSet) {
       modalContent.setAttribute('data-build-your-set', 'true');
+    }
+    if (wasPartyFavours) {
+      modalContent.setAttribute('data-party-favours', 'true');
     }
 
     this.#syncVariantSelection(modalContent);

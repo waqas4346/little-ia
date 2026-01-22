@@ -57,16 +57,13 @@ export class PersonaliseDialogComponent extends DialogComponent {
    * @private
    */
   #setupCloseButtonHandlers() {
-    console.log('PersonaliseDialog: #setupCloseButtonHandlers called');
     
     // Store reference to component for use in event handlers
     const component = this;
     
     const dialogElement = this.refs?.dialog || this.querySelector('dialog');
-    console.log('PersonaliseDialog: Dialog element:', dialogElement);
     
     if (!dialogElement) {
-      console.warn('PersonaliseDialog: Dialog element not found, retrying...');
       // Dialog element not ready yet, try again later
       setTimeout(() => this.#setupCloseButtonHandlers(), 50);
       return;
@@ -84,7 +81,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
       event.cancelBubble = true;
       event.returnValue = false;
       
-      console.log('PersonaliseDialog: handleClose called, stopping propagation');
       
       // Call close method immediately
       component.closePersonaliseOnly();
@@ -103,17 +99,14 @@ export class PersonaliseDialogComponent extends DialogComponent {
     let buttonsFound = 0;
     selectors.forEach(selector => {
       const buttons = this.querySelectorAll(selector);
-      console.log(`Found ${buttons.length} buttons with selector: ${selector}`);
       buttons.forEach(btn => {
         buttonsFound++;
-        console.log('Attaching handler to button:', btn);
         // Remove any existing handlers first to avoid duplicates
         btn.removeEventListener('click', handleClose, { capture: true });
         btn.removeEventListener('mousedown', handleClose, { capture: true });
         
         // Create wrapped handlers that ensure propagation is stopped IMMEDIATELY
         const wrappedMousedown = (e) => {
-          console.log('PersonaliseDialog: Mousedown on close button:', e.target, btn.className);
           e.preventDefault();
           e.stopPropagation();
           e.stopImmediatePropagation();
@@ -123,7 +116,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
         };
         
         const wrappedClick = (e) => {
-          console.log('PersonaliseDialog: Click on close button:', e.target, btn.className);
           e.preventDefault();
           e.stopPropagation();
           e.stopImmediatePropagation();
@@ -137,7 +129,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
         btn.addEventListener('click', wrappedClick, { capture: true, passive: false });
       });
     });
-    console.log(`Total buttons found: ${buttonsFound}`);
     
     // ALSO set up delegation on dialog element as additional safety
     if (!dialogElement.dataset.personaliseCloseHandlerSetup) {
@@ -220,7 +211,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
   loadSavedPersonalisation() {
     // First, check if we're opening from cart drawer (cart edit context)
     if (window.cartPersonalizationContext && window.cartPersonalizationContext.properties) {
-      console.log('Loading personalisation from cart context:', window.cartPersonalizationContext);
       
       // Convert cart properties to personalisation data format
       const properties = window.cartPersonalizationContext.properties;
@@ -258,7 +248,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
       };
       
       if (Object.keys(personalisation).length > 0) {
-        console.log('Loaded personalisation data from cart context:', this.personalisationData);
         return; // Exit early, we have the data from cart
       }
     }
@@ -391,9 +380,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
       ...personalisation
     };
     
-    if (Object.keys(personalisation).length > 0) {
-      console.log('Loaded personalisation data from form inputs:', this.personalisationData);
-    }
   }
 
   /**
@@ -480,7 +466,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // This will check cart context first, then form inputs
     try {
       this.loadSavedPersonalisation();
-      console.log('After loadSavedPersonalisation, personalisationData:', this.personalisationData);
     } catch (error) {
       console.error('Error loading personalisation:', error);
     }
@@ -508,7 +493,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
         setTimeout(checkAndPopulate, 50);
       } else {
         // Max attempts reached, try to populate anyway
-        console.warn('Dialog may not be fully open, attempting to populate fields anyway');
         try {
           this.#populateFieldsFromSavedData();
         } catch (error) {
@@ -540,7 +524,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
    * This method name is unique and won't conflict with anything
    */
   closePersonaliseOnly = async () => {
-    console.log('closePersonaliseOnly called');
     
     // Clear internal state when closing (especially for build-your-set to prevent font persistence)
     this.selectedFont = null;
@@ -568,10 +551,8 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Get dialog directly - don't rely on refs if they might be stale
     const dialogElement = this.querySelector('dialog') || this.refs?.dialog;
-    console.log('Dialog element:', dialogElement, 'Open:', dialogElement?.open);
 
     if (!dialogElement) {
-      console.warn('PersonaliseDialog: Dialog element not found');
       // Even if dialog isn't open, ensure body styles are reset if no other dialogs are open
       const quickAddDialog = document.querySelector('#quick-add-dialog dialog');
       const quickAddIsOpen = quickAddDialog && quickAddDialog.open;
@@ -584,7 +565,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
     }
     
     if (!dialogElement.open) {
-      console.log('Dialog already closed');
       // Even if dialog isn't open, ensure body styles are reset if no other dialogs are open
       const quickAddDialog = document.querySelector('#quick-add-dialog dialog');
       const quickAddIsOpen = quickAddDialog && quickAddDialog.open;
@@ -595,8 +575,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
       }
       return;
     }
-
-    console.log('Closing dialog...');
 
     // Remove keydown listener
     try {
@@ -616,10 +594,8 @@ export class PersonaliseDialogComponent extends DialogComponent {
     }
 
     // Close this dialog FIRST - don't check anything else
-    console.log('Calling dialogElement.close()');
     try {
       dialogElement.close();
-      console.log('Dialog close() called, open status:', dialogElement.open);
     } catch (e) {
       console.error('Error calling dialog.close():', e);
     }
@@ -629,8 +605,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Check if quick-add dialog is still open AFTER closing this one
     const quickAddDialog = document.querySelector('#quick-add-dialog dialog');
     const quickAddIsOpen = quickAddDialog && quickAddDialog.open;
-    
-    console.log('Quick-add dialog open?', quickAddIsOpen);
     
     // Only reset body styles if quick-add dialog is also closed
     if (!quickAddIsOpen) {
@@ -643,7 +617,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
     try {
       this.dispatchEvent(new DialogCloseEvent());
-      console.log('DialogCloseEvent dispatched');
     } catch (e) {
       console.error('Error dispatching event:', e);
     }
@@ -967,7 +940,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const icon = this.querySelector(`[data-tab-icon="${tabType}"]`);
     if (icon) {
       icon.style.display = show ? 'inline-flex' : 'none';
-      console.log(`Updated ${tabType} tab icon:`, show, icon);
     } else {
       console.warn(`Tab icon not found for type: ${tabType}`, this.querySelectorAll('[data-tab-icon]'));
     }
@@ -1103,7 +1075,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
    */
   savePersonalisation = async (event) => {
     event.preventDefault();
-    console.log('savePersonalisation called');
     
     // Collect all field values
     const nameInput = this.refs.nameInput || this.querySelector('#personalise-name');
@@ -1111,7 +1082,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Validate required fields (name is required for personalized_name products)
     if (nameInput && !name) {
-      console.log('Validation failed: name is required');
       return;
     }
 
@@ -1215,7 +1185,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
         form = document.querySelector('form[data-type="add-to-cart-form"]');
       }
       
-      console.log('Cart item updated, product page form NOT modified (preserving original personalization)');
     } else {
       // Write personalisation directly to form inputs (not to storage)
       form = this.closest('product-form-component')?.querySelector('form[data-type="add-to-cart-form"]');
@@ -1302,14 +1271,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
           value: input.value
         }));
         
-        console.log('Saved personalisation to form inputs', {
-          form: form,
-          formId: form.id,
-          productId: form.closest('product-form-component')?.dataset?.productId,
-          inputsAdded: addedInputs.length,
-          inputDetails: inputDetails
-        });
-        
         // Use requestAnimationFrame to ensure DOM is updated before checking
         requestAnimationFrame(() => {
           // Trigger update of button text - with multiple retries to ensure buttons are in DOM
@@ -1317,7 +1278,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
             if (typeof window.updatePersonaliseButtonText === 'function') {
               // Verify inputs are still in the form before updating
               const verifyInputs = form.querySelectorAll('input[name^="properties["]');
-              console.log('Updating button, attempt:', attempts, 'inputs in form:', verifyInputs.length);
               
               window.updatePersonaliseButtonText();
               
@@ -1330,12 +1290,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
                   if (textSpan && textSpan.textContent === 'EDIT') {
                     anyButtonUpdated = true;
                   }
-                });
-                
-                console.log('Button update check:', {
-                  buttonsFound: buttons.length,
-                  anyButtonUpdated: anyButtonUpdated,
-                  attempt: attempts
                 });
                 
                 // If no buttons were updated and we haven't exceeded retries, try again
@@ -1353,7 +1307,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
           setTimeout(() => updateButtonWithRetry(0), 50);
         });
       } else {
-        console.error('Form not found when saving personalisation');
       }
 
       // Also store globally for the current product (keyed by product ID to avoid conflicts)
@@ -1364,11 +1317,9 @@ export class PersonaliseDialogComponent extends DialogComponent {
         }
         window.currentPersonalisation[productId] = personalisation;
         window.currentPersonalisation._latest = personalisation; // Also store latest for fallback
-        console.log('Stored personalisation for product:', productId, personalisation);
       } else {
         // Fallback if product ID not found
         window.currentPersonalisation = personalisation;
-        console.log('Stored personalisation (no product ID):', personalisation);
       }
 
       // Update hidden form fields if they exist
@@ -1549,7 +1500,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
       
     } catch (error) {
       console.error('Error updating cart item properties:', error);
-      alert('Failed to update personalization. Please try again.');
     }
   }
 
@@ -1582,7 +1532,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
     }
     
     if (!productForm) {
-      console.warn('Product form not found for updating personalisation fields');
       return;
     }
 
@@ -1724,7 +1673,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
       }
       
       if (!productId) {
-        console.warn('Product ID not found for personalisation fields');
         return;
       }
       
@@ -1822,14 +1770,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
       // Check if we have any personalisation data from form inputs
       let hasPersonalisation = Object.keys(personalisation).length > 0;
       
-      console.log('addPersonalisationFieldsToForm: Checking for personalisation', {
-        hasPersonalisation: hasPersonalisation,
-        personalisationKeys: Object.keys(personalisation),
-        productId: productId,
-        formInputs: targetForm.querySelectorAll('input[name^="properties["]').length,
-        windowCurrentPersonalisation: window.currentPersonalisation ? Object.keys(window.currentPersonalisation) : null
-      });
-      
       // ALWAYS check window.currentPersonalisation as the source of truth
       // This ensures we have the data even if inputs were removed
       let savedPersonalisation = null;
@@ -1837,17 +1777,14 @@ export class PersonaliseDialogComponent extends DialogComponent {
       // Try to get personalisation by product ID first
       if (window.currentPersonalisation && productId && window.currentPersonalisation[productId]) {
         savedPersonalisation = { ...window.currentPersonalisation[productId] };
-        console.log('Found personalisation for product ID:', productId);
       } else if (window.currentPersonalisation?._latest) {
         // Fallback to latest
         savedPersonalisation = { ...window.currentPersonalisation._latest };
-        console.log('Using latest personalisation as fallback');
       } else if (window.currentPersonalisation && typeof window.currentPersonalisation === 'object' && !Array.isArray(window.currentPersonalisation)) {
         // Check if it's a direct object (old format)
         const hasProductKeys = Object.keys(window.currentPersonalisation).some(key => key.startsWith('_') || /^\d+$/.test(key));
         if (!hasProductKeys) {
           savedPersonalisation = { ...window.currentPersonalisation };
-          console.log('Using direct personalisation object');
         }
       }
       
@@ -1863,20 +1800,14 @@ export class PersonaliseDialogComponent extends DialogComponent {
         // Merge with form inputs (form inputs take precedence if they exist)
         Object.assign(personalisation, savedPersonalisation);
         hasPersonalisation = Object.keys(personalisation).length > 0;
-        console.log('Merged personalisation from window.currentPersonalisation:', Object.keys(personalisation));
       } else {
-        console.log('No saved personalisation found in window.currentPersonalisation');
       }
       
       if (!hasPersonalisation) {
-        console.log('No personalisation found in form or window.currentPersonalisation for product:', productId);
         return;
       }
       
-      console.log('Final personalisation data to add:', personalisation);
-      
       try {
-        console.log('addPersonalisationFieldsToForm: About to add personalisation with keys:', Object.keys(personalisation));
         
         // Remove existing personalisation properties fields (but keep gift message and other non-personalisation properties)
         const existingProps = targetForm.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
@@ -1910,7 +1841,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
             console.log('Removed personalisation input:', name);
           }
         });
-        console.log('Removed', removedCount, 'existing personalisation inputs');
         
         // Re-add all personalisation properties directly to the form
         const addProperty = (name, value) => {
@@ -2036,7 +1966,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const addToCartButtons = form.querySelectorAll('button[type="submit"], add-to-cart-component button, .add-to-cart-button');
     addToCartButtons.forEach(button => {
       button.addEventListener('click', () => {
-        console.log('Add to cart button clicked, adding personalisation fields');
         addPersonalisationFieldsToForm(form);
       }, { capture: true });
     });

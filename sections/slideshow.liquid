@@ -88,6 +88,9 @@
 </div>
 
 {% stylesheet %}
+ .slideshow-section .slideshow--content-right slideshow-slide .slide__content {
+      height: auto;
+    }
   .slideshow-section {
     slideshow-arrows .slideshow-control:first-of-type {
       margin-inline-start: var(--padding-xs);
@@ -138,6 +141,7 @@
         gap: min(var(--slideshow-gap, 0), 10px);
       }
     }
+
 
     @media screen and (min-width: 750px) {
       .slideshow--with-hints {

@@ -2444,6 +2444,7 @@ product-price.text-block:is(.h1, .h2, .h3, .h4, .h5, .h6) > *:not(.tax-note) {
 
   .layout-panel-flex--column {
     align-items: var(--horizontal-alignment-mobile, var(--horizontal-alignment));
+    justify-content: var(--vertical-alignment-mobile, var(--vertical-alignment));
   }
 
   .layout-panel-flex--row:not(.mobile-column) {
@@ -3485,7 +3486,6 @@ slideshow-slides {
   scrollbar-color: transparent transparent;
   scrollbar-width: none;
   gap: var(--slideshow-gap, 0);
-  cursor: var(--cursor);
   min-height: var(--slide-min-height);
 
   @media (prefers-reduced-motion) {

@@ -22,15 +22,19 @@
     else
       assign horizontal_alignment_mobile = horizontal_alignment
     endif
+
+    if settings.vertical_alignment_flex_direction_column_mobile != blank
+      assign vertical_alignment_mobile = settings.vertical_alignment_flex_direction_column_mobile
+    else
+      assign vertical_alignment_mobile = vertical_alignment
+    endif
   else
     assign horizontal_alignment_mobile = horizontal_alignment
+    assign vertical_alignment_mobile = vertical_alignment
+    if settings.vertical_on_mobile and vertical_alignment == 'last baseline'
+      assign vertical_alignment_mobile = 'flex-end'
+    endif
   endunless
-
-  assign vertical_alignment_mobile = vertical_alignment
-
-  if settings.vertical_on_mobile and vertical_alignment == 'last baseline'
-    assign vertical_alignment_mobile = 'flex-end'
-  endif
 -%}
 
 --flex-direction: {{ settings.content_direction | default: 'column' }}; --flex-wrap: nowrap; --flex-wrap-mobile: wrap;

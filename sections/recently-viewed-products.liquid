@@ -141,56 +141,6 @@
     display: none;
   }
 
-  /* Product card media sizing/background in slider */
-  [data-testid="recently-viewed-products-grid"] .card-gallery .product-media-container {
-    background: url("bg_removal [Background removed].png"), #F7F7F7;
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
-  }
-
-  [data-testid="recently-viewed-products-grid"] .card-gallery .product-media-container img,
-  [data-testid="recently-viewed-products-grid"] .card-gallery .product-media-container picture,
-  [data-testid="recently-viewed-products-grid"] .card-gallery .product-media-container video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  /* Hide sale/sold-out badge on slider images */
-  [data-testid="recently-viewed-products-grid"] .product-badges {
-    display: none !important;
-  }
-
-  /* Product title styling - match product-slider exactly using same selectors as base.css */
-  /* Target product-card structure (from main-collection/search-results) */
-  [data-testid="recently-viewed-products-grid"] .product-card .product-title-text,
-  [data-testid="recently-viewed-products-grid"] .product-card .product-title-text *,
-  [data-testid="recently-viewed-products-grid"] .product-card .product-title-text :is(h1, h2, h3, h4, h5, h6, p, span, a),
-  [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block,
-  [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block *,
-  [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block :is(h1, h2, h3, h4, h5, h6, p, span, a),
-  [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text,
-  [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text *,
-  [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text :is(h1, h2, h3, h4, h5, h6, p, span, a),
-  [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type,
-  [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type *,
-  [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type :is(h1, h2, h3, h4, h5, h6, p, span, a),
-  [data-testid="recently-viewed-products-grid"] .text-block--product_title,
-  [data-testid="recently-viewed-products-grid"] .text-block--product_title *,
-  [data-testid="recently-viewed-products-grid"] .text-block--product_title :is(h1, h2, h3, h4, h5, h6, p, span, a),
-  /* Target resource-card structure (fallback from predictive-search) */
-  [data-testid="recently-viewed-products-grid"] .resource-card__title,
-  [data-testid="recently-viewed-products-grid"] .resource-card__title *,
-  [data-testid="recently-viewed-products-grid"] .resource-card .resource-card__title {
-    font-family: 'Outfit', sans-serif !important;
-    font-weight: 500 !important;
-    font-style: normal !important;
-    font-size: 20px !important;
-    line-height: 140% !important;
-    letter-spacing: 0 !important;
-    color: #1D425A !important;
-  }
 
   /* Product slider carousel container */
   .recently-viewed-products-carousel {
@@ -211,12 +161,6 @@
     --peek-next-slide-size: 0px;
     --gutter-slide-width: 0px !important;
     overflow: visible;
-  }
-
-  @media (max-width: 767px) {
-    [data-testid="recently-viewed-products-grid"] {
-      overflow: hidden;
-    }
   }
 
   /* Use same carousel classes as product-slider */
@@ -274,11 +218,6 @@
     right: 0;
   }
 
-  /* Hide default quick-add on hover for recently viewed products (same as product-slider) */
-  [data-testid="recently-viewed-products"] product-card[data-collection-page="true"]:is(:hover, :focus-within) .quick-add__button:not(.product-slider-quick-add-button) {
-    opacity: 0 !important;
-    pointer-events: none !important;
-  }
 
   /* Ensure slideshow slides stretch to same height */
   [data-testid="recently-viewed-products-grid"] slideshow-slides {
@@ -450,10 +389,6 @@
       --column-count: 3;
     }
 
-    [data-testid="recently-viewed-products-grid"] {
-      overflow: hidden;
-    }
-
     [data-testid="recently-viewed-products"] .product-slider-desktop .resource-list__slide {
       width: calc((100% - (var(--resource-list-column-gap-desktop, 8px) * 2)) / 3);
       max-width: calc((100% - (var(--resource-list-column-gap-desktop, 8px) * 2)) / 3);
@@ -476,14 +411,12 @@
   @media (max-width: 767px) {
     [data-testid="recently-viewed-products"] .product-slider-wrapper {
       padding: 0;
-      overflow: hidden;
       max-width: calc((175px * 2) + 8px);
       width: 100%;
       margin: 0 auto;
     }
 
     [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-container {
-      overflow: hidden;
       max-width: calc((175px * 2) + 8px);
       width: 100%;
       margin: 0 auto;
@@ -493,30 +426,38 @@
       display: none !important;
     }
 
-    /* Mobile: Product title styling - match product-slider */
-    [data-testid="recently-viewed-products-grid"] .product-card .product-title-text,
-    [data-testid="recently-viewed-products-grid"] .product-card .product-title-text *,
-    [data-testid="recently-viewed-products-grid"] .product-card .product-title-text :is(h1, h2, h3, h4, h5, h6, p, span, a),
-    [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block,
-    [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block *,
-    [data-testid="recently-viewed-products-grid"] .product-card a.contents .text-block :is(h1, h2, h3, h4, h5, h6, p, span, a),
-    [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text,
-    [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text *,
-    [data-testid="recently-viewed-products-grid"] .product-card .text-block.product-title-text :is(h1, h2, h3, h4, h5, h6, p, span, a),
-    [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type,
-    [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type *,
-    [data-testid="recently-viewed-products-grid"] .product-card__content > .text-block:first-of-type :is(h1, h2, h3, h4, h5, h6, p, span, a),
-    [data-testid="recently-viewed-products-grid"] .text-block--product_title,
-    [data-testid="recently-viewed-products-grid"] .text-block--product_title *,
-    [data-testid="recently-viewed-products-grid"] .text-block--product_title :is(h1, h2, h3, h4, h5, h6, p, span, a),
-    /* Target resource-card structure (fallback) */
-    [data-testid="recently-viewed-products-grid"] .resource-card__title,
-    [data-testid="recently-viewed-products-grid"] .resource-card__title *,
-    [data-testid="recently-viewed-products-grid"] .resource-card .resource-card__title {
-      font-size: 16px !important;
-      line-height: 140% !important;
-      letter-spacing: 0 !important;
-      color: #1D425A !important;
+    /* Ensure card-gallery can scroll on mobile - allow overflow for product image scrolling */
+    [data-testid="recently-viewed-products-grid"] .card-gallery slideshow-slides {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Ensure card-gallery slider works properly - enable hover and arrows */
+  [data-testid="recently-viewed-products-grid"] .card-gallery {
+    pointer-events: auto;
+  }
+
+  [data-testid="recently-viewed-products-grid"] .card-gallery slideshow-component {
+    pointer-events: auto;
+  }
+
+  /* Ensure slideshow slides can be scrolled even when disabled */
+  [data-testid="recently-viewed-products-grid"] .card-gallery slideshow-component[disabled='true'] slideshow-slides {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  /* Desktop: Enable hover image change and arrows */
+  @media screen and (min-width: 750px) {
+    [data-testid="recently-viewed-products-grid"] .card-gallery slideshow-component[disabled='true'] slideshow-slides {
+      overflow-x: auto !important;
+      cursor: grab;
+    }
+
+    [data-testid="recently-viewed-products-grid"] .card-gallery slideshow-component[disabled='true'] slideshow-slides:active {
+      cursor: grabbing;
     }
   }
 
@@ -544,25 +485,6 @@
       height: 0;
     }
 
-    /* Mobile: Set product card images to 175px x 175px */
-    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card .card-gallery .product-media-container,
-    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container {
-      width: 175px !important;
-      height: 175px !important;
-      max-width: 175px !important;
-    }
-
-    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card .card-gallery .product-media-container img,
-    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card .card-gallery .product-media-container picture,
-    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card .card-gallery .product-media-container video,
-    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container img,
-    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container picture,
-    [data-testid="recently-viewed-products-grid"] .resource-list__item product-card-link .card-gallery .product-media-container video {
-      width: 175px !important;
-      height: 175px !important;
-      max-width: 175px !important;
-      object-fit: cover !important;
-    }
   }
 
   /* Enable product card image slider on desktop */
