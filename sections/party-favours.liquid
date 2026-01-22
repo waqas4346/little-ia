@@ -20,6 +20,7 @@
     {% render 'gap-style', value: section.settings.gap %}
   "
   data-minimum-quantity="{{ minimum_quantity }}"
+  data-discount-code="{{ section.settings.discount_code | default: '' }}"
 >
   <div class="party-favours-header">
     {% if section_heading != blank %}
@@ -481,6 +482,8 @@
     }
   }
 {% endstyle %}
+
+<script src="{{ 'party-favours-discount.js' | asset_url }}" type="module"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -989,6 +992,236 @@
         }
       });
     });
+
+    // Inline fallback implementation for discount code
+    function setupAutoDiscountCodeInline() {
+      const discountCode = section.dataset.discountCode;
+      if (!discountCode || discountCode.trim() === '') return;
+      let isApplyingDiscount = false;
+      let pendingDiscountApplication = false;
+
+      async function applyDiscountCode() {
+        if (isApplyingDiscount) return;
+        isApplyingDiscount = true;
+
+        try {
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          const cartResponse = await fetch('/cart.js');
+          const cart = await cartResponse.json();
+          
+          const existingDiscounts = cart.discount_codes || [];
+          if (existingDiscounts.some((d) => d.code === discountCode)) {
+            isApplyingDiscount = false;
+            pendingDiscountApplication = false;
+            return;
+          }
+
+          let sectionId = null;
+          const cartDrawer = document.querySelector('cart-drawer-component');
+          if (cartDrawer?.dataset.sectionId) {
+            sectionId = cartDrawer.dataset.sectionId;
+          } else {
+            const cartItems = document.querySelector('cart-items-component');
+            if (cartItems?.dataset.sectionId) {
+              sectionId = cartItems.dataset.sectionId;
+            } else {
+              const cartPage = document.querySelector('[data-section-type="cart"]');
+              if (cartPage) {
+                sectionId = cartPage.id?.replace('shopify-section-', '');
+              }
+            }
+          }
+
+          if (!sectionId) {
+            isApplyingDiscount = false;
+            pendingDiscountApplication = false;
+            return;
+          }
+
+          const existingCodes = existingDiscounts.map((d) => d.code).filter(Boolean);
+          const discountCodesToApply = [...existingCodes, discountCode].join(',');
+
+          const response = await fetch(window.Theme?.routes?.cart_update_url || '/cart/update.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              discount: discountCodesToApply,
+              sections: sectionId
+            })
+          });
+
+          if (!response.ok) {
+            isApplyingDiscount = false;
+            pendingDiscountApplication = false;
+            return;
+          }
+
+          const data = await response.json();
+
+          if (data.discount_codes) {
+            const applied = data.discount_codes.some((d) => {
+              return d.code === discountCode && d.applicable === true;
+            });
+            if (applied && data.sections && data.sections[sectionId]) {
+              const sectionElement = document.getElementById('shopify-section-' + sectionId);
+              if (sectionElement) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data.sections[sectionId], 'text/html');
+                const newSection = doc.getElementById('shopify-section-' + sectionId);
+                if (newSection) {
+                  sectionElement.innerHTML = newSection.innerHTML;
+                }
+              }
+              
+              document.dispatchEvent(new CustomEvent('discount:update', {
+                bubbles: true,
+                detail: { resource: data, sourceId: 'party-favours-auto-discount' }
+              }));
+              
+              document.dispatchEvent(new CustomEvent('cart:update', {
+                bubbles: true,
+                detail: data
+              }));
+            }
+          }
+        } catch (error) {
+          console.warn('Party Favours: Error applying discount code', error);
+        } finally {
+          isApplyingDiscount = false;
+          pendingDiscountApplication = false;
+        }
+      }
+
+      function markPartyFavoursForms() {
+        const productForms = section.querySelectorAll('product-form-component');
+        productForms.forEach((form) => {
+          form.setAttribute('data-party-favours', 'true');
+        });
+      }
+
+      markPartyFavoursForms();
+
+      const modalContent = document.getElementById('quick-add-modal-content');
+      if (modalContent) {
+        const modalObserver = new MutationObserver(() => {
+          if (modalContent.hasAttribute('data-party-favours')) {
+            const modalForms = modalContent.querySelectorAll('product-form-component');
+            modalForms.forEach((form) => {
+              form.setAttribute('data-party-favours', 'true');
+            });
+          }
+        });
+        modalObserver.observe(modalContent, { childList: true, subtree: true });
+      }
+
+      document.addEventListener('cart:update', function(event) {
+        const eventDetail = event.detail;
+        const eventSource = eventDetail?.data?.source;
+        
+        // Only process events from product-form-component
+        if (eventSource !== 'product-form-component') {
+          return; // Not from a product form, ignore
+        }
+
+        // Find the product-form-component that triggered this event
+        let formComponent = event.target;
+        
+        // If event.target is not a product-form-component, try to find it by sourceId
+        if (!formComponent || 
+            !(formComponent instanceof HTMLElement) ||
+            formComponent.tagName.toLowerCase() !== 'product-form-component') {
+          const sourceId = eventDetail?.sourceId;
+          if (sourceId) {
+            formComponent = document.getElementById(sourceId);
+          }
+          
+          // If still not found, try to find the form component in the event path
+          if (!formComponent || formComponent.tagName.toLowerCase() !== 'product-form-component') {
+            const path = event.composedPath ? event.composedPath() : [];
+            formComponent = path.find(el => 
+              el instanceof HTMLElement && 
+              el.tagName.toLowerCase() === 'product-form-component'
+            );
+          }
+        }
+        
+        // Final check: Is this actually a product-form-component?
+        if (!formComponent || 
+            !(formComponent instanceof HTMLElement) ||
+            formComponent.tagName.toLowerCase() !== 'product-form-component') {
+          return; // Not a product form, ignore
+        }
+        
+        // CRITICAL CHECK: Verify the form is actually within our specific section
+        const isFormInOurSection = section.contains(formComponent);
+        
+        // SAFETY CHECK: If we're on a product page (has main-product section), don't apply discount
+        // unless the form is explicitly in our party-favours section
+        const productPageSection = document.querySelector('[data-section-type="main-product"]');
+        if (productPageSection) {
+          // If form is in product page section and NOT in our section, definitely ignore
+          if (productPageSection.contains(formComponent) && !isFormInOurSection) {
+            return; // This is a product page form, not from party-favours section
+          }
+        }
+        
+        // If form is not in our section at all, check if it's from modal
+        // Otherwise, ignore completely
+        if (!isFormInOurSection) {
+          // SECONDARY CHECK: Is this from quick-add modal opened from party-favours?
+          // Only check if form has the attribute AND modal is marked as party-favours
+          if (!formComponent.hasAttribute('data-party-favours')) {
+            return; // Form doesn't have party-favours attribute, ignore
+          }
+          
+          const modalContent = document.getElementById('quick-add-modal-content');
+          // Verify modal is currently marked as party-favours (not stale)
+          // AND verify the form is actually in the modal
+          if (!modalContent || 
+              !modalContent.hasAttribute('data-party-favours') ||
+              !modalContent.contains(formComponent)) {
+            return; // Modal is not marked as party-favours or form not in modal, ignore
+          }
+          
+          // CRITICAL: Verify the modal was opened from a product card within OUR section
+          const partyFavoursCard = section.querySelector('product-card[data-party-favours="true"]');
+          if (!partyFavoursCard || !section.contains(partyFavoursCard)) {
+            return; // No party-favours card in our section, ignore
+          }
+        }
+
+        // If we get here, the form is from party-favours (either in section or modal from section)
+        if (!pendingDiscountApplication && !isApplyingDiscount) {
+          pendingDiscountApplication = true;
+          formComponent.setAttribute('data-discount-applied', 'true');
+          setTimeout(() => applyDiscountCode(), 800);
+        }
+      }, { passive: true, capture: true });
+
+      setInterval(markPartyFavoursForms, 2000);
+    }
+
+    // Auto-apply discount code for party favours products
+    function setupAutoDiscountCode() {
+      const discountCode = section.dataset.discountCode;
+      if (!discountCode || discountCode.trim() === '') return;
+
+      // Try to use the party-favours-discount module if available
+      // Wait a bit for the module to load
+      setTimeout(function() {
+        if (window.partyFavoursDiscount) {
+          window.partyFavoursDiscount.init(section, discountCode);
+          return;
+        }
+        
+        // Fallback: use inline implementation
+        setupAutoDiscountCodeInline();
+      }, 100);
+    }
+
+    // Setup auto discount code (will try module first, then fallback)
+    setupAutoDiscountCode();
   });
 </script>
 
@@ -1042,6 +1275,12 @@
       "step": 1,
       "default": 5,
       "info": "Minimum quantity that can be selected for products. Users cannot select a quantity below this value."
+    },
+    {
+      "type": "text",
+      "id": "discount_code",
+      "label": "Discount Code",
+      "info": "Enter the discount code to automatically apply when products are added from this section. Leave empty to disable auto-apply discount. Make sure to create this discount code in Shopify Admin > Discounts first."
     },
     {
       "type": "header",

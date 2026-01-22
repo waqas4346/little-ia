@@ -119,10 +119,18 @@ export class QuickAddComponent extends Component {
         modalContent.removeAttribute('data-build-your-set');
       }
       
+      // IMPORTANT: Only mark as party-favours if actually from party-favours section
+      // Clear it if not, to prevent false positives
       if (isFromPartyFavours) {
         modalContent.setAttribute('data-party-favours', 'true');
       } else {
+        // Clear party-favours attribute if not from party-favours
         modalContent.removeAttribute('data-party-favours');
+        // Also clear from any forms in the modal
+        const modalForms = modalContent.querySelectorAll('product-form-component[data-party-favours]');
+        modalForms.forEach((form) => {
+          form.removeAttribute('data-party-favours');
+        });
       }
     }
 
@@ -349,9 +357,19 @@ export class QuickAddComponent extends Component {
                                    productCard?.closest('[data-testid="party-favours"], .party-favours-section') !== null;
         if (isFromBuildYourSet) {
           modalContent.setAttribute('data-build-your-set', 'true');
+        } else {
+          modalContent.removeAttribute('data-build-your-set');
         }
+        // IMPORTANT: Only mark as party-favours if actually from party-favours, otherwise clear it
         if (isFromPartyFavours) {
           modalContent.setAttribute('data-party-favours', 'true');
+        } else {
+          modalContent.removeAttribute('data-party-favours');
+          // Also clear from any forms in the modal
+          const modalForms = modalContent.querySelectorAll('product-form-component[data-party-favours]');
+          modalForms.forEach((form) => {
+            form.removeAttribute('data-party-favours');
+          });
         }
       }
     });
@@ -500,12 +518,23 @@ export class QuickAddComponent extends Component {
 
     morph(modalContent, productGrid);
     
-    // Restore markers after morphing
+    // Restore markers after morphing ONLY if they were set before
+    // This ensures we don't accidentally mark non-party-favours modals
     if (wasBuildYourSet) {
       modalContent.setAttribute('data-build-your-set', 'true');
+    } else {
+      modalContent.removeAttribute('data-build-your-set');
     }
     if (wasPartyFavours) {
       modalContent.setAttribute('data-party-favours', 'true');
+    } else {
+      // Clear party-favours attribute if it wasn't set before
+      modalContent.removeAttribute('data-party-favours');
+      // Also clear from any forms in the modal
+      const modalForms = modalContent.querySelectorAll('product-form-component[data-party-favours]');
+      modalForms.forEach((form) => {
+        form.removeAttribute('data-party-favours');
+      });
     }
 
     this.#syncVariantSelection(modalContent);
