@@ -6,6 +6,217 @@ import { sectionRenderer } from '@theme/section-renderer';
  */
 class RecentlyViewedProductsComponent extends HTMLElement {
   /**
+   * Map to store product data (id -> {id, handle, url})
+   * @type {Map<string, {id: string, handle: string, url: string}>}
+   */
+  #productDataMap = new Map();
+
+  /**
+   * Get the current product ID if we're on a product page
+   * @returns {string | null} The current product ID or null if not on a product page
+   */
+  #getCurrentProductId() {
+    // Try to get from sticky-add-to-cart
+    const stickyAddToCart = document.querySelector('sticky-add-to-cart');
+    if (stickyAddToCart?.dataset?.productId) {
+      return String(stickyAddToCart.dataset.productId);
+    }
+
+    // Try to get from product-form-component
+    const productForm = document.querySelector('product-form-component');
+    if (productForm?.dataset?.productId) {
+      return String(productForm.dataset.productId);
+    }
+
+    // Try to get from URL (if on /products/[handle] page)
+    const urlMatch = window.location.pathname.match(/\/products\/([^\/]+)/);
+    if (urlMatch) {
+      // We can't easily get the product ID from handle without fetching, but we can check if the handle matches
+      // For now, we'll rely on the data attributes above
+      // If those fail, we can try to match by handle later
+    }
+
+    return null;
+  }
+
+  /**
+   * Render products by fetching individual product cards using section-rendering-product-card
+   * @param {string[]} productIds - Array of product IDs in the exact order from localStorage
+   */
+  async #renderProductsFromMainCollection(productIds) {
+    const itemsPerView = parseInt(this.dataset.itemsPerView) || 4;
+    const columnsGap = parseInt(this.dataset.columnsGap) || 8;
+    const iconsStyle = this.dataset.iconsStyle || 'arrow';
+
+    console.log('Product IDs to fetch (in exact localStorage order):', productIds);
+    
+    try {
+      // First, get product handles from search-results (quick way to get handles)
+      const searchUrl = new URL(Theme.routes.search_url, location.origin);
+      searchUrl.searchParams.set('q', productIds.map(id => `id:${id}`).join(' OR '));
+      searchUrl.searchParams.set('resources[type]', 'product');
+      
+      let productHandlesMap = new Map();
+      try {
+        const searchSectionHTML = await sectionRenderer.getSectionHTML('search-results', false, searchUrl);
+        if (searchSectionHTML) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(searchSectionHTML, 'text/html');
+          const productItems = Array.from(doc.querySelectorAll('.product-grid__item[data-product-id]'));
+          
+          productItems.forEach((item) => {
+            const id = item.dataset.productId || item.getAttribute('data-product-id');
+            const link = item.querySelector('a[href*="/products/"]');
+            if (link && id) {
+              const href = link.getAttribute('href');
+              const handle = href ? href.split('/products/')[1]?.split('?')[0] : null;
+              if (handle) {
+                productHandlesMap.set(String(id), handle);
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.warn('Error fetching product handles from search:', error);
+      }
+    
+    console.log(`Found ${productHandlesMap.size} product handles`);
+    
+    // Fetch individual product cards using section-rendering-product-card
+    // This section includes full content (gallery, title, price) without needing blocks
+    const productCardsPromises = productIds.map(async (productId) => {
+      try {
+        // Get handle from map, or try to construct URL
+        let handle = productHandlesMap.get(String(productId));
+        
+        if (!handle) {
+          console.warn(`No handle found for product ${productId}, skipping...`);
+          return null;
+        }
+        
+        // Build product URL with section_id parameter
+        const productUrl = new URL(`/products/${handle}`, location.origin);
+        productUrl.searchParams.set('section_id', 'section-rendering-product-card');
+        
+        console.log(`Fetching product card for ID ${productId} (handle: ${handle})...`);
+        
+        // Fetch using section-rendering-product-card which has full content
+        const sectionHTML = await sectionRenderer.getSectionHTML('section-rendering-product-card', false, productUrl);
+        
+        if (!sectionHTML || sectionHTML.trim().length === 0) {
+          console.warn(`No HTML returned for product ${productId}`);
+          return null;
+        }
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(sectionHTML, 'text/html');
+        const productCard = doc.querySelector('product-card');
+        
+        if (!productCard) {
+          console.warn(`No product-card found in HTML for product ${productId}`);
+          return null;
+        }
+        
+        // Check if card has full content
+        const cardContent = productCard.querySelector('.product-card__content');
+        const cardGallery = productCard.querySelector('.card-gallery');
+        const hasFullContent = cardContent && cardContent.innerHTML.trim().length > 0 && 
+                              cardGallery && cardGallery.innerHTML.trim().length > 0;
+        
+        console.log(`Product ${productId} card check:`, {
+          hasProductCard: !!productCard,
+          hasCardContent: !!cardContent,
+          hasCardGallery: !!cardGallery,
+          contentLength: cardContent?.innerHTML.trim().length || 0,
+          galleryLength: cardGallery?.innerHTML.trim().length || 0,
+          hasFullContent: hasFullContent,
+          cardOuterHTMLLength: productCard.outerHTML.trim().length
+        });
+        
+        if (!hasFullContent) {
+          console.warn(`Product ${productId} card is incomplete. HTML preview:`, productCard.outerHTML.substring(0, 500));
+          return null;
+        }
+        
+        // Extract URL for productDataMap (we already have handle from the map)
+        const link = productCard.querySelector('a[href*="/products/"]');
+        const productUrlValue = link ? link.getAttribute('href') : null;
+        
+        // Store in productDataMap
+        if (!this.#productDataMap) {
+          this.#productDataMap = new Map();
+        }
+        if (productId && handle) {
+          this.#productDataMap.set(String(productId), { id: String(productId), handle, url: productUrlValue });
+        }
+        
+        return { id: String(productId), html: productCard.outerHTML };
+      } catch (error) {
+        console.error(`Error fetching product card for ${productId}:`, error);
+        return null;
+      }
+    });
+    
+    // Wait for all product cards to be fetched
+    const productCardsHTML = (await Promise.all(productCardsPromises))
+      .filter(card => card !== null);
+    
+    console.log(`Fetched ${productCardsHTML.length} product cards out of ${productIds.length} requested`);
+      
+    if (productCardsHTML.length === 0) {
+      console.log('No valid product cards fetched');
+      this.dataset.hasProducts = 'false';
+      return;
+    }
+
+    // Render the carousel
+    this.#renderCarousel(productCardsHTML, itemsPerView, columnsGap, iconsStyle);
+    } catch (error) {
+      console.error('Error fetching product cards:', error);
+      this.dataset.hasProducts = 'false';
+    }
+  }
+
+  /**
+   * Load and render recently viewed products
+   */
+  async #loadProducts() {
+    let viewedProducts = RecentlyViewed.getProducts();
+    const maxProducts = RecentlyViewed.getMaxProducts();
+    
+    // Get current product ID and filter it out if we're on a product page
+    const currentProductId = this.#getCurrentProductId();
+    if (currentProductId) {
+      viewedProducts = viewedProducts.filter(id => String(id) !== String(currentProductId));
+      console.log('Filtered out current product from recently viewed:', currentProductId);
+    }
+    
+    console.log('Recently viewed products IDs from localStorage:', viewedProducts);
+    console.log('Number of products in localStorage:', viewedProducts.length);
+    console.log('Max products setting:', maxProducts);
+    
+    if (viewedProducts.length === 0) {
+      console.log('No recently viewed products found');
+      this.dataset.hasProducts = 'false';
+      this.dataset.loaded = 'true';
+      return;
+    }
+
+    this.dataset.hasProducts = 'true';
+
+    try {
+      // Fetch products directly using section-rendering-product-card
+      await this.#renderProductsFromMainCollection(viewedProducts);
+      
+      this.dataset.loaded = 'true';
+    } catch (error) {
+      console.error('Error loading recently viewed products:', error);
+      this.dataset.hasProducts = 'false';
+      this.dataset.loaded = 'true';
+    }
+  }
+
+  /**
    * Intersection observer for lazy loading
    * @type {IntersectionObserver}
    */
@@ -17,12 +228,6 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     },
     { rootMargin: '0px 0px 400px 0px' }
   );
-
-  /**
-   * Map to store product data (id -> {id, handle, url})
-   * @type {Map<string, {id: string, handle: string, url: string}>}
-   */
-  #productDataMap = new Map();
 
   connectedCallback() {
     this.#intersectionObserver.observe(this);
@@ -66,211 +271,6 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     this.dataset.loaded = 'false';
     this.#loadProducts();
   };
-
-  /**
-   * Get the current product ID if we're on a product page
-   * @returns {string | null} The current product ID or null if not on a product page
-   */
-  #getCurrentProductId() {
-    // Try to get from sticky-add-to-cart
-    const stickyAddToCart = document.querySelector('sticky-add-to-cart');
-    if (stickyAddToCart?.dataset?.productId) {
-      return String(stickyAddToCart.dataset.productId);
-    }
-
-    // Try to get from product-form-component
-    const productForm = document.querySelector('product-form-component');
-    if (productForm?.dataset?.productId) {
-      return String(productForm.dataset.productId);
-    }
-
-    // Try to get from URL (if on /products/[handle] page)
-    const urlMatch = window.location.pathname.match(/\/products\/([^\/]+)/);
-    if (urlMatch) {
-      // We can't easily get the product ID from handle without fetching, but we can check if the handle matches
-      // For now, we'll rely on the data attributes above
-      // If those fail, we can try to match by handle later
-    }
-
-    return null;
-  }
-
-  /**
-   * Load and render recently viewed products
-   */
-  async #loadProducts() {
-    let viewedProducts = RecentlyViewed.getProducts();
-    const maxProducts = RecentlyViewed.getMaxProducts();
-    
-    // Get current product ID and filter it out if we're on a product page
-    const currentProductId = this.#getCurrentProductId();
-    if (currentProductId) {
-      viewedProducts = viewedProducts.filter(id => String(id) !== String(currentProductId));
-      console.log('Filtered out current product from recently viewed:', currentProductId);
-    }
-    
-    console.log('Recently viewed products IDs from localStorage:', viewedProducts);
-    console.log('Number of products in localStorage:', viewedProducts.length);
-    console.log('Max products setting:', maxProducts);
-    
-    // Check localStorage directly to verify
-    const rawStorage = localStorage.getItem('viewedProducts');
-    console.log('Raw localStorage value:', rawStorage);
-    
-    if (viewedProducts.length === 0) {
-      console.log('No recently viewed products found');
-      this.dataset.hasProducts = 'false';
-      this.dataset.loaded = 'true';
-      return;
-    }
-
-    this.dataset.hasProducts = 'true';
-    
-    // Clear any cached data to ensure fresh fetch
-    console.log('Clearing section renderer cache for fresh fetch');
-
-    try {
-      // Use search API to get products by ID (same approach as predictive-search)
-      const url = new URL(Theme.routes.search_url, location.origin);
-      url.searchParams.set('q', viewedProducts.map((id) => `id:${id}`).join(' OR '));
-      url.searchParams.set('resources[type]', 'product');
-
-      console.log('Fetching products from URL:', url.toString());
-
-      // Use predictive-search section which already handles recently viewed products
-      const sectionHTML = await sectionRenderer.getSectionHTML('predictive-search', false, url);
-      
-      if (!sectionHTML) {
-        console.log('No section HTML returned');
-        this.dataset.hasProducts = 'false';
-        this.dataset.loaded = 'true';
-        return;
-      }
-
-      console.log('Section HTML length:', sectionHTML.length);
-
-      // Parse the HTML
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(sectionHTML, 'text/html');
-      
-      // Find the predictive search products list (same structure as predictive-search uses)
-      const productsList = doc.querySelector('#predictive-search-products');
-      
-      if (!productsList) {
-        console.log('No products list found');
-        this.dataset.hasProducts = 'false';
-        this.dataset.loaded = 'true';
-        return;
-      }
-
-      // Get product cards from the list
-      let productItems = Array.from(productsList.querySelectorAll('.predictive-search-results__card--product'));
-      
-      // If not found, try alternative selectors
-      if (productItems.length === 0) {
-        productItems = Array.from(productsList.querySelectorAll('li[data-product-id]'));
-      }
-      
-      if (productItems.length === 0) {
-        productItems = Array.from(productsList.querySelectorAll('[data-product-id]'));
-      }
-      
-      console.log('Found product items:', productItems.length);
-      
-      if (productItems.length === 0) {
-        console.log('No product items found. HTML structure:', productsList.innerHTML.substring(0, 500));
-        this.dataset.hasProducts = 'false';
-        this.dataset.loaded = 'true';
-        return;
-      }
-
-      // First, let's log what we found to debug
-      console.log('Product items details:', productItems.map(item => {
-        // Check for product-card-link first (this is where the ID is stored)
-        const productCardLink = item.querySelector('product-card-link');
-        const productIdFromLink = productCardLink?.dataset.productId || productCardLink?.getAttribute('data-product-id');
-        
-        const productId = item.dataset.productId || 
-                         productIdFromLink ||
-                         item.querySelector('[data-product-id]')?.dataset.productId ||
-                         item.getAttribute('data-product-id');
-        const resourceCard = item.querySelector('resource-card');
-        const resourceCardId = resourceCard?.dataset.resourceId;
-        const link = item.querySelector('a[href*="/products/"]');
-        const productUrl = link ? link.getAttribute('href') : null;
-        
-        return {
-          productId,
-          productIdFromLink,
-          resourceCardId,
-          productUrl,
-          innerHTML: item.innerHTML.substring(0, 200)
-        };
-      }));
-
-      // Since we can't match by ID directly, we'll use the products in the order they come from search
-      // The search API should return products matching our IDs, so we'll use them as-is
-      // Extract product URLs/handles from all items
-      const allProductData = productItems.map((item) => {
-        const link = item.querySelector('a[href*="/products/"]');
-        const productUrl = link ? link.getAttribute('href') : null;
-        const handle = productUrl ? productUrl.split('/products/')[1]?.split('?')[0] : null;
-        
-        return {
-          element: item,
-          url: productUrl,
-          handle: handle
-        };
-      }).filter(item => item.handle); // Only keep items with valid handles
-
-      console.log('All product data extracted:', allProductData.map(p => ({ handle: p.handle, url: p.url })));
-
-      // Since we can't match by ID, we'll use the products in the order they appear
-      // and limit to the number of products in localStorage
-      const productData = allProductData
-        .slice(0, viewedProducts.length)
-        .map((item, index) => {
-          return {
-            id: viewedProducts[index], // Use the ID from localStorage for reference
-            element: item.element,
-            url: item.url,
-            handle: item.handle
-          };
-        });
-
-      console.log('Ordered products count:', productData.length);
-      console.log('Product data:', productData.map(p => ({ id: p.id, handle: p.handle, url: p.url })));
-
-      if (productData.length === 0) {
-        console.log('No ordered products found after filtering');
-        this.dataset.hasProducts = 'false';
-        this.dataset.loaded = 'true';
-        return;
-      }
-
-      // Render the products in slider format
-      // Use the handles we extracted to fetch products via search-results
-      // Pass the original viewedProducts order to ensure correct ordering
-      await this.#renderProductsFromHandles(productData, viewedProducts);
-      
-      // Store product data for later use in adding actions
-      if (!this.#productDataMap) {
-        this.#productDataMap = new Map();
-      }
-      productData.forEach(({ id, handle, url }) => {
-        if (id && handle) {
-          this.#productDataMap.set(String(id), { id: String(id), handle, url });
-        }
-      });
-      console.log(`[Recently Viewed] Stored ${this.#productDataMap.size} products in productDataMap`);
-      
-      this.dataset.loaded = 'true';
-    } catch (error) {
-      console.error('Error loading recently viewed products:', error);
-      this.dataset.hasProducts = 'false';
-      this.dataset.loaded = 'true';
-    }
-  }
 
   /**
    * Use resource-card from predictive-search as fallback
@@ -323,215 +323,107 @@ class RecentlyViewedProductsComponent extends HTMLElement {
   }
 
   /**
-   * Render products using handles to fetch from search-results
-   * @param {Array<{id: string, element: HTMLElement, url: string, handle: string}>} productData - Array of product data
-   * @param {string[]} viewedProductsOrder - The exact order from localStorage
+   * Extract product cards HTML from product items
+   * @param {HTMLElement[]} productItems - Array of product item elements
+   * @returns {Array<{id: string, html: string}>}
    */
-  async #renderProductsFromHandles(productData, viewedProductsOrder) {
-    const itemsPerView = parseInt(this.dataset.itemsPerView) || 4;
-    const columnsGap = parseInt(this.dataset.columnsGap) || 8;
-    const iconsStyle = this.dataset.iconsStyle || 'arrow';
-
-    // Try to get product cards from main-collection first, fallback to resource-card
-    let productCardsHTML;
-    
-    // Use the exact order from localStorage, not from productData
-    const productIds = viewedProductsOrder || productData.map(p => p.id);
-    console.log('Product IDs to fetch (in exact localStorage order):', productIds);
-    console.log('Product data order:', productData.map(p => p.id));
-    
-    const searchUrl = new URL(Theme.routes.search_url, location.origin);
-    searchUrl.searchParams.set('q', productIds.map(id => `id:${id}`).join(' OR '));
-    searchUrl.searchParams.set('resources[type]', 'product');
-    
-    console.log('Fetching products from search-results section (which uses full product card structure):', searchUrl.toString());
-    
-    try {
-      // Try fetching from search-results section first, which should render products with full card-gallery structure
-      // Add timestamp to URL to bust any caching
-      searchUrl.searchParams.set('_t', Date.now().toString());
-      let sectionHTML = await sectionRenderer.getSectionHTML('search-results', false, searchUrl);
-      let sectionName = 'search-results';
+  #extractProductCards(productItems) {
+    return productItems.map((item) => {
+      const productId = item.dataset.productId || item.getAttribute('data-product-id');
       
-      // If search-results didn't work, try main-collection
-      if (!sectionHTML || sectionHTML.trim().length === 0) {
-        console.log('search-results returned empty, trying main-collection...');
-        sectionHTML = await sectionRenderer.getSectionHTML('main-collection', false, searchUrl);
-        sectionName = 'main-collection';
+      // Get the product-card element directly from the item
+      const productCard = item.querySelector('product-card');
+      
+      if (!productCard) {
+        console.warn(`Product ${productId} has no product-card element! Using item.innerHTML as fallback`);
+        const productCardHTML = item.innerHTML;
+        return { id: String(productId), html: productCardHTML };
       }
       
-      if (sectionHTML) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(sectionHTML, 'text/html');
-        const productItems = Array.from(doc.querySelectorAll('.product-grid__item[data-product-id]'));
-        
-        console.log(`Found ${productItems.length} product items in ${sectionName}`);
-        
-        if (productItems.length > 0) {
-          const orderedProducts = productIds
-            .map((id) => {
-              const item = productItems.find((p) => {
-                const productId = p.dataset.productId || p.getAttribute('data-product-id');
-                return String(productId) === String(id);
-              });
-              return item;
-            })
-            .filter(Boolean);
-
-          if (orderedProducts.length > 0) {
-            // Map in the exact order from localStorage - need to use async map for fallback fetching
-            const productCardsPromises = productIds.map(async (productId) => {
-              // Find the item that matches this product ID
-              const item = orderedProducts.find((p) => {
-                const itemId = p.dataset.productId || p.getAttribute('data-product-id');
-                return String(itemId) === String(productId);
-              });
-              
-              if (!item) {
-                console.warn(`Product ${productId} not found in ordered products`);
-                return null;
-              }
-              
-              const productCardHTML = item.innerHTML;
-              
-              // Check if product card has content and card-gallery with slideshow-component
-              const tempDiv = document.createElement('div');
-              tempDiv.innerHTML = productCardHTML;
-              const productCard = tempDiv.querySelector('product-card');
-              const cardContent = productCard?.querySelector('.product-card__content');
-              const hasContent = cardContent && cardContent.innerHTML.trim().length > 0;
-              
-              // Check if card-gallery and slideshow-component are present
-              const cardGallery = tempDiv.querySelector('.card-gallery');
-              const slideshowComponent = tempDiv.querySelector('.card-gallery slideshow-component');
-              
-              console.log(`Product ${productId} from ${sectionName}:`, {
-                hasContent,
-                hasCardGallery: !!cardGallery,
-                hasSlideshowComponent: !!slideshowComponent,
-                cardGalleryHTML: cardGallery ? cardGallery.outerHTML.substring(0, 300) : 'NONE',
-                slideshowHTML: slideshowComponent ? slideshowComponent.outerHTML.substring(0, 200) : 'NONE',
-                anchorTag: tempDiv.querySelector('a[ref="cardGalleryLink"], .card-gallery a'),
-                anchorHasSlideshow: tempDiv.querySelector('a[ref="cardGalleryLink"] slideshow-component, .card-gallery a slideshow-component') ? 'YES' : 'NO',
-                fullCardHTML: productCardHTML.substring(0, 1000)
-              });
-              
-              // CRITICAL: If card-gallery or slideshow-component is missing, the product card structure is incomplete
-              // This means products are being rendered with resource-card instead of full product-card with card-gallery
-              if (!cardGallery || !slideshowComponent) {
-                console.error(`Product ${productId} is MISSING card-gallery or slideshow-component!`);
-                console.error(`hasCardGallery: ${!!cardGallery}, hasSlideshowComponent: ${!!slideshowComponent}`);
-                console.error('This is why the slider is not showing - the slideshow-component is not in the HTML at all.');
-                console.error('Full product card HTML:', productCardHTML);
-                
-                // Product is rendered with resource-card or simple structure without card-gallery
-                // We need to inject card-gallery with slideshow-component structure
-                // But first, try fetching from a different section that might have full structure
-                const fallbackCard = await this.#fetchIndividualProductCard(productId, productData);
-                if (fallbackCard && fallbackCard.html) {
-                  const fallbackDiv = document.createElement('div');
-                  fallbackDiv.innerHTML = fallbackCard.html;
-                  const fallbackCardGallery = fallbackDiv.querySelector('.card-gallery');
-                  const fallbackSlideshow = fallbackDiv.querySelector('.card-gallery slideshow-component');
-                  
-                  if (fallbackCardGallery && fallbackSlideshow) {
-                    console.log(`Successfully fetched product ${productId} with full structure from fallback method`);
-                    return fallbackCard;
-                  }
-                }
-                
-                // If fallback didn't work, try fetching from collections.all collection
-                // This should render products with full product card structure
-                const collectionCard = await this.#fetchProductFromCollection(productId, productData);
-                if (collectionCard && collectionCard.html) {
-                  const collectionDiv = document.createElement('div');
-                  collectionDiv.innerHTML = collectionCard.html;
-                  const collectionCardGallery = collectionDiv.querySelector('.card-gallery');
-                  const collectionSlideshow = collectionDiv.querySelector('.card-gallery slideshow-component');
-                  
-                  if (collectionCardGallery && collectionSlideshow) {
-                    console.log(`Successfully fetched product ${productId} with full structure from collection page`);
-                    return collectionCard;
-                  }
-                }
-                
-                // If all methods fail, log error and skip this product for now
-                // Products without card-gallery won't have slider functionality
-                console.error(`Cannot fetch product ${productId} with full card-gallery structure using any method. Skipping slider for this product.`);
-                return null;
-              }
-              
-              // Verify slideshow-component is inside the anchor tag (as expected per card-gallery.liquid structure)
-              const anchorTag = tempDiv.querySelector('a[ref="cardGalleryLink"], .card-gallery a');
-              const slideshowInAnchor = anchorTag?.querySelector('slideshow-component');
-              
-              if (!slideshowInAnchor && slideshowComponent) {
-                console.warn(`Product ${productId}: slideshow-component exists but NOT inside anchor tag! Structure might be different.`);
-                console.warn('Anchor tag:', anchorTag?.outerHTML.substring(0, 200));
-                console.warn('Slideshow location:', slideshowComponent.parentElement?.tagName);
-              } else if (slideshowInAnchor) {
-                console.log(`Product ${productId}: slideshow-component is correctly inside anchor tag ✓`);
-              }
-              
-              return { id: productId, html: productCardHTML };
-            });
-            
-            // Wait for all promises to resolve
-            productCardsHTML = (await Promise.all(productCardsPromises))
-              .filter(card => {
-                if (!card) return false;
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = card.html;
-                const productCard = tempDiv.querySelector('product-card');
-                const cardContent = productCard?.querySelector('.product-card__content');
-                return cardContent && cardContent.innerHTML.trim().length > 0;
-              });
-          }
-        }
+      // Check if product card has full content BEFORE extracting
+      const cardContent = productCard.querySelector('.product-card__content');
+      const cardGallery = productCard.querySelector('.card-gallery');
+      const hasFullContent = cardContent && cardContent.innerHTML.trim().length > 0 && 
+                            cardGallery && cardGallery.innerHTML.trim().length > 0;
+      
+      console.log(`Product ${productId} BEFORE extraction check:`, {
+        hasProductCard: !!productCard,
+        hasCardContent: !!cardContent,
+        hasCardGallery: !!cardGallery,
+        contentLength: cardContent?.innerHTML.trim().length || 0,
+        galleryLength: cardGallery?.innerHTML.trim().length || 0,
+        hasFullContent: hasFullContent,
+        productCardInnerHTMLLength: productCard.innerHTML.trim().length,
+        productCardOuterHTMLLength: productCard.outerHTML.trim().length
+      });
+      
+      // If the product card doesn't have full content, it might not be fully rendered yet
+      // Use the entire item's innerHTML which should include all blocks
+      let productCardHTML;
+      if (!hasFullContent) {
+        console.warn(`Product ${productId} card appears incomplete. Using item.innerHTML instead.`);
+        // Use the full item innerHTML which includes all content blocks
+        productCardHTML = item.innerHTML;
+      } else {
+        // Use the product-card's outerHTML to get the complete element
+        productCardHTML = productCard.outerHTML;
       }
-    } catch (error) {
-      console.error('Error fetching from main-collection:', error);
-    }
-    
-    // Fallback to resource-card if main-collection didn't work
-    if (!productCardsHTML || productCardsHTML.length === 0) {
-      console.log('Using resource-card from predictive-search as fallback');
-      productCardsHTML = this.#useResourceCardsFromPredictiveSearch(productData, viewedProductsOrder);
-    }
-    
-    if (!productCardsHTML || productCardsHTML.length === 0) {
-      console.log('No valid product cards extracted');
-      this.dataset.hasProducts = 'false';
-      return;
-    }
-
-    console.log(`Extracted ${productCardsHTML.length} product cards with full HTML`);
-    console.log('Product cards order:', productCardsHTML.map(c => c.id));
-
-    // Create list items - the html from search-results is the content of .product-grid__item
-    // which includes the full product card with all blocks (gallery, title, price, etc.)
-    const listItems = productCardsHTML.map(({ id, html }) => {
-      // Extract handle from rendered HTML if not already in map
+      
+      console.log(`Extracting product ${productId}, HTML length: ${productCardHTML.length}`);
+      console.log(`Product ${productId} HTML preview:`, productCardHTML.substring(0, 800));
+      
+      // Extract handle and URL for productDataMap
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = productCardHTML;
+      const link = tempDiv.querySelector('a[href*="/products/"]') || productCard.querySelector('a[href*="/products/"]');
+      const productUrl = link ? link.getAttribute('href') : null;
+      const handle = productUrl ? productUrl.split('/products/')[1]?.split('?')[0] : null;
+      
+      // Store in productDataMap for later use
       if (!this.#productDataMap) {
         this.#productDataMap = new Map();
       }
-      if (!this.#productDataMap.has(String(id))) {
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        const handle = this.#extractHandleFromCard(tempDiv);
-        if (handle) {
-          // Extract URL from product card link
-          const link = tempDiv.querySelector('a[href*="/products/"]');
-          const url = link ? link.getAttribute('href') : null;
-          this.#productDataMap.set(String(id), { id: String(id), handle, url });
-          console.log(`[Recently Viewed] Extracted and stored handle "${handle}" for product ${id}`);
-        } else {
-          console.warn(`[Recently Viewed] Could not extract handle from rendered HTML for product ${id}`);
-        }
+      if (productId && handle) {
+        this.#productDataMap.set(String(productId), { id: String(productId), handle, url: productUrl });
       }
       
-      // The html already contains the product card with all blocks
-      // Just wrap it in resource-list__item structure like product-slider does
+      // Verify the extracted HTML has content
+      const extractedCard = tempDiv.querySelector('product-card');
+      const extractedContent = extractedCard?.querySelector('.product-card__content');
+      const extractedGallery = extractedCard?.querySelector('.card-gallery');
+      
+      console.log(`Product ${productId} AFTER extraction check:`, {
+        hasExtractedCard: !!extractedCard,
+        hasExtractedContent: !!extractedContent,
+        hasExtractedGallery: !!extractedGallery,
+        extractedContentLength: extractedContent?.innerHTML.trim().length || 0,
+        extractedGalleryLength: extractedGallery?.innerHTML.trim().length || 0
+      });
+      
+      if (!extractedContent || extractedContent.innerHTML.trim().length === 0) {
+        console.error(`Product ${productId} extracted HTML has no content! Full HTML:`, productCardHTML);
+      }
+      
+      return { id: String(productId), html: productCardHTML };
+    }).filter(card => {
+      // More lenient filter - just check if we have HTML
+      if (!card || !card.html || card.html.trim().length === 0) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  /**
+   * Render the carousel with product cards
+   * @param {Array<{id: string, html: string}>} productCardsHTML - Array of product card HTML
+   * @param {number} itemsPerView - Number of items per view
+   * @param {number} columnsGap - Gap between columns
+   * @param {string} iconsStyle - Icon style for arrows
+   */
+  #renderCarousel(productCardsHTML, itemsPerView, columnsGap, iconsStyle) {
+    // Create list items - wrap each product card in resource-list__item structure
+    const listItems = productCardsHTML.map(({ id, html }) => {
       return `
         <div class="resource-list__item" data-product-slider-item="true" data-product-id="${id}">
           ${html}
@@ -568,11 +460,6 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     // Generate timeline for slideshow (required by slideshow component)
     const timeline = Array.from({length: listItemsArray.length}, (_, i) => `--slide-${i}`).join(' ');
 
-    // Use the resource-list-carousel snippet structure via Section Rendering API
-    // This will properly render the slideshow with all required refs and arrows
-    // First, let's try rendering a simple product-slider section structure
-    // But since we can't easily do that, let's manually create the proper structure
-    
     // Create slideshow using the exact structure from slideshow snippet
     const timelineStyle = `--slideshow-timeline: ${timeline};`;
     
@@ -661,51 +548,183 @@ class RecentlyViewedProductsComponent extends HTMLElement {
       console.log('Inserting carousel HTML, length:', carouselHTML.length);
       console.log('Carousel HTML preview:', carouselHTML.substring(0, 500));
       
-                    contentEl.innerHTML = carouselHTML;
-                    
-                    // Check if slideshow was created and verify structure
-                    setTimeout(() => {
-                      const slideshow = contentEl.querySelector('slideshow-component[ref="recentlyViewedProductsSlider"]');
-                      const scroller = contentEl.querySelector('slideshow-slides[ref="scroller"]');
-                      const slides = contentEl.querySelectorAll('slideshow-slide');
-                      const productCards = contentEl.querySelectorAll('product-card');
-                      
-                      console.log('After HTML insertion:');
-                      console.log('- Slideshow found:', !!slideshow);
-                      console.log('- Scroller found:', !!scroller);
-                      console.log('- Slides count:', slides.length);
-                      console.log('- Product cards count:', productCards.length);
-                      
-                      if (slideshow && scroller) {
-                        console.log('Slideshow structure is correct');
-                      } else {
-                        console.error('Slideshow structure is missing required elements!');
-                        console.log('Full HTML:', contentEl.innerHTML.substring(0, 1000));
-                      }
-                      
-                      // Setup product cards first
-                      this.#setupProductCards();
-                      
-                      // Wait for products to be fully rendered before adding actions
-                      setTimeout(async () => {
-                        // Run setup again to catch any dynamically added cards
-                        this.#setupProductCards();
-                        
-                        await this.#enableProductCardImageSliders();
-                        await this.#addProductActions();
-                        
-                        // Run setup one more time after adding actions to ensure attributes are set
-                        setTimeout(() => {
-                          this.#setupProductCards();
-                        }, 100);
-                        
-                        // The slideshow component should auto-initialize, but we need to set up arrow handlers
-                        // Wait a bit longer to ensure slideshow is fully initialized
-                        setTimeout(() => {
-                          this.#initializeSlideshow();
-                        }, 200);
-                      }, 300);
-                    }, 300);
+      // Use a more reliable method to insert HTML that allows custom elements to initialize
+      // Create a temporary container to parse and upgrade custom elements
+      const tempContainer = document.createElement('div');
+      tempContainer.innerHTML = carouselHTML;
+      
+      // Upgrade any custom elements in the temp container
+      const productCardsInTemp = tempContainer.querySelectorAll('product-card');
+      productCardsInTemp.forEach(card => {
+        // Force custom element upgrade if needed
+        if (customElements.get('product-card') && card.constructor === HTMLElement) {
+          // The browser should auto-upgrade, but ensure it happens
+          console.log('Product card needs upgrade in temp container');
+        }
+      });
+      
+      // Clear and insert
+      contentEl.innerHTML = '';
+      contentEl.appendChild(tempContainer);
+      
+      // Move all children from temp container to contentEl (this preserves custom elements)
+      while (tempContainer.firstChild) {
+        contentEl.appendChild(tempContainer.firstChild);
+      }
+      
+      // Check if slideshow was created and verify structure
+      setTimeout(() => {
+        const slideshow = contentEl.querySelector('slideshow-component[ref="recentlyViewedProductsSlider"]');
+        const scroller = contentEl.querySelector('slideshow-slides[ref="scroller"]');
+        const slides = contentEl.querySelectorAll('slideshow-slide');
+        const productCards = contentEl.querySelectorAll('product-card');
+        const resourceListItems = contentEl.querySelectorAll('.resource-list__item');
+        
+        console.log('After HTML insertion:');
+        console.log('- Slideshow found:', !!slideshow);
+        console.log('- Scroller found:', !!scroller);
+        console.log('- Slides count:', slides.length);
+        console.log('- Resource list items count:', resourceListItems.length);
+        console.log('- Product cards count:', productCards.length);
+        
+        // Debug: Check if product cards are visible and have content
+        productCards.forEach((card, index) => {
+          const styles = window.getComputedStyle(card);
+          const cardContent = card.querySelector('.product-card__content');
+          const cardGallery = card.querySelector('.card-gallery');
+          const cardTitle = card.querySelector('.product-title-text, .text-block--product_title, .resource-card__title');
+          
+          // Check for actual rendered content
+          const hasImages = card.querySelector('img, picture, video') !== null;
+          const hasText = card.textContent.trim().length > 0;
+          const cardRect = card.getBoundingClientRect();
+          
+          console.log(`Product card ${index} (ID: ${card.dataset.productId}):`, {
+            display: styles.display,
+            visibility: styles.visibility,
+            opacity: styles.opacity,
+            height: styles.height,
+            width: styles.width,
+            boundingRect: { width: cardRect.width, height: cardRect.height, top: cardRect.top, left: cardRect.left },
+            hasContent: card.innerHTML.trim().length > 0,
+            hasCardContent: !!cardContent,
+            hasCardGallery: !!cardGallery,
+            hasTitle: !!cardTitle,
+            hasImages: hasImages,
+            hasText: hasText,
+            textContentLength: card.textContent.trim().length,
+            innerHTMLLength: card.innerHTML.trim().length,
+            contentHTML: cardContent ? cardContent.innerHTML.substring(0, 200) : 'NO CONTENT',
+            galleryHTML: cardGallery ? cardGallery.innerHTML.substring(0, 200) : 'NO GALLERY',
+            fullCardHTML: card.outerHTML.substring(0, 800)
+          });
+          
+          // If card has no visible dimensions, force it
+          if (cardRect.width === 0 || cardRect.height === 0) {
+            console.warn(`Product card ${index} has zero dimensions! Forcing display...`);
+            card.style.minHeight = '200px';
+            card.style.minWidth = '150px';
+          }
+        });
+        
+        // Ensure product cards are visible and properly initialized
+        productCards.forEach((card, index) => {
+          // Force visibility
+          card.style.display = '';
+          card.style.visibility = '';
+          card.style.opacity = '';
+          
+          // Ensure card content is visible
+          const cardContent = card.querySelector('.product-card__content');
+          if (cardContent) {
+            cardContent.style.display = '';
+            cardContent.style.visibility = '';
+          }
+          
+          // Ensure card gallery is visible
+          const cardGallery = card.querySelector('.card-gallery');
+          if (cardGallery) {
+            cardGallery.style.display = '';
+            cardGallery.style.visibility = '';
+          }
+          
+          // Ensure product-card custom element is properly initialized
+          if (card.tagName.toLowerCase() === 'product-card') {
+            // Check if it's a custom element instance
+            const isCustomElement = card.constructor.name !== 'HTMLElement';
+            console.log(`Product card ${index} custom element check:`, {
+              tagName: card.tagName,
+              constructor: card.constructor.name,
+              isCustomElement: isCustomElement,
+              hasConnectedCallback: typeof card.connectedCallback === 'function'
+            });
+            
+            // Force reconnection to trigger connectedCallback if needed
+            if (!isCustomElement && customElements.get('product-card')) {
+              console.log('Product card not upgraded, forcing reconnection...');
+              const parent = card.parentElement;
+              const nextSibling = card.nextSibling;
+              parent.removeChild(card);
+              parent.insertBefore(card, nextSibling);
+            }
+            
+            // Ensure all child elements are visible
+            const allChildren = card.querySelectorAll('*');
+            allChildren.forEach(child => {
+              const childStyles = window.getComputedStyle(child);
+              if (childStyles.display === 'none' || childStyles.visibility === 'hidden') {
+                child.style.display = '';
+                child.style.visibility = '';
+                console.log(`Fixed hidden child element:`, child.tagName, child.className);
+              }
+            });
+          }
+        });
+        
+        // Also ensure resource-list__item containers are visible
+        resourceListItems.forEach((item) => {
+          item.style.display = '';
+          item.style.visibility = '';
+          const styles = window.getComputedStyle(item);
+          console.log('Resource list item styles:', {
+            display: styles.display,
+            visibility: styles.visibility,
+            height: styles.height,
+            width: styles.width,
+            hasProductCard: !!item.querySelector('product-card')
+          });
+        });
+        
+        if (slideshow && scroller) {
+          console.log('Slideshow structure is correct');
+        } else {
+          console.error('Slideshow structure is missing required elements!');
+          console.log('Full HTML:', contentEl.innerHTML.substring(0, 1000));
+        }
+        
+        // Setup product cards first
+        this.#setupProductCards();
+        
+        // Wait for products to be fully rendered before adding actions
+        setTimeout(async () => {
+          // Run setup again to catch any dynamically added cards
+          this.#setupProductCards();
+          
+          await this.#enableProductCardImageSliders();
+          await this.#addProductActions();
+          
+          // Run setup one more time after adding actions to ensure attributes are set
+          setTimeout(() => {
+            this.#setupProductCards();
+          }, 100);
+          
+          // The slideshow component should auto-initialize, but we need to set up arrow handlers
+          // Wait a bit longer to ensure slideshow is fully initialized
+          setTimeout(() => {
+            this.#initializeSlideshow();
+          }, 200);
+        }, 300);
+      }, 300);
     } else {
       console.error('Content element not found!');
     }
@@ -1316,17 +1335,21 @@ class RecentlyViewedProductsComponent extends HTMLElement {
     const productResults = await Promise.all(productPromises);
     console.log(`[Recently Viewed] Processed ${productResults.length} products`);
     
+    // Filter out null results
+    const validResults = productResults.filter(result => result !== null);
+    console.log(`[Recently Viewed] Valid results: ${validResults.length} out of ${productResults.length}`);
+    
     let actionsAdded = 0;
     
     // Add actions to each product card (use for-await to handle async properly)
-    for (const { productId, item, cardContent, product, productCard } of productResults) {
+    for (const { productId, item, cardContent, product, productCard } of validResults) {
       if (!productId || !item || !cardContent) {
-        return;
+        continue;
       }
 
       if (!product) {
         console.warn(`[Recently Viewed] Product ${productId}: No product data available`);
-        return;
+        continue;
       }
       
       // Check if product is available - actions only show for available products
