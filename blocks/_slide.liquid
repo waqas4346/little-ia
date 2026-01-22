@@ -94,7 +94,7 @@
   </div>
   <div
     class="spacing-style slide__content{% if block_settings.inherit_color_scheme == false %} color-{{ block_settings.color_scheme }}{% endif %}{% if preview_image or block_settings.toggle_overlay %} background-transparent{% endif %}"
-    style="{% render 'spacing-style', settings: block_settings %}"
+    style="{% render 'spacing-style', settings: block_settings %}{% if block_settings.use_mobile_padding %} --padding-block-start-mobile: {{ block_settings.padding-block-start-mobile }}px; --padding-block-end-mobile: {{ block_settings.padding-block-end-mobile }}px; --padding-inline-start-mobile: {{ block_settings.padding-inline-start-mobile }}px; --padding-inline-end-mobile: {{ block_settings.padding-inline-end-mobile }}px;{% endif %}"
     {{ block.shopify_attributes }}
   >
     <div
@@ -159,6 +159,15 @@
 
   .slide__image-container > .slide__video-poster {
     position: absolute;
+  }
+
+  @media screen and (max-width: 749px) {
+    .slideshow-section .slide__content[style*='--padding-block-start-mobile'] {
+      padding-block-start: var(--padding-block-start-mobile);
+      padding-block-end: var(--padding-block-end-mobile);
+      padding-inline-start: var(--padding-inline-start-mobile);
+      padding-inline-end: var(--padding-inline-end-mobile);
+    }
   }
 {% endstylesheet %}
 
@@ -351,6 +360,31 @@
       "visible_if": "{{ block.settings.content_direction == 'column' }}"
     },
     {
+      "type": "select",
+      "id": "vertical_alignment_flex_direction_column_mobile",
+      "label": "Position (Mobile)",
+      "options": [
+        {
+          "value": "flex-start",
+          "label": "t:options.top"
+        },
+        {
+          "value": "center",
+          "label": "t:options.center"
+        },
+        {
+          "value": "flex-end",
+          "label": "t:options.bottom"
+        },
+        {
+          "value": "space-between",
+          "label": "t:options.space_between"
+        }
+      ],
+      "default": "center",
+      "visible_if": "{{ block.settings.content_direction == 'column' }}"
+    },
+    {
       "type": "range",
       "id": "gap",
       "label": "t:settings.gap",
@@ -467,6 +501,56 @@
       "step": 1,
       "unit": "px",
       "default": 0
+    },
+    {
+      "type": "checkbox",
+      "id": "use_mobile_padding",
+      "label": "Use separate mobile padding",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start-mobile",
+      "label": "Top (mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.use_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end-mobile",
+      "label": "Bottom (mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.use_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start-mobile",
+      "label": "Left (mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.use_mobile_padding }}"
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end-mobile",
+      "label": "Right (mobile)",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0,
+      "visible_if": "{{ block.settings.use_mobile_padding }}"
     }
   ],
   "presets": [
