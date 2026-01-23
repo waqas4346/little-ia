@@ -522,6 +522,10 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         this.setupFontButtons();
         this.setupColorButtons();
         this.setupNameTabs();
+        // Set up listeners for other input types (select, date, etc.)
+        this.setupOtherInputListeners();
+        // Initialize save button state after all fields are set up
+        this.updateSaveButton();
       });
     });
   }
@@ -552,6 +556,25 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         if (activePanel) {
           activePanel.classList.add('is-active');
         }
+      });
+    });
+    
+    // Set up input listeners for name tab inputs
+    const nameTabInputs = this.refs.formContainer.querySelectorAll('.personalise-name-tabs__input');
+    nameTabInputs.forEach(input => {
+      input.addEventListener('input', () => {
+        // Update character counter
+        const tabType = input.name.includes("Baby's Name") ? 'baby' : 
+                       input.name.includes("Kid's Name") ? 'kid' : 
+                       input.name.includes("Mum's Name") ? 'mum' : null;
+        if (tabType) {
+          const counter = this.refs.formContainer.querySelector(`[data-count="${tabType}"]`);
+          if (counter) {
+            counter.textContent = input.value.length;
+          }
+        }
+        // Update save button state when name tab input changes
+        this.updateSaveButton();
       });
     });
   }
@@ -794,6 +817,43 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     
     // Set up event listeners for color radio buttons
     this.setupColorButtons();
+    
+    // Set up listeners for other input types
+    this.setupOtherInputListeners();
+    
+    // Initialize save button state after all fields are set up
+    this.updateSaveButton();
+  }
+  
+  /**
+   * Sets up event listeners for other input types (select, date, checkbox, etc.)
+   */
+  setupOtherInputListeners() {
+    if (!this.refs.formContainer) return;
+    
+    // Listen for select dropdown changes
+    const selects = this.refs.formContainer.querySelectorAll('select');
+    selects.forEach(select => {
+      select.addEventListener('change', () => {
+        this.updateSaveButton();
+      });
+    });
+    
+    // Listen for date input changes
+    const dateInputs = this.refs.formContainer.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(input => {
+      input.addEventListener('change', () => {
+        this.updateSaveButton();
+      });
+    });
+    
+    // Listen for checkbox changes
+    const checkboxes = this.refs.formContainer.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        this.updateSaveButton();
+      });
+    });
   }
 
   /**
@@ -808,6 +868,8 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         if (counter) {
           counter.textContent = input.value.length;
         }
+        // Update save button state when input changes
+        this.updateSaveButton();
       });
     });
   }
@@ -834,6 +896,9 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
           btn.classList.remove('personalise-modal__font-button--selected');
         });
         button.classList.add('personalise-modal__font-button--selected');
+        
+        // Update save button state after font selection
+        this.updateSaveButton();
       });
     });
   }
@@ -846,8 +911,95 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     colorRadios.forEach(radio => {
       radio.addEventListener('change', () => {
         // Visual selection is handled by CSS :has() selector
+        // Update save button state after color selection
+        this.updateSaveButton();
       });
     });
+  }
+
+  /**
+   * Updates the save button enabled/disabled state
+   */
+  updateSaveButton() {
+    if (!this.refs.saveButton || !this.refs.formContainer) {
+      return;
+    }
+    
+    // Check if name field exists and has value (for personalized_name products)
+    const nameInput = this.refs.formContainer.querySelector('#build-your-set-personalise-name, input[name="personalise-name"]');
+    const hasName = nameInput ? nameInput.value.trim().length > 0 : true;
+    
+    // Check if baby/kid/mum name inputs exist and have values
+    const babyNameInput = this.refs.formContainer.querySelector('input[name="properties[Baby\'s Name]"]');
+    const kidNameInput = this.refs.formContainer.querySelector('input[name="properties[Kid\'s Name]"]');
+    const mumNameInput = this.refs.formContainer.querySelector('input[name="properties[Mum\'s Name]"]');
+    
+    const hasBabyName = babyNameInput ? babyNameInput.value.trim().length > 0 : true;
+    const hasKidName = kidNameInput ? kidNameInput.value.trim().length > 0 : true;
+    const hasMumName = mumNameInput ? mumNameInput.value.trim().length > 0 : true;
+    
+    // If any of these inputs exist, they must have values
+    const babyNameRequired = babyNameInput && !hasBabyName;
+    const kidNameRequired = kidNameInput && !hasKidName;
+    const mumNameRequired = mumNameInput && !hasMumName;
+    
+    // Check if font field exists (required field with red asterisk)
+    const fontGrid = this.refs.formContainer.querySelector('.personalise-modal__font-grid');
+    const fontHiddenInput = fontGrid ? this.refs.formContainer.querySelector('input[type="hidden"][data-field-name="personalise-font"]') : null;
+    const hasFont = fontGrid ? (fontHiddenInput && fontHiddenInput.value.trim()) : true;
+    const fontRequired = fontGrid && !hasFont;
+    
+    // Check if color field exists (required field with red asterisk)
+    const colorGrid = this.refs.formContainer.querySelector('.personalise-modal__color-grid');
+    const colorRadioInputs = colorGrid ? colorGrid.querySelectorAll('input[type="radio"]') : [];
+    const hasColor = colorGrid ? Array.from(colorRadioInputs).some(input => input.checked) : true;
+    const colorRequired = colorGrid && colorRadioInputs.length > 0 && !hasColor;
+    
+    // Check for any other required fields (fields with required attribute or aria-required)
+    const allInputs = this.refs.formContainer.querySelectorAll('input, textarea, select');
+    let hasMissingRequiredField = false;
+    allInputs.forEach(input => {
+      // Skip radio buttons that aren't checked (they're handled separately)
+      if (input.type === 'radio' && !input.checked) {
+        return;
+      }
+      // Skip hidden inputs (they're handled separately for font)
+      if (input.type === 'hidden' && input.dataset.fieldName === 'personalise-font') {
+        return;
+      }
+      // Check if field is required
+      if (input.hasAttribute('required') || input.hasAttribute('aria-required')) {
+        // For text inputs, textareas, and selects, check if they have a value
+        if ((input.type === 'text' || input.type === 'textarea' || input.tagName === 'TEXTAREA' || input.tagName === 'SELECT') && !input.value.trim()) {
+          hasMissingRequiredField = true;
+        }
+        // For checkboxes, check if they're checked
+        if (input.type === 'checkbox' && !input.checked) {
+          hasMissingRequiredField = true;
+        }
+      }
+    });
+    
+    // Disable save button if any required field is missing:
+    // 1. Name input exists but is empty (for personalized_name products)
+    // 2. Any baby/kid/mum name input exists but is empty
+    // 3. Font field exists but no font is selected
+    // 4. Color field exists but no color is selected
+    // 5. Any other required field is missing
+    if (nameInput && !hasName) {
+      this.refs.saveButton.disabled = true;
+    } else if (babyNameRequired || kidNameRequired || mumNameRequired) {
+      this.refs.saveButton.disabled = true;
+    } else if (fontRequired) {
+      this.refs.saveButton.disabled = true;
+    } else if (colorRequired) {
+      this.refs.saveButton.disabled = true;
+    } else if (hasMissingRequiredField) {
+      this.refs.saveButton.disabled = true;
+    } else {
+      // All required fields have values, enable save button
+      this.refs.saveButton.disabled = false;
+    }
   }
 
   /**
@@ -1090,6 +1242,12 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
 
         dialog.showModal();
         this.dispatchEvent(new DialogOpenEvent());
+        
+        // Initialize save button state after dialog opens
+        // Wait a bit for form fields to be generated
+        setTimeout(() => {
+          this.updateSaveButton();
+        }, 200);
 
         // Set up save button handler (remove old one first to prevent duplicates)
         if (this.refs.saveButton) {

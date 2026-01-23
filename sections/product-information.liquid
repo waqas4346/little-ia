@@ -193,15 +193,54 @@
         e.preventDefault();
         e.stopPropagation();
         
-        // Try to find and open the dialog with retries
-        function tryOpenDialog(attempts) {
-          attempts = attempts || 0;
-          const maxAttempts = 40; // Increased for slower mobile devices
-          
-          try {
-            // Check if dialog element exists in DOM
-            const dialog = document.getElementById('personalise-dialog') || 
-                          document.querySelector('personalise-dialog');
+          // Try to find and open the dialog with retries
+          function tryOpenDialog(attempts) {
+            attempts = attempts || 0;
+            const maxAttempts = 40; // Increased for slower mobile devices
+            
+            try {
+              // CRITICAL: Check if button is in quick-add modal - if so, find dialog within that modal
+              let dialog = null;
+              const quickAddModal = button.closest('#quick-add-modal-content');
+              
+              if (quickAddModal) {
+                // Button is in quick-add modal - find personalise-dialog associated with this modal
+                // First, try to find one marked for quick-add
+                const productFormComponent = quickAddModal.querySelector('product-form-component');
+                const productId = productFormComponent?.dataset?.productId;
+                
+                if (productId) {
+                  // Try to find dialog with matching product ID
+                  dialog = document.querySelector(`personalise-dialog[data-product-id="${productId}"][data-quick-add="true"]`);
+                }
+                
+                // If not found by product ID, try to find one in modal content
+                if (!dialog) {
+                  dialog = quickAddModal.querySelector('personalise-dialog');
+                }
+                
+                // If still not found, find one marked for quick-add (any product)
+                if (!dialog) {
+                  dialog = document.querySelector('personalise-dialog[data-quick-add="true"]');
+                }
+                
+                // Last resort: find any dialog that's not the main product page one
+                if (!dialog) {
+                  const allDialogs = document.querySelectorAll('personalise-dialog');
+                  if (allDialogs.length > 1) {
+                    dialog = Array.from(allDialogs).find(d => {
+                      const context = d.getAttribute('data-context');
+                      return context !== 'product-page';
+                    }) || allDialogs[0];
+                  } else if (allDialogs.length === 1) {
+                    dialog = allDialogs[0];
+                  }
+                }
+              } else {
+                // Button is NOT in quick-add modal - use main product page dialog
+                dialog = document.getElementById('personalise-dialog') || 
+                        document.querySelector('personalise-dialog');
+              }
             
             if (dialog) {
               // Check if custom element class is defined
@@ -301,6 +340,12 @@
           productFormComponents.forEach(formComponent => {
             const compProductId = formComponent.dataset?.productId || formComponent.dataset?.productId;
             if (compProductId === productId || compProductId === String(productId)) {
+              // CRITICAL: Exclude forms that are in quick-add modal (they should be handled separately)
+              const quickAddModal = document.querySelector('#quick-add-modal-content');
+              if (quickAddModal && quickAddModal.contains(formComponent)) {
+                return; // Skip this form - it's in quick-add modal
+              }
+              
               const compForm = formComponent.querySelector('form[data-type="add-to-cart-form"]');
               if (compForm && !allForms.includes(compForm)) {
                 allForms.push(compForm);
@@ -309,26 +354,36 @@
           });
         }
         
-        // Also check sticky-add-to-cart
+        // Also check sticky-add-to-cart (but not if it's in quick-add modal)
         const stickyCart = document.querySelector('sticky-add-to-cart');
         if (stickyCart) {
-          const stickyForm = stickyCart.querySelector('form[data-type="add-to-cart-form"]');
-          if (stickyForm && !allForms.includes(stickyForm)) {
-            allForms.push(stickyForm);
+          const quickAddModal = document.querySelector('#quick-add-modal-content');
+          if (!quickAddModal || !quickAddModal.contains(stickyCart)) {
+            const stickyForm = stickyCart.querySelector('form[data-type="add-to-cart-form"]');
+            if (stickyForm && !allForms.includes(stickyForm)) {
+              allForms.push(stickyForm);
+            }
           }
         }
         
-        // Fallback: find any form
+        // Fallback: find any form (but exclude quick-add modal forms)
         if (allForms.length === 0) {
-          const anyForm = document.querySelector('form[data-type="add-to-cart-form"]');
-          if (anyForm) {
-            allForms.push(anyForm);
-          }
+          const quickAddModal = document.querySelector('#quick-add-modal-content');
+          const allFormsOnPage = document.querySelectorAll('form[data-type="add-to-cart-form"]');
+          allFormsOnPage.forEach(anyForm => {
+            // Skip forms in quick-add modal
+            if (!quickAddModal || !quickAddModal.contains(anyForm)) {
+              allForms.push(anyForm);
+            }
+          });
         }
         
-        // If we have a form from the event, prioritize it
+        // If we have a form from the event, prioritize it (but not if it's in quick-add modal)
         if (updatedFormFromEvent && !allForms.includes(updatedFormFromEvent)) {
-          allForms.unshift(updatedFormFromEvent); // Add to beginning to check first
+          const quickAddModal = document.querySelector('#quick-add-modal-content');
+          if (!quickAddModal || !quickAddModal.contains(updatedFormFromEvent)) {
+            allForms.unshift(updatedFormFromEvent); // Add to beginning to check first
+          }
         }
         
         // Read personalisation from form inputs
@@ -436,6 +491,120 @@
         console.log('Found buttons:', buttons.length, 'Has personalisation:', hasPersonalisation);
         
         buttons.forEach(button => {
+          // CRITICAL: Check if button is in quick-add modal - if so, only read from that modal's forms
+          const buttonQuickAddModal = button.closest('#quick-add-modal-content');
+          let buttonPersonalisation = {};
+          
+          if (buttonQuickAddModal) {
+            // Button is in quick-add modal - ONLY check forms within that modal
+            const quickAddForms = buttonQuickAddModal.querySelectorAll('form[data-type="add-to-cart-form"]');
+            for (const qForm of quickAddForms) {
+              if (!qForm) continue;
+              
+              // Get product ID from the form's product-form-component
+              const qFormComponent = qForm.closest('product-form-component');
+              const qFormProductId = qFormComponent?.dataset?.productId;
+              
+              // Read personalisation from this form
+              const nameInput = qForm.querySelector('input[name="properties[Name]"]');
+              if (nameInput && nameInput.value.trim()) {
+                buttonPersonalisation.name = nameInput.value.trim();
+              }
+              
+              const colorInput = qForm.querySelector('input[name="properties[Text Color]"]:checked') || 
+                                 qForm.querySelector('input[name="properties[Text Color]"]');
+              if (colorInput && colorInput.value.trim()) {
+                buttonPersonalisation.color = colorInput.value.trim();
+              }
+              
+              const fontInput = qForm.querySelector('input[name="properties[Text Font]"]:checked') || 
+                                qForm.querySelector('input[name="properties[Text Font]"]');
+              if (fontInput && fontInput.value.trim()) {
+                buttonPersonalisation.font = fontInput.value.trim();
+              }
+              
+              // Read other fields too...
+              const babyNameInput = qForm.querySelector('input[name="properties[Baby\'s Name]"]');
+              if (babyNameInput && babyNameInput.value.trim()) {
+                buttonPersonalisation.babyName = babyNameInput.value.trim();
+              }
+              
+              const kidNameInput = qForm.querySelector('input[name="properties[Kid\'s Name]"]');
+              if (kidNameInput && kidNameInput.value.trim()) {
+                buttonPersonalisation.kidName = kidNameInput.value.trim();
+              }
+              
+              const mumNameInput = qForm.querySelector('input[name="properties[Mum\'s Name]"]');
+              if (mumNameInput && mumNameInput.value.trim()) {
+                buttonPersonalisation.mumName = mumNameInput.value.trim();
+              }
+              
+              // Read all other personalization fields
+              const name1Input = qForm.querySelector('input[name="properties[Name 1]"]');
+              if (name1Input && name1Input.value.trim()) {
+                buttonPersonalisation.name1 = name1Input.value.trim();
+              }
+              
+              const name2Input = qForm.querySelector('input[name="properties[Name 2]"]');
+              if (name2Input && name2Input.value.trim()) {
+                buttonPersonalisation.name2 = name2Input.value.trim();
+              }
+              
+              const name3Input = qForm.querySelector('input[name="properties[Name 3]"]');
+              if (name3Input && name3Input.value.trim()) {
+                buttonPersonalisation.name3 = name3Input.value.trim();
+              }
+              
+              const name4Input = qForm.querySelector('input[name="properties[Name 4]"]');
+              if (name4Input && name4Input.value.trim()) {
+                buttonPersonalisation.name4 = name4Input.value.trim();
+              }
+              
+              const dobInput = qForm.querySelector('input[name="properties[Date of Birth]"]');
+              if (dobInput && dobInput.value.trim()) {
+                buttonPersonalisation.dob = dobInput.value.trim();
+              }
+              
+              const optionalDobInput = qForm.querySelector('input[name="properties[Personalise Date of Birth]"]');
+              if (optionalDobInput && optionalDobInput.value.trim()) {
+                buttonPersonalisation.optionalDob = optionalDobInput.value.trim();
+              }
+              
+              const schoolYearInput = qForm.querySelector('input[name="properties[School Year]"]');
+              if (schoolYearInput && schoolYearInput.value.trim()) {
+                buttonPersonalisation.schoolYear = schoolYearInput.value.trim();
+              }
+              
+              const textboxInput = qForm.querySelector('textarea[name="properties[Personalisation:]"]');
+              if (textboxInput && textboxInput.value.trim()) {
+                buttonPersonalisation.textbox = textboxInput.value.trim();
+              }
+              
+              const messageInput = qForm.querySelector('textarea[name="properties[Message]"]');
+              if (messageInput && messageInput.value.trim()) {
+                buttonPersonalisation.message = messageInput.value.trim();
+              }
+              
+              const timeInput = qForm.querySelector('input[name="properties[Time]"]');
+              if (timeInput && timeInput.value.trim()) {
+                buttonPersonalisation.time = timeInput.value.trim();
+              }
+              
+              const weightInput = qForm.querySelector('input[name="properties[Weight]"]');
+              if (weightInput && weightInput.value.trim()) {
+                buttonPersonalisation.weight = weightInput.value.trim();
+              }
+              
+              // If we found any personalization, we can stop checking
+              if (Object.keys(buttonPersonalisation).length > 0) {
+                break;
+              }
+            }
+          } else {
+            // Button is NOT in quick-add modal - use the personalisation we already read
+            buttonPersonalisation = personalisation;
+          }
+          
           const textSpan = button.querySelector('[data-personalise-text]');
           const summarySpan = button.querySelector('[data-personalise-summary]');
           
@@ -455,47 +624,56 @@
           }
           
           if (textSpan) {
-            if (hasPersonalisation) {
+            // Use button-specific personalisation if button is in quick-add modal, otherwise use global personalisation
+            const buttonHasPersonalisation = Object.keys(buttonPersonalisation).length > 0;
+            const personalisationToUse = buttonQuickAddModal ? buttonPersonalisation : personalisation;
+            const hasPersonalisationToUse = buttonQuickAddModal ? buttonHasPersonalisation : hasPersonalisation;
+            
+            if (hasPersonalisationToUse) {
               try {
                 
                 // Format the summary: "Personalised: {name} | {date} ({color})"
                 // Include all active personalization fields
                 const parts = [];
-                if (personalisation.name) {
-                  parts.push(personalisation.name);
+                if (personalisationToUse.name) {
+                  parts.push(personalisationToUse.name);
                 }
-                if (personalisation.name1) {
-                  parts.push(personalisation.name1);
+                if (personalisationToUse.name1) {
+                  parts.push(personalisationToUse.name1);
                 }
-                if (personalisation.name2) {
-                  parts.push(personalisation.name2);
+                if (personalisationToUse.name2) {
+                  parts.push(personalisationToUse.name2);
                 }
-                if (personalisation.name3) {
-                  parts.push(personalisation.name3);
+                if (personalisationToUse.name3) {
+                  parts.push(personalisationToUse.name3);
                 }
-                if (personalisation.name4) {
-                  parts.push(personalisation.name4);
+                if (personalisationToUse.name4) {
+                  parts.push(personalisationToUse.name4);
                 }
-                if (personalisation.dob) {
-                  parts.push(personalisation.dob);
+                if (personalisationToUse.dob) {
+                  parts.push(personalisationToUse.dob);
                 }
-                if (personalisation.optionalDob) {
-                  parts.push(personalisation.optionalDob);
+                if (personalisationToUse.optionalDob) {
+                  parts.push(personalisationToUse.optionalDob);
                 }
-                if (personalisation.schoolYear) {
-                  parts.push(personalisation.schoolYear);
+                if (personalisationToUse.schoolYear) {
+                  parts.push(personalisationToUse.schoolYear);
                 }
                 // Add baby/kid/mum names
-                if (personalisation.babyName && typeof personalisation.babyName === 'string' && personalisation.babyName.trim()) {
-                  parts.push('Baby: ' + personalisation.babyName);
+                if (personalisationToUse.babyName && typeof personalisationToUse.babyName === 'string' && personalisationToUse.babyName.trim()) {
+                  parts.push('Baby: ' + personalisationToUse.babyName);
                 }
-                if (personalisation.kidName && typeof personalisation.kidName === 'string' && personalisation.kidName.trim()) {
-                  parts.push('Kid: ' + personalisation.kidName);
+                if (personalisationToUse.kidName && typeof personalisationToUse.kidName === 'string' && personalisationToUse.kidName.trim()) {
+                  parts.push('Kid: ' + personalisationToUse.kidName);
                 }
-                if (personalisation.mumName && typeof personalisation.mumName === 'string' && personalisation.mumName.trim()) {
-                  parts.push('Mum: ' + personalisation.mumName);
+                if (personalisationToUse.mumName && typeof personalisationToUse.mumName === 'string' && personalisationToUse.mumName.trim()) {
+                  parts.push('Mum: ' + personalisationToUse.mumName);
                 }
-                const colorText = personalisation.color || '';
+                // Add font to parts
+                if (personalisationToUse.font) {
+                  parts.push('Font: ' + personalisationToUse.font);
+                }
+                const colorText = personalisationToUse.color || '';
                 
                 let summaryText = 'Personalised:';
                 if (parts.length > 0) {
@@ -519,43 +697,43 @@
                   if (confirmTextSpan) {
                     // Build dynamic label based on ALL available fields
                     const fields = [];
-                    if (personalisation.name) {
+                    if (personalisationToUse.name) {
                       fields.push('name');
                     }
-                    if (personalisation.name1) {
+                    if (personalisationToUse.name1) {
                       fields.push('name1');
                     }
-                    if (personalisation.name2) {
+                    if (personalisationToUse.name2) {
                       fields.push('name2');
                     }
-                    if (personalisation.name3) {
+                    if (personalisationToUse.name3) {
                       fields.push('name3');
                     }
-                    if (personalisation.name4) {
+                    if (personalisationToUse.name4) {
                       fields.push('name4');
                     }
-                    if (personalisation.dob || personalisation.optionalDob) {
+                    if (personalisationToUse.dob || personalisationToUse.optionalDob) {
                       fields.push('date');
                     }
-                    if (personalisation.color) {
+                    if (personalisationToUse.color) {
                       fields.push('colour');
                     }
-                    if (personalisation.font) {
+                    if (personalisationToUse.font) {
                       fields.push('font');
                     }
-                    if (personalisation.schoolYear) {
+                    if (personalisationToUse.schoolYear) {
                       fields.push('school year');
                     }
-                    if (personalisation.textbox) {
+                    if (personalisationToUse.textbox) {
                       fields.push('text');
                     }
-                    if (personalisation.message) {
+                    if (personalisationToUse.message) {
                       fields.push('message');
                     }
-                    if (personalisation.time) {
+                    if (personalisationToUse.time) {
                       fields.push('time');
                     }
-                    if (personalisation.weight) {
+                    if (personalisationToUse.weight) {
                       fields.push('weight');
                     }
                     
@@ -613,22 +791,18 @@
     };
   }
   
-  // Listen for personalisation-saved event to update button
+  // Use shared debounce with buy-buttons to avoid duplicate updates (and flashing)
+  var _piDebounceMs = 400;
   function handlePersonalisationSaved(event) {
-    console.log('personalisation-saved event received in product-information', event.detail);
-    
-    // Get the form that was updated from event detail
-    const updatedForm = event.detail?.form;
-    
-    // Wait a bit for DOM to update after inputs are added
+    var now = Date.now();
+    if (window.__lastPersonalisationSavedHandledAt && (now - window.__lastPersonalisationSavedHandledAt) < _piDebounceMs) return;
+    window.__lastPersonalisationSavedHandledAt = now;
+    var updatedForm = event.detail && event.detail.form;
     setTimeout(function() {
-      if (window.updatePersonaliseButtonText) {
-        // Pass the updated form to the function if available
-        window.updatePersonaliseButtonText(updatedForm);
-      }
-    }, 200);
+      if (window.updatePersonaliseButtonText) window.updatePersonaliseButtonText(updatedForm);
+    }, 100);
   }
-  
+
   // Handle variant update - update personalization button text after variant changes
   function handleVariantUpdate(event) {
     // Wait a bit for DOM to update after variant change
@@ -663,40 +837,12 @@
     }, 150);
   }
   
-  // Set up event listeners
   try {
     document.addEventListener('personalisation-saved', handlePersonalisationSaved);
-    
-    // Listen for variant updates to update personalization button text
-    const sectionElement = document.querySelector('.shopify-section');
-    if (sectionElement) {
-      sectionElement.addEventListener('variant:update', handleVariantUpdate);
-    }
-    
-    // Also try to listen on the dialog element directly (wait for it to be available)
-    function setupDialogListener() {
-      try {
-        const dialog = document.querySelector('personalise-dialog');
-        if (dialog) {
-          dialog.addEventListener('personalisation-saved', handlePersonalisationSaved);
-        } else {
-          // Try again after a short delay (max 10 attempts)
-          if (setupDialogListener.attempts < 10) {
-            setupDialogListener.attempts = (setupDialogListener.attempts || 0) + 1;
-            setTimeout(setupDialogListener, 200);
-          }
-        }
-      } catch (error) {
-        console.error('Error setting up dialog listener:', error);
-      }
-    }
-    setupDialogListener.attempts = 0;
-    setupDialogListener();
-    
-    // Don't update button text on page load - everything is fresh on reload
-    // Button text will be updated when personalisation is saved during the current session
-  } catch (error) {
-    console.error('Error setting up personalise button listeners:', error);
+    var sectionEl = document.querySelector('.shopify-section');
+    if (sectionEl) sectionEl.addEventListener('variant:update', handleVariantUpdate);
+  } catch (e) {
+    console.error('Error setting up personalise button listeners:', e);
   }
 </script>
 
