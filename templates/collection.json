@@ -526,10 +526,24 @@
         "padding-block-start": 48,
         "padding-block-end": 48
       }
+    },
+    "sub_collections_fJQhV8": {
+      "type": "sub-collections",
+      "name": "Sub Collections",
+      "settings": {
+        "heading": "Product type",
+        "source_collection": "",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
     }
   },
   "order": [
     "collection_banner_xgMNMz",
+    "sub_collections_fJQhV8",
     "section",
     "main",
     "usps_Fk8nmk",
