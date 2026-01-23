@@ -334,17 +334,21 @@ export class PersonaliseDialogComponent extends DialogComponent {
     }
     
     // Find the product form
-    let form = this.closest('product-form-component')?.querySelector('form[data-type="add-to-cart-form"]');
-    
-    // If not found, check if we're in a quick-add modal context
-    if (!form) {
-      const quickAddModal = document.querySelector('#quick-add-modal-content');
-      if (quickAddModal) {
-        form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
-      }
+    // PRIORITIZE: If we're in a quick-add modal context, always use that form first
+    // This ensures we read personalization from the correct product in quick-add
+    let form = null;
+    const quickAddModal = document.querySelector('#quick-add-modal-content');
+    if (quickAddModal) {
+      // If quick-add modal exists, use its form (this is the current product being personalized)
+      form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
     }
     
-    // Fallback to any form
+    // If not in quick-add context, try closest product-form-component
+    if (!form) {
+      form = this.closest('product-form-component')?.querySelector('form[data-type="add-to-cart-form"]');
+    }
+    
+    // Fallback to any form (but this should rarely happen)
     if (!form) {
       form = document.querySelector('form[data-type="add-to-cart-form"]');
     }
@@ -461,6 +465,62 @@ export class PersonaliseDialogComponent extends DialogComponent {
       ...personalisation
     };
     
+    // CRITICAL: If no personalisation found in form inputs, check window.currentPersonalisation as fallback
+    // This is important because after adding to cart, form inputs might be cleared/morphed
+    // but the data is still stored in window.currentPersonalisation
+    if (Object.keys(personalisation).length === 0) {
+      // Try to get product ID to look up stored personalisation
+      let productId = null;
+      const productFormComponent = form?.closest('product-form-component');
+      if (productFormComponent) {
+        productId = productFormComponent.dataset?.productId;
+      }
+      
+      // If not found, try to get from quick-add modal
+      if (!productId && quickAddModal) {
+        const quickAddFormComponent = quickAddModal.querySelector('product-form-component');
+        productId = quickAddFormComponent?.dataset?.productId;
+      }
+      
+      // Check window.currentPersonalisation for this product
+      if (productId && window.currentPersonalisation) {
+        let savedPersonalisation = null;
+        
+        // Try to get personalisation by product ID first
+        if (window.currentPersonalisation[productId]) {
+          savedPersonalisation = { ...window.currentPersonalisation[productId] };
+        } else if (window.currentPersonalisation._latest) {
+          // Fallback to latest
+          savedPersonalisation = { ...window.currentPersonalisation._latest };
+        } else if (window.currentPersonalisation && typeof window.currentPersonalisation === 'object' && !Array.isArray(window.currentPersonalisation)) {
+          // Check if it's a direct object (old format)
+          const hasProductKeys = Object.keys(window.currentPersonalisation).some(key => key.startsWith('_') || /^\d+$/.test(key));
+          if (!hasProductKeys) {
+            savedPersonalisation = { ...window.currentPersonalisation };
+          }
+        }
+        
+        if (savedPersonalisation) {
+          // Filter out null/empty values and internal keys
+          Object.keys(savedPersonalisation).forEach(key => {
+            if (key.startsWith('_') || 
+                !savedPersonalisation[key] || 
+                (typeof savedPersonalisation[key] === 'string' && !savedPersonalisation[key].trim())) {
+              delete savedPersonalisation[key];
+            }
+          });
+          
+          // Merge saved personalisation into personalisationData
+          if (Object.keys(savedPersonalisation).length > 0) {
+            this.personalisationData = {
+              ...this.personalisationData,
+              ...savedPersonalisation
+            };
+          }
+        }
+      }
+    }
+    
   }
 
   /**
@@ -514,14 +574,27 @@ export class PersonaliseDialogComponent extends DialogComponent {
       });
     });
     
-    // Check if this is for build-your-set - if so, clear state first
+    // Check if this is for build-your-set or quick-add modal - if so, clear state first
     // BUT don't clear if we're opening from cart drawer (cart edit context)
     const quickAddModal = document.getElementById('quick-add-modal-content');
     const isBuildYourSet = quickAddModal?.hasAttribute('data-build-your-set');
     const isCartContext = window.cartPersonalizationContext && window.cartPersonalizationContext.properties;
+    const isQuickAddContext = quickAddModal && !isBuildYourSet;
     
-    if (isBuildYourSet && !isCartContext) {
-      // Clear internal state for build-your-set to ensure fresh start
+    // Track the current product ID to detect when switching products
+    const currentProductForm = quickAddModal?.querySelector('form[data-type="add-to-cart-form"]');
+    const currentProductId = currentProductForm?.closest('product-form-component')?.dataset?.productId;
+    const previousProductId = this._lastProductId;
+    
+    // Clear state if:
+    // 1. It's build-your-set (and not cart context)
+    // 2. It's a quick-add modal AND we're opening for a different product (product switched)
+    // 3. It's a quick-add modal AND we don't have a previous product ID (first time opening)
+    const shouldClearState = (isBuildYourSet && !isCartContext) || 
+                             (isQuickAddContext && !isCartContext && (currentProductId !== previousProductId || !previousProductId));
+    
+    if (shouldClearState) {
+      // Clear internal state to ensure fresh start for new product
       // But preserve cart context data if we're editing from cart
       this.selectedFont = null;
       this.selectedColor = null;
@@ -544,12 +617,104 @@ export class PersonaliseDialogComponent extends DialogComponent {
         kidName: null,
         mumName: null
       };
+      
+      // CRITICAL: Also clear visual fields in the dialog to prevent showing old values
+      // Wait for dialog to be available before clearing
+      requestAnimationFrame(() => {
+        // Clear name input
+        const nameInput = this.refs.nameInput || this.querySelector('#personalise-name');
+        if (nameInput) {
+          nameInput.value = '';
+          const charCounter = this.refs.charCounter?.querySelector('[ref="charCount"]') || this.refs.charCount;
+          if (charCounter) {
+            charCounter.textContent = '0';
+          }
+        }
+        
+        // Clear font selection
+        if (this.refs.fontGrid) {
+          const fontButtons = this.refs.fontGrid.querySelectorAll('.personalise-modal__font-button');
+          fontButtons.forEach(btn => {
+            btn.classList.remove('personalise-modal__font-button--selected');
+          });
+        }
+        
+        // Clear color selection
+        const colorGrid = this.refs.colorGrid || this.querySelector('.personalise-modal__color-grid');
+        if (colorGrid) {
+          const colorRadios = colorGrid.querySelectorAll('input[type="radio"]');
+          colorRadios.forEach(radio => {
+            radio.checked = false;
+          });
+        }
+        
+        // Clear Baby/Kid/Mum name inputs
+        const babyNameInput = this.refs.babyNameInput || this.querySelector('[data-name-input="baby"]');
+        if (babyNameInput) {
+          babyNameInput.value = '';
+          this.updateNameTabCharCounter('baby', 0);
+          this.updateNameTabIcon('baby', false);
+        }
+        
+        const kidNameInput = this.refs.kidNameInput || this.querySelector('[data-name-input="kid"]');
+        if (kidNameInput) {
+          kidNameInput.value = '';
+          this.updateNameTabCharCounter('kid', 0);
+          this.updateNameTabIcon('kid', false);
+        }
+        
+        const mumNameInput = this.refs.mumNameInput || this.querySelector('[data-name-input="mum"]');
+        if (mumNameInput) {
+          mumNameInput.value = '';
+          this.updateNameTabCharCounter('mum', 0);
+          this.updateNameTabIcon('mum', false);
+        }
+        
+        // Clear all other input fields
+        const allInputs = this.querySelectorAll('input[type="text"], textarea, input[type="date"]');
+        allInputs.forEach(input => {
+          // Skip radio buttons and checkboxes - they're handled separately
+          if (input.type !== 'radio' && input.type !== 'checkbox') {
+            input.value = '';
+          }
+        });
+      });
+    }
+    
+    // Store current product ID for next comparison
+    if (currentProductId) {
+      this._lastProductId = currentProductId;
     }
     
     // Load saved personalisation from current session only (non-blocking)
-    // This will check cart context first, then form inputs
+    // This will check cart context first, then form inputs, then window.currentPersonalisation
+    // BUT: If we just cleared state for a new product, we still want to load from the form
+    // (which should be empty for the new product, or have its own saved values)
     try {
       this.loadSavedPersonalisation();
+      
+      // After loading, if we got data from window.currentPersonalisation (not from form),
+      // re-add the hidden inputs to the form so they're available for next add-to-cart
+      if (this.personalisationData && Object.keys(this.personalisationData).length > 0) {
+        // Check if form has the inputs - if not, we loaded from window.currentPersonalisation
+        const form = quickAddModal?.querySelector('form[data-type="add-to-cart-form"]') ||
+                    this.closest('product-form-component')?.querySelector('form[data-type="add-to-cart-form"]') ||
+                    document.querySelector('form[data-type="add-to-cart-form"]');
+        
+        if (form) {
+          const hasNameInput = form.querySelector('input[name="properties[Name]"]');
+          const hasFontInput = form.querySelector('input[name="properties[Text Font]"]');
+          const hasColorInput = form.querySelector('input[name="properties[Text Color]"]');
+          
+          // If form doesn't have personalization inputs but we have data, re-add them
+          if ((this.personalisationData.name && !hasNameInput) ||
+              (this.personalisationData.font && !hasFontInput) ||
+              (this.personalisationData.color && !hasColorInput)) {
+            // Re-add inputs to form using the updateFormFields method
+            this.updateFormFields(this.personalisationData);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error loading personalisation:', error);
     }

@@ -1782,37 +1782,61 @@ export class QuickAddComponent extends Component {
    * @param {Element} modalContent - The modal content element
    */
   #ensurePersonaliseButtonHandlers(modalContent) {
-    // Check if personalise modal exists, if not, try to find it in the loaded content
-    let personaliseModal = document.querySelector('personalise-dialog');
-    if (!personaliseModal) {
-      // Try to find it in the loaded content
-      personaliseModal = modalContent.querySelector('personalise-dialog');
-      if (personaliseModal) {
-        // Move it to the document body so it's accessible globally
-        document.body.appendChild(personaliseModal);
+    // CRITICAL: Always check for personalise-dialog in the modal content first
+    // This ensures we use the dialog for the current product in quick-add, not the main page one
+    let personaliseModal = modalContent.querySelector('personalise-dialog');
+    
+    // If found in modal content, move it to body (if not already there) and mark it for quick-add
+    if (personaliseModal && personaliseModal.parentElement !== document.body) {
+      // Mark it as being from quick-add so we can identify it later
+      personaliseModal.setAttribute('data-quick-add', 'true');
+      
+      // Get current product ID to associate with this dialog
+      const productFormComponent = modalContent.querySelector('product-form-component');
+      const productId = productFormComponent?.dataset?.productId;
+      if (productId) {
+        personaliseModal.setAttribute('data-product-id', productId);
+      }
+      
+      // Move it to the document body so it's accessible globally
+      document.body.appendChild(personaliseModal);
+      
+      // CRITICAL: Ensure custom element is properly defined and initialized
+      // When content is loaded via morph, the script might not have run yet
+      customElements.whenDefined('personalise-dialog').then(() => {
+        console.log('PersonaliseDialog: Custom element defined');
         
-        // CRITICAL: Ensure custom element is properly defined and initialized
-        // When content is loaded via morph, the script might not have run yet
-        customElements.whenDefined('personalise-dialog').then(() => {
-          console.log('PersonaliseDialog: Custom element defined');
+        // Force re-initialization by temporarily disconnecting and reconnecting
+        // This ensures connectedCallback runs and sets up all handlers and functionality
+        const parent = personaliseModal.parentNode;
+        if (parent) {
+          console.log('PersonaliseDialog: Re-initializing element after move to body');
+          parent.removeChild(personaliseModal);
+          document.body.appendChild(personaliseModal);
           
-          // Force re-initialization by temporarily disconnecting and reconnecting
-          // This ensures connectedCallback runs and sets up all handlers and functionality
-          const parent = personaliseModal.parentNode;
-          if (parent) {
-            console.log('PersonaliseDialog: Re-initializing element after move to body');
-            parent.removeChild(personaliseModal);
-            document.body.appendChild(personaliseModal);
-            
-            // The element should now be properly initialized with all its methods
-            console.log('PersonaliseDialog: Element re-initialized, methods available:', {
-              showDialog: typeof personaliseModal.showDialog === 'function',
-              closePersonaliseOnly: typeof personaliseModal.closePersonaliseOnly === 'function'
-            });
-          }
-        }).catch((error) => {
-          console.error('PersonaliseDialog: Error waiting for custom element definition:', error);
-        });
+          // The element should now be properly initialized with all its methods
+          console.log('PersonaliseDialog: Element re-initialized, methods available:', {
+            showDialog: typeof personaliseModal.showDialog === 'function',
+            closePersonaliseOnly: typeof personaliseModal.closePersonaliseOnly === 'function'
+          });
+        }
+      }).catch((error) => {
+        console.error('PersonaliseDialog: Error waiting for custom element definition:', error);
+      });
+    } else if (!personaliseModal) {
+      // If not found in modal content, check if there's one already on the page
+      // But mark it for quick-add use
+      personaliseModal = document.querySelector('personalise-dialog[data-quick-add="true"]') ||
+                        document.querySelector('personalise-dialog:not([data-context="cart-drawer"])');
+      
+      // Update product ID association if we found an existing one
+      if (personaliseModal) {
+        const productFormComponent = modalContent.querySelector('product-form-component');
+        const productId = productFormComponent?.dataset?.productId;
+        if (productId) {
+          personaliseModal.setAttribute('data-product-id', productId);
+          personaliseModal.setAttribute('data-quick-add', 'true');
+        }
       }
     }
 
@@ -1831,8 +1855,26 @@ export class QuickAddComponent extends Component {
           e.preventDefault();
           e.stopPropagation();
           
-          // Try to find the personalise dialog
-          const dialog = document.querySelector('personalise-dialog');
+          // CRITICAL: Find personalise dialog within the quick-add modal content first
+          // This ensures we use the dialog for the current product, not the main page product
+          let dialog = modalContent.querySelector('personalise-dialog');
+          
+          // If not found in modal content, it might have been moved to body
+          // In that case, we need to ensure we're using the right one
+          // For quick-add, we should prioritize finding one that's not the main product page one
+          if (!dialog) {
+            const allDialogs = document.querySelectorAll('personalise-dialog');
+            // If there are multiple dialogs, try to find one that's not the main product page one
+            if (allDialogs.length > 1) {
+              dialog = Array.from(allDialogs).find(d => {
+                const context = d.getAttribute('data-context');
+                return context !== 'product-page';
+              }) || allDialogs[0];
+            } else if (allDialogs.length === 1) {
+              dialog = allDialogs[0];
+            }
+          }
+          
           if (dialog && typeof dialog.showDialog === 'function') {
             dialog.showDialog();
           } else if (dialog) {

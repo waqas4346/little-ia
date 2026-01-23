@@ -346,13 +346,52 @@
             const maxAttempts = 40; // Increased for slower mobile devices
             
             try {
-              // Check if dialog element exists in DOM - look for product page modal specifically
-              let dialog = document.getElementById('personalise-dialog');
+              // CRITICAL: Check if button is in quick-add modal - if so, find dialog within that modal
+              let dialog = null;
+              const quickAddModal = button.closest('#quick-add-modal-content');
               
-              // If not found by ID, search for product page context
-              if (!dialog) {
-                dialog = document.querySelector('personalise-dialog[data-context="product-page"]') ||
-                         document.querySelector('personalise-dialog:not([data-context="cart-drawer"])');
+              if (quickAddModal) {
+                // Button is in quick-add modal - find personalise-dialog associated with this modal
+                // First, try to find one marked for quick-add
+                const productFormComponent = quickAddModal.querySelector('product-form-component');
+                const productId = productFormComponent?.dataset?.productId;
+                
+                if (productId) {
+                  // Try to find dialog with matching product ID
+                  dialog = document.querySelector(`personalise-dialog[data-product-id="${productId}"][data-quick-add="true"]`);
+                }
+                
+                // If not found by product ID, try to find one in modal content
+                if (!dialog) {
+                  dialog = quickAddModal.querySelector('personalise-dialog');
+                }
+                
+                // If still not found, find one marked for quick-add (any product)
+                if (!dialog) {
+                  dialog = document.querySelector('personalise-dialog[data-quick-add="true"]');
+                }
+                
+                // Last resort: find any dialog that's not the main product page one
+                if (!dialog) {
+                  const allDialogs = document.querySelectorAll('personalise-dialog');
+                  if (allDialogs.length > 1) {
+                    dialog = Array.from(allDialogs).find(d => {
+                      const context = d.getAttribute('data-context');
+                      return context !== 'product-page';
+                    }) || allDialogs[0];
+                  } else if (allDialogs.length === 1) {
+                    dialog = allDialogs[0];
+                  }
+                }
+              } else {
+                // Button is NOT in quick-add modal - use main product page dialog
+                dialog = document.getElementById('personalise-dialog');
+                
+                // If not found by ID, search for product page context
+                if (!dialog) {
+                  dialog = document.querySelector('personalise-dialog[data-context="product-page"]') ||
+                           document.querySelector('personalise-dialog:not([data-context="cart-drawer"])');
+                }
               }
               
               if (dialog) {
@@ -558,51 +597,75 @@
           // Find ALL forms that might contain personalization for this product
           const allForms = [];
           
-          // First, try to find form by traversing from the button
-          const buttonFormComponent = button.closest('product-form-component');
-          if (buttonFormComponent) {
-            const btnForm = buttonFormComponent.querySelector('form[data-type="add-to-cart-form"]');
-            if (btnForm) allForms.push(btnForm);
-          }
-          
-          // Find all product form components and their forms
-          const allProductForms = document.querySelectorAll('product-form-component');
-          allProductForms.forEach(formComponent => {
-            if (buttonProductId) {
-              const compProductId = formComponent.dataset?.productId || formComponent.dataset?.productId;
-              if (compProductId === buttonProductId || compProductId === String(buttonProductId)) {
+          // CRITICAL: Check if button is in quick-add modal - if so, ONLY use forms from that modal
+          const buttonQuickAddModal = button.closest('#quick-add-modal-content');
+          if (buttonQuickAddModal) {
+            // Button is in quick-add modal - ONLY check forms within that modal
+            const quickAddForms = buttonQuickAddModal.querySelectorAll('form[data-type="add-to-cart-form"]');
+            quickAddForms.forEach(qForm => {
+              // Only include forms that match the button's product ID
+              const qFormComponent = qForm.closest('product-form-component');
+              const qFormProductId = qFormComponent?.dataset?.productId;
+              if (!buttonProductId || qFormProductId === buttonProductId || qFormProductId === String(buttonProductId)) {
+                if (!allForms.includes(qForm)) {
+                  allForms.push(qForm);
+                }
+              }
+            });
+            
+            // If we have a form from the event and it's in the quick-add modal, prioritize it
+            if (eventForm && buttonQuickAddModal.contains(eventForm) && !allForms.includes(eventForm)) {
+              allForms.unshift(eventForm);
+            }
+          } else {
+            // Button is NOT in quick-add modal - check all forms as before
+            // First, try to find form by traversing from the button
+            const buttonFormComponent = button.closest('product-form-component');
+            if (buttonFormComponent) {
+              const btnForm = buttonFormComponent.querySelector('form[data-type="add-to-cart-form"]');
+              if (btnForm) allForms.push(btnForm);
+            }
+            
+            // Find all product form components and their forms (but exclude quick-add modal forms)
+            const allProductForms = document.querySelectorAll('product-form-component');
+            allProductForms.forEach(formComponent => {
+              // Skip forms that are in quick-add modal (they should only be checked when button is in quick-add)
+              const quickAddModal = document.querySelector('#quick-add-modal-content');
+              if (quickAddModal && quickAddModal.contains(formComponent)) {
+                return; // Skip this form - it's in quick-add modal but button is not
+              }
+              
+              if (buttonProductId) {
+                const compProductId = formComponent.dataset?.productId || formComponent.dataset?.productId;
+                if (compProductId === buttonProductId || compProductId === String(buttonProductId)) {
+                  const compForm = formComponent.querySelector('form[data-type="add-to-cart-form"]');
+                  if (compForm && !allForms.includes(compForm)) {
+                    allForms.push(compForm);
+                  }
+                }
+              } else {
                 const compForm = formComponent.querySelector('form[data-type="add-to-cart-form"]');
                 if (compForm && !allForms.includes(compForm)) {
                   allForms.push(compForm);
                 }
               }
-            } else {
-              const compForm = formComponent.querySelector('form[data-type="add-to-cart-form"]');
-              if (compForm && !allForms.includes(compForm)) {
-                allForms.push(compForm);
+            });
+            
+            // Fallback to the form we found earlier (but not if it's in quick-add modal)
+            if (form && !allForms.includes(form)) {
+              const quickAddModal = document.querySelector('#quick-add-modal-content');
+              if (!quickAddModal || !quickAddModal.contains(form)) {
+                allForms.push(form);
               }
             }
-          });
-          
-          // Also check quick-add modal
-          const quickAddModal = document.querySelector('#quick-add-modal-content');
-          if (quickAddModal) {
-            const quickAddForms = quickAddModal.querySelectorAll('form[data-type="add-to-cart-form"]');
-            quickAddForms.forEach(qForm => {
-              if (!allForms.includes(qForm)) {
-                allForms.push(qForm);
+            
+            // If we have a form from the event, prioritize it (but not if it's in quick-add modal)
+            if (eventForm && !allForms.includes(eventForm)) {
+              const quickAddModal = document.querySelector('#quick-add-modal-content');
+              if (!quickAddModal || !quickAddModal.contains(eventForm)) {
+                allForms.unshift(eventForm);
               }
-            });
-          }
-          
-          // Fallback to the form we found earlier
-          if (form && !allForms.includes(form)) {
-            allForms.push(form);
-          }
-          
-          // If we have a form from the event, prioritize it
-          if (eventForm && !allForms.includes(eventForm)) {
-            allForms.unshift(eventForm); // Add to beginning to check first
+            }
           }
           
           if (textSpan) {
