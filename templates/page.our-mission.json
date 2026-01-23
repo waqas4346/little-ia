@@ -1,0 +1,208 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "blocks": {
+        "heading": {
+          "type": "text",
+          "name": "Title",
+          "settings": {
+            "text": "<h1>{{ closest.page.title }}<\/h1>",
+            "width": "100%",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "h2",
+            "font": "var(--font-primary--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "page-content": {
+          "type": "page-content",
+          "settings": {},
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "heading",
+        "page-content"
+      ],
+      "disabled": true,
+      "settings": {
+        "content_direction": "column",
+        "gap": 32,
+        "color_scheme": "",
+        "padding-block-start": 40,
+        "padding-block-end": 80
+      }
+    },
+    "page_banner_yewfKY": {
+      "type": "page-banner",
+      "blocks": {
+        "feature_ydzbt3": {
+          "type": "feature",
+          "settings": {
+            "text": "GOTS Certified Organic Cotton",
+            "icon": "",
+            "image_upload": "shopify:\/\/shop_images\/GOTS_certified_icon_5fa23041-96d7-44cc-94df-8626b33fa3fa.png"
+          }
+        },
+        "feature_BEdTWr": {
+          "type": "feature",
+          "settings": {
+            "text": "Free Pesonalisation",
+            "icon": "",
+            "image_upload": "shopify:\/\/shop_images\/Free_personalization_icon_1aac30f4-4f2e-4e22-8853-f1da553a5041.png"
+          }
+        }
+      },
+      "block_order": [
+        "feature_ydzbt3",
+        "feature_BEdTWr"
+      ],
+      "name": "Page banner",
+      "settings": {
+        "section_width": "full-width",
+        "image": "shopify:\/\/shop_images\/homepage-party-favours_527eaf2a-5777-4b90-9e75-06fa072ec651.png",
+        "title": "Party Favours",
+        "description": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."
+      }
+    },
+    "party_favours_NWDgQV": {
+      "type": "party-favours",
+      "blocks": {
+        "product-card": {
+          "type": "_product-card",
+          "name": "Product Card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 4,
+            "inherit_color_scheme": true,
+            "color_scheme": "",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0,
+            "show_view_product_button": false
+          },
+          "blocks": {
+            "product_card_gallery_Pth8pm": {
+              "type": "_product-card-gallery",
+              "name": "Product Card Media",
+              "settings": {
+                "image_ratio": "adapt",
+                "border": "none",
+                "border_width": 1,
+                "border_opacity": 100,
+                "border_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "product_title_3H7qG4": {
+              "type": "product-title",
+              "name": "Product Title",
+              "settings": {
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 4,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "price_gGndPR": {
+              "type": "price",
+              "name": "Product Price",
+              "settings": {
+                "show_sale_price_first": true,
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "h6",
+                "width": "100%",
+                "alignment": "left",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "color": "var(--color-foreground)",
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "product_card_gallery_Pth8pm",
+            "product_title_3H7qG4",
+            "price_gGndPR"
+          ]
+        }
+      },
+      "name": "Party Favours",
+      "settings": {
+        "collection_list": [
+          "create-a-signature-personalised-gift-set",
+          "party-favour-snack-boxes",
+          "party-favour-water-bottles",
+          "party-favour-backpacks-and-lunch-bags",
+          "party-favours-stationery",
+          "party-favour-towels"
+        ],
+        "heading": "Party Favours",
+        "subheading": "Select collections",
+        "minimum_quantity": 5,
+        "layout_type": "grid",
+        "product_card_size": "medium",
+        "mobile_product_card_size": "small",
+        "columns_gap_horizontal": 8,
+        "columns_gap_vertical": 12,
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    }
+  },
+  "order": [
+    "main",
+    "page_banner_yewfKY",
+    "party_favours_NWDgQV"
+  ]
+}
