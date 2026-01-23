@@ -1,0 +1,617 @@
+{% liquid
+  assign section_heading = section.settings.heading | default: 'Product type'
+  assign source_collection = section.settings.source_collection
+  
+  # If no source collection is selected, try to use the current collection
+  if source_collection == blank and collection != blank
+    assign source_collection = collection
+  endif
+  
+  # Get sub-collections from metafield
+  assign sub_collections = blank
+  if source_collection != blank
+    assign metafield_value = source_collection.metafields.custom.cb_sub_collections
+    if metafield_value != blank and metafield_value.value != blank
+      assign sub_collections = metafield_value.value
+    endif
+  endif
+%}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+<div
+  data-testid="sub-collections"
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    spacing-style
+    gap-style
+    sub-collections-section
+  "
+  style=" 
+    {% render 'spacing-style', settings: section.settings %}
+    {% render 'gap-style', value: section.settings.gap %}
+  "
+>
+  {% if sub_collections != blank and sub_collections.size > 0 %}
+    {% comment %} Collection slider with heading {% endcomment %}
+    <div class="sub-collections-slider-wrapper">
+      {% if section_heading != blank %}
+        <div class="sub-collections-heading">
+          <span class="sub-collections-heading-text">{{ section_heading }}:</span>
+        </div>
+      {% endif %}
+      <button 
+        type="button"
+        class="sub-collections-arrow sub-collections-arrow--prev"
+        aria-label="Previous collections"
+        data-collection-arrow="prev"
+      >
+        <svg width="11" height="19" viewBox="0 0 11 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9.36328 2.31564L1.26025 9.83979L9.36328 17.364" stroke="#7295BB" stroke-width="2.31515" stroke-linecap="square" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="sub-collections-slider" data-collection-slider>
+        {% for sub_collection in sub_collections %}
+          {% liquid
+            assign collection_name = sub_collection.title | default: 'Collection'
+          %}
+          <a
+            href="{{ sub_collection.url }}"
+            class="sub-collections-item"
+            data-collection-id="{{ sub_collection.id }}"
+            data-collection-handle="{{ sub_collection.handle }}"
+            aria-label="{{ collection_name }}"
+          >
+            <div class="sub-collections-image-wrapper">
+              {% if sub_collection.featured_image != blank %}
+                {{
+                  sub_collection.featured_image
+                  | image_url: width: 400
+                  | image_tag:
+                    loading: 'lazy',
+                    class: 'sub-collections-image',
+                    alt: sub_collection.featured_image.alt | default: collection_name,
+                    width: 200,
+                    height: 200
+                }}
+              {% else %}
+                <div class="sub-collections-image-placeholder">
+                  {{ 'collection-1' | placeholder_svg_tag: 'placeholder' }}
+                </div>
+              {% endif %}
+            </div>
+            <div class="sub-collections-label">{{ collection_name }}</div>
+          </a>
+        {% endfor %}
+      </div>
+      <button 
+        type="button"
+        class="sub-collections-arrow sub-collections-arrow--next"
+        aria-label="Next collections"
+        data-collection-arrow="next"
+      >
+        <svg width="11" height="19" viewBox="0 0 11 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1.63672 16.6844L9.73975 9.16021L1.63672 1.63596" stroke="#7295BB" stroke-width="2.31515" stroke-linecap="square" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  {% endif %}
+</div>
+
+{% style %}
+  .sub-collections-heading {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .sub-collections-heading-text {
+    margin: 0;
+    font-family: 'FuturaPT-Demi', 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 150%;
+    color: #1D425A;
+    white-space: nowrap;
+  }
+
+  .sub-collections-slider-wrapper {
+    margin: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .sub-collections-slider {
+    display: flex;
+    gap: 18px 24px;
+    justify-content: flex-start;
+    align-items: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+    flex: 1;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .sub-collections-slider--has-overflow {
+    justify-content: flex-start;
+  }
+
+  .sub-collections-slider::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sub-collections-arrow {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    min-width: 44px;
+    min-height: 44px;
+    z-index: 2;
+  }
+
+  .sub-collections-arrow:hover {
+    opacity: 0.7;
+  }
+
+  .sub-collections-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .sub-collections-arrow--hidden {
+    display: none !important;
+  }
+
+  .sub-collections-arrow svg {
+    width: 11px;
+    height: 19px;
+  }
+
+  .sub-collections-heading {
+    order: 1;
+  }
+
+  .sub-collections-arrow--prev {
+    order: 2;
+  }
+
+  .sub-collections-slider {
+    order: 3;
+  }
+
+  .sub-collections-arrow--next {
+    order: 4;
+  }
+
+  .sub-collections-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: opacity 0.2s ease;
+    min-width: 62px;
+    flex-shrink: 0;
+    flex-basis: auto;
+    width: auto;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .sub-collections-item:hover {
+    opacity: 0.8;
+  }
+
+  .sub-collections-image-wrapper {
+    width: 62px;
+    height: 62px;
+    border-radius: 100000px;
+    overflow: hidden;
+    border: none;
+    transition: border-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    position: relative;
+    box-sizing: border-box;
+    padding: 0;
+  }
+
+  .sub-collections-image,
+  .sub-collections-image-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 100000px;
+    box-sizing: border-box;
+  }
+
+  .sub-collections-image-placeholder {
+    width: 62px;
+    height: 62px;
+  }
+
+  .sub-collections-image-placeholder svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .sub-collections-label {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 140%;
+    text-align: center;
+    text-transform: uppercase;
+    color: #787878;
+    margin-top: 5px;
+    pointer-events: none;
+    transition: color 0.2s ease;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow: visible;
+  }
+
+  @media screen and (min-width: 750px) {
+    .sub-collections-heading-text {
+      font-size: 16px;
+    }
+    
+    .sub-collections-slider {
+      gap: 18px 24px;
+    }
+
+    .sub-collections-image-wrapper {
+      width: 62px;
+      height: 62px;
+    }
+
+    .sub-collections-image-placeholder {
+      width: 62px;
+      height: 62px;
+    }
+
+    .sub-collections-item {
+      width: auto;
+      min-width: 62px;
+    }
+
+    .sub-collections-label {
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .sub-collections-slider-wrapper {
+      flex-wrap: wrap;
+    }
+
+    .sub-collections-heading {
+      margin-right: 0;
+      margin-bottom: 16px;
+      width: 100%;
+      order: 1;
+    }
+
+    .sub-collections-heading-text {
+      font-size: 16px;
+    }
+    
+    .sub-collections-arrow--prev {
+      order: 2;
+    }
+
+    .sub-collections-slider {
+      order: 3;
+      width: 100%;
+    }
+
+    .sub-collections-arrow--next {
+      order: 4;
+    }
+
+    .sub-collections-slider-wrapper {
+      margin: 0;
+    }
+
+    .sub-collections-slider {
+      gap: 18px;
+      justify-content: flex-start;
+    }
+
+    .sub-collections-image-wrapper {
+      width: 62px;
+      height: 62px;
+    }
+
+    .sub-collections-image-placeholder {
+      width: 62px;
+      height: 62px;
+    }
+
+    .sub-collections-item {
+      width: auto;
+      min-width: 62px;
+      max-width: 90px;
+    }
+
+    .sub-collections-label {
+      font-size: 14px;
+    }
+
+    /* Hide arrows on mobile - allow touch scrolling */
+    .sub-collections-arrow {
+      display: none !important;
+    }
+  }
+{% endstyle %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const section = document.querySelector('[data-testid="sub-collections"]');
+    if (!section) return;
+
+    const collectionSlider = section.querySelector('[data-collection-slider]');
+    const prevArrow = section.querySelector('[data-collection-arrow="prev"]');
+    const nextArrow = section.querySelector('[data-collection-arrow="next"]');
+    
+    if (!collectionSlider || !prevArrow || !nextArrow) return;
+
+    // Setup collection slider scroll functionality
+    setupCollectionSlider(collectionSlider, prevArrow, nextArrow);
+
+    // Function to setup collection slider with arrows
+    function setupCollectionSlider(slider, prevBtn, nextBtn) {
+      if (!slider || !prevBtn || !nextBtn) return;
+      
+      // Calculate scroll amount based on item width + gap
+      function getScrollAmount() {
+        const firstItem = slider.querySelector('.sub-collections-item');
+        if (!firstItem) return 80;
+        const itemWidth = firstItem.offsetWidth;
+        const gap = 24; // Match CSS gap (horizontal)
+        return itemWidth + gap;
+      }
+
+      const scrollAmount = getScrollAmount();
+      
+      // Update arrow visibility based on scroll position
+      function updateArrows() {
+        if (!slider || !prevBtn || !nextBtn) return;
+        
+        const scrollLeft = slider.scrollLeft;
+        const scrollWidth = slider.scrollWidth;
+        const clientWidth = slider.clientWidth;
+        
+        // Check if there's overflow (need to scroll)
+        const hasOverflow = scrollWidth > clientWidth + 1; // Small threshold for rounding
+        
+        if (!hasOverflow) {
+          // No overflow - hide both arrows and center the slider
+          prevBtn.classList.add('sub-collections-arrow--hidden');
+          nextBtn.classList.add('sub-collections-arrow--hidden');
+          prevBtn.disabled = true;
+          nextBtn.disabled = true;
+          slider.classList.remove('sub-collections-slider--has-overflow');
+          return;
+        }
+        
+        // Has overflow - show arrows and align left
+        prevBtn.classList.remove('sub-collections-arrow--hidden');
+        nextBtn.classList.remove('sub-collections-arrow--hidden');
+        slider.classList.add('sub-collections-slider--has-overflow');
+        
+        const isAtStart = scrollLeft <= 5; // Small threshold for rounding
+        const isAtEnd = scrollLeft >= scrollWidth - clientWidth - 5;
+        
+        prevBtn.disabled = isAtStart;
+        nextBtn.disabled = isAtEnd;
+        
+        // Update opacity based on scroll position
+        if (isAtStart) {
+          prevBtn.classList.add('sub-collections-arrow--hidden');
+        } else {
+          prevBtn.classList.remove('sub-collections-arrow--hidden');
+        }
+        
+        if (isAtEnd) {
+          nextBtn.classList.add('sub-collections-arrow--hidden');
+        } else {
+          nextBtn.classList.remove('sub-collections-arrow--hidden');
+        }
+      }
+
+      // Initial check - wait for layout and images to load
+      function initialCheck() {
+        requestAnimationFrame(function() {
+          updateArrows();
+          // Double check after a short delay to account for image loading
+          setTimeout(function() {
+            updateArrows();
+          }, 100);
+        });
+      }
+      
+      initialCheck();
+
+      // Previous button - scroll left
+      prevBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (slider.scrollLeft <= 0) return;
+        
+        const amount = getScrollAmount();
+        slider.scrollBy({
+          left: -amount,
+          behavior: 'smooth'
+        });
+      });
+
+      // Next button - scroll right
+      nextBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const maxScroll = slider.scrollWidth - slider.clientWidth;
+        if (slider.scrollLeft >= maxScroll) return;
+        
+        const amount = getScrollAmount();
+        slider.scrollBy({
+          left: amount,
+          behavior: 'smooth'
+        });
+      });
+
+      // Update arrows on scroll
+      slider.addEventListener('scroll', function() {
+        requestAnimationFrame(updateArrows);
+      });
+
+      // Update arrows on resize
+      let resizeTimer;
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+          updateArrows();
+        }, 100);
+      });
+
+      // Update arrows after a delay to ensure accurate measurements
+      setTimeout(updateArrows, 200);
+      
+      // Update arrows when images load (they might affect layout)
+      const images = slider.querySelectorAll('.sub-collections-image');
+      images.forEach(function(img) {
+        if (img.complete) {
+          updateArrows();
+        } else {
+          img.addEventListener('load', function() {
+            updateArrows();
+          });
+        }
+      });
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Sub Collections",
+  "class": "ui-test-sub-collections",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Product type",
+      "info": "The heading text displayed before the collection list"
+    },
+    {
+      "type": "collection",
+      "id": "source_collection",
+      "label": "Source Collection",
+      "info": "Select the collection to get sub-collections from its 'custom.cb_sub_collections' metafield. If not selected, will use the current collection (if on a collection page)."
+    },
+    {
+      "type": "header",
+      "content": "Section Layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page"
+        },
+        {
+          "value": "full-width",
+          "label": "Full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color Scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 48
+    }
+  ],
+  "presets": [
+    {
+      "name": "Sub Collections",
+      "category": "Collections",
+      "settings": {
+        "heading": "Product type",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    }
+  ]
+}
+{% endschema %}

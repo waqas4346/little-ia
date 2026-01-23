@@ -495,6 +495,10 @@
                 if (personalisation.mumName && typeof personalisation.mumName === 'string' && personalisation.mumName.trim()) {
                   parts.push('Mum: ' + personalisation.mumName);
                 }
+                // Add font to parts
+                if (personalisation.font) {
+                  parts.push('Font: ' + personalisation.font);
+                }
                 const colorText = personalisation.color || '';
                 
                 let summaryText = 'Personalised:';
@@ -613,22 +617,18 @@
     };
   }
   
-  // Listen for personalisation-saved event to update button
+  // Use shared debounce with buy-buttons to avoid duplicate updates (and flashing)
+  var _piDebounceMs = 400;
   function handlePersonalisationSaved(event) {
-    console.log('personalisation-saved event received in product-information', event.detail);
-    
-    // Get the form that was updated from event detail
-    const updatedForm = event.detail?.form;
-    
-    // Wait a bit for DOM to update after inputs are added
+    var now = Date.now();
+    if (window.__lastPersonalisationSavedHandledAt && (now - window.__lastPersonalisationSavedHandledAt) < _piDebounceMs) return;
+    window.__lastPersonalisationSavedHandledAt = now;
+    var updatedForm = event.detail && event.detail.form;
     setTimeout(function() {
-      if (window.updatePersonaliseButtonText) {
-        // Pass the updated form to the function if available
-        window.updatePersonaliseButtonText(updatedForm);
-      }
-    }, 200);
+      if (window.updatePersonaliseButtonText) window.updatePersonaliseButtonText(updatedForm);
+    }, 100);
   }
-  
+
   // Handle variant update - update personalization button text after variant changes
   function handleVariantUpdate(event) {
     // Wait a bit for DOM to update after variant change
@@ -663,40 +663,12 @@
     }, 150);
   }
   
-  // Set up event listeners
   try {
     document.addEventListener('personalisation-saved', handlePersonalisationSaved);
-    
-    // Listen for variant updates to update personalization button text
-    const sectionElement = document.querySelector('.shopify-section');
-    if (sectionElement) {
-      sectionElement.addEventListener('variant:update', handleVariantUpdate);
-    }
-    
-    // Also try to listen on the dialog element directly (wait for it to be available)
-    function setupDialogListener() {
-      try {
-        const dialog = document.querySelector('personalise-dialog');
-        if (dialog) {
-          dialog.addEventListener('personalisation-saved', handlePersonalisationSaved);
-        } else {
-          // Try again after a short delay (max 10 attempts)
-          if (setupDialogListener.attempts < 10) {
-            setupDialogListener.attempts = (setupDialogListener.attempts || 0) + 1;
-            setTimeout(setupDialogListener, 200);
-          }
-        }
-      } catch (error) {
-        console.error('Error setting up dialog listener:', error);
-      }
-    }
-    setupDialogListener.attempts = 0;
-    setupDialogListener();
-    
-    // Don't update button text on page load - everything is fresh on reload
-    // Button text will be updated when personalisation is saved during the current session
-  } catch (error) {
-    console.error('Error setting up personalise button listeners:', error);
+    var sectionEl = document.querySelector('.shopify-section');
+    if (sectionEl) sectionEl.addEventListener('variant:update', handleVariantUpdate);
+  } catch (e) {
+    console.error('Error setting up personalise button listeners:', e);
   }
 </script>
 

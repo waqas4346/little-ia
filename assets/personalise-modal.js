@@ -50,6 +50,87 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Set form attribute on Baby/Kid/Mum inputs
     this.#setFormAttributeOnInputs();
+    
+    // Set up event listeners for input changes to update save button
+    this.#setupInputChangeListeners();
+  }
+  
+  /**
+   * Sets up event listeners for all input changes to update save button state
+   * @private
+   */
+  #setupInputChangeListeners() {
+    // Use a MutationObserver to watch for dynamically added fields
+    const observer = new MutationObserver(() => {
+      this.#attachInputListeners();
+    });
+    
+    // Start observing when dialog is available
+    const checkDialog = () => {
+      const dialog = this.refs?.dialog || this.querySelector('dialog');
+      if (dialog) {
+        observer.observe(dialog, { childList: true, subtree: true });
+        // Initial attachment
+        this.#attachInputListeners();
+      } else {
+        setTimeout(checkDialog, 100);
+      }
+    };
+    
+    setTimeout(checkDialog, 100);
+  }
+  
+  /**
+   * Attaches event listeners to all inputs for save button validation
+   * @private
+   */
+  #attachInputListeners() {
+    const dialog = this.refs?.dialog || this.querySelector('dialog');
+    if (!dialog) return;
+    
+    // Listen for color radio button changes
+    const colorRadios = dialog.querySelectorAll('.personalise-modal__color-grid input[type="radio"]');
+    colorRadios.forEach(radio => {
+      // Remove existing listener to avoid duplicates
+      radio.removeEventListener('change', this.#handleColorRadioChange);
+      radio.addEventListener('change', this.#handleColorRadioChange);
+    });
+    
+    // Listen for all other input/textarea/select changes
+    const allInputs = dialog.querySelectorAll('input:not([type="radio"]):not([type="checkbox"]), textarea, select');
+    allInputs.forEach(input => {
+      // Skip if already has listener (check by data attribute)
+      if (input.dataset.hasSaveButtonListener) return;
+      
+      input.dataset.hasSaveButtonListener = 'true';
+      input.addEventListener('input', () => this.updateSaveButton());
+      input.addEventListener('change', () => this.updateSaveButton());
+    });
+    
+    // Listen for checkbox changes
+    const checkboxes = dialog.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+      if (checkbox.dataset.hasSaveButtonListener) return;
+      checkbox.dataset.hasSaveButtonListener = 'true';
+      checkbox.addEventListener('change', () => this.updateSaveButton());
+    });
+  }
+  
+  /**
+   * Handles color radio button change events
+   * @private
+   */
+  #handleColorRadioChange = (event) => {
+    const radio = event.target;
+    if (radio.checked) {
+      const colorButton = radio.closest('.personalise-modal__color-button');
+      if (colorButton) {
+        const colorName = colorButton.dataset.color;
+        this.selectedColor = colorName;
+        this.personalisationData.color = colorName;
+      }
+    }
+    this.updateSaveButton();
   }
 
   /**
@@ -406,6 +487,9 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
       dialog.showModal();
       this.dispatchEvent(new DialogOpenEvent());
+      
+      // Initialize save button state
+      this.#initializeSaveButtonState();
 
       // Only add keydown listener for Escape key, NOT click listener
       // This prevents the personalise dialog from closing parent dialog
@@ -484,6 +568,8 @@ export class PersonaliseDialogComponent extends DialogComponent {
         requestAnimationFrame(() => {
           try {
             this.#populateFieldsFromSavedData();
+            // Set up input listeners after fields are populated
+            this.#attachInputListeners();
           } catch (error) {
             console.error('Error populating fields:', error);
           }
@@ -495,6 +581,8 @@ export class PersonaliseDialogComponent extends DialogComponent {
         // Max attempts reached, try to populate anyway
         try {
           this.#populateFieldsFromSavedData();
+          // Set up input listeners after fields are populated
+          this.#attachInputListeners();
         } catch (error) {
           console.error('Error populating fields after max attempts:', error);
         }
@@ -812,6 +900,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     this.updateSaveButton();
   }
+  
+  /**
+   * Initializes save button state when dialog opens
+   * @private
+   */
+  #initializeSaveButtonState() {
+    // Wait a bit for DOM to be ready
+    setTimeout(() => {
+      this.updateSaveButton();
+    }, 100);
+  }
 
   /**
    * Handles name input changes
@@ -994,6 +1093,9 @@ export class PersonaliseDialogComponent extends DialogComponent {
       this.selectedColor = colorName;
       this.personalisationData.color = colorName;
     }
+    
+    // Update save button state after color selection
+    this.updateSaveButton();
   }
 
   /**
@@ -1030,6 +1132,9 @@ export class PersonaliseDialogComponent extends DialogComponent {
       this.selectedFont = fontName;
       this.personalisationData.font = fontName;
     }
+    
+    // Update save button state after font selection
+    this.updateSaveButton();
   }
 
   /**
@@ -1055,12 +1160,53 @@ export class PersonaliseDialogComponent extends DialogComponent {
       const kidNameRequired = kidNameInput && !hasKidName;
       const mumNameRequired = mumNameInput && !hasMumName;
       
-      // Disable save button if:
+      // Check if font field exists (required field with red asterisk)
+      const fontGrid = this.refs.fontGrid || this.querySelector('.personalise-modal__font-grid');
+      const hasFont = fontGrid ? (this.selectedFont || this.personalisationData.font) : true;
+      const fontRequired = fontGrid && !hasFont;
+      
+      // Check if color field exists (required field with red asterisk)
+      const colorGrid = this.refs.colorGrid || this.querySelector('.personalise-modal__color-grid');
+      const colorRadioInputs = colorGrid ? colorGrid.querySelectorAll('input[type="radio"]') : [];
+      const hasColor = colorGrid ? (this.selectedColor || this.personalisationData.color || Array.from(colorRadioInputs).some(input => input.checked)) : true;
+      const colorRequired = colorGrid && colorRadioInputs.length > 0 && !hasColor;
+      
+      // Check for any other required fields (fields with required attribute or aria-required)
+      const allInputs = this.querySelectorAll('input, textarea, select');
+      let hasMissingRequiredField = false;
+      allInputs.forEach(input => {
+        // Skip radio buttons that aren't checked (they're handled separately)
+        if (input.type === 'radio' && !input.checked) {
+          return;
+        }
+        // Check if field is required
+        if (input.hasAttribute('required') || input.hasAttribute('aria-required')) {
+          // For text inputs, textareas, and selects, check if they have a value
+          if ((input.type === 'text' || input.type === 'textarea' || input.tagName === 'TEXTAREA' || input.tagName === 'SELECT') && !input.value.trim()) {
+            hasMissingRequiredField = true;
+          }
+          // For checkboxes, check if they're checked
+          if (input.type === 'checkbox' && !input.checked) {
+            hasMissingRequiredField = true;
+          }
+        }
+      });
+      
+      // Disable save button if any required field is missing:
       // 1. Name input exists but is empty (for personalized_name products)
       // 2. Any baby/kid/mum name input exists but is empty
+      // 3. Font field exists but no font is selected
+      // 4. Color field exists but no color is selected
+      // 5. Any other required field is missing
       if (nameInput && !hasName) {
         this.refs.saveButton.disabled = true;
       } else if (babyNameRequired || kidNameRequired || mumNameRequired) {
+        this.refs.saveButton.disabled = true;
+      } else if (fontRequired) {
+        this.refs.saveButton.disabled = true;
+      } else if (colorRequired) {
+        this.refs.saveButton.disabled = true;
+      } else if (hasMissingRequiredField) {
         this.refs.saveButton.disabled = true;
       } else {
         // All required fields have values, enable save button
@@ -1349,42 +1495,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
     // Close the dialog
     this.closeDialog();
-    
-    // Only update button text if NOT saving from cart context
-    // When saving from cart context, product page form should remain unchanged
-    if (!cartContext || !cartContext.cartLine) {
-      // Update button text for product page personalization
-      const updateButtonWithRetry2 = (attempts = 0) => {
-        if (typeof window.updatePersonaliseButtonText === 'function') {
-          window.updatePersonaliseButtonText(form);
-          
-          // Check if buttons were updated, if not retry
-          setTimeout(() => {
-            const buttons = document.querySelectorAll('[data-personalise-button]');
-            let anyButtonUpdated = false;
-            buttons.forEach((button) => {
-              const textSpan = button.querySelector('[data-personalise-text]');
-              if (textSpan && (textSpan.textContent === 'EDIT' || textSpan.textContent.includes('Personalised:'))) {
-                anyButtonUpdated = true;
-              }
-            });
-            
-            // If no buttons were updated and we haven't exceeded retries, try again
-            if (!anyButtonUpdated && attempts < 15) {
-              setTimeout(() => updateButtonWithRetry2(attempts + 1), 200);
-            }
-          }, 100);
-        } else if (attempts < 15) {
-          // Function not defined yet, retry
-          setTimeout(() => updateButtonWithRetry2(attempts + 1), 200);
-        }
-      };
-      
-      // Start button update immediately, with multiple retries
-      requestAnimationFrame(() => {
-        updateButtonWithRetry2(0);
-      });
-    }
+
+    // Button text is updated by document listener (buy-buttons) on 'personalisation-saved'.
+    // We do not update here to avoid duplicate retry loops that caused the Edit
+    // personalisation button to flash in the quick-add popup.
     
     // Clear cart context after save
     if (cartContext) {

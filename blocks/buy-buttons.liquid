@@ -678,6 +678,12 @@
                 colorText = colorInput.value.trim();
               }
               
+              // Read font from form
+              const fontInput = buttonForm.querySelector('input[name="properties[Text Font]"]');
+              if (fontInput && fontInput.value.trim()) {
+                parts.push('Font: ' + fontInput.value.trim());
+              }
+              
               // If we found any personalization in this form, we can stop checking
               if (parts.length > 0 || colorText) {
                 break;
@@ -792,30 +798,23 @@
                 if (colorInput && colorInput.value.trim()) {
                   colorText = colorInput.value.trim();
                 }
+                
+                // Read font from form
+                const fontInput = activeForm.querySelector('input[name="properties[Text Font]"]');
+                if (fontInput && fontInput.value.trim()) {
+                  // Check if font is already in parts to avoid duplicates
+                  const fontIndex = parts.findIndex(p => p.startsWith('Font: '));
+                  if (fontIndex >= 0) {
+                    parts[fontIndex] = 'Font: ' + fontInput.value.trim();
+                  } else {
+                    parts.push('Font: ' + fontInput.value.trim());
+                  }
+                }
               }
             }
             
             // Check if we have personalisation data (from form inputs)
             const hasPersonalisation = parts.length > 0 || colorText;
-            
-            // Debug logging
-            console.log('Button update check:', {
-              hasPersonalisation: hasPersonalisation,
-              parts: parts,
-              colorText: colorText,
-              formsChecked: allForms.length,
-              buttonProductId: buttonProductId,
-              formInputs: allForms.map(f => {
-                if (!f) return null;
-                const inputs = f.querySelectorAll('input[name^="properties["]');
-                return {
-                  formId: f.id,
-                  inputCount: inputs.length,
-                  inputNames: Array.from(inputs).map(i => i.name),
-                  inputValues: Array.from(inputs).map(i => i.value).filter(v => v.trim())
-                };
-              })
-            });
             
             if (hasPersonalisation) {
               // Build summary text - prefer sessionStorage data, fallback to form inputs
@@ -859,6 +858,7 @@
                       fields.push('date');
                     }
                     if (colorText) fields.push('colour');
+                    if (activeForm.querySelector('input[name="properties[Text Font]"]')) fields.push('font');
                     if (activeForm.querySelector('input[name="properties[Baby\'s Name]"]')) fields.push('baby name');
                     if (activeForm.querySelector('input[name="properties[Kid\'s Name]"]')) fields.push('kid name');
                     if (activeForm.querySelector('input[name="properties[Mum\'s Name]"]')) fields.push('mum name');
@@ -930,89 +930,27 @@
     };
   }
   
-  // Listen for personalisation-saved event to update button
+  // Listen for personalisation-saved event to update button (single update, no retries).
+  // Duplicate retry loops previously caused the Edit personalisation button to flash
+  // in the quick-add popup after save. Use shared debounce key with product-information.
+  var PERSONALISATION_SAVED_DEBOUNCE_MS = 400;
   function handlePersonalisationSaved(event) {
-    console.log('personalisation-saved event received', event.detail);
-    
-    // Get the form that was updated from event detail
-    const updatedForm = event.detail?.form;
-    const productId = event.detail?.productId;
-    
-    // Wait a bit for DOM to update after inputs are added
-    setTimeout(() => {
-      // Use multiple retries to ensure buttons are updated
-      const updateWithRetry = (attempts = 0) => {
-        if (window.updatePersonaliseButtonText) {
-          // Pass the updated form to the function if available
-          if (updatedForm) {
-            // Verify the form still has the inputs
-            const inputs = updatedForm.querySelectorAll('input[name^="properties["]');
-            console.log('Checking updated form for inputs:', inputs.length, 'attempt:', attempts);
-            
-            if (inputs.length === 0 && attempts < 5) {
-              // Inputs might not be in DOM yet, retry
-              setTimeout(() => updateWithRetry(attempts + 1), 100);
-              return;
-            }
-          }
-          
-          // Pass the updated form to the button update function
-          window.updatePersonaliseButtonText(updatedForm);
-          
-          // Check if buttons were updated
-          setTimeout(() => {
-            const buttons = document.querySelectorAll('[data-personalise-button]');
-            let anyUpdated = false;
-            buttons.forEach(button => {
-              const textSpan = button.querySelector('[data-personalise-text]');
-              if (textSpan && textSpan.textContent === 'EDIT') {
-                anyUpdated = true;
-              }
-            });
-            
-            console.log('Button update result:', {
-              buttonsFound: buttons.length,
-              anyUpdated: anyUpdated,
-              attempt: attempts
-            });
-            
-            // If buttons exist but weren't updated, retry
-            if (buttons.length > 0 && !anyUpdated && attempts < 15) {
-              setTimeout(() => updateWithRetry(attempts + 1), 200);
-            }
-          }, 100);
-        } else if (attempts < 15) {
-          setTimeout(() => updateWithRetry(attempts + 1), 200);
-        }
-      };
-      
-      updateWithRetry(0);
-    }, 200); // Small delay to ensure DOM has updated
+    var now = Date.now();
+    if (window.__lastPersonalisationSavedHandledAt && (now - window.__lastPersonalisationSavedHandledAt) < PERSONALISATION_SAVED_DEBOUNCE_MS) {
+      return;
+    }
+    window.__lastPersonalisationSavedHandledAt = now;
+    var updatedForm = event.detail && event.detail.form;
+    setTimeout(function() {
+      if (typeof window.updatePersonaliseButtonText === 'function') {
+        window.updatePersonaliseButtonText(updatedForm);
+      }
+    }, 100);
   }
-  
-  // Set up event listeners
+
+  // Set up event listeners (document only; event is also dispatched on dialog and bubbles)
   try {
     document.addEventListener('personalisation-saved', handlePersonalisationSaved);
-    
-    // Also try to listen on the dialog element directly (wait for it to be available)
-    function setupDialogListener() {
-      try {
-        const dialog = document.querySelector('personalise-dialog');
-        if (dialog) {
-          dialog.addEventListener('personalisation-saved', handlePersonalisationSaved);
-        } else {
-          // Try again after a short delay (max 10 attempts)
-          if (setupDialogListener.attempts < 10) {
-            setupDialogListener.attempts = (setupDialogListener.attempts || 0) + 1;
-            setTimeout(setupDialogListener, 200);
-          }
-        }
-      } catch (error) {
-        console.error('Error setting up dialog listener:', error);
-      }
-    }
-    setupDialogListener.attempts = 0;
-    setupDialogListener();
     
     // Don't update button text on page load - everything is fresh on reload
     // Button text will be updated when personalisation is saved during the current session
