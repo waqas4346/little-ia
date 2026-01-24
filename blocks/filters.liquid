@@ -703,7 +703,27 @@
     padding-inline: 0;
   }
 
-  @media screen and (max-width: 1024px) {
+  @media screen and (min-width: 768px) and (max-width: 1024px) {
+    .facets--drawer.dialog-drawer--right,
+    dialog.facets--drawer.dialog-drawer--right {
+      max-width: 50% !important;
+      width: 50% !important;
+      max-height: 100vh !important;
+      height: 100vh !important;
+      margin: 0 !important;
+      position: fixed !important;
+      top: 0 !important;
+      right: auto !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      border-right: var(--style-border-drawer);
+      border-left: none;
+      --dialog-drawer-opening-animation: slideInRight !important;
+      --dialog-drawer-closing-animation: slideOutRight !important;
+    }
+  }
+
+  @media screen and (max-width: 767px) {
     .facets--drawer.dialog-drawer--right,
     dialog.facets--drawer.dialog-drawer--right {
       max-width: 100% !important;
@@ -756,7 +776,7 @@
     overflow: visible;
   }
 
-  @media screen and (max-width: 749px) {
+  @media screen and (max-width: 1024px) {
     .facets--drawer sorting-filter-component,
     .facets--drawer .sorting-filter-component,
     .facets--drawer .sorting-filter {
