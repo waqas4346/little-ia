@@ -1,0 +1,678 @@
+
+{% liquid
+  # Get all blogs from blocks
+  assign blog_blocks = section.blocks | where: 'type', 'blog'
+  assign max_items = blog_blocks.size
+%}
+
+<div class="section-background color-{{ section.settings.color_scheme }}"></div>
+
+<div
+  class="
+    section
+    section--{{ section.settings.section_width }}
+    color-{{ section.settings.color_scheme }}
+    section-resource-list
+    spacing-style
+    gap-style
+    featured-blogs-section
+  "
+  style="
+    {%- render 'spacing-style', settings: section.settings -%}
+    {%- render 'gap-style', value: section.settings.gap -%}
+  "
+>
+  {% if section.settings.heading != blank or section.settings.subheading != blank %}
+    <div class="featured-blogs-header">
+      {% if section.settings.heading != blank %}
+        <h2 class="featured-blogs-heading">{{ section.settings.heading }}</h2>
+      {% endif %}
+      {% if section.settings.subheading != blank %}
+        <p class="featured-blogs-subheading">{{ section.settings.subheading }}</p>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% if blog_blocks.size > 0 %}
+    {% capture list_items %}
+      {% for block in blog_blocks %}
+        {% assign blog = block.settings.blog %}
+        {% if blog != blank and blog.articles.size > 0 %}
+          <div class="resource-list__item">
+            <div class="featured-blog-card">
+              <a href="{{ blog.url }}" class="featured-blog-card__link">
+                <div class="featured-blog-card__image-wrapper">
+                  {% comment %} Get blog image: first check metafield, then first article image, else placeholder {% endcomment %}
+                  {% assign blog_image = null %}
+                  
+                  {% comment %} Check for blog metafield image first {% endcomment %}
+                  {% if blog.metafields.custom.cb_featured_image != blank %}
+                    {% assign blog_image = blog.metafields.custom.cb_featured_image %}
+                  {% elsif blog.articles.first.image != blank %}
+                    {% assign blog_image = blog.articles.first.image %}
+                  {% endif %}
+                  
+                  {% if blog_image != blank %}
+                    {{
+                      blog_image
+                      | image_url: width: 800
+                      | image_tag: loading: 'lazy', class: 'featured-blog-card__image', alt: blog.title
+                    }}
+                  {% else %}
+                    <div class="featured-blog-card__placeholder">
+                      {{ blog.title | truncate: 60 }}
+                    </div>
+                  {% endif %}
+                  <div class="featured-blog-card__title-overlay">
+                    <span class="featured-blog-card__title">{{ blog.title }}</span>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+          {% unless forloop.last %}
+            <!--@list/split-->
+          {% endunless %}
+        {% endif %}
+      {% endfor %}
+    {% endcapture %}
+
+    {% liquid
+      assign list_items_array = list_items | strip | split: '<!--@list/split-->'
+      # Count non-empty items
+      assign valid_items = 0
+      for item in list_items_array
+        assign item_stripped = item | strip
+        unless item_stripped == blank or item_stripped == ''
+          assign valid_items = valid_items | plus: 1
+        endunless
+      endfor
+    %}
+
+    {% if valid_items > 0 and list_items_array.size > 0 %}
+      {% render 'resource-list',
+        list_items: list_items,
+        list_items_array: list_items_array,
+        settings: section.settings,
+        carousel_ref: 'featuredBlogs',
+        slide_count: valid_items,
+        content_type: 'blogs',
+        test_id: 'featured-blogs'
+      %}
+    {% endif %}
+  {% endif %}
+</div>
+
+{% stylesheet %}
+  .featured-blogs-header {
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  .featured-blogs-heading {
+    margin: 0;
+    font-family: 'Sacramento', cursive, sans-serif;
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 150%;
+    color: #7295BB;
+    text-align: center;
+    text-transform: lowercase;
+  }
+
+  .featured-blogs-subheading {
+    margin: 0;
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 150%;
+    text-transform: uppercase;
+    color: #1D425A;
+    text-align: center;
+  }
+
+  @media screen and (min-width: 750px) {
+    .featured-blogs-header {
+      margin-bottom: 7px;
+    }
+
+    .featured-blogs-heading {
+      font-size: 38px;
+    }
+    .featured-blogs-subheading {
+      font-size: 32px;
+    }
+  }
+
+  /* Featured blog card styling */
+  .featured-blog-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .featured-blog-card__link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+  }
+
+  .featured-blog-card__image-wrapper {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+  }
+
+  .featured-blog-card__image-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 53.36%, #000000 121.94%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .featured-blog-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .featured-blog-card__placeholder {
+    width: 100%;
+    height: 100%;
+    background: #F7F7F7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--padding-lg);
+    font-size: var(--font-size--lg);
+    color: var(--color-foreground);
+    text-align: center;
+  }
+
+  .featured-blog-card__title-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    padding: 0 24px 24px;
+    pointer-events: none;
+    text-align: center;
+  }
+
+  .featured-blog-card__title {
+    display: block;
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 150%;
+    color: #FFFFFF;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 749px) {
+    .featured-blog-card__image-wrapper {
+      aspect-ratio: 4 / 5;
+    }
+
+    .featured-blog-card__image-wrapper::before {
+      background: linear-gradient(180.06deg, rgba(0, 0, 0, 0) 45.21%, #000000 121.86%);
+    }
+
+    .featured-blog-card__title-overlay {
+      padding: 0 12px 13px;
+    }
+
+    .featured-blog-card__title {
+      font-size: 14px;
+      line-height: 150%;
+    }
+  }
+
+  /* Desktop: Ensure cards don't flush on left and right */
+  @media screen and (min-width: 750px) {
+    /* Override force-full-width to keep carousel within page width */
+    .featured-blogs-section.section--page-width > .resource-list.force-full-width {
+      grid-column: 2 !important;
+    }
+
+    /* Remove peek of next slide on desktop */
+    .featured-blogs-section .resource-list__carousel {
+      --peek-next-slide-size: 0px !important;
+    }
+
+    /* Override container query with media query for desktop slide width */
+    .featured-blogs-section .resource-list__carousel .resource-list__slide {
+      --section-slide-width: calc(
+        (100% - (var(--resource-list-column-gap, var(--resource-list-column-gap-desktop, 12px)) * (var(--column-count, 4) - 1)) - var(--peek-next-slide-size, 0px)) /
+          var(--column-count, 4)
+      );
+      --fallback-slide-width: clamp(150px, var(--mobile-card-size, 60vw), var(--slide-width-max, 450px));
+      --slide-width: var(--section-slide-width, var(--fallback-slide-width)) !important;
+    }
+
+    /* Remove padding from slideshow slides on desktop */
+    .featured-blogs-section .resource-list__carousel slideshow-slides {
+      padding-inline: 0 !important;
+    }
+
+    /* Position arrows outside the carousel container */
+    .featured-blogs-section .resource-list__carousel slideshow-component {
+      overflow: visible;
+    }
+
+    .featured-blogs-section .resource-list__carousel slideshow-container {
+      position: relative;
+      overflow: visible;
+    }
+
+    .featured-blogs-section .resource-list__carousel slideshow-arrows {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100%);
+      pointer-events: none;
+      z-index: var(--layer-heightened);
+      display: flex !important;
+    }
+
+    .featured-blogs-section .resource-list__carousel slideshow-arrows[position='center'] {
+      justify-content: space-between;
+      align-items: center;
+      padding: 0;
+    }
+
+    .featured-blogs-section .resource-list__carousel slideshow-arrows .slideshow-control {
+      position: absolute;
+      margin: 0;
+      pointer-events: auto;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 1;
+      transition: opacity 0.3s ease-out;
+    }
+
+    /* Position arrows outside the slider container */
+    .featured-blogs-section .resource-list__carousel slideshow-arrows .slideshow-control--previous {
+      left: -60px;
+    }
+
+    .featured-blogs-section .resource-list__carousel slideshow-arrows .slideshow-control--next {
+      right: -60px;
+    }
+
+    /* Prevent horizontal page scroll - use clip instead of hidden to allow arrows */
+    .featured-blogs-section {
+      overflow-x: clip;
+    }
+
+    @media (min-width: 1201px) {
+      .featured-blogs-section .slideshow-control--style-chevron {
+        border: 2px solid #7295bb;
+      }
+      .featured-blogs-section .slideshow-control--style-chevron svg path {
+        stroke: #7295bb;
+        fill: none;
+      }
+    }
+
+    /* On smaller desktop screens, reduce arrow extension */
+    @media (max-width: 1200px) {
+      .featured-blogs-section .resource-list__carousel slideshow-arrows .slideshow-control--previous {
+        left: 0px;
+      }
+      .featured-blogs-section .resource-list__carousel slideshow-arrows .slideshow-control--next {
+        right: 0px;
+      }
+      .featured-blogs-section .slideshow-control--style-chevron {
+        background-color: #7295bb;
+      }
+      .featured-blogs-section .slideshow-control--style-chevron svg path {
+        stroke: #ffffff;
+        fill: none;
+      }
+    }
+  }
+
+  /* Mobile: Cards should only flush on the right side */
+  @media screen and (max-width: 749px) {
+    /* Break out of page-width grid to touch right edge */
+    .featured-blogs-section.section--page-width > .resource-list.force-full-width {
+      grid-column: 1 / -1;
+    }
+
+    .featured-blogs-section.section--page-width {
+      padding-inline-start: var(--page-margin, 16px) !important;
+      padding-inline-end: 0 !important;
+    }
+
+    /* Enable scrolling on mobile - EXACTLY like collection-slider */
+    .featured-blogs-section .resource-list__carousel slideshow-component {
+      --cursor: grab;
+      padding-bottom: 0 !important;
+      margin-bottom: 0 !important;
+    }
+
+    .featured-blogs-section .resource-list__carousel slideshow-container {
+      padding-bottom: 0 !important;
+      margin-bottom: 0 !important;
+      overflow: visible;
+    }
+
+    /* CRITICAL: Override disabled state - this enables scrolling */
+    .featured-blogs-section .resource-list__carousel slideshow-component[disabled='true'] slideshow-slides {
+      overflow-x: auto !important;
+    }
+
+    /* Set mobile gap to 5px */
+    .featured-blogs-section .resource-list__carousel {
+      --resource-list-column-gap: 5px !important;
+    }
+
+    /* Calculate card width for 2 columns with peek */
+    .featured-blogs-section .resource-list__carousel {
+      --card-width: clamp(150px, 48cqw, 450px);
+    }
+
+    /* Enable horizontal scrolling - EXACTLY like collection-slider */
+    .featured-blogs-section .resource-list__carousel slideshow-slides {
+      gap: 5px !important;
+      overflow-x: auto !important;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 0 !important;
+      margin-bottom: 0 !important;
+      padding-inline-start: 0 !important;
+      /* Add padding at the end so cards don't touch edge when scrolled to end */
+      padding-inline-end: var(--page-margin, 16px) !important;
+      /* Use CSS Grid with 2 rows, flow column-wise for 2x2 layout */
+      display: grid !important;
+      grid-template-rows: repeat(2, auto) !important;
+      grid-auto-flow: column !important;
+      grid-auto-columns: var(--card-width) !important;
+      /* Set height for exactly 2 rows */
+      height: calc(var(--card-width) * 1.25 * 2 + 5px) !important;
+    }
+
+    /* Hide native scrollbar */
+    .featured-blogs-section .resource-list__carousel slideshow-slides::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    /* Each slide becomes a grid item in the 2-row grid */
+    .featured-blogs-section .resource-list__carousel .resource-list__slide {
+      --slide-width: var(--card-width) !important;
+      width: var(--card-width) !important;
+      min-width: var(--card-width) !important;
+      max-width: var(--card-width) !important;
+      scroll-snap-align: start;
+    }
+
+    /* Remove padding from carousel containers on mobile */
+    .featured-blogs-section .resource-list__carousel slideshow-component,
+    .featured-blogs-section .resource-list__carousel slideshow-container {
+      padding-inline-start: 0 !important;
+      padding-inline-end: 0 !important;
+    }
+
+    /* Hide arrows on mobile */
+    .featured-blogs-section .resource-list__carousel slideshow-arrows {
+      display: none !important;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Featured Blogs",
+  "tag": "section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "class": "featured-blogs",
+  "blocks": [
+    {
+      "type": "blog",
+      "name": "Blog",
+      "settings": [
+        {
+          "type": "blog",
+          "id": "blog",
+          "label": "Blog"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading"
+    },
+    {
+      "type": "header",
+      "content": "Carousel Settings"
+    },
+    {
+      "type": "select",
+      "id": "layout_type",
+      "label": "Layout type",
+      "options": [
+        {
+          "value": "carousel",
+          "label": "Carousel"
+        }
+      ],
+      "default": "carousel"
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "Columns",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "default": 3,
+      "visible_if": "{{ section.settings.layout_type == 'grid' or section.settings.layout_type == 'carousel' }}"
+    },
+    {
+      "type": "select",
+      "id": "mobile_card_size",
+      "label": "Mobile card size",
+      "options": [
+        {
+          "value": "60cqw",
+          "label": "Large"
+        },
+        {
+          "value": "44cqw",
+          "label": "Small"
+        }
+      ],
+      "default": "60cqw",
+      "visible_if": "{{ section.settings.layout_type == 'carousel' or section.settings.carousel_on_mobile == true }}"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap",
+      "label": "Horizontal gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 16,
+      "visible_if": "{{ section.settings.layout_type == 'grid' or section.settings.layout_type == 'carousel' }}"
+    },
+    {
+      "type": "header",
+      "content": "Carousel Navigation"
+    },
+    {
+      "type": "select",
+      "id": "icons_style",
+      "label": "Icon style",
+      "options": [
+        {
+          "value": "arrow",
+          "label": "Arrows"
+        },
+        {
+          "value": "chevron",
+          "label": "Chevrons"
+        },
+        {
+          "value": "arrows_large",
+          "label": "Large arrows"
+        },
+        {
+          "value": "chevron_large",
+          "label": "Large chevrons"
+        },
+        {
+          "value": "blue_arrows",
+          "label": "Blue arrows"
+        },
+        {
+          "value": "none",
+          "label": "None"
+        }
+      ],
+      "default": "arrow",
+      "visible_if": "{{ section.settings.layout_type == 'carousel' or section.settings.carousel_on_mobile == true }}"
+    },
+    {
+      "type": "select",
+      "id": "icons_shape",
+      "label": "Icon background",
+      "options": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "circle",
+          "label": "Circle"
+        },
+        {
+          "value": "square",
+          "label": "Square"
+        }
+      ],
+      "default": "none",
+      "visible_if": "{{ section.settings.icons_style != 'none' and section.settings.layout_type == 'carousel' or section.settings.carousel_on_mobile == true }}"
+    },
+    {
+      "type": "header",
+      "content": "Section Layout"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "Page width"
+        },
+        {
+          "value": "full-width",
+          "label": "Full width"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "label": "Gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 32
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 32
+    }
+  ],
+  "presets": [
+    {
+      "name": "Featured Blogs",
+      "category": "Storytelling",
+      "blocks": [
+        {
+          "type": "blog",
+          "settings": {}
+        },
+        {
+          "type": "blog",
+          "settings": {}
+        },
+        {
+          "type": "blog",
+          "settings": {}
+        }
+      ],
+      "settings": {
+        "layout_type": "carousel",
+        "columns": 3,
+        "columns_gap": 16,
+        "mobile_card_size": "60cqw",
+        "icons_style": "arrow",
+        "icons_shape": "circle",
+        "gap": 12,
+        "padding-block-start": 32,
+        "padding-block-end": 32
+      }
+    }
+  ]
+}
+{% endschema %}
