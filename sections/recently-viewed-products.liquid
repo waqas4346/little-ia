@@ -38,7 +38,7 @@
     id="recently-viewed-products-{{ section.id }}"
     data-section-id="{{ section.id }}"
     data-items-per-view="{{ section.settings.items_per_view | default: 4 }}"
-    data-columns-gap="{{ section.settings.columns_gap | default: 8 }}"
+    data-columns-gap="{{ section.settings.columns_gap | default: 12 }}"
     data-icons-style="{{ section.settings.icons_style | default: 'arrow' }}"
     data-icons-shape="{{ section.settings.icons_shape | default: 'none' }}"
     data-max-products="{{ section.settings.max_products | default: 10 }}"
@@ -127,7 +127,7 @@
     border-radius: 4px;
   }
 
-  @media (max-width: 767px) {
+  @media (max-width: 749px) {
     .recently-viewed-products-skeleton {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -147,13 +147,11 @@
     position: relative;
   }
 
-  /* Remove horizontal padding for max width */
-  [data-testid="recently-viewed-products"] .section--page-width {
-    padding-inline: 0 !important;
-  }
-
-  [data-testid="recently-viewed-products"] .section--page-width > * {
-    padding-inline: 0 !important;
+  /* Remove horizontal padding for max width - but keep mobile padding */
+  @media screen and (min-width: 750px) {
+    [data-testid="recently-viewed-products"].section--page-width {
+      padding-inline: 0 !important;
+    }
   }
 
   [data-testid="recently-viewed-products-grid"] {
@@ -161,6 +159,14 @@
     --peek-next-slide-size: 0px;
     --gutter-slide-width: 0px !important;
     overflow: visible;
+  }
+
+  @media screen and (max-width: 749px) {
+    [data-testid="recently-viewed-products-grid"] {
+      padding-inline-start: 0 !important;
+      padding-inline-end: 0 !important;
+      overflow: visible;
+    }
   }
 
   /* Use same carousel classes as product-slider */
@@ -171,11 +177,31 @@
 
   [data-testid="recently-viewed-products"] .product-slider-desktop .resource-list__carousel {
     --column-count: var(--items-per-view, 4);
-    --resource-list-column-gap-desktop: var(--columns-gap, 8px);
+    --resource-list-column-gap-desktop: var(--columns-gap, 12px);
+  }
+
+  /* Mobile (max-width: 749px): Show 2 columns like collection pages */
+  @media screen and (max-width: 749px) {
+    [data-testid="recently-viewed-products-grid"] .product-slider-desktop .resource-list__carousel {
+      --column-count: 2;
+      --resource-list-column-gap: var(--columns-gap, 12px);
+    }
+
+    /* Ensure product cards use responsive sizing like collection pages */
+    [data-testid="recently-viewed-products-grid"] .resource-list__item {
+      min-width: 0;
+    }
   }
 
   [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-slides {
-    gap: var(--columns-gap, 8px) !important;
+    gap: var(--columns-gap, 12px);
+  }
+
+  /* Mobile gap */
+  @media screen and (max-width: 749px) {
+    [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-slides {
+      gap: 5px;
+    }
   }
 
   [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-container {
@@ -384,7 +410,7 @@
   }
 
   /* Tablet (iPad) - Show 3 items per row */
-  @media (min-width: 768px) and (max-width: 1024px) {
+  @media (min-width: 750px) and (max-width: 1024px) {
     [data-testid="recently-viewed-products"] .product-slider-desktop .resource-list__carousel {
       --column-count: 3;
     }
@@ -408,28 +434,121 @@
     }
   }
 
-  @media (max-width: 767px) {
-    [data-testid="recently-viewed-products"] .product-slider-wrapper {
-      padding: 0;
-      max-width: calc((175px * 2) + 8px);
+  /* Mobile: Add left padding, keep right edge flush for peek */
+  @media screen and (max-width: 749px) {
+    /* Break out of page-width grid to touch right edge - only for component wrapper */
+    [data-testid="recently-viewed-products"].section--page-width > recently-viewed-products-component {
+      grid-column: 1 / -1;
+      padding-inline-start: var(--page-margin, 16px) !important;
+      padding-inline-end: 0 !important;
+      display: block;
+    }
+
+    /* Keep header in normal grid column */
+    [data-testid="recently-viewed-products"].section--page-width > .product-slider-header {
+      grid-column: 2;
+    }
+
+    [data-testid="recently-viewed-products"] .recently-viewed-products-content {
+      padding: 0 !important;
+      padding-inline-start: 0 !important;
+      padding-inline-end: 0 !important;
+      overflow: visible;
       width: 100%;
-      margin: 0 auto;
+    }
+
+    [data-testid="recently-viewed-products"] .product-slider-wrapper {
+      padding: 0 !important;
+      padding-inline-start: 0 !important;
+      padding-inline-end: 0 !important;
+      overflow: visible;
+      width: 100%;
     }
 
     [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-container {
-      max-width: calc((175px * 2) + 8px);
+      overflow: visible;
       width: 100%;
-      margin: 0 auto;
     }
 
     [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-arrows {
       display: none !important;
     }
 
+    /* Allow peek of next slide on mobile - touch right edge */
+    [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-component slideshow-slides,
+    [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-component[disabled='true'] slideshow-slides {
+      overflow-x: auto !important;
+      overflow-y: visible !important;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-snap-type: x mandatory;
+    }
+
+
+    [data-testid="recently-viewed-products"] .product-slider-desktop slideshow-slides::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    /* Add padding after last slide so it doesn't touch edge when scrolled to end - only for main carousel */
+    [data-testid="recently-viewed-products-grid"] > slideshow-component > slideshow-container > slideshow-slides > slideshow-slide:last-child {
+      padding-inline-end: var(--page-margin, 16px);
+    }
+
     /* Ensure card-gallery can scroll on mobile - allow overflow for product image scrolling */
     [data-testid="recently-viewed-products-grid"] .card-gallery slideshow-slides {
       overflow-x: auto !important;
       -webkit-overflow-scrolling: touch;
+    }
+
+    /* Custom scrollbar indicator */
+    .recently-viewed-products-scrollbar-indicator {
+      width: auto;
+      max-width: calc(100% - var(--page-margin, 16px));
+      height: 4px;
+      position: relative;
+      margin-top: 37px;
+      margin-right: var(--page-margin, 16px);
+      box-sizing: border-box;
+    }
+
+    .recently-viewed-products-scrollbar-track {
+      width: 100%;
+      height: 4px;
+      background-color: #EEEEEE;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .recently-viewed-products-scrollbar-thumb {
+      height: 4px;
+      background-color: #7295BB;
+      border-radius: 10px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      transition: width 0.1s ease-out;
+      min-width: 20px;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .recently-viewed-products-scrollbar-thumb:active {
+      cursor: grabbing;
+    }
+
+    .recently-viewed-products-scrollbar-track {
+      cursor: pointer;
+    }
+  }
+
+  /* Hide scrollbar indicator on desktop */
+  @media screen and (min-width: 750px) {
+    .recently-viewed-products-scrollbar-indicator {
+      display: none !important;
     }
   }
 
@@ -547,6 +666,203 @@
   }
 </style>
 
+<script>
+  // Custom scrollbar indicator for mobile
+  document.addEventListener('DOMContentLoaded', function() {
+    function setupRecentlyViewedScrollbar() {
+      const grid = document.querySelector('[data-testid="recently-viewed-products-grid"]');
+      if (!grid) return;
+      
+      const slides = grid.querySelector('.product-slider-desktop slideshow-component slideshow-slides') || 
+                     grid.querySelector('.product-slider-desktop slideshow-slides');
+      const wrapper = grid.closest('.product-slider-wrapper') || grid.parentElement;
+      
+      if (!slides || !wrapper) return;
+
+      // Check if scrollbar indicator already exists
+      let scrollbarIndicator = wrapper.querySelector('.recently-viewed-products-scrollbar-indicator');
+      if (!scrollbarIndicator) {
+        // Create scrollbar indicator
+        scrollbarIndicator = document.createElement('div');
+        scrollbarIndicator.className = 'recently-viewed-products-scrollbar-indicator';
+        scrollbarIndicator.innerHTML = `
+          <div class="recently-viewed-products-scrollbar-track">
+            <div class="recently-viewed-products-scrollbar-thumb"></div>
+          </div>
+        `;
+        wrapper.appendChild(scrollbarIndicator);
+      }
+
+      const scrollbarThumb = scrollbarIndicator.querySelector('.recently-viewed-products-scrollbar-thumb');
+      if (!scrollbarThumb) return;
+
+      function updateScrollbar() {
+        // Only show on mobile
+        if (window.innerWidth > 749) {
+          scrollbarIndicator.style.display = 'none';
+          return;
+        }
+
+        const scrollLeft = slides.scrollLeft;
+        const scrollWidth = slides.scrollWidth;
+        const clientWidth = slides.clientWidth;
+        const maxScroll = scrollWidth - clientWidth;
+        
+        if (maxScroll <= 0) {
+          scrollbarIndicator.style.display = 'none';
+          return;
+        }
+        
+        scrollbarIndicator.style.display = 'block';
+        
+        // Calculate thumb width and position
+        const thumbWidth = (clientWidth / scrollWidth) * 100;
+        const thumbPosition = (scrollLeft / maxScroll) * (100 - thumbWidth);
+        
+        scrollbarThumb.style.width = thumbWidth + '%';
+        scrollbarThumb.style.left = thumbPosition + '%';
+      }
+
+      // Update on scroll
+      slides.addEventListener('scroll', updateScrollbar);
+      
+      // Update on resize
+      const resizeObserver = new ResizeObserver(updateScrollbar);
+      resizeObserver.observe(slides);
+      
+      window.addEventListener('resize', updateScrollbar);
+      
+      // Initial update
+      updateScrollbar();
+      
+      // Update periodically to catch any changes
+      setInterval(updateScrollbar, 100);
+
+      // Make scrollbar interactive - click on track to jump
+      const scrollbarTrack = scrollbarIndicator.querySelector('.recently-viewed-products-scrollbar-track');
+      if (scrollbarTrack) {
+        scrollbarTrack.addEventListener('click', function(e) {
+          if (window.innerWidth > 749) return;
+          
+          const trackRect = scrollbarTrack.getBoundingClientRect();
+          const clickX = e.clientX - trackRect.left;
+          const trackWidth = trackRect.width;
+          const percentage = clickX / trackWidth;
+          
+          const scrollWidth = slides.scrollWidth;
+          const clientWidth = slides.clientWidth;
+          const maxScroll = scrollWidth - clientWidth;
+          const targetScroll = percentage * maxScroll;
+          
+          slides.scrollTo({
+            left: targetScroll,
+            behavior: 'smooth'
+          });
+        });
+      }
+
+      // Make scrollbar thumb draggable
+      let isDragging = false;
+      let startX = 0;
+      let startScrollLeft = 0;
+
+      const handleMouseMove = function(e) {
+        if (!isDragging || window.innerWidth > 749) return;
+        
+        const scrollbarTrack = scrollbarIndicator.querySelector('.recently-viewed-products-scrollbar-track');
+        if (!scrollbarTrack) return;
+        
+        const trackRect = scrollbarTrack.getBoundingClientRect();
+        const deltaX = e.clientX - startX;
+        const trackWidth = trackRect.width;
+        const scrollWidth = slides.scrollWidth;
+        const clientWidth = slides.clientWidth;
+        const maxScroll = scrollWidth - clientWidth;
+        const scrollRatio = maxScroll / trackWidth;
+        const newScrollLeft = startScrollLeft + (deltaX * scrollRatio);
+        
+        slides.scrollLeft = Math.max(0, Math.min(maxScroll, newScrollLeft));
+      };
+
+      const handleMouseUp = function() {
+        isDragging = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      scrollbarThumb.addEventListener('mousedown', function(e) {
+        if (window.innerWidth > 749) return;
+        isDragging = true;
+        startX = e.clientX;
+        startScrollLeft = slides.scrollLeft;
+        e.preventDefault();
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+      });
+
+      // Touch support for mobile
+      const handleTouchMove = function(e) {
+        if (!isDragging || window.innerWidth > 749) return;
+        
+        const scrollbarTrack = scrollbarIndicator.querySelector('.recently-viewed-products-scrollbar-track');
+        if (!scrollbarTrack) return;
+        
+        const trackRect = scrollbarTrack.getBoundingClientRect();
+        const deltaX = e.touches[0].clientX - startX;
+        const trackWidth = trackRect.width;
+        const scrollWidth = slides.scrollWidth;
+        const clientWidth = slides.clientWidth;
+        const maxScroll = scrollWidth - clientWidth;
+        const scrollRatio = maxScroll / trackWidth;
+        const newScrollLeft = startScrollLeft + (deltaX * scrollRatio);
+        
+        slides.scrollLeft = Math.max(0, Math.min(maxScroll, newScrollLeft));
+      };
+
+      const handleTouchEnd = function() {
+        isDragging = false;
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
+
+      scrollbarThumb.addEventListener('touchstart', function(e) {
+        if (window.innerWidth > 749) return;
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        startScrollLeft = slides.scrollLeft;
+        e.preventDefault();
+        document.addEventListener('touchmove', handleTouchMove);
+        document.addEventListener('touchend', handleTouchEnd);
+      });
+    }
+
+    // Try to setup immediately
+    setupRecentlyViewedScrollbar();
+    
+    // Also try after delays to catch dynamically loaded content
+    setTimeout(setupRecentlyViewedScrollbar, 500);
+    setTimeout(setupRecentlyViewedScrollbar, 1000);
+    setTimeout(setupRecentlyViewedScrollbar, 2000);
+    
+    // Watch for changes to the component
+    const component = document.querySelector('recently-viewed-products-component');
+    if (component) {
+      const observer = new MutationObserver(function() {
+        setTimeout(setupRecentlyViewedScrollbar, 100);
+      });
+      observer.observe(component, {
+        childList: true,
+        subtree: true
+      });
+    }
+
+    // Also listen for custom events that might indicate carousel is ready
+    document.addEventListener('recently-viewed-products-loaded', function() {
+      setTimeout(setupRecentlyViewedScrollbar, 100);
+    });
+  });
+</script>
+
 {% schema %}
 {
   "name": "Recently Viewed Products",
@@ -622,7 +938,7 @@
       "max": 100,
       "step": 1,
       "unit": "px",
-      "default": 8
+      "default": 12
     },
     {
       "type": "select",
@@ -747,7 +1063,7 @@
         "section_title": "RECENTLY VIEWED",
         "items_per_view": 4,
         "max_products": 10,
-        "columns_gap": 8,
+        "columns_gap": 12,
         "icons_style": "arrow",
         "icons_shape": "none",
         "section_width": "page-width",
