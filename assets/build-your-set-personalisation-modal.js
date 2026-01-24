@@ -330,10 +330,11 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
                 required
               >
               <div class="variant-option__image-thumbnail">
-                <span
-                  class="swatch swatch--unscaled"
-                  style="--swatch-background: ${option.display}; background-color: ${option.display};"
-                ></span>
+                <div 
+                  class="personalise-modal__color-icon" 
+                  data-color-icon="${option.display}"
+                  style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;"
+                ></div>
               </div>
             </label>
           `;
@@ -520,6 +521,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
       requestAnimationFrame(() => {
         this.setupCharacterCounters();
         this.setupFontButtons();
+        this.loadColorIcons();
         this.setupColorButtons();
         this.setupNameTabs();
         // Set up listeners for other input types (select, date, etc.)
@@ -906,6 +908,91 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
   /**
    * Sets up change handlers for color radio buttons
    */
+  /**
+   * Loads SVG icons for color selection
+   * Since Liquid snippets can't be directly fetched, we use a data attribute
+   * and load the SVG content via a Shopify-compatible endpoint or include it in JS
+   * For now, we'll create a placeholder that can be replaced with actual SVG content
+   */
+  async loadColorIcons() {
+    if (!this.refs.formContainer) return;
+    
+    const colorIconContainers = this.refs.formContainer.querySelectorAll('.personalise-modal__color-icon[data-color-icon]');
+    
+    // Map color names to their SVG snippet file names
+    const colorIconMap = {
+      'grey': 'icon-grey',
+      'pink': 'icon-pink',
+      'white': 'icon-white',
+      'red': 'icon-red',
+      'green': 'icon-green',
+      'blue': 'icon-blue',
+      'orange': 'icon-orange',
+      'yellow': 'icon-yellow',
+      'purple': 'icon-purple',
+      'gold': 'icon-gold',
+      'silver': 'icon-silver',
+      'multicolour': 'icon-multicolour',
+      'black': 'icon-black'
+    };
+    
+    for (const container of colorIconContainers) {
+      const colorName = container.dataset.colorIcon.toLowerCase();
+      const iconSnippetName = colorIconMap[colorName];
+      
+      if (!iconSnippetName) {
+        console.warn(`No icon mapping found for color: ${colorName}`);
+        continue;
+      }
+      
+      // Create an img element that will load the SVG from the snippet
+      // Note: This requires the snippet to be accessible via URL, which may not work directly
+      // Alternative: Include SVG content in JS or render server-side
+      const img = document.createElement('img');
+      img.src = `/snippets/${iconSnippetName}.liquid`;
+      img.alt = `${colorName} color icon`;
+      img.style.width = '60px';
+      img.style.height = '60px';
+      img.style.objectFit = 'contain';
+      
+      // Try to load as image first, fallback to fetch if that doesn't work
+      img.onerror = async () => {
+        try {
+          // Try fetching as HTML/text to get the SVG content
+          const response = await fetch(`/snippets/${iconSnippetName}.liquid`, {
+            headers: { 'Accept': 'text/html' }
+          });
+          
+          if (response.ok) {
+            const htmlContent = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            const svg = doc.querySelector('svg');
+            
+            if (svg) {
+              const svgClone = svg.cloneNode(true);
+              svgClone.setAttribute('width', '60');
+              svgClone.setAttribute('height', '60');
+              svgClone.style.width = '60px';
+              svgClone.style.height = '60px';
+              container.innerHTML = '';
+              container.appendChild(svgClone);
+              return;
+            }
+          }
+        } catch (error) {
+          console.warn(`Error loading color icon for ${colorName}:`, error);
+        }
+        
+        // Final fallback: create a colored div placeholder
+        container.innerHTML = `<div style="width: 60px; height: 60px; background-color: ${colorName}; border: 1px solid #ccc;"></div>`;
+      };
+      
+      container.innerHTML = '';
+      container.appendChild(img);
+    }
+  }
+
   setupColorButtons() {
     const colorRadios = this.refs.formContainer.querySelectorAll('.personalise-modal__color-button input[type="radio"]');
     colorRadios.forEach(radio => {

@@ -132,7 +132,7 @@
               {% comment %} Pagination controls {% endcomment %}
               {% if paginate.pages > 1 %}
                 <div class="party-favours-pagination-wrapper" data-pagination-wrapper data-collection-handle="{{ collection.handle }}">
-                  {% render 'pagination-controls', paginate: paginate, on_click_handler: 'handlePartyFavoursPagination' %}
+                  {% render 'pagination-controls', paginate: paginate %}
                 </div>
               {% endif %}
             </div>
@@ -573,103 +573,140 @@
     }
 
     // Handle pagination clicks for Party Favours
-    window.handlePartyFavoursPagination = function(eventOrParams) {
-      let page = '1';
-      if (typeof eventOrParams === 'string') {
-        const urlParams = new URLSearchParams(eventOrParams);
-        page = urlParams.get('page') || '1';
-      } else if (eventOrParams && typeof eventOrParams === 'object') {
-        if (eventOrParams.preventDefault) {
-          eventOrParams.preventDefault();
-          const target = eventOrParams.currentTarget || eventOrParams.target;
-          if (target && target.href) {
-            const url = new URL(target.href);
-            page = url.searchParams.get('page') || '1';
-          }
-        } else {
-          page = eventOrParams.page || '1';
-        }
-      }
-      
+    async function handlePartyFavoursPagination(pageNumber, collectionHandle) {
       const activeWrapper = section.querySelector('.party-favours-product-grid-wrapper:not(.hidden)');
       if (!activeWrapper) return;
       
-      const collectionHandle = activeWrapper.dataset.collectionHandle;
+      if (!collectionHandle) {
+        collectionHandle = activeWrapper.dataset.collectionHandle;
+      }
       if (!collectionHandle) return;
       
-      const url = page === '1' 
-        ? `/collections/${collectionHandle}` 
-        : `/collections/${collectionHandle}?page=${page}`;
+      // Get the section ID (normalize it by removing the prefix if present)
+      const sectionElement = section.closest('.shopify-section');
+      if (!sectionElement) {
+        console.error('Party Favours section element not found');
+        return;
+      }
       
-      fetch(url)
-        .then(function(response) {
-          return response.text();
-        })
-        .then(function(html) {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          
-          const fetchedSection = doc.querySelector('[data-testid="party-favours"]');
-          if (!fetchedSection) return;
-          
-          const fetchedWrapper = Array.from(fetchedSection.querySelectorAll('.party-favours-product-grid-wrapper')).find(function(w) {
-            return w.dataset.collectionHandle === collectionHandle;
-          });
-          
-          if (!fetchedWrapper) return;
-          
-          const fetchedProductGrid = fetchedWrapper.querySelector('.product-grid');
-          const fetchedPagination = fetchedWrapper.querySelector('.party-favours-pagination-wrapper');
-          
-          if (!fetchedProductGrid) return;
-          
-          const currentProductGrid = activeWrapper.querySelector('.product-grid');
-          if (currentProductGrid) {
-            currentProductGrid.innerHTML = fetchedProductGrid.innerHTML;
-          }
-          
-          const currentPaginationWrapper = activeWrapper.querySelector('.party-favours-pagination-wrapper');
-          if (fetchedPagination) {
-            if (currentPaginationWrapper) {
-              currentPaginationWrapper.innerHTML = fetchedPagination.innerHTML;
-            } else {
-              activeWrapper.insertAdjacentHTML('beforeend', fetchedPagination.outerHTML);
-            }
-          } else if (currentPaginationWrapper) {
-            currentPaginationWrapper.remove();
-          }
-          
-          initializeProductCards(activeWrapper);
-          
-          setTimeout(setupPaginationClickListeners, 100);
-          
-          activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        })
-        .catch(function(error) {
-          console.error('Error loading paginated products:', error);
+      let sectionId = sectionElement.id;
+      // Remove 'shopify-section-' prefix if present
+      if (sectionId.startsWith('shopify-section-')) {
+        sectionId = sectionId.replace('shopify-section-', '');
+      }
+      
+      // Build URL with page parameter for section rendering API
+      const url = new URL(window.location.href);
+      url.pathname = `/collections/${collectionHandle}`;
+      if (pageNumber && pageNumber !== '1') {
+        url.searchParams.set('page', pageNumber);
+      } else {
+        url.searchParams.delete('page');
+      }
+      // Add section_id parameter for section rendering API
+      url.searchParams.set('section_id', sectionId);
+      url.searchParams.sort();
+      
+      try {
+        // Fetch section HTML using Shopify's section rendering API
+        const response = await fetch(url.toString());
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const sectionHTML = await response.text();
+        
+        // Parse the fetched section HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(sectionHTML, 'text/html');
+        
+        const fetchedSection = doc.querySelector('[data-testid="party-favours"]');
+        if (!fetchedSection) {
+          console.error('Party Favours section not found in response');
+          return;
+        }
+        
+        const fetchedWrapper = Array.from(fetchedSection.querySelectorAll('.party-favours-product-grid-wrapper')).find(function(w) {
+          return w.dataset.collectionHandle === collectionHandle;
         });
-      
-      return false;
-    };
+        
+        if (!fetchedWrapper) {
+          console.error('Collection wrapper not found in response');
+          return;
+        }
+        
+        const fetchedProductGrid = fetchedWrapper.querySelector('.product-grid');
+        const fetchedPagination = fetchedWrapper.querySelector('.party-favours-pagination-wrapper');
+        
+        if (!fetchedProductGrid) {
+          console.error('Product grid not found in response');
+          return;
+        }
+        
+        // Update the product grid
+        const currentProductGrid = activeWrapper.querySelector('.product-grid');
+        if (currentProductGrid) {
+          currentProductGrid.innerHTML = fetchedProductGrid.innerHTML;
+        }
+        
+        // Update pagination
+        const currentPaginationWrapper = activeWrapper.querySelector('.party-favours-pagination-wrapper');
+        if (fetchedPagination) {
+          if (currentPaginationWrapper) {
+            currentPaginationWrapper.innerHTML = fetchedPagination.innerHTML;
+          } else {
+            activeWrapper.insertAdjacentHTML('beforeend', fetchedPagination.outerHTML);
+          }
+        } else if (currentPaginationWrapper) {
+          currentPaginationWrapper.remove();
+        }
+        
+        // Re-initialize product cards and pagination listeners
+        initializeProductCards(activeWrapper);
+        
+        // Setup pagination listeners after a short delay to ensure DOM is ready
+        setTimeout(function() {
+          setupPaginationClickListeners();
+        }, 50);
+        
+        // Scroll to top of section
+        activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (error) {
+        console.error('Error loading paginated products:', error);
+      }
+    }
     
     function setupPaginationClickListeners() {
       const paginationLinks = section.querySelectorAll('.party-favours-pagination-wrapper a.pagination__link');
       paginationLinks.forEach(function(link) {
-        const newLink = link.cloneNode(true);
-        link.parentNode.replaceChild(newLink, link);
+        // Skip if listener already attached
+        if (link.dataset.partyFavoursListener === 'true') return;
+        link.dataset.partyFavoursListener = 'true';
         
-        newLink.addEventListener('click', function(e) {
+        link.addEventListener('click', function(e) {
           e.preventDefault();
-          const href = newLink.href;
-          if (href) {
-            const url = new URL(href);
-            const page = url.searchParams.get('page') || '1';
-            window.handlePartyFavoursPagination({ page: page });
+          e.stopPropagation();
+          
+          const href = link.getAttribute('href');
+          if (!href) return;
+          
+          // Create URL object, handling both absolute and relative URLs
+          const url = href.startsWith('http') 
+            ? new URL(href) 
+            : new URL(href, window.location.origin);
+          
+          const page = url.searchParams.get('page') || '1';
+          
+          const activeWrapper = section.querySelector('.party-favours-product-grid-wrapper:not(.hidden)');
+          const collectionHandle = activeWrapper?.dataset.collectionHandle;
+          
+          if (collectionHandle) {
+            handlePartyFavoursPagination(page, collectionHandle);
           }
         });
       });
     }
     
+    // Setup initial pagination listeners
     setTimeout(setupPaginationClickListeners, 100);
 
     // Handle collection item clicks

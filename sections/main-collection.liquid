@@ -1058,6 +1058,17 @@
     left: auto;
   }
 
+  @media screen and (min-width: 768px) and (max-width: 1024px) {
+    .mobile-sort-modal__dialog {
+      max-width: 50% !important;
+      width: 50% !important;
+      right: auto !important;
+      left: 0 !important;
+      --dialog-drawer-opening-animation: slideInRight !important;
+      --dialog-drawer-closing-animation: slideOutRight !important;
+    }
+  }
+
   @media screen and (min-width: 1025px) {
     .mobile-sort-modal__dialog {
       display: none;

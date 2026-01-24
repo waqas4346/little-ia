@@ -10,6 +10,7 @@
 {%- enddoc -%}
 
 {% assign block_settings = block.settings %}
+{% assign disable_product_link = block_settings.disable_product_link | default: false %}
 
 {% style %}
   {% if request.visual_preview_mode %}
@@ -102,6 +103,9 @@
   {% else %}
     data-view-product-button-enabled="false"
     data-view-product-button-setting="false"
+  {% endif %}
+  {% if disable_product_link %}
+    data-no-navigation="true"
   {% endif %}
   {{ block.shopify_attributes }}
   {% if onboarding %}

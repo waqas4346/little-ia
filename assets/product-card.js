@@ -400,8 +400,11 @@ export class ProductCard extends Component {
   navigateToProduct = (event) => {
     if (!(event.target instanceof Element)) return;
 
-    // Don't navigate if this product card is marked as no-navigation (e.g., in theme editor)
-    if (this.hasAttribute('data-no-navigation')) return;
+    // Don't navigate if this product card is marked as no-navigation (e.g., disable link setting)
+    if (this.hasAttribute('data-no-navigation')) {
+      event.preventDefault();
+      return;
+    }
 
     const interactiveElement = event.target.closest('button, input, label, select, [tabindex="1"]');
 

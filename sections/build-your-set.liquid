@@ -138,7 +138,7 @@
               {% comment %} Pagination controls {% endcomment %}
               {% if paginate.pages > 1 %}
                 <div class="build-your-set-pagination-wrapper" data-pagination-wrapper data-collection-handle="{{ collection.handle }}">
-                  {% render 'pagination-controls', paginate: paginate, on_click_handler: 'handleBuildYourSetPagination' %}
+                  {% render 'pagination-controls', paginate: paginate %}
                 </div>
               {% endif %}
             </div>
@@ -685,6 +685,9 @@
           card.removeAttribute('data-view-product-button-setting');
         }
       });
+      
+      // Trigger product grid update event
+      window.dispatchEvent(new CustomEvent('product-grid:updated'));
     }
     
     // Initialize first collection's product cards
@@ -696,150 +699,141 @@
     }
 
     // Handle pagination clicks for Build Your Set
-    window.handleBuildYourSetPagination = function(eventOrParams) {
-      // Parse params - could be an event object or params string from URL
-      let page = '1';
-      if (typeof eventOrParams === 'string') {
-        // URL search params string (e.g., "page=2")
-        const urlParams = new URLSearchParams(eventOrParams);
-        page = urlParams.get('page') || '1';
-      } else if (eventOrParams && typeof eventOrParams === 'object') {
-        // Params object or event
-        if (eventOrParams.preventDefault) {
-          // It's an event, prevent default
-          eventOrParams.preventDefault();
-          // Try to get page from href or dataset
-          const target = eventOrParams.currentTarget || eventOrParams.target;
-          if (target && target.href) {
-            const url = new URL(target.href);
-            page = url.searchParams.get('page') || '1';
-          }
-        } else {
-          // It's a params object
-          page = eventOrParams.page || '1';
-        }
-      }
-      
-      // Find the active product grid wrapper
+    async function handleBuildYourSetPagination(pageNumber, collectionHandle) {
       const activeWrapper = section.querySelector('.build-your-set-product-grid-wrapper:not(.hidden)');
       if (!activeWrapper) return;
       
-      const collectionHandle = activeWrapper.dataset.collectionHandle;
+      if (!collectionHandle) {
+        collectionHandle = activeWrapper.dataset.collectionHandle;
+      }
       if (!collectionHandle) return;
       
-      // Construct URL for the paginated collection page
-      const url = page === '1' 
-        ? `/collections/${collectionHandle}` 
-        : `/collections/${collectionHandle}?page=${page}`;
+      // Get the section ID (normalize it by removing the prefix if present)
+      const sectionElement = section.closest('.shopify-section');
+      if (!sectionElement) {
+        console.error('Build Your Set section element not found');
+        return;
+      }
       
-      // Fetch the collection page with pagination
-      fetch(url)
-        .then(function(response) {
-          return response.text();
-        })
-        .then(function(html) {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          
-          // Find the build-your-set section in the fetched HTML
-          const fetchedSection = doc.querySelector('[data-testid="build-your-set"]');
-          if (!fetchedSection) return;
-          
-          // Find the product grid wrapper for this collection in the fetched HTML
-          const fetchedWrapper = Array.from(fetchedSection.querySelectorAll('.build-your-set-product-grid-wrapper')).find(function(w) {
-            return w.dataset.collectionHandle === collectionHandle;
-          });
-          
-          if (!fetchedWrapper) return;
-          
-          // Get the product grid and pagination from fetched content
-          const fetchedProductGrid = fetchedWrapper.querySelector('.product-grid');
-          const fetchedPagination = fetchedWrapper.querySelector('.build-your-set-pagination-wrapper');
-          
-          if (!fetchedProductGrid) return;
-          
-          // Update the current product grid
-          const currentProductGrid = activeWrapper.querySelector('.product-grid');
-          if (currentProductGrid) {
-            currentProductGrid.innerHTML = fetchedProductGrid.innerHTML;
-          }
-          
-          // Update pagination
-          const currentPaginationWrapper = activeWrapper.querySelector('.build-your-set-pagination-wrapper');
-          if (fetchedPagination) {
-            if (currentPaginationWrapper) {
-              currentPaginationWrapper.innerHTML = fetchedPagination.innerHTML;
-            } else {
-              activeWrapper.insertAdjacentHTML('beforeend', fetchedPagination.outerHTML);
-            }
-          } else if (currentPaginationWrapper) {
-            // No pagination in fetched content (last page), remove it
-            currentPaginationWrapper.remove();
-          }
-          
-          // Initialize product cards attributes for the new page
-          initializeProductCards(activeWrapper);
-          
-          // Re-setup pagination listeners
-          setTimeout(setupPaginationClickListeners, 100);
-          
-          // Scroll to top of product grid
-          activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        })
-        .catch(function(error) {
-          console.error('Error loading paginated products:', error);
+      let sectionId = sectionElement.id;
+      // Remove 'shopify-section-' prefix if present
+      if (sectionId.startsWith('shopify-section-')) {
+        sectionId = sectionId.replace('shopify-section-', '');
+      }
+      
+      // Build URL with page parameter for section rendering API
+      const url = new URL(window.location.href);
+      url.pathname = `/collections/${collectionHandle}`;
+      if (pageNumber && pageNumber !== '1') {
+        url.searchParams.set('page', pageNumber);
+      } else {
+        url.searchParams.delete('page');
+      }
+      // Add section_id parameter for section rendering API
+      url.searchParams.set('section_id', sectionId);
+      url.searchParams.sort();
+      
+      try {
+        // Fetch section HTML using Shopify's section rendering API
+        const response = await fetch(url.toString());
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const sectionHTML = await response.text();
+        
+        // Parse the fetched section HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(sectionHTML, 'text/html');
+        
+        const fetchedSection = doc.querySelector('[data-testid="build-your-set"]');
+        if (!fetchedSection) {
+          console.error('Build Your Set section not found in response');
+          return;
+        }
+        
+        const fetchedWrapper = Array.from(fetchedSection.querySelectorAll('.build-your-set-product-grid-wrapper')).find(function(w) {
+          return w.dataset.collectionHandle === collectionHandle;
         });
-      
-      return false; // Prevent default link behavior
-    };
+        
+        if (!fetchedWrapper) {
+          console.error('Collection wrapper not found in response');
+          return;
+        }
+        
+        const fetchedProductGrid = fetchedWrapper.querySelector('.product-grid');
+        const fetchedPagination = fetchedWrapper.querySelector('.build-your-set-pagination-wrapper');
+        
+        if (!fetchedProductGrid) {
+          console.error('Product grid not found in response');
+          return;
+        }
+        
+        // Update the product grid
+        const currentProductGrid = activeWrapper.querySelector('.product-grid');
+        if (currentProductGrid) {
+          currentProductGrid.innerHTML = fetchedProductGrid.innerHTML;
+        }
+        
+        // Update pagination
+        const currentPaginationWrapper = activeWrapper.querySelector('.build-your-set-pagination-wrapper');
+        if (fetchedPagination) {
+          if (currentPaginationWrapper) {
+            currentPaginationWrapper.innerHTML = fetchedPagination.innerHTML;
+          } else {
+            activeWrapper.insertAdjacentHTML('beforeend', fetchedPagination.outerHTML);
+          }
+        } else if (currentPaginationWrapper) {
+          currentPaginationWrapper.remove();
+        }
+        
+        // Re-initialize product cards and pagination listeners
+        initializeProductCards(activeWrapper);
+        
+        // Setup pagination listeners after a short delay to ensure DOM is ready
+        setTimeout(function() {
+          setupPaginationClickListeners();
+        }, 50);
+        
+        // Scroll to top of section
+        activeWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (error) {
+        console.error('Error loading paginated products:', error);
+      }
+    }
     
-    // Also attach click listeners to pagination links as fallback
     function setupPaginationClickListeners() {
       const paginationLinks = section.querySelectorAll('.build-your-set-pagination-wrapper a.pagination__link');
       paginationLinks.forEach(function(link) {
-        // Remove existing listener if any
-        const newLink = link.cloneNode(true);
-        link.parentNode.replaceChild(newLink, link);
+        // Skip if listener already attached
+        if (link.dataset.buildYourSetListener === 'true') return;
+        link.dataset.buildYourSetListener = 'true';
         
-        // Add click listener
-        newLink.addEventListener('click', function(e) {
+        link.addEventListener('click', function(e) {
           e.preventDefault();
-          const href = newLink.href;
-          if (href) {
-            const url = new URL(href);
-            const page = url.searchParams.get('page') || '1';
-            window.handleBuildYourSetPagination({ page: page });
+          e.stopPropagation();
+          
+          const href = link.getAttribute('href');
+          if (!href) return;
+          
+          // Create URL object, handling both absolute and relative URLs
+          const url = href.startsWith('http') 
+            ? new URL(href) 
+            : new URL(href, window.location.origin);
+          
+          const page = url.searchParams.get('page') || '1';
+          
+          const activeWrapper = section.querySelector('.build-your-set-product-grid-wrapper:not(.hidden)');
+          const collectionHandle = activeWrapper?.dataset.collectionHandle;
+          
+          if (collectionHandle) {
+            handleBuildYourSetPagination(page, collectionHandle);
           }
         });
       });
     }
     
-    // Setup pagination listeners after initial load
+    // Setup initial pagination listeners
     setTimeout(setupPaginationClickListeners, 100);
-    
-    // Function to initialize product cards (set data attributes)
-    // Product cards are now rendered server-side, so we just need to set attributes
-    function initializeProductCards(wrapper) {
-      if (!wrapper) return;
-      
-      const productsWrapper = section.querySelector('[data-products-wrapper]');
-      const showViewProductButton = productsWrapper?.dataset.showViewProductButton === 'true';
-      
-      const productCards = wrapper.querySelectorAll('product-card, product-card-link');
-      productCards.forEach(function(card) {
-        card.setAttribute('data-build-your-set', 'true');
-        card.removeAttribute('data-collection-page');
-        
-        if (showViewProductButton) {
-          card.setAttribute('data-view-product-button-setting', 'true');
-        } else {
-          card.removeAttribute('data-view-product-button-setting');
-        }
-      });
-      
-      // Trigger product grid update event
-      window.dispatchEvent(new CustomEvent('product-grid:updated'));
-    }
 
     // Handle collection item clicks
     collectionItems.forEach(function(item) {

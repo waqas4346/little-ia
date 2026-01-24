@@ -164,13 +164,38 @@ export class QuantitySelectorComponent extends Component {
     const { min, value } = this.getCurrentValues();
     const effectiveMax = this.getEffectiveMax();
 
+    // Check for qty_ tag minimum (from hidden element)
+    let qtyTagMin = null;
+    const tagsplitVal = this.querySelector?.('.tagsplit_val');
+    if (tagsplitVal) {
+      const tagValue = tagsplitVal.textContent?.trim();
+      if (tagValue) {
+        qtyTagMin = parseInt(tagValue, 10);
+      }
+    }
+
+    // Use qty_ tag minimum if available, otherwise use regular min
+    const effectiveMin = qtyTagMin !== null ? qtyTagMin : min;
+
     // Only manage buttons that weren't server-disabled
     if (!this.serverDisabledMinus) {
-      minusButton.disabled = value <= min;
+      // Disable minus button if at or below effective minimum
+      minusButton.disabled = value <= effectiveMin;
+      
+      // Add 'intro' class for visual feedback when disabled (as per reference)
+      if (value <= effectiveMin) {
+        minusButton.classList.add('intro');
+      } else {
+        minusButton.classList.remove('intro');
+      }
     }
 
     if (!this.serverDisabledPlus) {
       plusButton.disabled = effectiveMax !== null && value >= effectiveMax;
+      // Re-enable minus button when increasing (remove intro class)
+      if (value > effectiveMin) {
+        minusButton.classList.remove('intro');
+      }
     }
   }
 
@@ -198,6 +223,11 @@ export class QuantitySelectorComponent extends Component {
     if (!(event.target instanceof HTMLElement)) return;
     event.preventDefault();
     this.updateQuantity(1);
+    // Re-enable minus button when increasing (as per reference)
+    const { minusButton } = this.refs;
+    if (minusButton) {
+      minusButton.classList.remove('intro');
+    }
   }
 
   /**
