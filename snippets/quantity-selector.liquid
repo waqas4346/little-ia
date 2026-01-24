@@ -22,10 +22,36 @@
     assign component_name = 'cart-quantity-selector-component'
   endif
 
+  # Check for qty_ tag system
+  assign qty_tag_found = false
+  assign qty_tag_value = null
+  if line_index == null
+    # Only check for qty_ tags on product page (not cart)
+    for tag in product.tags
+      if tag contains "qty_"
+        assign qty_tag_found = true
+        assign tagsplit = tag | split: '_'
+        assign qty_tag_value = tagsplit[1] | plus: 0
+        break
+      endif
+    endfor
+  endif
+
   if min != null
     assign min_quantity = min
+  elsif qty_tag_found and qty_tag_value != null
+    assign min_quantity = qty_tag_value
   else
     assign min_quantity = variant.quantity_rule.min | default: 1
+  endif
+
+  # Determine default quantity value
+  if in_cart_quantity
+    assign default_quantity = in_cart_quantity
+  elsif qty_tag_found and qty_tag_value != null
+    assign default_quantity = qty_tag_value
+  else
+    assign default_quantity = variant.quantity_rule.min | default: 1
   endif
 %}
 
@@ -61,7 +87,7 @@
     <input
       type="number"
       name="{% if line_index %}updates[]{% else %}quantity{% endif %}"
-      value="{{ in_cart_quantity | default: variant.quantity_rule.min | default: 1 }}"
+      value="{{ default_quantity }}"
       data-cart-quantity="{{ cart | item_count_for_variant: variant.id }}"
       min="{{ min_quantity }}"
       data-min="{{ variant.quantity_rule.min | default: 1 }}"
@@ -78,6 +104,8 @@
       step="{{ variant.quantity_rule.increment | default: 1 }}"
       {% if can_update_quantity == false or variant.available == false %}
         disabled
+      {% elsif qty_tag_found %}
+        readonly
       {% endif %}
     >
     <button
@@ -96,6 +124,11 @@
       </span>
     </button>
   </{{ component_name }}>
+
+  {%- comment -%} Hidden element to store qty_ tag value for JavaScript {%- endcomment -%}
+  {%- if line_index == null and qty_tag_found and qty_tag_value != null -%}
+    <p class="tagsplit_val" value="{{ qty_tag_value }}" style="display:none;">{{ qty_tag_value }}</p>
+  {%- endif -%}
 
   {%- if line_index == null -%}
     {%- liquid
@@ -171,5 +204,12 @@
     @media screen and (min-width: 750px) {
       gap: var(--gap-sm);
     }
+  }
+
+  /* Style for disabled minus button when at qty_ tag minimum */
+  .quantity-minus.intro {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
   }
 {% endstylesheet %}
