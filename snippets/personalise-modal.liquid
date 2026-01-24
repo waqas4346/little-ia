@@ -362,10 +362,39 @@
                         on:click="/selectColor"
                       >
                       <div class="variant-option__image-thumbnail">
-                        <span
-                          class="swatch swatch--unscaled"
-                          style="--swatch-background: {{ color_tag[1] | downcase }}; background-color: {{ color_tag[1] | downcase }};"
-                        ></span>
+                        {% assign color_name = color_tag[1] | downcase %}
+                        <div class="personalise-modal__color-icon" style="width: 60px; height: 60px;">
+                          {% case color_name %}
+                            {% when 'grey' %}
+                              {% render 'icon-grey' %}
+                            {% when 'pink' %}
+                              {% render 'icon-pink' %}
+                            {% when 'white' %}
+                              {% render 'icon-white' %}
+                            {% when 'red' %}
+                              {% render 'icon-red' %}
+                            {% when 'green' %}
+                              {% render 'icon-green' %}
+                            {% when 'blue' %}
+                              {% render 'icon-blue' %}
+                            {% when 'orange' %}
+                              {% render 'icon-orange' %}
+                            {% when 'yellow' %}
+                              {% render 'icon-yellow' %}
+                            {% when 'purple' %}
+                              {% render 'icon-purple' %}
+                            {% when 'gold' %}
+                              {% render 'icon-gold' %}
+                            {% when 'silver' %}
+                              {% render 'icon-silver' %}
+                            {% when 'multicolour' %}
+                              {% render 'icon-multicolour' %}
+                            {% when 'black' %}
+                              {% render 'icon-black' %}
+                            {% else %}
+                              <span class="swatch swatch--unscaled" style="--swatch-background: {{ color_name }}; background-color: {{ color_name }};"></span>
+                          {% endcase %}
+                        </div>
                       </div>
                     </label>
                   {% endif %}
@@ -925,10 +954,10 @@
     border-radius: 0;
     overflow: hidden;
     position: relative;
-    width: 64px;
-    height: 64px;
-    min-width: 64px;
-    min-height: 64px;
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
+    min-height: 60px;
     flex: 0 0 auto;
     background: transparent;
     cursor: pointer;
@@ -941,12 +970,25 @@
   }
 
   .personalise-modal__color-button:has(:checked) {
-    border: 1px solid #7295BB;
+    border: 1px solid #1D425A;
+    border-radius: 50%;
     outline: none;
   }
 
   .personalise-modal__color-button:has(:checked):hover {
-    border-color: #7295BB !important;
+    border-color: #1D425A !important;
+    background-color: transparent !important;
+  }
+
+  /* Match the exact styling from variant picker image thumbnails */
+  .personalise-modal__color-button.variant-option__button-label--image-thumbnail:has(:checked) {
+    border: 1px solid #1D425A;
+    border-radius: 50%;
+    outline: none;
+  }
+
+  .personalise-modal__color-button.variant-option__button-label--image-thumbnail:has(:checked):hover {
+    border-color: #1D425A !important;
     background-color: transparent !important;
   }
 
@@ -977,6 +1019,27 @@
     display: block;
     background: var(--swatch-background);
     border-radius: var(--variant-picker-swatch-radius, 0);
+  }
+
+  .personalise-modal__color-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .personalise-modal__color-icon svg {
+    width: 60px;
+    height: 60px;
+    display: block;
+  }
+
+  .personalise-modal__color-button:has(:checked) .variant-option__image-thumbnail {
+    border-radius: 50%;
+    overflow: hidden;
   }
 
   .personalise-modal__color-button:has(:focus-visible) {
