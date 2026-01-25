@@ -1,5 +1,105 @@
 {
   "sections": {
+    "featured_blogs_Mg8dKd": {
+      "type": "featured-blogs",
+      "blocks": {
+        "blog_kGhV74": {
+          "type": "blog",
+          "settings": {
+            "blog": "parenting"
+          }
+        },
+        "blog_gdrfdN": {
+          "type": "blog",
+          "settings": {
+            "blog": "recipes"
+          }
+        },
+        "blog_Y4tmfq": {
+          "type": "blog",
+          "settings": {
+            "blog": "kids-activities"
+          }
+        },
+        "blog_Nc8phY": {
+          "type": "blog",
+          "settings": {
+            "blog": "bookclub"
+          }
+        },
+        "blog_iF8848": {
+          "type": "blog",
+          "settings": {
+            "blog": "baby-and-mum"
+          }
+        },
+        "blog_NLYfnD": {
+          "type": "blog",
+          "settings": {
+            "blog": "expert-learning"
+          }
+        },
+        "blog_tCtkpt": {
+          "type": "blog",
+          "settings": {
+            "blog": "most-recent"
+          }
+        },
+        "blog_kUmwi6": {
+          "type": "blog",
+          "settings": {
+            "blog": "maternity"
+          }
+        },
+        "blog_TDGcUb": {
+          "type": "blog",
+          "settings": {
+            "blog": "prenatal"
+          }
+        },
+        "blog_RyzeKb": {
+          "type": "blog",
+          "settings": {
+            "blog": "note-from-the-founder"
+          }
+        },
+        "blog_CQaFiW": {
+          "type": "blog",
+          "settings": {
+            "blog": "everything-else"
+          }
+        }
+      },
+      "block_order": [
+        "blog_kGhV74",
+        "blog_gdrfdN",
+        "blog_Y4tmfq",
+        "blog_Nc8phY",
+        "blog_iF8848",
+        "blog_NLYfnD",
+        "blog_tCtkpt",
+        "blog_kUmwi6",
+        "blog_TDGcUb",
+        "blog_RyzeKb",
+        "blog_CQaFiW"
+      ],
+      "name": "Featured Blogs",
+      "settings": {
+        "heading": "explore",
+        "subheading": "\u2028Blog topics",
+        "layout_type": "carousel",
+        "columns": 4,
+        "mobile_card_size": "44cqw",
+        "columns_gap": 12,
+        "icons_style": "chevron",
+        "icons_shape": "circle",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-6",
+        "padding-block-start": 18,
+        "padding-block-end": 26
+      }
+    },
     "main": {
       "type": "main-blog",
       "blocks": {
@@ -7,11 +107,11 @@
           "type": "text",
           "name": "Title",
           "settings": {
-            "text": "<h1>{{ closest.blog.title }}<\/h1>",
+            "text": "<p>Recent  blogs<\/p>",
             "width": "fit-content",
             "max_width": "narrow",
             "alignment": "left",
-            "type_preset": "h2",
+            "type_preset": "paragraph",
             "font": "var(--font-primary--family)",
             "font_size": "",
             "line_height": "normal",
@@ -22,8 +122,8 @@
             "background": false,
             "background_color": "#00000026",
             "corner_radius": 0,
-            "padding-block-start": 48,
-            "padding-block-end": 48,
+            "padding-block-start": 0,
+            "padding-block-end": 18,
             "padding-inline-start": 0,
             "padding-inline-end": 0
           },
@@ -116,8 +216,9 @@
       "settings": {
         "color_scheme": "scheme-6",
         "enable_infinite_scroll": false,
-        "padding-block-start": 0,
-        "padding-block-end": 48
+        "load_more_text": "Load More",
+        "padding-block-start": 40,
+        "padding-block-end": 30
       }
     },
     "featured_blog_posts_w3a6L4": {
@@ -265,12 +366,15 @@
         "section_width": "page-width",
         "gap": 0,
         "color_scheme": "scheme-e61ffaea-b125-47f9-97f4-7f39823bb857",
+        "button_text": "",
+        "button_style": "primary",
         "padding-block-start": 48,
         "padding-block-end": 48
       }
     }
   },
   "order": [
+    "featured_blogs_Mg8dKd",
     "main",
     "featured_blog_posts_w3a6L4"
   ]

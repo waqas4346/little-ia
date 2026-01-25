@@ -18,7 +18,11 @@
     "
     style="{% render 'spacing-style', settings: section.settings %}"
   >
-    {% content_for 'blocks' %}
+    
+    <div class="blog-posts-header">
+      {% content_for 'blocks' %}
+    </div>
+    
 
     {%- paginate blog.articles by 12 -%}
       {%- if section.settings.enable_infinite_scroll -%}
@@ -66,8 +70,13 @@
   .blog-posts {
     --page-content-width: var(--narrow-page-width);
     --page-width: calc(var(--page-content-width) + (var(--page-margin) * 2));
-    --columns-gap: 36px;
-    --rows-gap: 36px;
+    --columns-gap: 20px;
+    --rows-gap: 48px;
+
+    @media screen and (max-width: 749px) {
+      --columns-gap: 9px;
+      --rows-gap: 24px;
+    }
   }
 
   .blog-posts-container {
@@ -75,13 +84,18 @@
     grid-template-columns: repeat(6, 1fr);
     gap: 1rem;
     width: 100%;
+    min-width: 0;
     column-gap: var(--columns-gap);
     row-gap: var(--rows-gap);
+
+    @media screen and (max-width: 749px) {
+      /* Prevent overflow from intrinsic min-width content */
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   /**
-   * Apart from the first and second rows in the grid, all remaining blog posts
-   * are arranged in a three-column layout:
+   * Default layout (desktop): three-column grid
    * +------------+------------+-------------+
    * |            |            |             |
    * |  (span 2)  |  (span 2)  |  (span 2)   |
@@ -89,50 +103,43 @@
    * +------------+------------+-------------+
    */
   .blog-post-item {
-    --blog-post-card-scale: 0.6;
+    --blog-post-card-scale: 0.7;
 
     grid-column: span 2;
+    min-width: 0;
 
     @media screen and (max-width: 749px) {
-      --blog-post-card-scale: 0.5;
+      --blog-post-card-scale: 0.27;
 
-      grid-column: span 6;
+      /* Mobile: two columns by default (2 posts per row) */
+      grid-column: span 1;
     }
   }
 
   /**
-   * The second row of blog posts has two columns:
+   * First row (desktop): two columns
    * +-------------------+-------------------+
    * |                   |                   |
    * |  (column span 3)  |  (column span 3)  |
    * |                   |                   |
    * +-------------------+-------------------+
    */
-  .blog-post-item:nth-child(2),
-  .blog-post-item:nth-child(3) {
-    --blog-post-card-scale: 0.8;
+  .blog-post-item:nth-child(-n + 2) {
+    --blog-post-card-scale: 1;
 
     grid-column: span 3;
 
     @media screen and (max-width: 749px) {
       --blog-post-card-scale: 0.5;
 
-      grid-column: span 6;
+      /* Mobile: first two posts are full width (one per row) */
+      grid-column: 1 / -1;
     }
   }
 
-  /**
-   * The first row of blog posts has only one column:
-   * +---------------------------------------+
-   * |                                       |
-   * |           (1 column span 6)           |
-   * |                                       |
-   * +---------------------------------------+
-   */
-  .blog-post-item:first-child {
-    --blog-post-card-scale: 1;
-
-    grid-column: span 6;
+  /* If there's only one post, make it full width on desktop too. */
+  .blog-post-item:first-child:last-child {
+    grid-column: 1 / -1;
   }
 
   /**
@@ -148,6 +155,10 @@
     padding: 0;
   }
 
+  .blog-posts-header {
+    min-width: 0;
+  }
+
   .blog-posts-load-more-wrapper {
     display: flex;
     justify-content: center;
@@ -155,8 +166,36 @@
     margin-top: var(--padding-xl, 24px);
   }
 
-  .blog-posts-load-more-button {
-    /* Uses primary button styles via .button class */
+  .blog-posts-header .text-block p {
+    font-size: 32px;
+    line-height: 120%;
+    font-weight: 500;
+  }
+
+  @media screen and (max-width: 749px) {
+    .blog-posts-header .text-block p {
+      font-size: 24px;
+    }
+  }
+
+  .blog-posts .text-block {
+    font-weight: 500;
+    line-height: 120%;
+    font-size: 16px;
+  }
+
+  .blog-posts .blog-post-item:nth-child(-n + 2) .text-block {
+    font-size: 20px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .blog-posts .text-block {
+      font-size: 24px;
+    }
+
+    .blog-posts .blog-post-item:nth-child(-n + 2) .text-block {
+      font-size: 28px;
+    }
   }
 {% endstylesheet %}
 
