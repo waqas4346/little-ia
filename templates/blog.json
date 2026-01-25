@@ -371,10 +371,23 @@
         "padding-block-start": 48,
         "padding-block-end": 48
       }
+    },
+    "popular_blog_posts_WeWwDE": {
+      "type": "popular-blog-posts",
+      "name": "Popular blog posts",
+      "settings": {
+        "blog": "",
+        "heading": "Popular blogs",
+        "section_width": "page-width",
+        "color_scheme": "",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
     }
   },
   "order": [
     "featured_blogs_Mg8dKd",
+    "popular_blog_posts_WeWwDE",
     "main",
     "featured_blog_posts_w3a6L4"
   ]
