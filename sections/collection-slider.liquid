@@ -348,17 +348,32 @@
       }
     }
 
-    /* Tablet: 3 tiles per row (750-1024px) */
+    /* Tablet: 3 tiles per row (750-1024px) - match explore-more-products */
     @media (min-width: 750px) and (max-width: 1024px) {
+      .collection-slider-section .resource-list,
       .collection-slider-section .resource-list__carousel {
         --column-count: 3 !important;
+        --gutter-slide-width: 0px !important;
       }
       
       .collection-slider-section .resource-list__carousel .resource-list__slide {
-        --section-slide-width: calc(
-          (100% - (var(--resource-list-column-gap, var(--resource-list-column-gap-desktop, 12px)) * 2) - var(--peek-next-slide-size, 0px)) / 3
-        ) !important;
-        --slide-width: var(--section-slide-width, var(--fallback-slide-width)) !important;
+        width: calc((100% - (var(--resource-list-column-gap-desktop, 12px) * 2)) / 3) !important;
+        max-width: calc((100% - (var(--resource-list-column-gap-desktop, 12px) * 2)) / 3) !important;
+        flex: 0 0 calc((100% - (var(--resource-list-column-gap-desktop, 12px) * 2)) / 3) !important;
+      }
+
+      /* Enable scroll snap and scrolling on tablet */
+      .collection-slider-section .resource-list__carousel slideshow-component[disabled='true'] slideshow-slides {
+        overflow-x: auto !important;
+      }
+
+      .collection-slider-section .resource-list__carousel slideshow-slides {
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .collection-slider-section .resource-list__carousel .resource-list__slide {
+        scroll-snap-align: start;
       }
     }
 
@@ -406,12 +421,19 @@
       overflow-x: auto !important;
     }
 
+    /* Set mobile to show 2 columns - match explore-more-products */
+    .collection-slider-section .resource-list,
     .collection-slider-section .resource-list__carousel {
-      --resource-list-column-gap: 5px !important;
+      --column-count: 2 !important;
+      --gutter-slide-width: 0px !important;
     }
 
-    .collection-slider-section .resource-list__carousel {
-      --card-width: clamp(150px, 48cqw, 450px);
+    /* Override mobile slide width to use column-count calculation - match explore-more-products */
+    .collection-slider-section .resource-list__carousel .resource-list__slide {
+      --section-slide-width: calc(
+        (100% - (var(--resource-list-column-gap, 5px) * (var(--column-count, 2) - 1))) / var(--column-count, 2)
+      );
+      --slide-width: var(--section-slide-width) !important;
     }
 
     .collection-slider-section .resource-list__carousel slideshow-slides {
@@ -424,12 +446,7 @@
       padding-bottom: 0 !important;
       margin-bottom: 0 !important;
       padding-inline-start: 0 !important;
-      padding-inline-end: var(--page-margin, 16px) !important;
-      display: grid !important;
-      grid-template-rows: repeat(2, auto) !important;
-      grid-auto-flow: column !important;
-      grid-auto-columns: var(--card-width) !important;
-      height: calc(var(--card-width) * 1.25 * 2 + 5px) !important;
+      padding-inline-end: 0 !important;
     }
 
     .collection-slider-section .resource-list__carousel slideshow-slides::-webkit-scrollbar {
@@ -438,12 +455,14 @@
       height: 0;
     }
 
+    /* Each slide should snap to show 2 full items - match explore-more-products */
     .collection-slider-section .resource-list__carousel .resource-list__slide {
-      --slide-width: var(--card-width) !important;
-      width: var(--card-width) !important;
-      min-width: var(--card-width) !important;
-      max-width: var(--card-width) !important;
       scroll-snap-align: start;
+    }
+
+    /* Add padding to last slide so it doesn't touch edge when scrolled to end */
+    .collection-slider-section .resource-list__carousel slideshow-slide:last-child {
+      padding-inline-end: var(--page-margin, 16px);
     }
 
     .collection-slider-section .resource-list__carousel slideshow-component,
