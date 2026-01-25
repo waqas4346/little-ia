@@ -1,3 +1,12 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
     "main": {
@@ -126,7 +135,7 @@
                   "type": "text",
                   "name": "Product title",
                   "settings": {
-                    "text": "<h1>{{ closest.product.title }}<\/h1>",
+                    "text": "<h1>{{ closest.product.title }}</h1>",
                     "width": "100%",
                     "max_width": "normal",
                     "alignment": "left",
@@ -494,7 +503,8 @@
             "padding-block-end": 0,
             "padding-inline-start": 0,
             "padding-inline-end": 0,
-            "show_view_product_button": true
+            "show_view_product_button": true,
+            "disable_product_link": false
           },
           "blocks": {
             "product_card_gallery_PAXWzm": {
@@ -624,8 +634,8 @@
         "columns": 4,
         "mobile_card_size": "44cqw",
         "columns_gap": 12,
-        "icons_style": "blue_arrows",
-        "icons_shape": "none",
+        "icons_style": "chevron",
+        "icons_shape": "circle",
         "section_width": "page-width",
         "gap": 12,
         "color_scheme": "scheme-1",
@@ -652,7 +662,8 @@
             "padding-block-end": 0,
             "padding-inline-start": 0,
             "padding-inline-end": 0,
-            "show_view_product_button": true
+            "show_view_product_button": true,
+            "disable_product_link": false
           },
           "blocks": {
             "product_card_gallery_DxbJeW": {

@@ -16,6 +16,19 @@
         "section_width": "full-width"
       }
     },
+    "sub_collections_fJQhV8": {
+      "type": "sub-collections",
+      "name": "Sub Collections",
+      "settings": {
+        "heading": "Product type",
+        "source_collection": "",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    },
     "section": {
       "type": "section",
       "blocks": {
@@ -148,7 +161,8 @@
             "padding-block-end": 0,
             "padding-inline-start": 0,
             "padding-inline-end": 0,
-            "show_view_product_button": true
+            "show_view_product_button": true,
+            "disable_product_link": false
           },
           "blocks": {
             "card-gallery": {
@@ -390,8 +404,8 @@
       "type": "collection-slider",
       "name": "Collection Slider",
       "settings": {
-        "heading": "shop",
-        "subheading": "OUR COLLECTIONS",
+        "heading": "explore",
+        "subheading": "All Categories",
         "collection_list": [],
         "layout_type": "carousel",
         "columns": 4,
@@ -424,7 +438,8 @@
             "padding-block-end": 0,
             "padding-inline-start": 0,
             "padding-inline-end": 0,
-            "show_view_product_button": false
+            "show_view_product_button": false,
+            "disable_product_link": false
           },
           "blocks": {
             "product_card_gallery_yXRbCK": {
@@ -521,19 +536,6 @@
         "mobile_product_card_size": "small",
         "columns_gap_horizontal": 8,
         "columns_gap_vertical": 12,
-        "section_width": "page-width",
-        "gap": 12,
-        "color_scheme": "scheme-1",
-        "padding-block-start": 48,
-        "padding-block-end": 48
-      }
-    },
-    "sub_collections_fJQhV8": {
-      "type": "sub-collections",
-      "name": "Sub Collections",
-      "settings": {
-        "heading": "Product type",
-        "source_collection": "",
         "section_width": "page-width",
         "gap": 12,
         "color_scheme": "scheme-1",
