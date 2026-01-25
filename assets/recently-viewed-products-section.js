@@ -905,7 +905,7 @@ class RecentlyViewedProductsComponent extends HTMLElement {
                 <slideshow-arrows position="center" data-icon-style="${iconsStyle}" data-icon-shape="${iconShape}">
                   <button
                     type="button"
-                    class="slideshow-control slideshow-control--previous slideshow-control--style-${iconsStyle}${iconShape !== 'none' ? ` slideshow-control--shape-${iconShape}` : ''} button button-unstyled button-unstyled--transparent${iconsStyle === 'blue_arrows' ? '' : ' flip-x'}"
+                    class="slideshow-control slideshow-control--previous slideshow-control--style-${iconsStyle}${iconShape !== 'none' ? ` slideshow-control--shape-${iconShape}` : ''} button button-unstyled button-unstyled--transparent${iconsStyle === 'blue_arrows' ? '' : iconsStyle.includes('chevron') ? '' : ' flip-x'}"
                     aria-label="Previous slide"
                     ref="previous"
                   >
@@ -929,7 +929,7 @@ class RecentlyViewedProductsComponent extends HTMLElement {
                   </button>
                   <button
                     type="button"
-                    class="slideshow-control slideshow-control--next slideshow-control--style-${iconsStyle}${iconShape !== 'none' ? ` slideshow-control--shape-${iconShape}` : ''} button button-unstyled button-unstyled--transparent${iconsStyle === 'blue_arrows' ? ' flip-x' : ''}"
+                    class="slideshow-control slideshow-control--next slideshow-control--style-${iconsStyle}${iconShape !== 'none' ? ` slideshow-control--shape-${iconShape}` : ''} button button-unstyled button-unstyled--transparent${iconsStyle === 'blue_arrows' ? ' flip-x' : iconsStyle.includes('chevron') ? '' : ''}"
                     aria-label="Next slide"
                     ref="next"
                   >

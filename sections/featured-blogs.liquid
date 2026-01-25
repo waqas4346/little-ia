@@ -324,6 +324,20 @@
       }
     }
 
+    /* Tablet: 3 tiles per row (750-1024px) */
+    @media (min-width: 750px) and (max-width: 1024px) {
+      .featured-blogs-section .resource-list__carousel {
+        --column-count: 3 !important;
+      }
+      
+      .featured-blogs-section .resource-list__carousel .resource-list__slide {
+        --section-slide-width: calc(
+          (100% - (var(--resource-list-column-gap, var(--resource-list-column-gap-desktop, 12px)) * 2) - var(--peek-next-slide-size, 0px)) / 3
+        ) !important;
+        --slide-width: var(--section-slide-width, var(--fallback-slide-width)) !important;
+      }
+    }
+
     /* On smaller desktop screens, reduce arrow extension */
     @media (max-width: 1200px) {
       .featured-blogs-section .resource-list__carousel slideshow-arrows .slideshow-control--previous {
