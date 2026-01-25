@@ -91,9 +91,47 @@
         content_type: 'collections',
         test_id: 'collection-slider'
       %}
+      <div class="collection-slider-scrollbar-indicator hidden--desktop">
+        <div class="collection-slider-scrollbar-track">
+          <div class="collection-slider-scrollbar-thumb"></div>
+        </div>
+      </div>
     {% endif %}
   {% endif %}
 </div>
+
+<script>
+  (function() {
+    const section = document.getElementById('shopify-section-{{ section.id }}');
+    if (!section) return;
+    const mobileSlides = section.querySelector('.collection-slider-section slideshow-slides');
+    const scrollbarThumb = section.querySelector('.collection-slider-scrollbar-thumb');
+    const scrollbarIndicator = section.querySelector('.collection-slider-scrollbar-indicator');
+    if (!mobileSlides || !scrollbarThumb || !scrollbarIndicator) return;
+
+    function updateScrollbar() {
+      const scrollLeft = mobileSlides.scrollLeft;
+      const scrollWidth = mobileSlides.scrollWidth;
+      const clientWidth = mobileSlides.clientWidth;
+      const maxScroll = scrollWidth - clientWidth;
+      if (maxScroll <= 0) {
+        scrollbarIndicator.style.display = 'none';
+        return;
+      }
+      scrollbarIndicator.style.display = 'block';
+      const thumbWidth = (clientWidth / scrollWidth) * 100;
+      const thumbPosition = (scrollLeft / maxScroll) * (100 - thumbWidth);
+      scrollbarThumb.style.width = thumbWidth + '%';
+      scrollbarThumb.style.left = thumbPosition + '%';
+    }
+
+    mobileSlides.addEventListener('scroll', updateScrollbar);
+    const resizeObserver = new ResizeObserver(updateScrollbar);
+    resizeObserver.observe(mobileSlides);
+    updateScrollbar();
+    setInterval(updateScrollbar, 100);
+  })();
+</script>
 
 {% stylesheet %}
   .collection-slider-header {
@@ -402,6 +440,38 @@
 
     .collection-slider-section .resource-list__carousel slideshow-arrows {
       display: none !important;
+    }
+
+    .collection-slider-section.section--page-width > .collection-slider-scrollbar-indicator {
+      grid-column: 1 / -2;
+      width: 100%;
+    }
+
+    .collection-slider-scrollbar-indicator {
+      width: 100%;
+      height: 4px;
+      position: relative;
+      margin-top: 12px;
+    }
+
+    .collection-slider-scrollbar-track {
+      width: 100%;
+      height: 4px;
+      background-color: #EEEEEE;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .collection-slider-scrollbar-thumb {
+      height: 4px;
+      background-color: #7295BB;
+      border-radius: 10px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      transition: width 0.1s ease-out;
+      min-width: 20px;
     }
   }
 {% endstylesheet %}
