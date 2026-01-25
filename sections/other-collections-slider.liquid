@@ -1,25 +1,16 @@
 {% liquid
-  assign items_per_view = section.settings.items_per_view | default: 4
-  
-  # Get collections from metafield - check different contexts
   assign metafield_collections = null
-  
-  # First, try collection metafield (if on collection page)
+
   if collection.metafields.custom.cb_other_collections != blank
     assign metafield_collections = collection.metafields.custom.cb_other_collections.value
-  # Try product metafield (if on product page)
   elsif product.metafields.custom.cb_other_collections != blank
     assign metafield_collections = product.metafields.custom.cb_other_collections.value
-  # Try shop metafield (global)
   elsif shop.metafields.custom.cb_other_collections != blank
     assign metafield_collections = shop.metafields.custom.cb_other_collections.value
   endif
-  
-  # Handle the metafield value - it should be a list of collection references
+
   if metafield_collections != blank
     assign all_collections = metafield_collections
-    
-    # Count items - for list_reference metafields, we can iterate directly
     if all_collections.size > 0
       assign max_items = all_collections.size
     else
@@ -39,213 +30,105 @@
     section
     section--{{ section.settings.section_width }}
     color-{{ section.settings.color_scheme }}
+    section-resource-list
     spacing-style
     gap-style
-    collection-slider-section
+    other-collections-slider-section
   "
   style="
-    {% render 'spacing-style', settings: section.settings %}
-    {% render 'gap-style', value: section.settings.gap %}
+    {%- render 'spacing-style', settings: section.settings -%}
+    {%- render 'gap-style', value: section.settings.gap -%}
   "
 >
-  <div class="collection-slider-header">
-    {% if section.settings.top_label != blank %}
-      <div class="collection-slider-top-label">
-        <span class="collection-slider-top-label-text">{{ section.settings.top_label }}</span>
-      </div>
-    {% endif %}
-    
-    {% if section.settings.section_title != blank %}
-      <div class="collection-slider-section-title">
-        <span class="collection-slider-section-title-label">{{ section.settings.section_title }}</span>
-      </div>
-    {% endif %}
-  </div>
+  {% if section.settings.heading != blank or section.settings.subheading != blank %}
+    <div class="other-collections-slider-header">
+      {% if section.settings.heading != blank %}
+        <h2 class="other-collections-slider-heading">{{ section.settings.heading }}</h2>
+      {% endif %}
+      {% if section.settings.subheading != blank %}
+        <p class="other-collections-slider-subheading">{{ section.settings.subheading }}</p>
+      {% endif %}
+    </div>
+  {% endif %}
 
   {% capture list_items %}
-    {% if all_collections != blank and max_items > 0 %}
-      {% for collection_item in all_collections limit: max_items %}
-        {% comment %} collection_item should already be a collection object from list_reference metafield {% endcomment %}
-        {% assign collection = collection_item %}
-        
-        {% if collection and collection.url %}
-          <div class="resource-list__item collection-slider-item">
-            <div class="collection-slider-card">
-              <a href="{{ collection.url }}" class="collection-slider-card__link">
-                <div class="collection-slider-card__image-wrapper">
-                  {% if collection.featured_image %}
-                    {{
-                      collection.featured_image
-                      | image_url: width: 800
-                      | image_tag: loading: 'lazy', class: 'collection-slider-card__image', alt: collection.title
-                    }}
-                  {% else %}
-                    <div class="collection-slider-card__placeholder">
-                      {{ collection.title | truncate: 60 }}
-                    </div>
-                  {% endif %}
-                  <div class="collection-slider-card__title-overlay" style="--title-position: {{ section.settings.title_position }}; --title-margin-bottom: 24px;">
-                    <span class="collection-slider-card__title">{{ collection.title }}</span>
-                  </div>
-                </div>
-              </a>
-            </div>
-          </div>
-          {% unless forloop.last %}
-            <!--@list/split-->
-          {% endunless %}
+    {% assign printed_first = false %}
+    {% for collection_item in all_collections limit: max_items %}
+      {% assign collection = collection_item %}
+      {% if collection and collection.url %}
+        {% if printed_first %}
+          <!--@list/split-->
         {% endif %}
-      {% endfor %}
-    {% endif %}
-  {% endcapture %}
-
-  {% liquid
-    assign list_items_array = list_items | strip | split: '<!--@list/split-->'
-    
-    # Prepare carousel settings - no gutters to maximize width
-    assign slideshow_gutters = null
-    assign gutter_style = '--gutter-slide-width: 0px;'
-
-    assign show_arrows = false
-    if section.settings.icons_style != 'none'
-      assign show_arrows = true
-    endif
-
-    # For mobile: group items into slides of 4 (2x2 grid)
-    # For desktop: each item is a slide, showing 4 at once
-    assign items_per_slide_mobile = 4
-    assign total_slides_mobile = list_items_array.size | divided_by: items_per_slide_mobile
-    assign remainder_mobile = list_items_array.size | modulo: items_per_slide_mobile
-    if remainder_mobile > 0
-      assign total_slides_mobile = total_slides_mobile | plus: 1
-    endif
-  %}
-
-  {% capture slides %}
-    {% comment %} Desktop: each item is a separate slide {% endcomment %}
-    {% for item in list_items_array %}
-      {% render 'slideshow-slide'
-        index : forloop.index0,
-        children : item,
-        class : 'resource-list__slide collection-slider-slide collection-slider-slide-desktop'
-      %}
-    {% endfor %}
-  {% endcapture %}
-
-  {% capture slides_mobile %}
-    {% comment %} Mobile: group items into slides of 4 {% endcomment %}
-    {% assign slide_index = 0 %}
-    {% for i in (0..total_slides_mobile) %}
-      {% if forloop.index0 < total_slides_mobile %}
-        {% capture mobile_slide_content %}
-          <div class="collection-slider-mobile-grid">
-            {% assign start_index = forloop.index0 | times: items_per_slide_mobile %}
-            {% assign end_index = start_index | plus: items_per_slide_mobile | minus: 1 %}
-            {% for j in (start_index..end_index) %}
-              {% if j < list_items_array.size %}
-                {{ list_items_array[j] }}
-              {% endif %}
-            {% endfor %}
+        <div class="resource-list__item">
+          <div class="other-collections-slider-card">
+            <a href="{{ collection.url }}" class="other-collections-slider-card__link">
+              <div class="other-collections-slider-card__image-wrapper">
+                {% if collection.featured_image %}
+                  {{
+                    collection.featured_image
+                    | image_url: width: 800
+                    | image_tag: loading: 'lazy', class: 'other-collections-slider-card__image', alt: collection.title
+                  }}
+                {% else %}
+                  <div class="other-collections-slider-card__placeholder">
+                    {{ collection.title | truncate: 60 }}
+                  </div>
+                {% endif %}
+                <div class="other-collections-slider-card__title-overlay">
+                  <span class="other-collections-slider-card__title">{{ collection.title }}</span>
+                </div>
+              </div>
+            </a>
           </div>
-        {% endcapture %}
-        {% render 'slideshow-slide'
-          index : slide_index,
-          children : mobile_slide_content,
-          class : 'resource-list__slide collection-slider-slide collection-slider-slide-mobile'
-        %}
-        {% assign slide_index = slide_index | plus: 1 %}
+        </div>
+        {% assign printed_first = true %}
       {% endif %}
     {% endfor %}
   {% endcapture %}
 
-  {% comment %} Desktop carousel {% endcomment %}
-  <div class="collection-slider-wrapper">
-    <div
-      class="resource-list resource-list__carousel collection-slider-carousel collection-slider-desktop"
-      style="{{ gutter_style }} --column-count: {{ items_per_view }}; --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 12 }}px; --peek-next-slide-size: 0px;"
-      data-testid="other-collections-slider-grid"
-      data-items-per-view="{{ items_per_view }}"
-    >
-      {% render 'slideshow',
-        ref: 'otherCollectionsSliderDesktop',
-        class: 'resource-list__carousel',
-        slides: slides,
-        show_arrows: show_arrows,
-        icon_style: section.settings.icons_style,
-        icon_shape: section.settings.icons_shape,
-        auto_hide_controls: false,
-        infinite: false,
-        initial_slide: 0,
-        slide_count: max_items,
-        slideshow_gutters: slideshow_gutters,
-        arrows_position: 'center'
-      %}
-    </div>
-  </div>
+  {% liquid
+    assign list_items_array = list_items | strip | split: '<!--@list/split-->'
+    assign valid_items = 0
+    for item in list_items_array
+      assign item_stripped = item | strip
+      unless item_stripped == blank or item_stripped == ''
+        assign valid_items = valid_items | plus: 1
+      endunless
+    endfor
+  %}
 
-  {% comment %} Mobile carousel {% endcomment %}
-  <div
-    class="resource-list__carousel collection-slider-carousel collection-slider-mobile hidden--desktop"
-    style="--gutter-slide-width: 0px;"
-    data-testid="other-collections-slider-grid-mobile"
-  >
-    {% render 'slideshow',
-      ref: 'otherCollectionsSliderMobile',
-      class: 'resource-list__carousel',
-      slides: slides_mobile,
-      show_arrows: false,
-      icon_style: 'none',
-      icon_shape: 'none',
-      auto_hide_controls: false,
-      infinite: false,
-      initial_slide: 0,
-      slide_count: total_slides_mobile,
-      slideshow_gutters: ''
+  {% if valid_items > 0 and list_items_array.size > 0 %}
+    {% render 'resource-list',
+      list_items: list_items,
+      list_items_array: list_items_array,
+      settings: section.settings,
+      carousel_ref: 'otherCollectionsSlider',
+      slide_count: valid_items,
+      content_type: 'collections',
+      test_id: 'other-collections-slider'
     %}
-    <div class="collection-slider-scrollbar-indicator">
-      <div class="collection-slider-scrollbar-track">
-        <div class="collection-slider-scrollbar-thumb"></div>
-      </div>
-    </div>
-  </div>
+  {% endif %}
 </div>
 {% endif %}
 
-<style>
-  .collection-slider-header {
+{% stylesheet %}
+  .other-collections-slider-header {
+    margin-bottom: 4px;
     text-align: center;
-    margin-bottom: 16px;
   }
 
-  @media screen and (min-width: 750px) {
-    .collection-slider-header {
-      margin-bottom: 24px;
-    }
-  }
-
-  .collection-slider-top-label {
-    text-align: center;
-    margin-bottom: 0;
-  }
-
-  .collection-slider-top-label-text {
+  .other-collections-slider-heading {
     margin: 0;
     font-family: 'Sacramento', cursive, sans-serif;
     font-weight: 400;
     font-size: 30px;
-    line-height: 100%;
+    line-height: 150%;
     color: #7295BB;
     text-align: center;
     text-transform: lowercase;
-    display: block;
   }
 
-  .collection-slider-section-title {
-    text-align: center;
-    margin-bottom: 0;
-  }
-
-  .collection-slider-section-title-label {
+  .other-collections-slider-subheading {
     margin: 0;
     font-weight: 500;
     font-size: 24px;
@@ -253,36 +136,44 @@
     text-transform: uppercase;
     color: #1D425A;
     text-align: center;
-    display: block;
   }
 
   @media screen and (min-width: 750px) {
-    .collection-slider-section-title-label {
+    .other-collections-slider-header {
+      margin-bottom: 7px;
+    }
+
+    .other-collections-slider-heading {
+      font-size: 38px;
+    }
+
+    .other-collections-slider-subheading {
       font-size: 32px;
     }
   }
 
-  /* Collection slider card styling */
-  .collection-slider-card {
+  /* Collection card – same design as Featured Blogs / Collection Slider */
+  .other-collections-slider-section .other-collections-slider-card {
     position: relative;
     width: 100%;
     height: 100%;
     overflow: hidden;
   }
 
-  .collection-slider-card__link {
+  .other-collections-slider-section .other-collections-slider-card__link {
     display: block;
     width: 100%;
     height: 100%;
     text-decoration: none;
   }
 
-  .collection-slider-card__image-wrapper {
-    height: 417px;
+  .other-collections-slider-section .other-collections-slider-card__image-wrapper {
+    position: relative;
+    aspect-ratio: 4 / 5;
     overflow: hidden;
   }
 
-  .collection-slider-card__image-wrapper::before {
+  .other-collections-slider-section .other-collections-slider-card__image-wrapper::before {
     content: '';
     position: absolute;
     top: 0;
@@ -294,14 +185,14 @@
     pointer-events: none;
   }
 
-  .collection-slider-card__image {
+  .other-collections-slider-section .other-collections-slider-card__image {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
 
-  .collection-slider-card__placeholder {
+  .other-collections-slider-section .other-collections-slider-card__placeholder {
     width: 100%;
     height: 100%;
     background: #F7F7F7;
@@ -314,205 +205,181 @@
     text-align: center;
   }
 
-  .collection-slider-card__title-overlay {
+  .other-collections-slider-section .other-collections-slider-card__title-overlay {
     position: absolute;
+    bottom: 0;
     left: 0;
     right: 0;
-    bottom: var(--title-margin-bottom);
-    display: flex;
-    justify-content: var(--title-position);
-    align-items: center;
-    padding: 0 8px;
-    pointer-events: none;
     z-index: 2;
+    padding: 0 24px 24px;
+    pointer-events: none;
+    text-align: center;
   }
 
-  .collection-slider-card__title {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 500;
-    font-style: normal;
+  .other-collections-slider-section .other-collections-slider-card__title {
+    display: block;
+    font-weight: 400;
     font-size: 22px;
     line-height: 150%;
-    letter-spacing: 0;
-    text-transform: uppercase;
     color: #FFFFFF;
-    text-align: center;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    transition: text-decoration 0.3s ease;
+    text-transform: uppercase;
   }
 
-  .collection-slider-card__link:hover .collection-slider-card__title {
-    text-decoration: underline;
-  }
-
-  /* Collection slider carousel container */
-  .collection-slider-carousel {
-    position: relative;
-  }
-
-  /* Remove horizontal padding from section */
-  .collection-slider-section {
-    padding-inline: 0 !important;
-  }
-
-  /* Allow overflow for arrows to show outside, but clip slides */
-  .collection-slider-desktop slideshow-component {
-    overflow: visible;
-  }
-
-  .collection-slider-desktop slideshow-container {
-    position: relative;
-    overflow: hidden;
-  }
-
-  /* Ensure carousel container allows arrows to show */
-  .collection-slider-desktop.resource-list__carousel {
-    overflow: visible;
-  }
-
-  /* Hide mobile carousel on desktop */
-  .collection-slider-mobile {
-    display: none;
-  }
-
-  @media (max-width: 767px) {
-    .collection-slider-desktop {
-      display: none;
-    }
-    
-    .collection-slider-mobile {
-      display: block;
-    }
-  }
-
-  /* Desktop slider styling */
-  .collection-slider-desktop .resource-list__carousel {
-    --column-count: {{ section.settings.items_per_view | default: 4 }};
-    --resource-list-column-gap-desktop: {{ section.settings.columns_gap | default: 12 }}px;
-  }
-
-  /* Ensure gap is applied to slideshow slides on desktop */
-  .collection-slider-desktop slideshow-slides {
-    gap: {{ section.settings.columns_gap | default: 12 }}px !important;
-  }
-
-  /* Position arrows outside the carousel on desktop */
-  .collection-slider-wrapper {
-    position: relative;
-    padding: 0;
-    overflow: visible;
-  }
-
-  .collection-slider-desktop slideshow-container {
-    position: relative;
-    overflow: visible;
-  }
-
-  .collection-slider-desktop slideshow-component {
-    overflow: visible;
-  }
-
-  .collection-slider-desktop slideshow-arrows {
-    position: absolute;
-    inset: 0;
-    left: auto;
-    right: auto;
-    width: calc(100% + 120px);
-    max-width: none;
-    pointer-events: none;
-    z-index: var(--layer-heightened);
-    margin-left: -60px;
-    margin-right: -60px;
-    display: flex !important;
-  }
-
-  .collection-slider-desktop slideshow-arrows[position='center'] {
-    justify-content: space-between;
-    align-items: center;
-    padding: 0;
-  }
-
-  .collection-slider-desktop slideshow-arrows .slideshow-control {
-    position: absolute;
-    margin: 0;
-    pointer-events: auto;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 1;
-    transition: opacity 0.3s ease-out;
-  }
-
-  /* Position arrows outside the slider container */
-  .collection-slider-desktop slideshow-arrows .slideshow-control--previous {
-    left: 0;
-  }
-
-  .collection-slider-desktop slideshow-arrows .slideshow-control--next {
-    right: 0;
-  }
-
-  @media (max-width: 1200px) {
-    .collection-slider-wrapper {
-      padding: 0;
+  @media (max-width: 749px) {
+    .other-collections-slider-section .other-collections-slider-card__image-wrapper {
+      aspect-ratio: 4 / 5;
     }
 
-    .collection-slider-desktop slideshow-arrows {
-      width: calc(100% + 100px);
-      margin-left: -50px;
-      margin-right: -50px;
-    }
-  }
-
-  /* Mobile slider styling - 2x2 grid */
-  @media screen and (min-width: 750px) {
-    .collection-slider-top-label-text {
-      font-size: 38px;
-    }
-  }
-
-  @media (max-width: 767px) {
-    .collection-slider-header {
-      margin-bottom: 16px;
-    }
-
-    .collection-slider-card__title {
-      font-size: 14px;
-      line-height: 150%;
-    }
-
-    .collection-slider-card__title-overlay {
-      padding: 0 12px;
-      --title-margin-bottom: 13px;
-    }
-
-    /* Mobile image dimensions and gradient */
-    .collection-slider-card__image-wrapper {
-      height: 219px;
-    }
-
-    .collection-slider-card__image-wrapper::before {
+    .other-collections-slider-section .other-collections-slider-card__image-wrapper::before {
       background: linear-gradient(180.06deg, rgba(0, 0, 0, 0) 45.21%, #000000 121.86%);
     }
 
-    /* Enable scrollbar on mobile - override slideshow default */
-    .collection-slider-mobile slideshow-component {
+    .other-collections-slider-section .other-collections-slider-card__title-overlay {
+      padding: 0 12px 13px;
+    }
+
+    .other-collections-slider-section .other-collections-slider-card__title {
+      font-size: 14px;
+      line-height: 150%;
+    }
+  }
+
+  /* Desktop – same as Featured Blogs / Collection Slider */
+  @media screen and (min-width: 750px) {
+    .other-collections-slider-section.section--page-width > .resource-list.force-full-width {
+      grid-column: 2 !important;
+    }
+
+    .other-collections-slider-section .resource-list__carousel {
+      --peek-next-slide-size: 0px !important;
+    }
+
+    .other-collections-slider-section .resource-list__carousel .resource-list__slide {
+      --section-slide-width: calc(
+        (100% - (var(--resource-list-column-gap, var(--resource-list-column-gap-desktop, 12px)) * (var(--column-count, 4) - 1)) - var(--peek-next-slide-size, 0px)) /
+          var(--column-count, 4)
+      );
+      --fallback-slide-width: clamp(150px, var(--mobile-card-size, 60vw), var(--slide-width-max, 450px));
+      --slide-width: var(--section-slide-width, var(--fallback-slide-width)) !important;
+    }
+
+    .other-collections-slider-section .resource-list__carousel slideshow-slides {
+      padding-inline: 0 !important;
+    }
+
+    .other-collections-slider-section .resource-list__carousel slideshow-component {
+      overflow: visible;
+    }
+
+    .other-collections-slider-section .resource-list__carousel slideshow-container {
+      position: relative;
+      overflow: visible;
+    }
+
+    .other-collections-slider-section .resource-list__carousel slideshow-arrows {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100%);
+      pointer-events: none;
+      z-index: var(--layer-heightened);
+      display: flex !important;
+    }
+
+    .other-collections-slider-section .resource-list__carousel slideshow-arrows[position='center'] {
+      justify-content: space-between;
+      align-items: center;
+      padding: 0;
+    }
+
+    .other-collections-slider-section .resource-list__carousel slideshow-arrows .slideshow-control {
+      position: absolute;
+      margin: 0;
+      pointer-events: auto;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 1;
+      transition: opacity 0.3s ease-out;
+    }
+
+    .other-collections-slider-section .resource-list__carousel slideshow-arrows .slideshow-control--previous {
+      left: -60px;
+    }
+
+    .other-collections-slider-section .resource-list__carousel slideshow-arrows .slideshow-control--next {
+      right: -60px;
+    }
+
+    .other-collections-slider-section {
+      overflow-x: clip;
+    }
+
+    @media (min-width: 1201px) {
+      .other-collections-slider-section .slideshow-control--style-chevron {
+        border: 2px solid #7295bb;
+      }
+      .other-collections-slider-section .slideshow-control--style-chevron svg path {
+        stroke: #7295bb;
+        fill: none;
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .other-collections-slider-section .resource-list__carousel slideshow-arrows .slideshow-control--previous {
+        left: 0px;
+      }
+      .other-collections-slider-section .resource-list__carousel slideshow-arrows .slideshow-control--next {
+        right: 0px;
+      }
+      .other-collections-slider-section .slideshow-control--style-chevron {
+        background-color: #7295bb;
+      }
+      .other-collections-slider-section .slideshow-control--style-chevron svg path {
+        stroke: #ffffff;
+        fill: none;
+      }
+    }
+  }
+
+  /* Mobile – same as Featured Blogs / Collection Slider */
+  @media screen and (max-width: 749px) {
+    .other-collections-slider-section.section--page-width > .resource-list.force-full-width {
+      grid-column: 1 / -1;
+    }
+
+    .other-collections-slider-section.section--page-width {
+      padding-inline-start: var(--page-margin, 16px) !important;
+      padding-inline-end: 0 !important;
+    }
+
+    .other-collections-slider-section .resource-list__carousel slideshow-component {
       --cursor: grab;
       padding-bottom: 0 !important;
       margin-bottom: 0 !important;
     }
 
-    .collection-slider-mobile slideshow-container {
+    .other-collections-slider-section .resource-list__carousel slideshow-container {
       padding-bottom: 0 !important;
       margin-bottom: 0 !important;
-      overflow: visible; /* Allow peek of next slide to show */
+      overflow: visible;
     }
 
-    .collection-slider-mobile slideshow-component[disabled='true'] slideshow-slides {
+    .other-collections-slider-section .resource-list__carousel slideshow-component[disabled='true'] slideshow-slides {
       overflow-x: auto !important;
     }
 
-    .collection-slider-mobile slideshow-slides {
-      gap: 5px;
+    .other-collections-slider-section .resource-list__carousel {
+      --resource-list-column-gap: 5px !important;
+    }
+
+    .other-collections-slider-section .resource-list__carousel {
+      --card-width: clamp(150px, 48cqw, 450px);
+    }
+
+    .other-collections-slider-section .resource-list__carousel slideshow-slides {
+      gap: 5px !important;
       overflow-x: auto !important;
       scrollbar-width: none;
       -ms-overflow-style: none;
@@ -520,169 +387,40 @@
       scroll-snap-type: x mandatory;
       padding-bottom: 0 !important;
       margin-bottom: 0 !important;
+      padding-inline-start: 0 !important;
+      padding-inline-end: var(--page-margin, 16px) !important;
+      display: grid !important;
+      grid-template-rows: repeat(2, auto) !important;
+      grid-auto-flow: column !important;
+      grid-auto-columns: var(--card-width) !important;
+      height: calc(var(--card-width) * 1.25 * 2 + 5px) !important;
     }
 
-    /* Hide native scrollbar */
-    .collection-slider-mobile slideshow-slides::-webkit-scrollbar {
+    .other-collections-slider-section .resource-list__carousel slideshow-slides::-webkit-scrollbar {
       display: none;
       width: 0;
       height: 0;
     }
 
-    /* Custom scrollbar indicator */
-    .collection-slider-scrollbar-indicator {
-      width: 100%;
-      height: 4px;
-      position: relative;
-      margin-top: 12px;
-    }
-
-    .collection-slider-scrollbar-track {
-      width: 100%;
-      height: 4px;
-      background-color: #EEEEEE;
-      border-radius: 10px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .collection-slider-scrollbar-thumb {
-      height: 4px;
-      background-color: #7295BB;
-      border-radius: 10px;
-      position: absolute;
-      left: 0;
-      top: 0;
-      transition: width 0.1s ease-out;
-      min-width: 20px;
-    }
-
-    /* Mobile slide: 2x2 grid layout - slightly smaller to show peek */
-    .collection-slider-mobile .collection-slider-slide-mobile {
-      width: calc(100% - 10px);
-      flex: 0 0 calc(100% - 10px);
+    .other-collections-slider-section .resource-list__carousel .resource-list__slide {
+      --slide-width: var(--card-width) !important;
+      width: var(--card-width) !important;
+      min-width: var(--card-width) !important;
+      max-width: var(--card-width) !important;
       scroll-snap-align: start;
     }
 
-    .collection-slider-mobile-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 5px;
-      width: 100%;
-      padding: 0;
+    .other-collections-slider-section .resource-list__carousel slideshow-component,
+    .other-collections-slider-section .resource-list__carousel slideshow-container {
+      padding-inline-start: 0 !important;
+      padding-inline-end: 0 !important;
     }
 
-    .collection-slider-mobile-grid .collection-slider-item {
-      width: 100%;
-    }
-  }
-
-  /* Desktop: Show arrows, hide on mobile */
-  @media (max-width: 767px) {
-    .collection-slider-carousel slideshow-arrows {
+    .other-collections-slider-section .resource-list__carousel slideshow-arrows {
       display: none !important;
     }
   }
-
-  @media (min-width: 768px) {
-    .collection-slider-carousel slideshow-arrows {
-      display: flex;
-    }
-  }
-
-  /* Tablet and iPad responsive adjustments - ensure desktop view shows */
-  @media (min-width: 768px) {
-    .collection-slider-desktop {
-      display: block !important;
-    }
-
-    .collection-slider-mobile {
-      display: none !important;
-    }
-
-    /* Ensure proper column count for tablets */
-    .collection-slider-desktop .resource-list__carousel {
-      --column-count: {{ section.settings.items_per_view | default: 4 }};
-    }
-  }
-
-  /* iPad Mini (768px) - base tablet height */
-  @media (min-width: 768px) and (max-width: 819px) {
-    .collection-slider-card__image-wrapper {
-      height: 350px;
-    }
-  }
-
-  /* iPad Air and similar (820px - 1023px) */
-  @media (min-width: 820px) and (max-width: 1023px) {
-    .collection-slider-card__image-wrapper {
-      height: 380px;
-    }
-  }
-
-  /* iPad Pro (1024px) - show 3 collections per row and full desktop height */
-  @media (min-width: 1024px) and (max-width: 1199px) {
-    .collection-slider-card__image-wrapper {
-      height: 417px;
-    }
-
-    /* Note: --column-count must be set via JavaScript to override inline styles */
-  }
-
-  /* Large desktop (1200px+) - use default items_per_view setting */
-  @media (max-width: 1200px) {
-   
-
-    .collection-slider-desktop .resource-list__carousel {
-      --column-count: 3;
-    }
-  }
-</style>
-
-<script>
-  // Custom scrollbar indicator for mobile
-  document.addEventListener('DOMContentLoaded', function() {
-    const mobileSlides = document.querySelector('.collection-slider-mobile slideshow-slides');
-    const scrollbarThumb = document.querySelector('.collection-slider-scrollbar-thumb');
-    const scrollbarIndicator = document.querySelector('.collection-slider-scrollbar-indicator');
-    
-    if (!mobileSlides || !scrollbarThumb || !scrollbarIndicator) return;
-
-    function updateScrollbar() {
-      const scrollLeft = mobileSlides.scrollLeft;
-      const scrollWidth = mobileSlides.scrollWidth;
-      const clientWidth = mobileSlides.clientWidth;
-      const maxScroll = scrollWidth - clientWidth;
-      
-      if (maxScroll <= 0) {
-        scrollbarIndicator.style.display = 'none';
-        return;
-      }
-      
-      scrollbarIndicator.style.display = 'block';
-      
-      // Calculate thumb width and position
-      const thumbWidth = (clientWidth / scrollWidth) * 100;
-      const thumbPosition = (scrollLeft / maxScroll) * (100 - thumbWidth);
-      
-      scrollbarThumb.style.width = thumbWidth + '%';
-      scrollbarThumb.style.left = thumbPosition + '%';
-    }
-
-    // Update on scroll
-    mobileSlides.addEventListener('scroll', updateScrollbar);
-    
-    // Update on resize
-    const resizeObserver = new ResizeObserver(updateScrollbar);
-    resizeObserver.observe(mobileSlides);
-    
-    // Initial update
-    updateScrollbar();
-    
-    // Update periodically to catch any changes
-    setInterval(updateScrollbar, 100);
-  });
-</script>
+{% endstylesheet %}
 
 {% schema %}
 {
@@ -693,18 +431,18 @@
   },
   "settings": [
     {
-      "type": "text",
-      "id": "top_label",
-      "label": "Top Label",
-      "default": "explore",
-      "info": "Text displayed above the section title"
+      "type": "header",
+      "content": "Section Header"
     },
     {
       "type": "text",
-      "id": "section_title",
-      "label": "Section Title",
-      "default": "OTHER COLLECTIONS",
-      "info": "Title displayed above the collection slider"
+      "id": "heading",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading"
     },
     {
       "type": "header",
@@ -712,43 +450,67 @@
     },
     {
       "type": "paragraph",
-      "content": "Collections are automatically loaded from the metafield 'custom.cb_other_collections'. The metafield can be set on the current collection, product, or shop level."
+      "content": "Collections are loaded from the metafield 'custom.cb_other_collections' on the current collection, product, or shop."
     },
     {
-      "type": "range",
-      "id": "items_per_view",
-      "label": "Items per view",
-      "min": 1,
-      "max": 8,
-      "step": 1,
-      "default": 4,
-      "info": "Number of collections to show at once in the slider"
+      "type": "header",
+      "content": "Carousel Settings"
     },
     {
       "type": "select",
-      "id": "title_position",
-      "label": "Title Position",
+      "id": "layout_type",
+      "label": "Layout type",
       "options": [
         {
-          "value": "flex-start",
-          "label": "Left"
-        },
-        {
-          "value": "center",
-          "label": "Center"
-        },
-        {
-          "value": "flex-end",
-          "label": "Right"
+          "value": "carousel",
+          "label": "Carousel"
         }
       ],
-      "default": "center",
-      "info": "Position of collection title on the image"
+      "default": "carousel"
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "Columns",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "type": "select",
+      "id": "mobile_card_size",
+      "label": "Mobile card size",
+      "options": [
+        {
+          "value": "60cqw",
+          "label": "Large"
+        },
+        {
+          "value": "44cqw",
+          "label": "Small"
+        }
+      ],
+      "default": "44cqw"
+    },
+    {
+      "type": "range",
+      "id": "columns_gap",
+      "label": "Horizontal gap",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "Carousel Navigation"
     },
     {
       "type": "select",
       "id": "icons_style",
-      "label": "Arrow Style",
+      "label": "Icon style",
       "options": [
         {
           "value": "arrow",
@@ -760,11 +522,11 @@
         },
         {
           "value": "arrows_large",
-          "label": "Large Arrows"
+          "label": "Large arrows"
         },
         {
           "value": "chevron_large",
-          "label": "Large Chevrons"
+          "label": "Large chevrons"
         },
         {
           "value": "blue_arrows",
@@ -775,12 +537,12 @@
           "label": "None"
         }
       ],
-      "default": "arrow"
+      "default": "chevron"
     },
     {
       "type": "select",
       "id": "icons_shape",
-      "label": "Arrow Background",
+      "label": "Icon background",
       "options": [
         {
           "value": "none",
@@ -795,18 +557,7 @@
           "label": "Square"
         }
       ],
-      "default": "none",
-      "visible_if": "{{ section.settings.icons_style != 'none' }}"
-    },
-    {
-      "type": "range",
-      "id": "columns_gap",
-      "label": "Horizontal Gap",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 12
+      "default": "circle"
     },
     {
       "type": "header",
@@ -819,11 +570,11 @@
       "options": [
         {
           "value": "page-width",
-          "label": "Page"
+          "label": "Page width"
         },
         {
           "value": "full-width",
-          "label": "Full"
+          "label": "Full width"
         }
       ],
       "default": "page-width"
@@ -841,7 +592,7 @@
     {
       "type": "color_scheme",
       "id": "color_scheme",
-      "label": "Color Scheme",
+      "label": "Color scheme",
       "default": "scheme-1"
     },
     {
@@ -874,13 +625,14 @@
       "name": "Other Collections Slider",
       "category": "Collections",
       "settings": {
-        "top_label": "explore",
-        "section_title": "OTHER COLLECTIONS",
-        "items_per_view": 4,
-        "title_position": "center",
-        "icons_style": "arrow",
-        "icons_shape": "none",
+        "heading": "explore",
+        "subheading": "OTHER COLLECTIONS",
+        "layout_type": "carousel",
+        "columns": 4,
         "columns_gap": 12,
+        "mobile_card_size": "44cqw",
+        "icons_style": "chevron",
+        "icons_shape": "circle",
         "section_width": "page-width",
         "gap": 12,
         "color_scheme": "scheme-1",
