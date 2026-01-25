@@ -91,9 +91,47 @@
         content_type: 'collections',
         test_id: 'collection-slider'
       %}
+      <div class="collection-slider-scrollbar-indicator hidden--desktop">
+        <div class="collection-slider-scrollbar-track">
+          <div class="collection-slider-scrollbar-thumb"></div>
+        </div>
+      </div>
     {% endif %}
   {% endif %}
 </div>
+
+<script>
+  (function() {
+    const section = document.getElementById('shopify-section-{{ section.id }}');
+    if (!section) return;
+    const mobileSlides = section.querySelector('.collection-slider-section slideshow-slides');
+    const scrollbarThumb = section.querySelector('.collection-slider-scrollbar-thumb');
+    const scrollbarIndicator = section.querySelector('.collection-slider-scrollbar-indicator');
+    if (!mobileSlides || !scrollbarThumb || !scrollbarIndicator) return;
+
+    function updateScrollbar() {
+      const scrollLeft = mobileSlides.scrollLeft;
+      const scrollWidth = mobileSlides.scrollWidth;
+      const clientWidth = mobileSlides.clientWidth;
+      const maxScroll = scrollWidth - clientWidth;
+      if (maxScroll <= 0) {
+        scrollbarIndicator.style.display = 'none';
+        return;
+      }
+      scrollbarIndicator.style.display = 'block';
+      const thumbWidth = (clientWidth / scrollWidth) * 100;
+      const thumbPosition = (scrollLeft / maxScroll) * (100 - thumbWidth);
+      scrollbarThumb.style.width = thumbWidth + '%';
+      scrollbarThumb.style.left = thumbPosition + '%';
+    }
+
+    mobileSlides.addEventListener('scroll', updateScrollbar);
+    const resizeObserver = new ResizeObserver(updateScrollbar);
+    resizeObserver.observe(mobileSlides);
+    updateScrollbar();
+    setInterval(updateScrollbar, 100);
+  })();
+</script>
 
 {% stylesheet %}
   .collection-slider-header {
@@ -310,6 +348,35 @@
       }
     }
 
+    /* Tablet: 3 tiles per row (750-1024px) - match explore-more-products */
+    @media (min-width: 750px) and (max-width: 1024px) {
+      .collection-slider-section .resource-list,
+      .collection-slider-section .resource-list__carousel {
+        --column-count: 3 !important;
+        --gutter-slide-width: 0px !important;
+      }
+      
+      .collection-slider-section .resource-list__carousel .resource-list__slide {
+        width: calc((100% - (var(--resource-list-column-gap-desktop, 12px) * 2)) / 3) !important;
+        max-width: calc((100% - (var(--resource-list-column-gap-desktop, 12px) * 2)) / 3) !important;
+        flex: 0 0 calc((100% - (var(--resource-list-column-gap-desktop, 12px) * 2)) / 3) !important;
+      }
+
+      /* Enable scroll snap and scrolling on tablet */
+      .collection-slider-section .resource-list__carousel slideshow-component[disabled='true'] slideshow-slides {
+        overflow-x: auto !important;
+      }
+
+      .collection-slider-section .resource-list__carousel slideshow-slides {
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .collection-slider-section .resource-list__carousel .resource-list__slide {
+        scroll-snap-align: start;
+      }
+    }
+
     @media (max-width: 1200px) {
       .collection-slider-section .resource-list__carousel slideshow-arrows .slideshow-control--previous {
         left: 0px;
@@ -354,12 +421,19 @@
       overflow-x: auto !important;
     }
 
+    /* Set mobile to show 2 columns - match explore-more-products */
+    .collection-slider-section .resource-list,
     .collection-slider-section .resource-list__carousel {
-      --resource-list-column-gap: 5px !important;
+      --column-count: 2 !important;
+      --gutter-slide-width: 0px !important;
     }
 
-    .collection-slider-section .resource-list__carousel {
-      --card-width: clamp(150px, 48cqw, 450px);
+    /* Override mobile slide width to use column-count calculation - match explore-more-products */
+    .collection-slider-section .resource-list__carousel .resource-list__slide {
+      --section-slide-width: calc(
+        (100% - (var(--resource-list-column-gap, 5px) * (var(--column-count, 2) - 1))) / var(--column-count, 2)
+      );
+      --slide-width: var(--section-slide-width) !important;
     }
 
     .collection-slider-section .resource-list__carousel slideshow-slides {
@@ -372,12 +446,7 @@
       padding-bottom: 0 !important;
       margin-bottom: 0 !important;
       padding-inline-start: 0 !important;
-      padding-inline-end: var(--page-margin, 16px) !important;
-      display: grid !important;
-      grid-template-rows: repeat(2, auto) !important;
-      grid-auto-flow: column !important;
-      grid-auto-columns: var(--card-width) !important;
-      height: calc(var(--card-width) * 1.25 * 2 + 5px) !important;
+      padding-inline-end: 0 !important;
     }
 
     .collection-slider-section .resource-list__carousel slideshow-slides::-webkit-scrollbar {
@@ -386,12 +455,14 @@
       height: 0;
     }
 
+    /* Each slide should snap to show 2 full items - match explore-more-products */
     .collection-slider-section .resource-list__carousel .resource-list__slide {
-      --slide-width: var(--card-width) !important;
-      width: var(--card-width) !important;
-      min-width: var(--card-width) !important;
-      max-width: var(--card-width) !important;
       scroll-snap-align: start;
+    }
+
+    /* Add padding to last slide so it doesn't touch edge when scrolled to end */
+    .collection-slider-section .resource-list__carousel slideshow-slide:last-child {
+      padding-inline-end: var(--page-margin, 16px);
     }
 
     .collection-slider-section .resource-list__carousel slideshow-component,
@@ -402,6 +473,38 @@
 
     .collection-slider-section .resource-list__carousel slideshow-arrows {
       display: none !important;
+    }
+
+    .collection-slider-section.section--page-width > .collection-slider-scrollbar-indicator {
+      grid-column: 1 / -2;
+      width: 100%;
+    }
+
+    .collection-slider-scrollbar-indicator {
+      width: 100%;
+      height: 4px;
+      position: relative;
+      margin-top: 12px;
+    }
+
+    .collection-slider-scrollbar-track {
+      width: 100%;
+      height: 4px;
+      background-color: #EEEEEE;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .collection-slider-scrollbar-thumb {
+      height: 4px;
+      background-color: #7295BB;
+      border-radius: 10px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      transition: width 0.1s ease-out;
+      min-width: 20px;
     }
   }
 {% endstylesheet %}

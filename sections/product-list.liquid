@@ -603,27 +603,31 @@
     }
   }
 
-  /* Position arrows outside the carousel on desktop - match explore-more-products */
+  /* Position arrows outside the carousel – match Explore More Collections */
   .product-list-wrapper {
     position: relative;
     padding: 0;
   }
 
+  .product-list-desktop slideshow-component {
+    overflow: visible;
+  }
+
   .product-list-desktop slideshow-container {
     position: relative;
+    overflow: visible;
   }
 
   .product-list-desktop slideshow-arrows {
     position: absolute;
-    inset: 0;
-    left: auto;
-    right: auto;
-    width: calc(100% + 120px);
-    max-width: none;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100%);
     pointer-events: none;
     z-index: var(--layer-heightened);
-    margin-left: -60px;
-    margin-right: -60px;
+    display: flex !important;
   }
 
   .product-list-desktop slideshow-arrows[position='center'] {
@@ -639,26 +643,50 @@
     opacity: 1;
     top: 50%;
     transform: translateY(-50%);
+    z-index: var(--layer-heightened);
+    transition: opacity 0.3s ease-out;
   }
 
   .product-list-desktop slideshow-arrows .slideshow-control--previous {
-    left: 0;
+    left: -60px;
   }
 
   .product-list-desktop slideshow-arrows .slideshow-control--next {
-    right: 0;
+    right: -60px;
   }
 
-
-  @media (max-width: 1200px) {
-    .product-list-wrapper {
-      padding: 0;
+  /* Desktop (≥750px): clip overflow for arrows – match Explore More Collections */
+  @media screen and (min-width: 750px) {
+    [data-testid="product-list"] {
+      overflow-x: clip;
     }
+  }
 
-    .product-list-desktop slideshow-arrows {
-      width: calc(100% + 100px);
-      margin-left: -50px;
-      margin-right: -50px;
+  /* Desktop (≥1201px): chevron outline – match Explore More Collections */
+  @media (min-width: 1201px) {
+    [data-testid="product-list"] .slideshow-control--style-chevron {
+      border: 2px solid #7295bb;
+    }
+    [data-testid="product-list"] .slideshow-control--style-chevron svg path {
+      stroke: #7295bb;
+      fill: none;
+    }
+  }
+
+  /* Tablet (750px–1200px): chevron filled, arrows at edges – match Explore More Collections */
+  @media (min-width: 750px) and (max-width: 1200px) {
+    .product-list-desktop slideshow-arrows .slideshow-control--previous {
+      left: 0;
+    }
+    .product-list-desktop slideshow-arrows .slideshow-control--next {
+      right: 0;
+    }
+    [data-testid="product-list"] .slideshow-control--style-chevron {
+      background-color: #7295bb;
+    }
+    [data-testid="product-list"] .slideshow-control--style-chevron svg path {
+      stroke: #ffffff;
+      fill: none;
     }
   }
 
@@ -1453,7 +1481,7 @@
           "label": "t:options.none"
         }
       ],
-      "default": "arrow",
+      "default": "chevron",
       "visible_if": "{{ section.settings.layout_type == 'carousel' or section.settings.carousel_on_mobile == true }}"
     },
     {
@@ -1474,7 +1502,7 @@
           "label": "t:options.square"
         }
       ],
-      "default": "none",
+      "default": "circle",
       "visible_if": "{{ section.settings.icons_style != 'none' and section.settings.layout_type == 'carousel' or section.settings.carousel_on_mobile == true }}"
     },
     {
@@ -1571,8 +1599,8 @@
         "mobile_columns": "2",
         "columns_gap": 8,
         "rows_gap": 24,
-        "icons_style": "arrow",
-        "icons_shape": "none",
+        "icons_style": "chevron",
+        "icons_shape": "circle",
         "section_width": "page-width",
         "gap": 28,
         "color_scheme": "scheme-1",
@@ -1749,7 +1777,7 @@
         "mobile_columns": "2",
         "columns_gap": 8,
         "rows_gap": 24,
-        "icons_style": "arrow",
+        "icons_style": "chevron",
         "icons_shape": "circle",
         "section_width": "page-width",
         "gap": 28,
@@ -1927,8 +1955,8 @@
         "mobile_columns": "2",
         "columns_gap": 8,
         "rows_gap": 24,
-        "icons_style": "arrow",
-        "icons_shape": "none",
+        "icons_style": "chevron",
+        "icons_shape": "circle",
         "section_width": "page-width",
         "horizontal_alignment": "flex-start",
         "gap": 64,

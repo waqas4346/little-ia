@@ -107,8 +107,62 @@
       content_type: 'collections',
       test_id: 'other-collections-slider'
     %}
+    <div class="other-collections-slider-scrollbar-indicator hidden--desktop">
+      <div class="other-collections-slider-scrollbar-track">
+        <div class="other-collections-slider-scrollbar-thumb"></div>
+      </div>
+    </div>
   {% endif %}
 </div>
+
+<script>
+  (function() {
+    function initScrollbar() {
+      const section = document.getElementById('shopify-section-{{ section.id }}');
+      if (!section) return false;
+      const root = section.querySelector('.other-collections-slider-section');
+      if (!root) return false;
+      const mobileSlides = root.querySelector('.resource-list__carousel slideshow-slides') || root.querySelector('slideshow-slides');
+      const scrollbarThumb = root.querySelector('.other-collections-slider-scrollbar-thumb');
+      const scrollbarIndicator = root.querySelector('.other-collections-slider-scrollbar-indicator');
+      if (!mobileSlides || !scrollbarThumb || !scrollbarIndicator) return false;
+
+      function updateScrollbar() {
+        const scrollLeft = mobileSlides.scrollLeft;
+        const scrollWidth = mobileSlides.scrollWidth;
+        const clientWidth = mobileSlides.clientWidth;
+        const maxScroll = scrollWidth - clientWidth;
+        if (maxScroll <= 0) {
+          scrollbarIndicator.style.display = 'none';
+          return;
+        }
+        scrollbarIndicator.style.display = 'block';
+        const thumbWidth = (clientWidth / scrollWidth) * 100;
+        const thumbPosition = (scrollLeft / maxScroll) * (100 - thumbWidth);
+        scrollbarThumb.style.width = thumbWidth + '%';
+        scrollbarThumb.style.left = thumbPosition + '%';
+      }
+
+      mobileSlides.addEventListener('scroll', updateScrollbar);
+      const resizeObserver = new ResizeObserver(updateScrollbar);
+      resizeObserver.observe(mobileSlides);
+      updateScrollbar();
+      setInterval(updateScrollbar, 100);
+      return true;
+    }
+
+    function tryInit(attempt) {
+      if (initScrollbar()) return;
+      if (attempt < 5) setTimeout(function() { tryInit(attempt + 1); }, 150 * attempt);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() { tryInit(0); });
+    } else {
+      tryInit(0);
+    }
+  })();
+</script>
 {% endif %}
 
 {% stylesheet %}
@@ -316,6 +370,35 @@
       overflow-x: clip;
     }
 
+    /* Tablet: 3 tiles per row (750-1024px) - match explore-more-products */
+    @media (min-width: 750px) and (max-width: 1024px) {
+      .other-collections-slider-section .resource-list,
+      .other-collections-slider-section .resource-list__carousel {
+        --column-count: 3 !important;
+        --gutter-slide-width: 0px !important;
+      }
+      
+      .other-collections-slider-section .resource-list__carousel .resource-list__slide {
+        width: calc((100% - (var(--resource-list-column-gap-desktop, 12px) * 2)) / 3) !important;
+        max-width: calc((100% - (var(--resource-list-column-gap-desktop, 12px) * 2)) / 3) !important;
+        flex: 0 0 calc((100% - (var(--resource-list-column-gap-desktop, 12px) * 2)) / 3) !important;
+      }
+
+      /* Enable scroll snap and scrolling on tablet */
+      .other-collections-slider-section .resource-list__carousel slideshow-component[disabled='true'] slideshow-slides {
+        overflow-x: auto !important;
+      }
+
+      .other-collections-slider-section .resource-list__carousel slideshow-slides {
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .other-collections-slider-section .resource-list__carousel .resource-list__slide {
+        scroll-snap-align: start;
+      }
+    }
+
     @media (min-width: 1201px) {
       .other-collections-slider-section .slideshow-control--style-chevron {
         border: 2px solid #7295bb;
@@ -370,12 +453,19 @@
       overflow-x: auto !important;
     }
 
+    /* Set mobile to show 2 columns - match explore-more-products */
+    .other-collections-slider-section .resource-list,
     .other-collections-slider-section .resource-list__carousel {
-      --resource-list-column-gap: 5px !important;
+      --column-count: 2 !important;
+      --gutter-slide-width: 0px !important;
     }
 
-    .other-collections-slider-section .resource-list__carousel {
-      --card-width: clamp(150px, 48cqw, 450px);
+    /* Override mobile slide width to use column-count calculation - match explore-more-products */
+    .other-collections-slider-section .resource-list__carousel .resource-list__slide {
+      --section-slide-width: calc(
+        (100% - (var(--resource-list-column-gap, 5px) * (var(--column-count, 2) - 1))) / var(--column-count, 2)
+      );
+      --slide-width: var(--section-slide-width) !important;
     }
 
     .other-collections-slider-section .resource-list__carousel slideshow-slides {
@@ -388,12 +478,7 @@
       padding-bottom: 0 !important;
       margin-bottom: 0 !important;
       padding-inline-start: 0 !important;
-      padding-inline-end: var(--page-margin, 16px) !important;
-      display: grid !important;
-      grid-template-rows: repeat(2, auto) !important;
-      grid-auto-flow: column !important;
-      grid-auto-columns: var(--card-width) !important;
-      height: calc(var(--card-width) * 1.25 * 2 + 5px) !important;
+      padding-inline-end: 0 !important;
     }
 
     .other-collections-slider-section .resource-list__carousel slideshow-slides::-webkit-scrollbar {
@@ -402,12 +487,14 @@
       height: 0;
     }
 
+    /* Each slide should snap to show 2 full items - match explore-more-products */
     .other-collections-slider-section .resource-list__carousel .resource-list__slide {
-      --slide-width: var(--card-width) !important;
-      width: var(--card-width) !important;
-      min-width: var(--card-width) !important;
-      max-width: var(--card-width) !important;
       scroll-snap-align: start;
+    }
+
+    /* Add padding to last slide so it doesn't touch edge when scrolled to end */
+    .other-collections-slider-section .resource-list__carousel slideshow-slide:last-child {
+      padding-inline-end: var(--page-margin, 16px);
     }
 
     .other-collections-slider-section .resource-list__carousel slideshow-component,
@@ -418,6 +505,38 @@
 
     .other-collections-slider-section .resource-list__carousel slideshow-arrows {
       display: none !important;
+    }
+
+    .other-collections-slider-section.section--page-width > .other-collections-slider-scrollbar-indicator {
+      grid-column: 1 / -2;
+      width: 100%;
+    }
+
+    .other-collections-slider-scrollbar-indicator {
+      width: 100%;
+      height: 4px;
+      position: relative;
+      margin-top: 12px;
+    }
+
+    .other-collections-slider-scrollbar-track {
+      width: 100%;
+      height: 4px;
+      background-color: #EEEEEE;
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .other-collections-slider-scrollbar-thumb {
+      height: 4px;
+      background-color: #7295BB;
+      border-radius: 10px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      transition: width 0.1s ease-out;
+      min-width: 20px;
     }
   }
 {% endstylesheet %}
