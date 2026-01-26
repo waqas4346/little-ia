@@ -182,13 +182,14 @@
     -ms-touch-action: pan-x pan-y;
     touch-action: pan-x pan-y;
     -webkit-tap-highlight-color: transparent;
+    margin: 0 auto;
   }
 
   .product-video-slick-slider-section .slick-list {
     position: relative;
     display: block;
     overflow: hidden;
-    margin: 0;
+    margin: 0 auto;
     padding: 0;
     -webkit-transform: translate3d(0, 0, 0);
     -moz-transform: translate3d(0, 0, 0);
@@ -221,7 +222,8 @@
     position: relative;
     top: 0;
     left: 0;
-    display: block;
+    display: flex;
+    align-items: center;
     margin-left: auto;
     margin-right: auto;
   }
@@ -271,35 +273,64 @@
   }
 
   @media screen and (max-width: 749px) {
-    /* On mobile, each slide should be full viewport width */
+    /* Prevent horizontal scroll on mobile - hide overflow at section level */
+    .product-video-slick-slider-section {
+      overflow-x: hidden !important;
+      overflow-y: visible !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+      position: relative;
+    }
+    
+    /* Ensure parent section container also clips overflow */
+    .product-video-slick-slider-section.section {
+      overflow-x: hidden !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+    }
+    
+    /* On mobile, let Slick handle slide widths with centerMode - don't force fixed widths */
     .product-video-slick-slider-section .slick-slide {
-      width: 100vw !important;
+      width: auto !important;
       margin-right: 0 !important;
     }
     
-    /* Hide non-active slides on mobile - only show the centered one */
-    .product-video-slick-slider-section .slick-slide:not(.slick-center) {
-      opacity: 0 !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-    }
-    
-    /* Show only the centered/active slide */
+    /* Center slide should be fully visible */
     .product-video-slick-slider-section .slick-slide.slick-center {
       opacity: 1 !important;
       visibility: visible !important;
       pointer-events: auto !important;
+      z-index: 2;
     }
     
-    /* Ensure center mode properly centers the active slide on mobile */
+    /* Show all slides on mobile with reduced opacity for non-center */
+    .product-video-slick-slider-section .slick-slide:not(.slick-center) {
+      opacity: 0.6 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      z-index: 1;
+    }
+    
+    /* Let Slick's centerPadding handle the spacing - clip overflow but allow partial views */
     .product-video-slick-slider-section .slick-list {
       padding: 0 !important;
       overflow: hidden !important;
+      width: 100% !important;
+      max-width: 100vw !important;
     }
     
-    /* Ensure the carousel container doesn't add extra spacing */
+    /* Ensure the carousel container clips overflow */
     .product-video-slick-slider-section .slick-slider {
-      overflow: hidden;
+      overflow: hidden !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+    }
+    
+    /* Wrapper should not cause overflow */
+    .product-video-slick-slider__wrapper {
+      overflow: hidden !important;
+      width: 100% !important;
+      max-width: 100vw !important;
     }
     
     /* Ensure the item inside takes full width with padding */
@@ -310,10 +341,24 @@
       box-sizing: border-box;
     }
     
-    /* Make sure the track centers properly */
+    /* Non-center slides also need proper padding */
+    .product-video-slick-slider-section .slick-slide:not(.slick-center) .product-video-slick-slider__item {
+      padding: 0 20px;
+      box-sizing: border-box;
+    }
+    
+    /* Make sure the track centers properly but doesn't cause overflow */
     .product-video-slick-slider-section .slick-track {
       display: flex !important;
       align-items: center;
+      width: 100% !important;
+    }
+    
+    /* Ensure carousel element doesn't exceed viewport */
+    .product-video-slick-slider__carousel {
+      width: 100% !important;
+      max-width: 100vw !important;
+      overflow: hidden !important;
     }
   }
 
@@ -402,13 +447,40 @@
   .product-video-slick-slider__wrapper {
     width: 100%;
     position: relative;
-    padding: 0 60px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
   }
 
   @media screen and (max-width: 749px) {
     .product-video-slick-slider__wrapper {
       padding: 0;
-      overflow: visible;
+      overflow: hidden !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+    }
+  }
+  
+  /* Ensure carousel is centered */
+  .product-video-slick-slider__carousel {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  /* Center the slick track on larger screens */
+  @media screen and (min-width: 750px) {
+    .product-video-slick-slider-section .slick-track {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100% !important;
+    }
+    
+    .product-video-slick-slider-section .slick-slider {
+      display: flex;
+      justify-content: center;
     }
   }
 
@@ -658,7 +730,7 @@
     aspect-ratio: 204 / 321;
     overflow: hidden;
     border-radius: 4px;
-    cursor: pointer;
+    cursor: default;
     box-sizing: border-box;
   }
 
@@ -693,7 +765,7 @@
   }
 
   .product-video-slick-slider__video-wrapper .deferred-media__poster-button {
-    cursor: pointer;
+    cursor: pointer !important;
     pointer-events: auto !important;
     z-index: var(--layer-raised);
     position: relative;
@@ -719,7 +791,7 @@
   }
 
   .product-video-slick-slider__video-wrapper deferred-media[data-media-loaded] {
-    cursor: pointer;
+    cursor: default;
   }
 
   .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play svg {
@@ -888,38 +960,62 @@
     
     function initializeSlick() {
       const slidesToShow = calculateSlidesToShow();
+      const totalSlides = jQuery('#' + carouselId).find('.product-video-slick-slider__item').length;
+      
+      // Calculate initial slide to center (middle slide)
+      let initialSlide = 0;
+      if (totalSlides > 0) {
+        initialSlide = Math.floor(totalSlides / 2);
+      }
       
       jQuery('#' + carouselId).slick({
         centerMode: true,
-        centerPadding: window.innerWidth > 750 ? '60px' : '0px',
+        centerPadding: window.innerWidth > 750 ? '60px' : '10%',
         slidesToShow: slidesToShow,
         slidesToScroll: 1,
         infinite: true,
         speed: 500,
         arrows: false,
-        variableWidth: false,
+        variableWidth: true,
         swipe: true,
         touchMove: true,
         draggable: true,
-        focusOnSelect: window.innerWidth <= 750,
+        focusOnSelect: false,
+        initialSlide: initialSlide,
         responsive: [
           {
             breakpoint: 750,
             settings: {
               centerMode: true,
-              centerPadding: '0px',
+              centerPadding: '10%',
               slidesToShow: 1,
               slidesToScroll: 1,
               arrows: false,
-              variableWidth: false,
+              variableWidth: true,
               swipe: true,
               touchMove: true,
               draggable: true,
               infinite: true,
-              focusOnSelect: true
+              focusOnSelect: false,
+              initialSlide: initialSlide
             }
           }
         ]
+      });
+      
+      // Ensure center slide is selected after initialization and properly centered
+      setTimeout(function() {
+        jQuery('#' + carouselId).slick('slickGoTo', initialSlide, false);
+        // Force a refresh to ensure proper centering
+        jQuery('#' + carouselId).slick('setPosition');
+      }, 150);
+      
+      // Ensure proper positioning after slide changes
+      jQuery('#' + carouselId).on('afterChange', function(event, slick, currentSlide) {
+        // Refresh position to ensure proper centering
+        setTimeout(function() {
+          jQuery('#' + carouselId).slick('setPosition');
+        }, 50);
       });
       
       // Force slide widths after initialization
@@ -933,19 +1029,26 @@
             });
           });
         } else {
-          // On mobile, set each slide to full viewport width
+          // On mobile, let variableWidth handle it, but ensure slides have a base width
+          // Calculate width based on viewport minus centerPadding
+          const viewportWidth = window.innerWidth;
+          const centerPaddingPercent = 10; // 10% on each side = 20% total
+          const slideWidth = viewportWidth * (1 - centerPaddingPercent / 100 * 2);
+          
           jQuery('#' + carouselId).find('.slick-slide').each(function() {
             jQuery(this).css({
-              'width': '100vw',
-              'max-width': '100vw',
-              'min-width': '100vw'
+              'width': slideWidth + 'px',
+              'max-width': slideWidth + 'px',
+              'min-width': slideWidth + 'px'
             });
           });
         }
         applyGap();
+        // Refresh slick position after width update
+        jQuery('#' + carouselId).slick('setPosition');
       }
       
-      setTimeout(updateSlideWidths, 100);
+      setTimeout(updateSlideWidths, 200);
       
       // Update slide widths when slide changes (for mobile)
       if (window.innerWidth <= 750) {
@@ -963,20 +1066,38 @@
           const currentSlidesToShow = jQuery('#' + carouselId).slick('slickGetOption', 'slidesToShow');
           
           if (newSlidesToShow !== currentSlidesToShow) {
+            const totalSlides = jQuery('#' + carouselId).find('.product-video-slick-slider__item').length;
+            const centerSlide = totalSlides > 0 ? Math.floor(totalSlides / 2) : 0;
+            
             jQuery('#' + carouselId).slick('slickSetOption', 'slidesToShow', newSlidesToShow, true);
-            jQuery('#' + carouselId).slick('slickSetOption', 'centerPadding', window.innerWidth > 750 ? '60px' : '0px', true);
+            jQuery('#' + carouselId).slick('slickSetOption', 'centerPadding', window.innerWidth > 750 ? '60px' : '10%', true);
+            // Refresh position after option change
+            setTimeout(function() {
+              jQuery('#' + carouselId).slick('setPosition');
+            }, 50);
             jQuery('#' + carouselId).slick('slickSetOption', 'focusOnSelect', window.innerWidth <= 750, true);
+            
+            // Ensure center slide remains selected after resize
+            setTimeout(function() {
+              jQuery('#' + carouselId).slick('slickGoTo', centerSlide, false);
+            }, 100);
           }
           
-          // On mobile resize, update slide widths
+          // On mobile resize, update slide widths to show partial views
           if (window.innerWidth <= 750) {
+            const viewportWidth = window.innerWidth;
+            const centerPaddingPercent = 10; // 10% on each side
+            const slideWidth = viewportWidth * (1 - centerPaddingPercent / 100 * 2);
+            
             jQuery('#' + carouselId).find('.slick-slide').each(function() {
               jQuery(this).css({
-                'width': '100vw',
-                'max-width': '100vw',
-                'min-width': '100vw'
+                'width': slideWidth + 'px',
+                'max-width': slideWidth + 'px',
+                'min-width': slideWidth + 'px'
               });
             });
+            // Refresh slick position after resize
+            jQuery('#' + carouselId).slick('setPosition');
           }
           
           // Reapply gap on resize
@@ -985,80 +1106,68 @@
       });
     }
     
-    // Make video wrappers clickable to toggle play/pause
+    // Make only the play button clickable to start video
     const videoWrappers = carousel.querySelectorAll('.product-video-slick-slider__video-wrapper');
     videoWrappers.forEach(function(wrapper) {
       const deferredMedia = wrapper.querySelector('deferred-media');
       if (!deferredMedia) return;
       
-      let clickHandlerAdded = false;
+      // Remove pointer cursor from wrapper - only play button should be clickable
+      wrapper.style.cursor = 'default';
       
-      function handleVideoClick(e) {
-        if (e.target.closest('button, a, .quick-add')) {
-          return;
-        }
+      // Find the play button and ensure it's the only clickable element
+      function setupPlayButtonHandler() {
+        const playButton = wrapper.querySelector('.deferred-media__poster-button');
+        if (!playButton) return;
         
-        if (!deferredMedia.hasAttribute('data-media-loaded')) {
-          return;
-        }
+        // Remove any existing click handlers from wrapper
+        wrapper.onclick = null;
         
-        if (deferredMedia.toggleMedia && typeof deferredMedia.toggleMedia === 'function') {
-          deferredMedia.toggleMedia();
-        }
-      }
-      
-      function setupVideoClickHandler() {
-        if (clickHandlerAdded) return;
-        clickHandlerAdded = true;
-        wrapper.addEventListener('click', handleVideoClick, true);
-        wrapper.style.cursor = 'pointer';
-      }
-      
-      function playVideoAfterLoad() {
-        let attempts = 0;
-        const maxAttempts = 10;
-        
-        function tryPlay() {
-          attempts++;
+        // Only allow play button to trigger video
+        playButton.addEventListener('click', function(e) {
+          e.stopPropagation();
           
-          if (deferredMedia.playMedia && typeof deferredMedia.playMedia === 'function') {
-            try {
-              deferredMedia.playMedia();
-              return;
-            } catch (err) {
-              console.log('playMedia method failed:', err);
-            }
+          if (!deferredMedia.hasAttribute('data-media-loaded')) {
+            // If media not loaded, let the default deferred-media behavior handle it
+            return;
           }
           
-          const videoElement = deferredMedia.querySelector('video');
-          const iframe = deferredMedia.querySelector('iframe[data-video-type]');
-          
-          if (videoElement) {
-            videoElement.play().catch(function(err) {
-              if (attempts < maxAttempts) {
-                setTimeout(tryPlay, 50);
+          // Toggle play/pause when play button is clicked
+          if (deferredMedia.toggleMedia && typeof deferredMedia.toggleMedia === 'function') {
+            deferredMedia.toggleMedia();
+          } else {
+            // Fallback: try to play the video
+            const videoElement = deferredMedia.querySelector('video');
+            const iframe = deferredMedia.querySelector('iframe[data-video-type]');
+            
+            if (videoElement) {
+              if (videoElement.paused) {
+                videoElement.play().catch(function(err) {
+                  console.log('Video play failed:', err);
+                });
+              } else {
+                videoElement.pause();
               }
-            });
-          } else if (iframe) {
-            const videoType = iframe.dataset.videoType;
-            if (videoType === 'youtube') {
-              iframe.contentWindow?.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-            } else if (videoType === 'vimeo') {
-              iframe.contentWindow?.postMessage('{"method":"play"}', '*');
+            } else if (iframe) {
+              const videoType = iframe.dataset.videoType;
+              if (videoType === 'youtube') {
+                iframe.contentWindow?.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+              } else if (videoType === 'vimeo') {
+                iframe.contentWindow?.postMessage('{"method":"play"}', '*');
+              }
             }
-          } else if (attempts < maxAttempts) {
-            setTimeout(tryPlay, 50);
           }
-        }
+        }, true);
         
-        setTimeout(tryPlay, 50);
+        // Ensure play button has pointer cursor
+        playButton.style.cursor = 'pointer';
       }
       
+      // Setup play button handler when media is loaded
       const mediaObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
           if (mutation.type === 'attributes' && mutation.attributeName === 'data-media-loaded') {
-            setupVideoClickHandler();
-            playVideoAfterLoad();
+            setupPlayButtonHandler();
           }
         });
       });
@@ -1068,8 +1177,12 @@
         attributeFilter: ['data-media-loaded']
       });
       
+      // Setup immediately if media is already loaded
       if (deferredMedia.hasAttribute('data-media-loaded')) {
-        setupVideoClickHandler();
+        setupPlayButtonHandler();
+      } else {
+        // Also try to setup after a short delay in case button exists before media loads
+        setTimeout(setupPlayButtonHandler, 100);
       }
     });
   });
