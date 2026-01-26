@@ -273,7 +273,7 @@ export class BuildYourSetStickyBarComponent extends Component {
           ` : ''}
           ${showAddPersonalizationButton ? `
             <button class="build-your-set-sticky-bar__product-add-personalisation" data-product-index="${index}" data-product-id="${item.product_id}" data-variant-id="${item.variant_id}" aria-label="Add personalization for ${productName}">
-              Add Personalization
+              Personalize
             </button>
           ` : ''}
         </div>
