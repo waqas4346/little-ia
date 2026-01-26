@@ -76,12 +76,12 @@
       "settings": {
         "section_width": "full-width",
         "image": "shopify:\/\/shop_images\/homepage-party-favours_527eaf2a-5777-4b90-9e75-06fa072ec651.png",
-        "title": "Party Favours",
+        "title": "Build Your Set",
         "description": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book."
       }
     },
-    "party_favours_8XqGMA": {
-      "type": "party-favours",
+    "build_your_set_AAPxGk": {
+      "type": "build-your-set",
       "blocks": {
         "product-card": {
           "type": "_product-card",
@@ -100,10 +100,10 @@
             "padding-inline-start": 0,
             "padding-inline-end": 0,
             "show_view_product_button": false,
-            "disable_product_link": false
+            "disable_product_link": true
           },
           "blocks": {
-            "product_card_gallery_xKTdy3": {
+            "product_card_gallery_TrPAcD": {
               "type": "_product-card-gallery",
               "name": "Product Card Media",
               "settings": {
@@ -119,7 +119,7 @@
               },
               "blocks": {}
             },
-            "product_title_Vrq6mR": {
+            "product_title_XKDEgp": {
               "type": "product-title",
               "name": "Product Title",
               "settings": {
@@ -144,7 +144,7 @@
               },
               "blocks": {}
             },
-            "price_Mt3hqP": {
+            "price_YhxNDM": {
               "type": "price",
               "name": "Product Price",
               "settings": {
@@ -169,25 +169,21 @@
             }
           },
           "block_order": [
-            "product_card_gallery_xKTdy3",
-            "product_title_Vrq6mR",
-            "price_Mt3hqP"
+            "product_card_gallery_TrPAcD",
+            "product_title_XKDEgp",
+            "price_YhxNDM"
           ]
         }
       },
-      "name": "Party Favours",
+      "name": "Build Your Set",
       "settings": {
         "collection_list": [
-          "party-favour-snack-boxes",
-          "party-favour-water-bottles",
-          "party-favour-backpacks-and-travel-bags",
-          "party-favours-stationery",
-          "party-favour-towels",
-          "view-all-party-favours"
+          "all-products"
         ],
-        "heading": "Party Favours",
-        "subheading": "Select collections",
-        "minimum_quantity": 5,
+        "heading": "Build Your Set",
+        "subheading": "Select a theme",
+        "select_product_text": "Select a product",
+        "show_view_product_button": false,
         "layout_type": "grid",
         "product_card_size": "medium",
         "mobile_product_card_size": "small",
@@ -204,6 +200,6 @@
   "order": [
     "main",
     "page_banner_yewfKY",
-    "party_favours_8XqGMA"
+    "build_your_set_AAPxGk"
   ]
 }
