@@ -523,6 +523,10 @@
     width: auto !important;
     max-width: none !important;
     margin: 0 !important;
+    /* Explicitly reset outer/section carousel styles (left 50%, transform, etc.) */
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
     /* Hide arrows by default, show on hover */
     opacity: 0 !important;
     visibility: hidden !important;
@@ -535,13 +539,30 @@
     align-items: center !important;
   }
 
+  /* Explicit overrides: reset outer carousel arrow styles so card-gallery keeps edges, not -60px */
+  .card-gallery slideshow-arrows .slideshow-control--previous {
+    left: 0 !important;
+  }
+  .card-gallery slideshow-arrows .slideshow-control--next {
+    right: 0 !important;
+  }
+
+  /* Reset outer carousel chevron styles (border, fill) – card-gallery keeps its own look */
+  .card-gallery .slideshow-control--style-chevron {
+    border: none !important;
+    background-color: transparent !important;
+  }
+  .card-gallery .slideshow-control--style-chevron svg path {
+    stroke: inherit !important;
+    fill: inherit !important;
+  }
+
   /* Show arrows even when slideshow is disabled (common in carousel contexts) */
   .card-gallery slideshow-component[disabled='true'] slideshow-arrows {
     display: flex !important;
   }
 
   /* Card gallery arrow controls - always clickable and above everything */
-  /* Don't override position/transform - let base.css handle positioning */
   .card-gallery slideshow-arrows .slideshow-control {
     pointer-events: auto !important;
     z-index: calc(var(--layer-heightened) + 101) !important;

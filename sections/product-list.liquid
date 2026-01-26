@@ -592,8 +592,7 @@
     }
   }
 
-  /* Ensure gap is applied to slideshow slides on desktop */
-
+  /* Ensure gap is applied to slideshow slides */
   .product-list-desktop slideshow-slides {
     gap: 5px;
   }
@@ -603,7 +602,7 @@
     }
   }
 
-  /* Position arrows outside the carousel – match Explore More Collections */
+  /* Position arrows outside the carousel – match Explore More Collections (outer/section carousel only) */
   .product-list-wrapper {
     position: relative;
     padding: 0;
@@ -655,14 +654,12 @@
     right: -60px;
   }
 
-  /* Desktop (≥750px): clip overflow for arrows – match Explore More Collections */
   @media screen and (min-width: 750px) {
     [data-testid="product-list"] {
       overflow-x: clip;
     }
   }
 
-  /* Desktop (≥1201px): chevron outline – match Explore More Collections */
   @media (min-width: 1201px) {
     [data-testid="product-list"] .slideshow-control--style-chevron {
       border: 2px solid #7295bb;
@@ -673,7 +670,6 @@
     }
   }
 
-  /* Tablet (750px–1200px): chevron filled, arrows at edges – match Explore More Collections */
   @media (min-width: 750px) and (max-width: 1200px) {
     .product-list-desktop slideshow-arrows .slideshow-control--previous {
       left: 0;
@@ -719,7 +715,6 @@
       -ms-overflow-style: none;
       scroll-snap-type: x mandatory;
     }
-
 
     .product-list-desktop slideshow-slides::-webkit-scrollbar {
       display: none;

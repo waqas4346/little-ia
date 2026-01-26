@@ -317,14 +317,13 @@
   .product-bundle-desktop slideshow-slides {
     gap: 5px;
   }
-  /* Ensure gap is applied to slideshow slides on desktop */
   @media screen and (min-width: 750px) {
     .product-bundle-desktop slideshow-slides {
       gap: {{ section.settings.columns_gap | default: 12 }}px !important;
     }
   }
 
-  /* Position arrows outside the carousel – match Explore More Collections */
+  /* Position arrows outside the carousel – match Explore More Collections (outer/section carousel only) */
   .product-bundle-wrapper {
     position: relative;
     padding: 0;
@@ -376,14 +375,12 @@
     right: -60px;
   }
 
-  /* Desktop (≥750px): clip overflow for arrows */
   @media screen and (min-width: 750px) {
     .product-bundle-section {
       overflow-x: clip;
     }
   }
 
-  /* Desktop (≥1201px): chevron outline – match Explore More Collections */
   @media (min-width: 1201px) {
     .product-bundle-section .slideshow-control--style-chevron {
       border: 2px solid #7295bb;
@@ -394,7 +391,6 @@
     }
   }
 
-  /* Tablet (750px–1200px): chevron filled, arrows at edges – match Explore More Collections */
   @media (min-width: 750px) and (max-width: 1200px) {
     .product-bundle-desktop slideshow-arrows .slideshow-control--previous {
       left: 0;
@@ -560,7 +556,6 @@
       -ms-overflow-style: none;
       scroll-snap-type: x mandatory;
     }
-
 
     .product-bundle-desktop slideshow-slides::-webkit-scrollbar {
       display: none;
