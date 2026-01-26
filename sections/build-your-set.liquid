@@ -2,6 +2,16 @@
   assign section_heading = section.settings.heading | default: 'Build Your Set'
   assign section_subheading = section.settings.subheading | default: 'Select a theme'
   assign select_product_text = section.settings.select_product_text | default: 'Select a product'
+  assign collection_count = 0
+  if section.settings.collection_list != blank
+    for collection in section.settings.collection_list
+      assign collection_count = collection_count | plus: 1
+    endfor
+  endif
+  assign is_single_collection = false
+  if collection_count == 1
+    assign is_single_collection = true
+  endif
 %}
 
 <div class="section-background color-{{ section.settings.color_scheme }}"></div>
@@ -27,15 +37,17 @@
       </div>
     {% endif %}
     
-    {% if section_subheading != blank %}
-      <div class="build-your-set-section-title">
-        <span class="build-your-set-section-title-label">{{ section_subheading }}</span>
-      </div>
-    {% endif %}
+    {% unless is_single_collection %}
+      {% if section_subheading != blank %}
+        <div class="build-your-set-section-title">
+          <span class="build-your-set-section-title-label">{{ section_subheading }}</span>
+        </div>
+      {% endif %}
+    {% endunless %}
   </div>
 
     {% comment %} Collection slider {% endcomment %}
-    {% if section.settings.collection_list != blank and section.settings.collection_list.count > 0 %}
+    {% if section.settings.collection_list != blank and collection_count > 1 %}
       <div class="build-your-set-collection-slider-wrapper">
         <button 
           type="button"
@@ -92,16 +104,20 @@
           </svg>
         </button>
       </div>
-
-    {% comment %} Select a product text {% endcomment %}
-    {% if select_product_text != blank %}
-      <div class="build-your-set-select-product-text">
-        <span class="build-your-set-select-product-text-label">{{ select_product_text }}</span>
-      </div>
     {% endif %}
 
+    {% comment %} Select a product text {% endcomment %}
+    {% unless is_single_collection %}
+      {% if select_product_text != blank %}
+        <div class="build-your-set-select-product-text">
+          <span class="build-your-set-select-product-text-label">{{ select_product_text }}</span>
+        </div>
+      {% endif %}
+    {% endunless %}
+
     {% comment %} Product grids for each collection {% endcomment %}
-    <div class="build-your-set-products-wrapper" data-products-wrapper data-show-view-product-button="{{ section.settings.show_view_product_button }}">
+    {% if section.settings.collection_list != blank and collection_count > 0 %}
+      <div class="build-your-set-products-wrapper" data-products-wrapper data-show-view-product-button="{{ section.settings.show_view_product_button }}">
       {% for collection in section.settings.collection_list %}
         {% liquid
           assign is_first = forloop.first
@@ -145,8 +161,8 @@
           {% endpaginate %}
         {% endif %}
       {% endfor %}
-    </div>
-  {% endif %}
+      </div>
+    {% endif %}
   
   {% comment %} Build Your Set Sticky Bar {% endcomment %}
       {% render 'build-your-set-sticky-bar' %}
@@ -509,6 +525,22 @@
     }
   }
 
+  /* Fix card gallery overflow - prevent showing peek of next image */
+  .build-your-set-products-wrapper .card-gallery {
+    overflow: hidden !important;
+  }
+
+  .build-your-set-products-wrapper .card-gallery slideshow-component[disabled='true'] slideshow-slides,
+  .build-your-set-products-wrapper .card-gallery slideshow-component slideshow-slides {
+    overflow: hidden !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+  }
+
+  .build-your-set-products-wrapper .card-gallery slideshow-slide:not([aria-hidden='false']) {
+    content-visibility: hidden !important;
+  }
+
   /* When show_view_product_button is false: Show quick add on hover, hide product-card-actions */
   /* Set CSS variable to ensure quick add is displayed */
   .build-your-set-products-wrapper[data-show-view-product-button="false"] product-card[data-build-your-set="true"] {
@@ -660,9 +692,9 @@
     const prevArrow = section.querySelector('[data-collection-arrow="prev"]');
     const nextArrow = section.querySelector('[data-collection-arrow="next"]');
     
-    if (!collectionSlider || !productsWrapper) return;
+    if (!productsWrapper) return;
 
-    // Setup collection slider scroll functionality
+    // Setup collection slider scroll functionality (only if collection slider exists)
     if (prevArrow && nextArrow && collectionSlider) {
       setupCollectionSlider(collectionSlider, prevArrow, nextArrow);
     }
@@ -835,8 +867,9 @@
     // Setup initial pagination listeners
     setTimeout(setupPaginationClickListeners, 100);
 
-    // Handle collection item clicks
-    collectionItems.forEach(function(item) {
+    // Handle collection item clicks (only if there are multiple collections)
+    if (collectionItems.length > 1) {
+      collectionItems.forEach(function(item) {
       item.addEventListener('click', function() {
         // Remove active class from all items
         collectionItems.forEach(function(ci) {
@@ -871,6 +904,7 @@
         }
       });
     });
+    }
 
     // Function to setup collection slider with arrows
     function setupCollectionSlider(slider, prevBtn, nextBtn) {

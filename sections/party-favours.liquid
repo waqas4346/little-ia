@@ -2,6 +2,16 @@
   assign section_heading = section.settings.heading | default: 'Party Favours'
   assign section_subheading = section.settings.subheading | default: 'Select collections'
   assign minimum_quantity = section.settings.minimum_quantity | default: 5
+  assign collection_count = 0
+  if section.settings.collection_list != blank
+    for collection in section.settings.collection_list
+      assign collection_count = collection_count | plus: 1
+    endfor
+  endif
+  assign is_single_collection = false
+  if collection_count == 1
+    assign is_single_collection = true
+  endif
 %}
 
 <div class="section-background color-{{ section.settings.color_scheme }}"></div>
@@ -28,15 +38,17 @@
       </div>
     {% endif %}
     
-    {% if section_subheading != blank %}
-      <div class="party-favours-section-title">
-        <span class="party-favours-section-title-label">{{ section_subheading }}</span>
-      </div>
-    {% endif %}
+    {% unless is_single_collection %}
+      {% if section_subheading != blank %}
+        <div class="party-favours-section-title">
+          <span class="party-favours-section-title-label">{{ section_subheading }}</span>
+        </div>
+      {% endif %}
+    {% endunless %}
   </div>
 
     {% comment %} Collection slider {% endcomment %}
-    {% if section.settings.collection_list != blank and section.settings.collection_list.count > 0 %}
+    {% if section.settings.collection_list != blank and collection_count > 1 %}
       <div class="party-favours-collection-slider-wrapper">
         <button 
           type="button"
@@ -93,10 +105,12 @@
           </svg>
         </button>
       </div>
+    {% endif %}
 
     {% comment %} Product grids for each collection {% endcomment %}
-    <div class="party-favours-products-wrapper" data-products-wrapper>
-      {% for collection in section.settings.collection_list %}
+    {% if section.settings.collection_list != blank and collection_count > 0 %}
+      <div class="party-favours-products-wrapper" data-products-wrapper>
+        {% for collection in section.settings.collection_list %}
         {% liquid
           assign is_first = forloop.first
         %}
@@ -138,9 +152,9 @@
             </div>
           {% endpaginate %}
         {% endif %}
-      {% endfor %}
-    </div>
-  {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
 </div>
 
 {% style %}
@@ -495,9 +509,9 @@
     const prevArrow = section.querySelector('[data-collection-arrow="prev"]');
     const nextArrow = section.querySelector('[data-collection-arrow="next"]');
     
-    if (!collectionSlider || !productsWrapper) return;
+    if (!productsWrapper) return;
 
-    // Setup collection slider scroll functionality
+    // Setup collection slider scroll functionality (only if collection slider exists)
     if (prevArrow && nextArrow && collectionSlider) {
       setupCollectionSlider(collectionSlider, prevArrow, nextArrow);
     }
@@ -709,36 +723,38 @@
     // Setup initial pagination listeners
     setTimeout(setupPaginationClickListeners, 100);
 
-    // Handle collection item clicks
-    collectionItems.forEach(function(item) {
-      item.addEventListener('click', function() {
-        collectionItems.forEach(function(ci) {
-          ci.classList.remove('active');
+    // Handle collection item clicks (only if there are multiple collections)
+    if (collectionItems.length > 1) {
+      collectionItems.forEach(function(item) {
+        item.addEventListener('click', function() {
+          collectionItems.forEach(function(ci) {
+            ci.classList.remove('active');
+          });
+
+          item.classList.add('active');
+
+          const handle = item.dataset.collectionHandle;
+          const collectionId = item.dataset.collectionId;
+
+          productGridWrappers.forEach(function(wrapper) {
+            wrapper.classList.add('hidden');
+            wrapper.style.display = 'none';
+          });
+
+          const selectedWrapper = Array.from(productGridWrappers).find(function(wrapper) {
+            return wrapper.dataset.collectionHandle === handle ||
+                   wrapper.dataset.collectionId === collectionId;
+          });
+
+          if (selectedWrapper) {
+            selectedWrapper.classList.remove('hidden');
+            selectedWrapper.style.display = 'block';
+            
+            initializeProductCards(selectedWrapper);
+          }
         });
-
-        item.classList.add('active');
-
-        const handle = item.dataset.collectionHandle;
-        const collectionId = item.dataset.collectionId;
-
-        productGridWrappers.forEach(function(wrapper) {
-          wrapper.classList.add('hidden');
-          wrapper.style.display = 'none';
-        });
-
-        const selectedWrapper = Array.from(productGridWrappers).find(function(wrapper) {
-          return wrapper.dataset.collectionHandle === handle ||
-                 wrapper.dataset.collectionId === collectionId;
-        });
-
-        if (selectedWrapper) {
-          selectedWrapper.classList.remove('hidden');
-          selectedWrapper.style.display = 'block';
-          
-          initializeProductCards(selectedWrapper);
-        }
       });
-    });
+    }
 
     // Function to setup collection slider with arrows
     function setupCollectionSlider(slider, prevBtn, nextBtn) {

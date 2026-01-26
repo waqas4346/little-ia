@@ -304,7 +304,7 @@
     min-width: 0;
   }
 
-  /* Position arrows outside the carousel – match Explore More Collections (other-collections-slider) */
+  /* Position arrows outside the carousel – match Explore More Collections (outer/section carousel only) */
   .explore-more-products-wrapper {
     position: relative;
     padding: 0;
@@ -356,7 +356,6 @@
     right: -60px;
   }
 
-  /* Desktop (≥1201px): chevron outline style – match Explore More Collections */
   @media screen and (min-width: 750px) {
     .explore-more-products-section {
       overflow-x: clip;
@@ -364,16 +363,15 @@
   }
 
   @media (min-width: 1201px) {
-    .explore-more-products-section .slideshow-control--style-chevron {
+    .explore-more-products-desktop .slideshow-control--style-chevron {
       border: 2px solid #7295bb;
     }
-    .explore-more-products-section .slideshow-control--style-chevron svg path {
+    .explore-more-products-desktop .slideshow-control--style-chevron svg path {
       stroke: #7295bb;
       fill: none;
     }
   }
 
-  /* Tablet (750px–1200px): chevron filled style, arrows at edges – match Explore More Collections */
   @media (min-width: 750px) and (max-width: 1200px) {
     .explore-more-products-desktop slideshow-arrows .slideshow-control--previous {
       left: 0;
@@ -381,10 +379,10 @@
     .explore-more-products-desktop slideshow-arrows .slideshow-control--next {
       right: 0;
     }
-    .explore-more-products-section .slideshow-control--style-chevron {
+    .explore-more-products-desktop .slideshow-control--style-chevron {
       background-color: #7295bb;
     }
-    .explore-more-products-section .slideshow-control--style-chevron svg path {
+    .explore-more-products-desktop .slideshow-control--style-chevron svg path {
       stroke: #ffffff;
       fill: none;
     }
@@ -447,7 +445,6 @@
       -ms-overflow-style: none;
       scroll-snap-type: x mandatory;
     }
-
 
     .explore-more-products-desktop slideshow-slides::-webkit-scrollbar {
       display: none;
@@ -535,7 +532,6 @@
   @media screen and (min-width: 750px) {
     [data-testid="explore-more-products-grid"] .card-gallery slideshow-component[disabled='true'] slideshow-slides {
       overflow-x: auto !important;
-      cursor: grab;
     }
 
     [data-testid="explore-more-products-grid"] .card-gallery slideshow-component[disabled='true'] slideshow-slides:active {
