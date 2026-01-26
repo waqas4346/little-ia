@@ -64,13 +64,9 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
       return;
     }
 
-    // Set a generic title/image for "all products" mode
-    if (this.refs.productImage) {
-      this.refs.productImage.style.display = 'none';
-      if (this.refs.productPlaceholder && this.refs.productTitle) {
-        this.refs.productTitle.textContent = `Personalise All Products (${products.length} items)`;
-        this.refs.productPlaceholder.style.display = 'flex';
-      }
+    // Hide the entire preview section for "all products" mode (no image available)
+    if (this.refs.previewSection) {
+      this.refs.previewSection.setAttribute('hidden', '');
     }
 
     // Open the dialog first for immediate visual feedback
@@ -108,6 +104,11 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
       return;
     }
     
+    // Show the preview section for single product mode
+    if (this.refs.previewSection) {
+      this.refs.previewSection.removeAttribute('hidden');
+    }
+
     // Set product image and title (optional refs)
     if (this.refs.productImage) {
       if (productData.images && productData.images.length > 0) {

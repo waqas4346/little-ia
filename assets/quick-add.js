@@ -4,6 +4,32 @@ import { CartUpdateEvent, ThemeEvents, VariantSelectedEvent } from '@theme/event
 import { DialogComponent, DialogCloseEvent, DialogOpenEvent } from '@theme/dialog';
 import { mediaQueryLarge, isMobileBreakpoint, getIOSVersion, onAnimationEnd } from '@theme/utilities';
 
+/**
+ * Updates Build Your Set "Add to Set" button disabled state from confirmation checkbox.
+ * Callable from document listeners (e.g. personalisation-saved); modalContent optional.
+ * @param {Element} [modalContent] - #quick-add-modal-content, or omitted to resolve from document
+ */
+function updateBuildYourSetAddToSetState(modalContent) {
+  const modal = modalContent || document.getElementById('quick-add-modal-content');
+  if (!modal?.hasAttribute('data-build-your-set')) return;
+  const btn = modal.querySelector('.build-your-set-add-to-session-button');
+  if (!btn) return;
+  const confirmation = modal.querySelector('[data-personalise-confirmation]');
+  const checkbox = confirmation?.querySelector('[data-personalise-confirm-checkbox]');
+  if (!confirmation || !checkbox) {
+    btn.disabled = false;
+    return;
+  }
+  const isVisible = confirmation.offsetParent !== null ||
+    confirmation.style.display !== 'none' ||
+    window.getComputedStyle(confirmation).display !== 'none';
+  if (!isVisible) {
+    btn.disabled = false;
+    return;
+  }
+  btn.disabled = !checkbox.checked;
+}
+
 export class QuickAddComponent extends Component {
   /** @type {AbortController | null} */
   #abortController = null;
@@ -572,6 +598,9 @@ export class QuickAddComponent extends Component {
         
         if (typeof window.updatePersonaliseButtonText === 'function') {
           window.updatePersonaliseButtonText();
+          if (wasBuildYourSet) {
+            updateBuildYourSetAddToSetState(modalContent);
+          }
           
           // Check if buttons in quick-add modal were updated
           const quickAddButtons = modalContent.querySelectorAll('[data-personalise-button]');
@@ -1387,10 +1416,10 @@ export class QuickAddComponent extends Component {
       // Store product data in button data attribute (tags will be updated async)
       const productDataJson = JSON.stringify(productData);
       
-      // Create custom button with same styling as original
+      // Create custom button with same styling as original (add-to-cart-button for shared disabled styles)
       customButton = document.createElement('button');
       customButton.type = 'button';
-      customButton.className = 'button build-your-set-add-to-session-button';
+      customButton.className = 'button add-to-cart-button build-your-set-add-to-session-button';
       customButton.setAttribute('data-product-id', productId || '');
       customButton.setAttribute('data-product-data', productDataJson);
       
@@ -1413,7 +1442,8 @@ export class QuickAddComponent extends Component {
       customButton.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
+        if (customButton.disabled) return;
+
         // Get product data from button data attribute
         let productDataJson = customButton.getAttribute('data-product-data');
         if (!productDataJson) {
@@ -1775,6 +1805,33 @@ export class QuickAddComponent extends Component {
     if (customButton instanceof HTMLElement) {
       customButton.style.display = '';
     }
+
+    // Build Your Set: wire confirmation checkbox → Add to Set disabled state
+    this.#updateBuildYourSetAddToSetButtonState(modalContent);
+    if (!modalContent.dataset.bysConfirmListener) {
+      modalContent.dataset.bysConfirmListener = 'true';
+      modalContent.addEventListener('change', (e) => {
+        if (e.target?.matches?.('[data-personalise-confirm-checkbox]')) {
+          updateBuildYourSetAddToSetState(modalContent);
+        }
+      });
+    }
+
+    // Build Your Set: update Add to Set state after personalisation-saved (once per page)
+    if (!document.body.dataset.bysPersonalisationSavedListener) {
+      document.body.dataset.bysPersonalisationSavedListener = 'true';
+      document.addEventListener('personalisation-saved', () => {
+        setTimeout(updateBuildYourSetAddToSetState, 200);
+      });
+    }
+  }
+
+  /**
+   * Updates Build Your Set "Add to Set" button disabled state based on personalisation confirmation.
+   * @param {Element} [modalContent] - #quick-add-modal-content
+   */
+  #updateBuildYourSetAddToSetButtonState(modalContent) {
+    updateBuildYourSetAddToSetState(modalContent);
   }
 
   /**
@@ -1782,6 +1839,12 @@ export class QuickAddComponent extends Component {
    * @param {Element} modalContent - The modal content element
    */
   #ensurePersonaliseButtonHandlers(modalContent) {
+    // Build Your Set only: remove previous product's personalise-dialogs from body before processing.
+    // Prevents "Personalised: {value}" from showing for a different product when reopening Quick Add.
+    if (modalContent.hasAttribute('data-build-your-set')) {
+      document.querySelectorAll('personalise-dialog[data-quick-add="true"]').forEach((el) => el.remove());
+    }
+
     // CRITICAL: Always check for personalise-dialog in the modal content first
     // This ensures we use the dialog for the current product in quick-add, not the main page one
     let personaliseModal = modalContent.querySelector('personalise-dialog');

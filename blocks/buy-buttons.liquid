@@ -661,7 +661,14 @@
           }
           
           if (textSpan) {
-            const modalDialog = document.querySelector('personalise-dialog');
+            let modalDialog = document.querySelector('personalise-dialog');
+            // Build Your Set Quick Add: use only the quick-add dialog for current product; never fall back to another dialog
+            if (buttonQuickAddModal && buttonQuickAddModal.hasAttribute('data-build-your-set')) {
+              const bysDialog = buttonProductId
+                ? document.querySelector(`personalise-dialog[data-quick-add="true"][data-product-id="${buttonProductId}"]`)
+                : document.querySelector('personalise-dialog[data-quick-add="true"]');
+              modalDialog = bysDialog || null;
+            }
             
             const parts = [];
             let colorText = '';

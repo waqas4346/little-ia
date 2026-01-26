@@ -20,7 +20,7 @@
 
     <div class="personalise-modal__content">
       <!-- Left Section: Product Preview (40%) -->
-      <div class="personalise-modal__preview">
+      <div class="personalise-modal__preview" ref="previewSection">
         <img
           ref="productImage"
           src=""
@@ -173,6 +173,45 @@
   @media screen and (min-width: 1440px) {
     .personalise-modal__form {
       flex: 0 0 530px;
+    }
+  }
+
+  /* When preview is hidden (all products mode), reduce modal width and center the form */
+  .personalise-modal__preview[hidden] {
+    display: none !important;
+  }
+
+  /* Reduce modal width when preview is hidden */
+  .personalise-modal:has(.personalise-modal__preview[hidden]) {
+    width: 600px;
+  }
+
+  @media screen and (min-width: 1440px) {
+    .personalise-modal:has(.personalise-modal__preview[hidden]) {
+      width: 600px;
+    }
+  }
+
+  @media screen and (max-width: 1439px) {
+    .personalise-modal:has(.personalise-modal__preview[hidden]) {
+      width: 600px;
+      max-width: 90vw;
+    }
+  }
+
+  .personalise-modal__content:has(.personalise-modal__preview[hidden]) {
+    justify-content: center;
+  }
+
+  .personalise-modal__content:has(.personalise-modal__preview[hidden]) .personalise-modal__form {
+    flex: 0 0 100%;
+    padding-left: 0;
+    max-width: 100%;
+  }
+
+  @media screen and (min-width: 1440px) {
+    .personalise-modal__content:has(.personalise-modal__preview[hidden]) .personalise-modal__form {
+      flex: 0 0 100%;
     }
   }
 
@@ -544,6 +583,22 @@
       flex: 1;
       padding-left: 0;
       padding-top: 20px;
+    }
+
+    /* When preview is hidden on mobile, keep full width */
+    .personalise-modal:has(.personalise-modal__preview[hidden]) {
+      width: 100%;
+      max-width: 100vw;
+    }
+
+    .personalise-modal__content:has(.personalise-modal__preview[hidden]) {
+      justify-content: center;
+    }
+
+    .personalise-modal__content:has(.personalise-modal__preview[hidden]) .personalise-modal__form {
+      padding-top: 0;
+      flex: 0 0 100%;
+      width: 100%;
     }
   }
 {% endstylesheet %}

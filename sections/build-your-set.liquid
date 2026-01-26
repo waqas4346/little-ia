@@ -525,6 +525,22 @@
     }
   }
 
+  /* Fix card gallery overflow - prevent showing peek of next image */
+  .build-your-set-products-wrapper .card-gallery {
+    overflow: hidden !important;
+  }
+
+  .build-your-set-products-wrapper .card-gallery slideshow-component[disabled='true'] slideshow-slides,
+  .build-your-set-products-wrapper .card-gallery slideshow-component slideshow-slides {
+    overflow: hidden !important;
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+  }
+
+  .build-your-set-products-wrapper .card-gallery slideshow-slide:not([aria-hidden='false']) {
+    content-visibility: hidden !important;
+  }
+
   /* When show_view_product_button is false: Show quick add on hover, hide product-card-actions */
   /* Set CSS variable to ensure quick add is displayed */
   .build-your-set-products-wrapper[data-show-view-product-button="false"] product-card[data-build-your-set="true"] {

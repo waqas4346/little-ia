@@ -328,6 +328,25 @@
     /* margin-top: auto; */
   }
 
+  /* Build Your Set: Add to Set button – match add-to-cart enabled/disabled styles */
+  .quick-add-modal__content[data-build-your-set] .build-your-set-add-to-session-button {
+    height: var(--height-buy-buttons);
+    text-transform: uppercase !important;
+    background-color: #7295BB !important;
+    color: #ffffff !important;
+    border: none !important;
+    font-weight: 500;
+  }
+  .quick-add-modal__content[data-build-your-set] .build-your-set-add-to-session-button:hover:not(:disabled) {
+    background-color: #5a7a9a !important;
+    color: #ffffff !important;
+  }
+  .quick-add-modal__content[data-build-your-set] .build-your-set-add-to-session-button:disabled {
+    background-color: #cccccc !important;
+    color: #666666 !important;
+    cursor: not-allowed;
+  }
+
   .quick-add-modal__content .product-details .variant-picker {
     flex: 0 0 auto;
 
