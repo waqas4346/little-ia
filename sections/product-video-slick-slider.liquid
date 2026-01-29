@@ -47,34 +47,34 @@
             endif
           %}
           
-          <div class="product-video-slick-slider__item" {{ block.shopify_attributes }}>
-            <div class="product-video-slick-slider__video-wrapper">
-              {% if video_to_show != blank %}
-                {% render 'video',
-                  video: video_to_show,
-                  video_loop: true,
-                  video_autoplay: false,
-                  disable_controls: true,
-                  section_id: section.id,
-                  video_class: 'product-video-slick-slider__video',
-                  video_preview_image: preview_image
-                %}
-              {% elsif block_image != blank %}
-                <div class="product-video-slick-slider__image-wrapper">
-                  {{
-                    block_image
-                    | image_url: width: 3840
-                    | image_tag: widths: '240, 352, 832, 1200, 1600, 1920, 2560, 3840', sizes: '100vw', loading: 'lazy', class: 'product-video-slick-slider__image', alt: block_image.alt
-                  }}
-                </div>
-              {% else %}
-                <div class="product-video-slick-slider__placeholder-video">
-                  {{ 'hero-apparel-3' | placeholder_svg_tag: 'product-video-slick-slider__placeholder-svg' }}
-                </div>
-              {% endif %}
-            </div>
-            
-            {% if block_product != blank %}
+          {% if block_product != blank %}
+            <div class="product-video-slick-slider__item" {{ block.shopify_attributes }}>
+              <div class="product-video-slick-slider__video-wrapper">
+                {% if video_to_show != blank %}
+                  {% render 'video',
+                    video: video_to_show,
+                    video_loop: true,
+                    video_autoplay: false,
+                    disable_controls: true,
+                    section_id: section.id,
+                    video_class: 'product-video-slick-slider__video',
+                    video_preview_image: preview_image
+                  %}
+                {% elsif block_image != blank %}
+                  <div class="product-video-slick-slider__image-wrapper">
+                    {{
+                      block_image
+                      | image_url: width: 3840
+                      | image_tag: widths: '240, 352, 832, 1200, 1600, 1920, 2560, 3840', sizes: '100vw', loading: 'lazy', class: 'product-video-slick-slider__image', alt: block_image.alt
+                    }}
+                  </div>
+                {% else %}
+                  <div class="product-video-slick-slider__placeholder-video">
+                    {{ 'hero-apparel-3' | placeholder_svg_tag: 'product-video-slick-slider__placeholder-svg' }}
+                  </div>
+                {% endif %}
+              </div>
+              
               <div class="product-video-slick-slider__product-info">
                 {% if block_product.featured_image != blank %}
                   <div class="product-video-slick-slider__product-image-wrapper">
@@ -97,7 +97,7 @@
                     {% render 'price', product_resource: block_product, show_sale_price_first: true %}
                   </div>
                 </div>
-                {% if settings.quick_add and block_product.available %}
+                {% if settings.quick_add %}
                   <div class="product-video-slick-slider__quick-add-wrapper">
                     {% liquid
                       assign product_form_id = 'QuickAdd-ProductForm-' | append: block_product.id | append: '-' | append: block.id
@@ -155,8 +155,8 @@
                   </div>
                 {% endif %}
               </div>
-            {% endif %}
-          </div>
+            </div>
+          {% endif %}
         {% endfor %}
       </div>
     </div>
@@ -402,6 +402,12 @@
     transform: scale(1, 0.9);
     transition: transform 0.4s ease;
   }
+  
+  /* Prevent product-info from stretching on non-center items */
+  .product-video-slick-slider-section .slick-slide:not(.slick-center) .product-video-slick-slider__product-info {
+    transform: scale(1, 1.111); /* Inverse of 0.9 to maintain original proportions: 1/0.9 = 1.111 */
+    transform-origin: center;
+  }
 
   /* Header Styles - Matching video slider */
   .product-video-slick-slider__header {
@@ -472,10 +478,8 @@
     .product-video-slick-slider-section .slick-track {
       display: flex;
       align-items: center;
-      justify-content: center;
       margin-left: auto;
       margin-right: auto;
-      width: 100% !important;
     }
     
     .product-video-slick-slider-section .slick-slider {
@@ -534,6 +538,7 @@
     box-sizing: border-box;
     position: relative;
     width: 100%;
+    flex-shrink: 0;
   }
 
   .product-video-slick-slider__product-image-wrapper {
@@ -586,49 +591,72 @@
 
   .product-video-slick-slider__product-title {
     margin: 0;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Outfit';
     font-style: normal;
     font-weight: 500;
-    font-size: 13px;
-    line-height: 16px;
+    font-size: 12px;
+    line-height: 15px;
     color: #1D425A;
     display: flex;
     align-items: center;
   }
 
-  @media screen and (min-width: 750px) {
-    .product-video-slick-slider__product-title {
-      font-size: 14px;
-      line-height: 18px;
-    }
+  /* Active (center) card title styling */
+  .product-video-slick-slider-section .slick-center .product-video-slick-slider__product-title {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 18px;
+    color: #1D425A;
+    display: flex;
+    align-items: center;
   }
 
   .product-video-slick-slider__product-link {
     color: inherit;
     text-decoration: none;
-    transition: opacity 0.2s ease;
-  }
-
-  .product-video-slick-slider__product-link:hover {
-    opacity: 0.8;
   }
 
   .product-video-slick-slider__product-price {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Outfit';
     font-style: normal;
     font-weight: 500;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 160%;
     color: #1D425A;
   }
 
-  .product-video-slick-slider__product-price .price {
-    font-family: 'Outfit', sans-serif;
+  .product-video-slick-slider__product-price .price,
+  .product-video-slick-slider__product-price .price-snippet,
+  .product-video-slick-slider__product-price .price-snippet .price {
+    font-family: 'Outfit';
     font-style: normal;
     font-weight: 500;
-    font-size: 13px;
+    font-size: 14px;
+    line-height: 160%;
+    color: #1D425A !important;
+  }
+
+  /* Active (center) card price styling */
+  .product-video-slick-slider-section .slick-center .product-video-slick-slider__product-price {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
     line-height: 160%;
     color: #1D425A;
+  }
+
+  .product-video-slick-slider-section .slick-center .product-video-slick-slider__product-price .price,
+  .product-video-slick-slider-section .slick-center .product-video-slick-slider__product-price .price-snippet,
+  .product-video-slick-slider-section .slick-center .product-video-slick-slider__product-price .price-snippet .price {
+    font-family: 'Outfit';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 160%;
+    color: #1D425A !important;
   }
 
   .product-video-slick-slider__product-price .compare-at-price,
@@ -637,24 +665,14 @@
     display: none !important;
   }
 
-  @media screen and (min-width: 750px) {
-    .product-video-slick-slider__product-price {
-      font-size: 14px;
-      line-height: 160%;
-    }
-    
-    .product-video-slick-slider__product-price .price {
-      font-size: 14px;
-      line-height: 160%;
-    }
-  }
-
   .product-video-slick-slider__quick-add-wrapper {
     position: relative;
     width: 20.99px;
     height: 20.99px;
     pointer-events: all;
     flex-shrink: 0;
+    min-width: 20.99px;
+    min-height: 20.99px;
   }
 
   .product-video-slick-slider__quick-add-wrapper .quick-add {
@@ -667,25 +685,46 @@
     display: none !important;
   }
 
-  .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose {
+  .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose,
+  .product-video-slick-slider__quick-add-wrapper .button.quick-add__button--choose,
+  .product-video-slick-slider__quick-add-wrapper .add-to-cart-button.quick-add__button--choose,
+  .product-video-slick-slider__plus-button {
     position: relative;
     right: auto;
     bottom: auto;
     width: 20.99px;
     height: 20.99px;
-    padding: 0;
+    padding: 0 !important;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 1;
     border-radius: 50%;
-    border: 1px solid #1D425A;
-    background: transparent;
+    border: 0.74px solid #7295BB !important;
+    background: transparent !important;
     min-width: 20.99px;
+    outline: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
   }
 
-  .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose:hover {
-    opacity: 0.8;
+  .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose:hover:not(:disabled),
+  .product-video-slick-slider__quick-add-wrapper .button.quick-add__button--choose:hover:not(:disabled),
+  .product-video-slick-slider__quick-add-wrapper .add-to-cart-button.quick-add__button--choose:hover:not(:disabled),
+  .product-video-slick-slider__quick-add-wrapper .quick-add__button.add-to-cart-button:hover:not(:disabled),
+  .product-video-slick-slider__plus-button:hover:not(:disabled) {
+    background: #7295BB !important;
+    background-color: #7295BB !important;
+    color: #FFFFFF !important;
+    border: 0.74px solid #7295BB !important;
+  }
+  
+  .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose:hover:not(:disabled) .product-video-slick-slider__plus-text,
+  .product-video-slick-slider__quick-add-wrapper .button.quick-add__button--choose:hover:not(:disabled) .product-video-slick-slider__plus-text,
+  .product-video-slick-slider__quick-add-wrapper .add-to-cart-button.quick-add__button--choose:hover:not(:disabled) .product-video-slick-slider__plus-text,
+  .product-video-slick-slider__quick-add-wrapper .quick-add__button.add-to-cart-button:hover:not(:disabled) .product-video-slick-slider__plus-text,
+  .product-video-slick-slider__plus-button:hover:not(:disabled) .product-video-slick-slider__plus-text {
+    color: #FFFFFF !important;
   }
 
   .product-video-slick-slider__plus-text {
@@ -708,11 +747,27 @@
   }
 
   @media screen and (min-width: 750px) {
-    .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose {
+    .product-video-slick-slider__quick-add-wrapper {
       width: 31.61px;
       height: 31.61px;
-      border: 0.735105px solid #7295BB;
       min-width: 31.61px;
+      min-height: 31.61px;
+    }
+    
+    .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose,
+    .product-video-slick-slider__quick-add-wrapper .button.quick-add__button--choose,
+    .product-video-slick-slider__quick-add-wrapper .add-to-cart-button.quick-add__button--choose,
+    .product-video-slick-slider__plus-button {
+      width: 31.61px;
+      height: 31.61px;
+      border: 0.74px solid #7295BB !important;
+      min-width: 31.61px;
+      min-height: 31.61px;
+      outline: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      background: transparent !important;
     }
     
     .product-video-slick-slider__plus-text {
@@ -720,6 +775,25 @@
       line-height: 37px;
       color: #7295BB;
       top: -2px;
+    }
+    
+    .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose:hover:not(:disabled),
+    .product-video-slick-slider__quick-add-wrapper .button.quick-add__button--choose:hover:not(:disabled),
+    .product-video-slick-slider__quick-add-wrapper .add-to-cart-button.quick-add__button--choose:hover:not(:disabled),
+    .product-video-slick-slider__quick-add-wrapper .quick-add__button.add-to-cart-button:hover:not(:disabled),
+    .product-video-slick-slider__plus-button:hover:not(:disabled) {
+      background: #7295BB !important;
+      background-color: #7295BB !important;
+      color: #FFFFFF !important;
+      border: 0.74px solid #7295BB !important;
+    }
+    
+    .product-video-slick-slider__quick-add-wrapper .quick-add__button--choose:hover:not(:disabled) .product-video-slick-slider__plus-text,
+    .product-video-slick-slider__quick-add-wrapper .button.quick-add__button--choose:hover:not(:disabled) .product-video-slick-slider__plus-text,
+    .product-video-slick-slider__quick-add-wrapper .add-to-cart-button.quick-add__button--choose:hover:not(:disabled) .product-video-slick-slider__plus-text,
+    .product-video-slick-slider__quick-add-wrapper .quick-add__button.add-to-cart-button:hover:not(:disabled) .product-video-slick-slider__plus-text,
+    .product-video-slick-slider__plus-button:hover:not(:disabled) .product-video-slick-slider__plus-text {
+      color: #FFFFFF !important;
     }
   }
 
@@ -1008,13 +1082,82 @@
         jQuery('#' + carouselId).slick('slickGoTo', initialSlide, false);
         // Force a refresh to ensure proper centering
         jQuery('#' + carouselId).slick('setPosition');
-      }, 150);
+        
+        // Ensure first slide is visible on desktop - adjust if cut off
+        if (window.innerWidth > 750) {
+          setTimeout(function() {
+            const firstSlide = jQuery('#' + carouselId).find('.slick-slide').first();
+            const list = jQuery('#' + carouselId).find('.slick-list');
+            const track = jQuery('#' + carouselId).find('.slick-track');
+            
+            if (firstSlide.length && list.length && track.length) {
+              const firstSlideRect = firstSlide[0].getBoundingClientRect();
+              const listRect = list[0].getBoundingClientRect();
+              
+              // Check if first slide's left edge is visible (within list bounds accounting for centerPadding)
+              const centerPadding = 60; // Match the centerPadding value
+              if (firstSlideRect.left < listRect.left + centerPadding) {
+                // First slide is cut off, adjust track position
+                const adjustment = (listRect.left + centerPadding) - firstSlideRect.left;
+                const currentTransform = track.css('transform');
+                
+                let currentX = 0;
+                if (currentTransform && currentTransform !== 'none') {
+                  const matrix = currentTransform.match(/matrix\(([^)]+)\)/);
+                  if (matrix && matrix[1]) {
+                    const values = matrix[1].split(',');
+                    if (values.length >= 6) {
+                      currentX = parseFloat(values[4]) || 0;
+                    }
+                  }
+                }
+                
+                // Adjust track to show first slide
+                track.css('transform', 'translate3d(' + (currentX + adjustment) + 'px, 0px, 0px)');
+              }
+            }
+          }, 150);
+        }
+      }, 200);
       
       // Ensure proper positioning after slide changes
       jQuery('#' + carouselId).on('afterChange', function(event, slick, currentSlide) {
         // Refresh position to ensure proper centering
         setTimeout(function() {
           jQuery('#' + carouselId).slick('setPosition');
+          
+          // On desktop, ensure first slide is still visible after slide change
+          if (window.innerWidth > 750) {
+            setTimeout(function() {
+              const firstSlide = jQuery('#' + carouselId).find('.slick-slide').first();
+              const list = jQuery('#' + carouselId).find('.slick-list');
+              const track = jQuery('#' + carouselId).find('.slick-track');
+              
+              if (firstSlide.length && list.length && track.length) {
+                const firstSlideRect = firstSlide[0].getBoundingClientRect();
+                const listRect = list[0].getBoundingClientRect();
+                const centerPadding = 60;
+                
+                if (firstSlideRect.left < listRect.left + centerPadding) {
+                  const adjustment = (listRect.left + centerPadding) - firstSlideRect.left;
+                  const currentTransform = track.css('transform');
+                  
+                  let currentX = 0;
+                  if (currentTransform && currentTransform !== 'none') {
+                    const matrix = currentTransform.match(/matrix\(([^)]+)\)/);
+                    if (matrix && matrix[1]) {
+                      const values = matrix[1].split(',');
+                      if (values.length >= 6) {
+                        currentX = parseFloat(values[4]) || 0;
+                      }
+                    }
+                  }
+                  
+                  track.css('transform', 'translate3d(' + (currentX + adjustment) + 'px, 0px, 0px)');
+                }
+              }
+            }, 50);
+          }
         }, 50);
       });
       
