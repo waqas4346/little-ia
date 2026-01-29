@@ -1,0 +1,130 @@
+<div
+  class="section section--{{ section.settings.section_width }} collection-featured-tiles"
+  data-testid="collection-featured-tiles"
+  id="collection-featured-tiles-{{ section.id }}"
+  hidden
+>
+  <div class="collection-featured-tiles__inner">
+    <div class="collection-featured-tiles__list" data-tiles-list></div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const container = document.getElementById('collection-featured-tiles-{{ section.id }}');
+    const listEl = container?.querySelector('[data-tiles-list]');
+    if (!container || !listEl) return;
+
+    const headings = document.querySelectorAll('.collection-featured__heading');
+    if (headings.length === 0) return;
+
+    headings.forEach(function (headingEl) {
+      const sectionWrapper = headingEl.closest('[id^="shopify-section-"]');
+      const sectionId = sectionWrapper ? sectionWrapper.id : null;
+      const text = (headingEl.textContent || '').trim();
+      if (!text) return;
+
+      const tile = document.createElement('div');
+      tile.className = 'collection-featured-tiles__tile';
+
+      if (sectionId) {
+        const link = document.createElement('a');
+        link.href = '#' + sectionId;
+        link.className = 'collection-featured-tiles__tile-link';
+        link.textContent = text.toUpperCase();
+        tile.appendChild(link);
+      } else {
+        const span = document.createElement('span');
+        span.className = 'collection-featured-tiles__tile-text';
+        span.textContent = text.toUpperCase();
+        tile.appendChild(span);
+      }
+
+      listEl.appendChild(tile);
+    });
+
+    container.hidden = false;
+  })();
+</script>
+
+{% stylesheet %}
+  .collection-featured-tiles {
+    padding-block: 24px 32px;
+  }
+
+  .collection-featured-tiles__inner {
+    width: 100%;
+    max-width: var(--page-width, 1200px);
+    margin: 0 auto;
+    padding-inline: var(--padding-page, 24px);
+  }
+
+  .collection-featured-tiles__list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .collection-featured-tiles__tile {
+    border: 1px solid #d1d5db;
+    border-radius: 0;
+    background: #ffffff;
+    padding: 12px 20px;
+  }
+
+  .collection-featured-tiles__tile-link,
+  .collection-featured-tiles__tile-text {
+    font-family: var(--font-body-family);
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.4;
+    letter-spacing: 0;
+    color: #6b7280;
+    text-decoration: none;
+    display: block;
+  }
+
+  .collection-featured-tiles__tile-link:hover {
+    color: #1D425A;
+  }
+
+  @media screen and (max-width: 749px) {
+    .collection-featured-tiles__list {
+      gap: 8px;
+    }
+    .collection-featured-tiles__tile {
+      padding: 10px 16px;
+    }
+    .collection-featured-tiles__tile-link,
+    .collection-featured-tiles__tile-text {
+      font-size: 12px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Collection featured tiles",
+  "tag": "section",
+  "class": "section-wrapper",
+  "settings": [
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "Section width",
+      "options": [
+        { "value": "page-width", "label": "Page width" },
+        { "value": "full-width", "label": "Full width" }
+      ],
+      "default": "page-width"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collection featured tiles"
+    }
+  ]
+}
+{% endschema %}

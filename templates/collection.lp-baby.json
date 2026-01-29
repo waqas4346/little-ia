@@ -1,0 +1,22 @@
+{
+  "sections": {
+    "collection_banner_baby": {
+      "type": "collection-banner-below",
+      "name": "Collection banner",
+      "settings": {
+        "section_width": "full-width"
+      }
+    },
+    "collection_featured_tiles": {
+      "type": "collection-featured-tiles",
+      "name": "Collection featured tiles",
+      "settings": {
+        "section_width": "page-width"
+      }
+    }
+  },
+  "order": [
+    "collection_banner_baby",
+    "collection_featured_tiles"
+  ]
+}
