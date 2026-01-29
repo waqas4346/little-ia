@@ -394,6 +394,9 @@
     text-align: center;
     text-transform: uppercase;
     color: #1D425A;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
   }
 
   /* Match collection page gaps: mobile 22px row, 12px column */
@@ -501,6 +504,7 @@
     .collection-featured__products-header {
       flex: 0 0 auto;
       width: auto;
+      max-width: 320px;
       min-width: 0;
       text-align: center;
     }
@@ -634,7 +638,7 @@
       "max": 100,
       "step": 1,
       "unit": "px",
-      "default": 32
+      "default": 100
     },
     {
       "type": "range",
@@ -872,7 +876,7 @@
           "label": "t:options.full"
         }
       ],
-      "default": "page-width"
+      "default": "full-width"
     },
     {
       "type": "range",
@@ -919,6 +923,9 @@
     {
       "name": "Collection Featured",
       "category": "Collection",
+      "settings": {
+        "section_width": "full-width"
+      },
       "blocks": {
         "product-card": {
           "type": "_product-card",

@@ -10,7 +10,7 @@
 </div>
 
 <script>
-  (function () {
+  function initCollectionFeaturedTiles() {
     const container = document.getElementById('collection-featured-tiles-{{ section.id }}');
     const listEl = container?.querySelector('[data-tiles-list]');
     if (!container || !listEl) return;
@@ -44,7 +44,13 @@
     });
 
     container.hidden = false;
-  })();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCollectionFeaturedTiles);
+  } else {
+    initCollectionFeaturedTiles();
+  }
 </script>
 
 {% stylesheet %}
@@ -57,33 +63,40 @@
     max-width: var(--page-width, 1200px);
     margin: 0 auto;
     padding-inline: var(--padding-page, 24px);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .collection-featured-tiles__list {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
     gap: 12px;
+    min-width: min-content;
   }
 
   .collection-featured-tiles__tile {
-    border: 1px solid #d1d5db;
+    border: 1px solid #787878;
     border-radius: 0;
     background: #ffffff;
-    padding: 12px 20px;
+    padding: 8px 10px;
+    flex-shrink: 0;
   }
 
   .collection-featured-tiles__tile-link,
   .collection-featured-tiles__tile-text {
-    font-family: var(--font-body-family);
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
     font-weight: 400;
     font-size: 14px;
-    line-height: 1.4;
-    letter-spacing: 0;
-    color: #6b7280;
+    line-height: 20px;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: #787878;
     text-decoration: none;
     display: block;
+    white-space: nowrap;
   }
 
   .collection-featured-tiles__tile-link:hover {
@@ -91,15 +104,14 @@
   }
 
   @media screen and (max-width: 749px) {
-    .collection-featured-tiles__list {
-      gap: 8px;
-    }
     .collection-featured-tiles__tile {
-      padding: 10px 16px;
+      padding: 6px 12px;
     }
     .collection-featured-tiles__tile-link,
     .collection-featured-tiles__tile-text {
       font-size: 12px;
+      line-height: 20px;
+      letter-spacing: -0.02em;
     }
   }
 {% endstylesheet %}
