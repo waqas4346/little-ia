@@ -1136,17 +1136,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const colorMap = {
       black: '#000000',
       white: '#ffffff',
-      red: '#c00',
-      blue: '#06c',
-      green: '#080',
-      pink: '#ff69b4',
-      grey: '#666',
-      gray: '#666',
-      gold: '#b8860b',
-      silver: '#c0c0c0',
-      orange: '#f80',
-      yellow: '#fc0',
-      purple: '#606'
+      blue: '#DEE8EF',
+      gold: '#DEB035',
+      green: '#E4EFDB',
+      grey: '#E8EBEC',
+      gray: '#E8EBEC',
+      orange: '#F8CF89',
+      pink: '#F7DDE2',
+      purple: '#F0D9E6',
+      red: '#BC3725',
+      silver: '#DEEBF7',
+      yellow: '#F9F3DB'
     };
     const colorKey = colorName && colorName.toLowerCase ? colorName.toLowerCase() : '';
     const cssColor = (colorKey && colorMap[colorKey]) || colorName || '';
