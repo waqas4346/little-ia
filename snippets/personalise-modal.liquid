@@ -89,33 +89,100 @@
     assign modal_id = 'personalise-dialog-cart'
   endif
 
-  # Dynamic personalization preview: variant first, then product fallback
-  # Use custom.cb_personalization_image and custom.cb_personalization_position (JSON: x, y, font_size)
-  assign cb_image_metafield = variant.metafields.custom.cb_personalization_image
-  if cb_image_metafield == blank
-    assign cb_image_metafield = product.metafields.custom.cb_personalization_image
-  endif
-  assign cb_position_metafield = variant.metafields.custom.cb_personalization_position
-  if cb_position_metafield == blank
-    assign cb_position_metafield = variant.metafields.custom.cb_personalization_poisition
-  endif
-  if cb_position_metafield == blank
-    assign cb_position_metafield = product.metafields.custom.cb_personalization_position
-  endif
-  if cb_position_metafield == blank
-    assign cb_position_metafield = product.metafields.custom.cb_personalization_poisition
-  endif
+  # Dynamic personalization preview: show ONLY if selected variant has ALL required metafields OR product has ALL.
+  # Required: cb_personalization_image AND cb_personalization_position (also check typo poisition).
+  # Check selected variant first; if it has both, use variant. Else check product; if product has both, use product.
   assign show_cb_dynamic_preview = false
   assign cb_personalization_image_url = ''
   assign cb_personalization_position_json = ''
-  if cb_image_metafield != blank and cb_image_metafield.value != blank and cb_position_metafield != blank and cb_position_metafield.value != blank
+
+  assign variant_has_image = false
+  assign variant_has_position = false
+  assign variant_image_val = variant.metafields.custom.cb_personalization_image
+  if variant_image_val != blank and variant_image_val.value != blank
+    assign variant_has_image = true
+  endif
+  assign variant_pos_val = variant.metafields.custom.cb_personalization_position | default: variant.metafields.custom.cb_personalization_poisition
+  if variant_pos_val != blank and variant_pos_val.value != blank
+    assign variant_has_position = true
+  endif
+
+  assign product_has_image = false
+  assign product_has_position = false
+  assign product_image_val = product.metafields.custom.cb_personalization_image
+  if product_image_val != blank and product_image_val.value != blank
+    assign product_has_image = true
+  endif
+  assign product_pos_val = product.metafields.custom.cb_personalization_position | default: product.metafields.custom.cb_personalization_poisition
+  if product_pos_val != blank and product_pos_val.value != blank
+    assign product_has_position = true
+  endif
+
+  if variant_has_image and variant_has_position
     assign show_cb_dynamic_preview = true
-    assign cb_personalization_image_url = cb_image_metafield.value | image_url: width: 600
-    assign cb_personalization_position_json = cb_position_metafield.value | json
+    assign cb_personalization_image_url = variant_image_val.value | image_url: width: 600
+    assign cb_personalization_position_json = variant_pos_val.value | json
+  elsif product_has_image and product_has_position
+    assign show_cb_dynamic_preview = true
+    assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
+    assign cb_personalization_position_json = product_pos_val.value | json
+  endif
+
+  # Build variant/product cb personalization map for JS (used when variant changes)
+  assign product_image_url = ''
+  assign product_position_json = ''
+  if product_has_image and product_has_position
+    assign product_image_url = product_image_val.value | image_url: width: 600
+    assign product_position_json = product_pos_val.value | json
+  endif
+  if product.featured_media
+    assign product_fallback_image = product.featured_media.preview_image | default: product.featured_image | image_url: width: 600
+  elsif product.featured_image
+    assign product_fallback_image = product.featured_image | image_url: width: 600
+  else
+    assign product_fallback_image = ''
   endif
 %}
 
-<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}"{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}>
+<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}" data-product-id="{{ product.id }}"{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}>
+  {%- comment -%} Variant metafields for dynamic preview when variant changes - keyed by variant ID {%- endcomment -%}
+  <script type="application/json" data-cb-personalization-variants>
+    {
+      "product": {
+        "image": {{ product_image_url | json }},
+        "position": {{ product_position_json | json }},
+        "fallbackImage": {{ product_fallback_image | json }}
+      },
+      "variants": {
+        {%- assign first_variant_entry = true -%}
+        {%- for v in product.variants -%}
+        {%- assign v_img = v.metafields.custom.cb_personalization_image -%}
+        {%- assign v_pos = v.metafields.custom.cb_personalization_position | default: v.metafields.custom.cb_personalization_poisition -%}
+        {%- if v_img != blank and v_img.value != blank and v_pos != blank and v_pos.value != blank -%}
+        {%- unless first_variant_entry -%},{%- endunless -%}
+        "{{ v.id }}": {
+          "image": {{ v_img.value | image_url: width: 600 | json }},
+          "position": {{ v_pos.value | json }}
+        }
+        {%- assign first_variant_entry = false -%}
+        {%- endif -%}
+        {%- endfor -%}
+      },
+      "variantFallbackImages": {
+        {%- assign first_fb = true -%}
+        {%- for v in product.variants -%}
+        {%- if v.featured_image -%}
+          {%- assign v_fb = v.featured_image | image_url: width: 600 -%}
+        {%- else -%}
+          {%- assign v_fb = product_fallback_image -%}
+        {%- endif -%}
+        {%- unless first_fb -%},{%- endunless -%}
+        "{{ v.id }}": {{ v_fb | json }}
+        {%- assign first_fb = false -%}
+        {%- endfor -%}
+      }
+    }
+  </script>
   <dialog
     class="personalise-modal dialog-modal"
     ref="dialog"
@@ -159,33 +226,36 @@
 
       <!-- Left Section: Product Preview (40%) -->
       <div class="personalise-modal__preview" ref="previewContainer">
-        {% if show_cb_dynamic_preview and cb_personalization_image_url != blank %}
-          <div class="personalise-modal__preview-image-wrap">
-            <img
-              src="{{ cb_personalization_image_url }}"
-              alt="{{ product.title | escape }}"
-              class="personalise-modal__preview-image personalise-modal__preview-image--dynamic"
-              loading="lazy"
-              width="600"
-              height="600"
-              ref="previewImage"
-            >
-            <div class="personalise-modal__preview-text-overlay" ref="previewTextOverlay" aria-hidden="true"></div>
-          </div>
-        {% elsif product_image %}
+        {% comment %} Dynamic preview (cb metafields) - always rendered for variant-switch updates, visibility toggled via JS {% endcomment %}
+        <div class="personalise-modal__preview-image-wrap" data-cb-dynamic-wrap style="{% unless show_cb_dynamic_preview and cb_personalization_image_url != blank %}display: none;{% endunless %}">
+          <img
+            src="{{ cb_personalization_image_url | default: '' }}"
+            alt="{{ product.title | escape }}"
+            class="personalise-modal__preview-image personalise-modal__preview-image--dynamic"
+            loading="lazy"
+            width="600"
+            height="600"
+            ref="previewImage"
+          >
+          <div class="personalise-modal__preview-text-overlay" ref="previewTextOverlay" aria-hidden="true"></div>
+        </div>
+        {% if product_image %}
           {% liquid
             assign image_alt = product.title | escape
           %}
-          {{
-            product_image
-            | image_url: width: 600
-            | image_tag: loading: 'lazy', alt: image_alt, class: 'personalise-modal__preview-image'
-          }}
-        {% else %}
-          <div class="personalise-modal__preview-placeholder">
-            {{ product.title | escape }}
+          <div data-cb-fallback-wrap style="{% if show_cb_dynamic_preview and cb_personalization_image_url != blank %}display: none;{% endif %}">
+            {{
+              product_image
+              | image_url: width: 600
+              | image_tag: loading: 'lazy', alt: image_alt, class: 'personalise-modal__preview-image'
+            }}
           </div>
         {% endif %}
+        {% unless product_image %}
+          <div class="personalise-modal__preview-placeholder" data-cb-placeholder style="{% if show_cb_dynamic_preview and cb_personalization_image_url != blank %}display: none;{% endif %}">
+            {{ product.title | escape }}
+          </div>
+        {% endunless %}
       </div>
 
       <!-- Right Section: Personalisation Form (60%) -->

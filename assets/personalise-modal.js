@@ -2,6 +2,7 @@ import { DialogComponent, DialogOpenEvent, DialogCloseEvent } from '@theme/dialo
 import { Component } from '@theme/component';
 import { onAnimationEnd } from '@theme/utilities';
 import { morphSection } from '@theme/section-renderer';
+import { ThemeEvents } from '@theme/events';
 
 /**
  * A custom element that manages the personalisation modal.
@@ -53,6 +54,110 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Set up event listeners for input changes to update save button
     this.#setupInputChangeListeners();
+
+    // Set up variant change listener for dynamic personalization (cb metafields)
+    this.#setupCbVariantChangeListener();
+  }
+
+  /**
+   * Parses the cb personalization variants map from the embedded script
+   * @returns {{ product: { image?: string, position?: object, fallbackImage?: string }, variants: Record<string, { image: string, position: object }>, variantFallbackImages: Record<string, string> } | null}
+   */
+  #getCbPersonalizationMap() {
+    const script = this.querySelector('script[data-cb-personalization-variants]');
+    if (!script?.textContent) return null;
+    try {
+      return JSON.parse(script.textContent);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Updates the dynamic personalization preview when the selected variant changes.
+   * Uses variant metafields if variant has both required; else product metafields if product has both.
+   * @param {string} variantId - The selected variant ID
+   */
+  #updateCbPreviewForVariant(variantId) {
+    const map = this.#getCbPersonalizationMap();
+    if (!map) return;
+
+    const { product, variants, variantFallbackImages } = map;
+    let showDynamic = false;
+    let imageUrl = '';
+    let positionJson = '';
+
+    if (variantId && variants && variants[variantId]?.image && variants[variantId]?.position) {
+      showDynamic = true;
+      imageUrl = variants[variantId].image;
+      positionJson = typeof variants[variantId].position === 'string'
+        ? variants[variantId].position
+        : JSON.stringify(variants[variantId].position);
+    } else if (product?.image && product?.position) {
+      showDynamic = true;
+      imageUrl = product.image;
+      positionJson = typeof product.position === 'string'
+        ? product.position
+        : JSON.stringify(product.position);
+    }
+
+    const dynamicWrap = this.querySelector('[data-cb-dynamic-wrap]');
+    const fallbackWrap = this.querySelector('[data-cb-fallback-wrap]');
+    const placeholder = this.querySelector('[data-cb-placeholder]');
+
+    if (showDynamic) {
+      this.dataset.cbPersonalizationImage = imageUrl;
+      this.dataset.cbPersonalizationPosition = positionJson;
+      const dynamicImg = dynamicWrap?.querySelector('.personalise-modal__preview-image--dynamic');
+      if (dynamicImg) {
+        dynamicImg.src = imageUrl;
+      }
+      if (dynamicWrap) dynamicWrap.style.display = '';
+      if (fallbackWrap) fallbackWrap.style.display = 'none';
+      if (placeholder) placeholder.style.display = 'none';
+      this.updateCbPreviewOverlay();
+    } else {
+      delete this.dataset.cbPersonalizationImage;
+      delete this.dataset.cbPersonalizationPosition;
+      if (dynamicWrap) dynamicWrap.style.display = 'none';
+      if (fallbackWrap) {
+        fallbackWrap.style.display = '';
+        const fallbackImg = fallbackWrap.querySelector('.personalise-modal__preview-image');
+        const fallbackImageUrl = variantFallbackImages?.[variantId] || product?.fallbackImage;
+        if (fallbackImg && fallbackImageUrl) {
+          fallbackImg.src = fallbackImageUrl;
+        }
+      }
+      if (placeholder && !fallbackWrap) placeholder.style.display = '';
+    }
+  }
+
+  /**
+   * Sets up listener for variant changes to update dynamic personalization preview.
+   * Only active for product-page context (not cart-drawer, quick-add).
+   * @private
+   */
+  #setupCbVariantChangeListener() {
+    if (this.dataset.context !== 'product-page') return;
+    if (!this.querySelector('script[data-cb-personalization-variants]')) return;
+
+    const handleVariantUpdate = (event) => {
+      const productId = event.detail?.data?.productId;
+      const ourProductId = this.dataset.productId;
+      if (ourProductId && productId && productId !== ourProductId) return;
+
+      const variant = event.detail?.resource;
+      const variantId = variant?.id?.toString?.() ?? variant?.id;
+      if (!variantId) return;
+
+      this.#updateCbPreviewForVariant(variantId);
+    };
+
+    const section = this.closest('.shopify-section') || document.body;
+    section.addEventListener(ThemeEvents.variantUpdate, handleVariantUpdate);
+
+    this._cbVariantUpdateHandler = handleVariantUpdate;
+    this._cbVariantUpdateTarget = section;
   }
   
   /**
@@ -287,6 +392,51 @@ export class PersonaliseDialogComponent extends DialogComponent {
   }
 
   /**
+   * Returns which personalisation fields the current product supports, based on DOM presence.
+   * Used to filter saved/loaded data so we never apply fields from one product to another.
+   * @returns {Record<string, boolean>}
+   */
+  #getSupportedPersonalisationFields() {
+    const root = this;
+    return {
+      name: !!(root.querySelector('#personalise-name') || root.querySelector('input[name="personalise-name"]')),
+      font: !!(root.querySelector('.personalise-modal__font-grid') || root.refs?.fontGrid),
+      color: !!(root.querySelector('.personalise-modal__color-grid') || root.refs?.colorGrid),
+      dob: !!(root.querySelector('input[name="properties[Date of Birth]"]') || root.refs?.dobInput),
+      schoolYear: !!(root.querySelector('input[name="properties[School Year]"]') || root.refs?.schoolYearInput),
+      name1: !!(root.querySelector('input[name="properties[Name 1]"]') || root.refs?.name1Input),
+      name2: !!(root.querySelector('input[name="properties[Name 2]"]') || root.refs?.name2Input),
+      name3: !!(root.querySelector('input[name="properties[Name 3]"]') || root.refs?.name3Input),
+      name4: !!(root.querySelector('input[name="properties[Name 4]"]') || root.refs?.name4Input),
+      textbox: !!(root.querySelector('textarea[name="properties[Personalisation:]"]') || root.refs?.textboxInput),
+      message: !!(root.querySelector('textarea[name="properties[Message]"]') || root.refs?.messageInput),
+      optionalDob: !!(root.querySelector('#dob_field_val') || root.querySelector('input[id="dob_field_val"]') || root.refs?.optionalDobInput),
+      time: !!(root.querySelector('input[name="properties[Time]"]') || root.refs?.timeInput),
+      weight: !!(root.querySelector('input[name="properties[Weight]"]') || root.refs?.weightInput),
+      babyName: !!(root.querySelector('[data-name-input="baby"]') || root.refs?.babyNameInput),
+      kidName: !!(root.querySelector('[data-name-input="kid"]') || root.refs?.kidNameInput),
+      mumName: !!(root.querySelector('[data-name-input="mum"]') || root.refs?.mumNameInput)
+    };
+  }
+
+  /**
+   * Filters a personalisation object to only include fields the current product supports.
+   * @param {Object} data - Personalisation data object
+   * @returns {Object} Filtered object with only supported fields
+   */
+  #filterToSupportedFields(data) {
+    if (!data) return {};
+    const supported = this.#getSupportedPersonalisationFields();
+    const filtered = {};
+    for (const key of Object.keys(data)) {
+      if (supported[key] && data[key] != null && (!(typeof data[key] === 'string') || data[key].trim() !== '')) {
+        filtered[key] = data[key];
+      }
+    }
+    return filtered;
+  }
+
+  /**
    * Loads saved personalisation from form inputs (not from storage)
    */
   loadSavedPersonalisation() {
@@ -315,20 +465,14 @@ export class PersonaliseDialogComponent extends DialogComponent {
         weight: properties['Weight'] || null
       };
       
-      // Filter out null/empty values
-      Object.keys(personalisation).forEach(key => {
-        if (!personalisation[key] || (typeof personalisation[key] === 'string' && !personalisation[key].trim())) {
-          delete personalisation[key];
-        }
-      });
-      
-      // Merge with existing personalisationData
+      // Filter out null/empty values and restrict to fields this product supports
+      const filtered = this.#filterToSupportedFields(personalisation);
       this.personalisationData = {
         ...this.personalisationData,
-        ...personalisation
+        ...filtered
       };
       
-      if (Object.keys(personalisation).length > 0) {
+      if (Object.keys(filtered).length > 0) {
         return; // Exit early, we have the data from cart
       }
     }
@@ -509,12 +653,12 @@ export class PersonaliseDialogComponent extends DialogComponent {
               delete savedPersonalisation[key];
             }
           });
-          
-          // Merge saved personalisation into personalisationData
-          if (Object.keys(savedPersonalisation).length > 0) {
+          // Only merge fields that THIS product supports (prevents Product A's font/color leaking to Product B)
+          const filtered = this.#filterToSupportedFields(savedPersonalisation);
+          if (Object.keys(filtered).length > 0) {
             this.personalisationData = {
               ...this.personalisationData,
-              ...savedPersonalisation
+              ...filtered
             };
           }
         }
@@ -1124,8 +1268,9 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const nameInput = (this.refs && this.refs.nameInput) || this.querySelector('#personalise-name');
     const nameVal = (nameInput && nameInput.value) || (this.personalisationData && this.personalisationData.name) || '';
     const name = String(nameVal).trim();
-    const colorName = (this.personalisationData && this.personalisationData.color) || this.selectedColor || '';
-    const fontName = (this.personalisationData && this.personalisationData.font) || this.selectedFont || '';
+    const supported = this.#getSupportedPersonalisationFields();
+    const colorName = supported.color ? ((this.personalisationData && this.personalisationData.color) || this.selectedColor || '') : '';
+    const fontName = supported.font ? ((this.personalisationData && this.personalisationData.font) || this.selectedFont || '') : '';
 
     overlay.textContent = name;
     overlay.style.fontSize = `${fontSize}px`;
@@ -1150,7 +1295,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     };
     const colorKey = colorName && colorName.toLowerCase ? colorName.toLowerCase() : '';
     const cssColor = (colorKey && colorMap[colorKey]) || colorName || '';
-    overlay.style.color = cssColor || 'inherit';
+    overlay.style.color = (supported.color && cssColor) ? cssColor : 'inherit';
 
     if (!wrap || !img || !img.naturalWidth) return;
     const wrapW = wrap.clientWidth;
@@ -1501,11 +1646,12 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const mumNameInput = this.refs.mumNameInput || this.querySelector('[data-name-input="mum"]');
     const mumNameValue = mumNameInput && mumNameInput.value.trim() ? mumNameInput.value.trim() : null;
 
-    // Collect all personalisation data
+    // Collect all personalisation data - only include values for fields this product supports
+    const supported = this.#getSupportedPersonalisationFields();
     const personalisation = {
-      name: name,
-      font: this.personalisationData.font || this.selectedFont,
-      color: this.personalisationData.color || this.selectedColor,
+      name: supported.name ? name : null,
+      font: supported.font ? (this.personalisationData.font || this.selectedFont) : null,
+      color: supported.color ? (this.personalisationData.color || this.selectedColor) : null,
       dob: null,
       schoolYear: null,
       name1: null,
@@ -1517,12 +1663,12 @@ export class PersonaliseDialogComponent extends DialogComponent {
       optionalDob: null,
       time: null,
       weight: null,
-      babyName: babyNameValue,
-      kidName: kidNameValue,
-      mumName: mumNameValue
+      babyName: supported.babyName ? babyNameValue : null,
+      kidName: supported.kidName ? kidNameValue : null,
+      mumName: supported.mumName ? mumNameValue : null
     };
 
-    // Collect optional fields
+    // Collect optional fields (only from inputs that exist = product supports them)
     const dobInput = this.refs.dobInput || this.querySelector('input[name="properties[Date of Birth]"]');
     if (dobInput) personalisation.dob = dobInput.value.trim();
 
@@ -1568,7 +1714,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (kidNameValue !== null) this.personalisationData.kidName = kidNameValue;
     if (mumNameValue !== null) this.personalisationData.mumName = mumNameValue;
 
-     // Check if we're editing from cart context
+    // Only keep fields this product supports (prevents Product A's font/color etc. being saved for Product B)
+    const filteredPersonalisation = this.#filterToSupportedFields(personalisation);
+
+    // Check if we're editing from cart context
     const cartContext = window.cartPersonalizationContext;
     
     // Declare form variable outside if/else so it's accessible later
@@ -1577,7 +1726,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (cartContext && cartContext.cartLine) {
       // Update cart item properties ONLY - do NOT update product page form
       // The product page form should keep its original personalization
-      await this.#updateCartItemProperties(cartContext, personalisation);
+      await this.#updateCartItemProperties(cartContext, filteredPersonalisation);
       
       // Find form only for event detail, but don't modify it
       form = this.closest('product-form-component')?.querySelector('form[data-type="add-to-cart-form"]');
@@ -1635,7 +1784,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
           }
         });
         
-        // Add personalisation properties as hidden inputs
+        // Add personalisation properties as hidden inputs (only supported fields)
         const addProperty = (name, value) => {
           if (value && value.toString().trim() !== '') {
             const input = document.createElement('input');
@@ -1652,23 +1801,23 @@ export class PersonaliseDialogComponent extends DialogComponent {
           }
         };
         
-        if (personalisation.name) addProperty('properties[Name]', personalisation.name);
-        if (personalisation.font) addProperty('properties[Text Font]', personalisation.font);
-        if (personalisation.color) addProperty('properties[Text Color]', personalisation.color);
-        if (personalisation.dob) addProperty('properties[Date of Birth]', personalisation.dob);
-        if (personalisation.schoolYear) addProperty('properties[School Year]', personalisation.schoolYear);
-        if (personalisation.name1) addProperty('properties[Name 1]', personalisation.name1);
-        if (personalisation.name2) addProperty('properties[Name 2]', personalisation.name2);
-        if (personalisation.name3) addProperty('properties[Name 3]', personalisation.name3);
-        if (personalisation.name4) addProperty('properties[Name 4]', personalisation.name4);
-        if (personalisation.textbox) addProperty('properties[Personalisation:]', personalisation.textbox);
-        if (personalisation.message) addProperty('properties[Message]', personalisation.message);
-        if (personalisation.optionalDob) addProperty('properties[Personalise Date of Birth]', personalisation.optionalDob);
-        if (personalisation.time) addProperty('properties[Time]', personalisation.time);
-        if (personalisation.weight) addProperty('properties[Weight]', personalisation.weight);
-        if (personalisation.babyName) addProperty('properties[Baby\'s Name]', personalisation.babyName);
-        if (personalisation.kidName) addProperty('properties[Kid\'s Name]', personalisation.kidName);
-        if (personalisation.mumName) addProperty('properties[Mum\'s Name]', personalisation.mumName);
+        if (filteredPersonalisation.name) addProperty('properties[Name]', filteredPersonalisation.name);
+        if (filteredPersonalisation.font) addProperty('properties[Text Font]', filteredPersonalisation.font);
+        if (filteredPersonalisation.color) addProperty('properties[Text Color]', filteredPersonalisation.color);
+        if (filteredPersonalisation.dob) addProperty('properties[Date of Birth]', filteredPersonalisation.dob);
+        if (filteredPersonalisation.schoolYear) addProperty('properties[School Year]', filteredPersonalisation.schoolYear);
+        if (filteredPersonalisation.name1) addProperty('properties[Name 1]', filteredPersonalisation.name1);
+        if (filteredPersonalisation.name2) addProperty('properties[Name 2]', filteredPersonalisation.name2);
+        if (filteredPersonalisation.name3) addProperty('properties[Name 3]', filteredPersonalisation.name3);
+        if (filteredPersonalisation.name4) addProperty('properties[Name 4]', filteredPersonalisation.name4);
+        if (filteredPersonalisation.textbox) addProperty('properties[Personalisation:]', filteredPersonalisation.textbox);
+        if (filteredPersonalisation.message) addProperty('properties[Message]', filteredPersonalisation.message);
+        if (filteredPersonalisation.optionalDob) addProperty('properties[Personalise Date of Birth]', filteredPersonalisation.optionalDob);
+        if (filteredPersonalisation.time) addProperty('properties[Time]', filteredPersonalisation.time);
+        if (filteredPersonalisation.weight) addProperty('properties[Weight]', filteredPersonalisation.weight);
+        if (filteredPersonalisation.babyName) addProperty('properties[Baby\'s Name]', filteredPersonalisation.babyName);
+        if (filteredPersonalisation.kidName) addProperty('properties[Kid\'s Name]', filteredPersonalisation.kidName);
+        if (filteredPersonalisation.mumName) addProperty('properties[Mum\'s Name]', filteredPersonalisation.mumName);
         
         // Verify inputs were added
         const addedInputs = form.querySelectorAll('input[name^="properties["]');
@@ -1721,15 +1870,15 @@ export class PersonaliseDialogComponent extends DialogComponent {
         if (!window.currentPersonalisation) {
           window.currentPersonalisation = {};
         }
-        window.currentPersonalisation[productId] = personalisation;
-        window.currentPersonalisation._latest = personalisation; // Also store latest for fallback
+        window.currentPersonalisation[productId] = filteredPersonalisation;
+        window.currentPersonalisation._latest = filteredPersonalisation; // Also store latest for fallback
       } else {
         // Fallback if product ID not found
-        window.currentPersonalisation = personalisation;
+        window.currentPersonalisation = filteredPersonalisation;
       }
 
       // Update hidden form fields if they exist
-      this.updateFormFields(personalisation);
+      this.updateFormFields(filteredPersonalisation);
     }
 
     // Dispatch custom event for other components to listen to
@@ -1739,7 +1888,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     const customEvent = new CustomEvent('personalisation-saved', {
       detail: {
-        ...personalisation,
+        ...filteredPersonalisation,
         form: form,
         formId: form?.id,
         productId: productId,
@@ -1878,10 +2027,14 @@ export class PersonaliseDialogComponent extends DialogComponent {
   }
 
   /**
-   * Updates form fields with personalisation data
+   * Updates form fields with personalisation data.
+   * Only adds properties for fields this product supports.
    * @param {Object} personalisation - The personalisation data
    */
   updateFormFields(personalisation) {
+    const filtered = this.#filterToSupportedFields(personalisation || {});
+    if (Object.keys(filtered).length === 0) return;
+
     // Find the product form - try multiple methods to ensure we get the right one
     let productForm = null;
     
@@ -1946,73 +2099,73 @@ export class PersonaliseDialogComponent extends DialogComponent {
       }
     };
 
-    // Add all personalisation properties
-    if (personalisation.name) {
-      addProperty('properties[Name]', personalisation.name);
+    // Add all personalisation properties (filtered to supported fields only)
+    if (filtered.name) {
+      addProperty('properties[Name]', filtered.name);
     }
 
-    if (personalisation.font) {
-      addProperty('properties[Text Font]', personalisation.font);
+    if (filtered.font) {
+      addProperty('properties[Text Font]', filtered.font);
     }
 
-    if (personalisation.color) {
-      addProperty('properties[Text Color]', personalisation.color);
+    if (filtered.color) {
+      addProperty('properties[Text Color]', filtered.color);
     }
 
-    if (personalisation.dob) {
-      addProperty('properties[Date of Birth]', personalisation.dob);
+    if (filtered.dob) {
+      addProperty('properties[Date of Birth]', filtered.dob);
     }
 
-    if (personalisation.schoolYear) {
-      addProperty('properties[School Year]', personalisation.schoolYear);
+    if (filtered.schoolYear) {
+      addProperty('properties[School Year]', filtered.schoolYear);
     }
 
-    if (personalisation.name1) {
-      addProperty('properties[Name 1]', personalisation.name1);
+    if (filtered.name1) {
+      addProperty('properties[Name 1]', filtered.name1);
     }
 
-    if (personalisation.name2) {
-      addProperty('properties[Name 2]', personalisation.name2);
+    if (filtered.name2) {
+      addProperty('properties[Name 2]', filtered.name2);
     }
 
-    if (personalisation.name3) {
-      addProperty('properties[Name 3]', personalisation.name3);
+    if (filtered.name3) {
+      addProperty('properties[Name 3]', filtered.name3);
     }
 
-    if (personalisation.name4) {
-      addProperty('properties[Name 4]', personalisation.name4);
+    if (filtered.name4) {
+      addProperty('properties[Name 4]', filtered.name4);
     }
 
-    if (personalisation.textbox) {
-      addProperty('properties[Personalisation:]', personalisation.textbox);
+    if (filtered.textbox) {
+      addProperty('properties[Personalisation:]', filtered.textbox);
     }
 
-    if (personalisation.message) {
-      addProperty('properties[Message]', personalisation.message);
+    if (filtered.message) {
+      addProperty('properties[Message]', filtered.message);
     }
 
-    if (personalisation.optionalDob) {
-      addProperty('properties[Personalise Date of Birth]', personalisation.optionalDob);
+    if (filtered.optionalDob) {
+      addProperty('properties[Personalise Date of Birth]', filtered.optionalDob);
     }
 
-    if (personalisation.time) {
-      addProperty('properties[Time]', personalisation.time);
+    if (filtered.time) {
+      addProperty('properties[Time]', filtered.time);
     }
 
-    if (personalisation.weight) {
-      addProperty('properties[Weight]', personalisation.weight);
+    if (filtered.weight) {
+      addProperty('properties[Weight]', filtered.weight);
     }
 
-    if (personalisation.babyName) {
-      addProperty('properties[Baby\'s Name]', personalisation.babyName);
+    if (filtered.babyName) {
+      addProperty('properties[Baby\'s Name]', filtered.babyName);
     }
 
-    if (personalisation.kidName) {
-      addProperty('properties[Kid\'s Name]', personalisation.kidName);
+    if (filtered.kidName) {
+      addProperty('properties[Kid\'s Name]', filtered.kidName);
     }
 
-    if (personalisation.mumName) {
-      addProperty('properties[Mum\'s Name]', personalisation.mumName);
+    if (filtered.mumName) {
+      addProperty('properties[Mum\'s Name]', filtered.mumName);
     }
     
     // Also set up a listener to re-add fields before form submission
