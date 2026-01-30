@@ -49,7 +49,7 @@
     }
   }
 
-  // Function to check and show filters if active (only if not manually hidden and on desktop)
+  // Function to check and show filters (open by default on desktop unless manually hidden)
   function checkAndShowFilters() {
     const resultsList = document.querySelector('results-list');
     if (!resultsList) return;
@@ -57,11 +57,14 @@
     // Only show filters on desktop (screen width >= 1024px)
     const isDesktop = window.innerWidth >= 1024;
     
-    // If there are active filters and they haven't been manually hidden, show the filters component (desktop only)
-    if (hasActiveFilters() && !areFiltersManuallyHidden() && isDesktop) {
+    // On desktop: show filters by default unless manually hidden
+    if (isDesktop && !areFiltersManuallyHidden()) {
       resultsList.classList.add('filters-visible');
     } else if (!isDesktop) {
       // Remove filters-visible class on mobile
+      resultsList.classList.remove('filters-visible');
+    } else {
+      // Desktop but manually hidden - remove the class
       resultsList.classList.remove('filters-visible');
     }
   }
@@ -331,7 +334,7 @@
       });
 
       // Use MutationObserver to preserve filters-visible class during morph
-      // But only if filters haven't been manually hidden and we're on desktop
+      // Restore filters on desktop by default unless manually hidden
       let isRestoring = false;
       const observer = new MutationObserver((mutations) => {
         if (isRestoring) return;
@@ -341,13 +344,13 @@
         mutations.forEach((mutation) => {
           if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
             const target = mutation.target;
-            if (target === resultsList && hasActiveFilters() && !areFiltersManuallyHidden() && isDesktop) {
-              // If filters-visible was removed but we have active filters and they're not manually hidden, restore it (desktop only)
+            if (target === resultsList && !areFiltersManuallyHidden() && isDesktop) {
+              // If filters-visible was removed but filters haven't been manually hidden, restore it (desktop only)
               if (!target.classList.contains('filters-visible')) {
                 isRestoring = true;
                 // Use requestAnimationFrame to avoid conflicts with morph
                 requestAnimationFrame(() => {
-                  if (hasActiveFilters() && !areFiltersManuallyHidden() && window.innerWidth >= 1024 && !target.classList.contains('filters-visible')) {
+                  if (!areFiltersManuallyHidden() && window.innerWidth >= 1024 && !target.classList.contains('filters-visible')) {
                     target.classList.add('filters-visible');
                   }
                   isRestoring = false;
@@ -379,7 +382,7 @@
     // Mark that we should keep filters visible immediately (desktop only)
     const resultsList = document.querySelector('results-list');
     const isDesktop = window.innerWidth >= 1024;
-    if (resultsList && hasActiveFilters() && isDesktop) {
+    if (resultsList && isDesktop) {
       resultsList.classList.add('filters-visible');
     } else if (resultsList && !isDesktop) {
       // Remove filters-visible class on mobile

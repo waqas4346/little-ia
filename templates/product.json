@@ -301,7 +301,7 @@
                 "accordion_row_product_feature": {
                   "type": "_accordion-row",
                   "settings": {
-                    "heading": "Product Feature",
+                    "heading": "Product Features",
                     "open_by_default": false,
                     "icon": "none",
                     "width": 20
@@ -359,7 +359,7 @@
                 "accordion_row_delivery_return": {
                   "type": "_accordion-row",
                   "settings": {
-                    "heading": "DELIVERY & RETURN",
+                    "heading": "Delivery Time & Return",
                     "open_by_default": false,
                     "icon": "none",
                     "width": 20

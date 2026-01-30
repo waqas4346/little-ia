@@ -1,0 +1,164 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "collection_banner_baby": {
+      "type": "collection-banner-below",
+      "name": "Collection banner",
+      "settings": {
+        "section_width": "full-width"
+      }
+    },
+    "collection_featured_yqmTeP": {
+      "type": "collection-featured",
+      "blocks": {
+        "product-card": {
+          "type": "_product-card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 16,
+            "inherit_color_scheme": true,
+            "color_scheme": "",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0,
+            "show_view_product_button": true,
+            "disable_product_link": false
+          },
+          "blocks": {
+            "product_card_gallery_pNi8V9": {
+              "type": "_product-card-gallery",
+              "name": "t:names.product_card_media",
+              "settings": {
+                "image_ratio": "portrait",
+                "border": "none",
+                "border_width": 1,
+                "border_opacity": 100,
+                "border_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "product_title_hCHR4w": {
+              "type": "product-title",
+              "name": "t:names.title",
+              "settings": {
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "price_Tzwhnc": {
+              "type": "price",
+              "name": "t:names.product_price",
+              "settings": {
+                "show_sale_price_first": true,
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "",
+                "width": "100%",
+                "alignment": "left",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "color": "var(--color-foreground)",
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "product_card_gallery_pNi8V9",
+            "product_title_hCHR4w",
+            "price_Tzwhnc"
+          ]
+        }
+      },
+      "name": "Collection Featured",
+      "settings": {
+        "collection": "baby-sleepsuits",
+        "collection_heading": "",
+        "icon1_image": "shopify://shop_images/image_3033_traced.png",
+        "text1": "Soft",
+        "icon2_image": "shopify://shop_images/Sleep--Streamline-Core_1.png",
+        "text2": "Breathable",
+        "description": "<p>Sleep suits designed for cosy naps and dreamy nights, made for comfort from day one.</p>",
+        "text_container_padding_top_desktop": 40,
+        "text_container_padding_right_desktop": 32,
+        "text_container_padding_bottom_desktop": 40,
+        "text_container_padding_left_desktop": 100,
+        "text_container_padding_top_mobile": 24,
+        "text_container_padding_right_mobile": 16,
+        "text_container_padding_bottom_mobile": 24,
+        "text_container_padding_left_mobile": 16,
+        "text_container_vertical_alignment": "center",
+        "text_container_horizontal_desktop": "left",
+        "text_container_horizontal_mobile": "center",
+        "image_position": "left",
+        "product_heading": "our",
+        "product_subheading": "",
+        "top_picks_count": 3,
+        "max_products": 8,
+        "layout_type": "grid",
+        "columns": 4,
+        "mobile_columns": 2,
+        "columns_gap": 12,
+        "rows_gap": 16,
+        "mobile_card_size": "60cqw",
+        "section_width": "full-width",
+        "gap": 12,
+        "color_scheme": "",
+        "padding-block-start": 32,
+        "padding-block-end": 32
+      }
+    },
+    "collection_featured_tiles": {
+      "type": "collection-featured-tiles",
+      "name": "Collection featured tiles",
+      "settings": {
+        "section_width": "page-width"
+      }
+    }
+  },
+  "order": [
+    "collection_banner_baby",
+    "collection_featured_tiles",
+    "collection_featured_yqmTeP"
+  ]
+}
