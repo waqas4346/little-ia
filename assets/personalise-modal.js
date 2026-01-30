@@ -551,13 +551,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
       // Initialize save button state
       this.#initializeSaveButtonState();
 
-      // Keep preview wrap sized to image on resize (dynamic personalization)
+      // Update overlay position on resize (dynamic personalization; position in px from visible image rect)
       if (this.dataset.cbPersonalizationImage) {
         if (!this._cbPreviewResizeHandler) {
-          this._cbPreviewResizeHandler = () => {
-            this.syncCbPreviewWrapToImage();
-            this.updateCbPreviewOverlay();
-          };
+          this._cbPreviewResizeHandler = () => this.updateCbPreviewOverlay();
         }
         window.addEventListener('resize', this._cbPreviewResizeHandler);
       }
@@ -1095,30 +1092,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
   }
 
   /**
-   * Syncs the preview image wrap size to the image's displayed size (object-fit: contain)
-   * so the overlay's left/top % are always relative to the image, not the container.
-   */
-  syncCbPreviewWrapToImage() {
-    const wrap = this.querySelector('.personalise-modal__preview-image-wrap');
-    const img = wrap && wrap.querySelector('.personalise-modal__preview-image--dynamic');
-    if (!wrap || !img || !img.naturalWidth) return;
-
-    const nw = img.naturalWidth;
-    const nh = img.naturalHeight;
-    const cw = img.clientWidth;
-    const ch = img.clientHeight;
-    if (!cw || !ch) return;
-
-    const scale = Math.min(cw / nw, ch / nh);
-    const dispW = Math.round(nw * scale);
-    const dispH = Math.round(nh * scale);
-    // wrap.style.width = dispW + 'px';
-    // wrap.style.height = dispH + 'px';
-  }
-
-  /**
    * Updates the dynamic personalization text overlay on the preview image when
    * variant/product has cb_personalization_image and cb_personalization_position metafields.
+   * Positions overlay in pixels from the visible (object-fit: contain) image rect so the
+   * image stays full size and text placement is correct at all viewports.
    */
   updateCbPreviewOverlay() {
     const imageUrl = this.dataset.cbPersonalizationImage;
@@ -1128,12 +1105,8 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const wrap = this.querySelector('.personalise-modal__preview-image-wrap');
     const img = wrap && wrap.querySelector('.personalise-modal__preview-image--dynamic');
     if (img && !img.complete) {
-      img.addEventListener('load', () => {
-        this.syncCbPreviewWrapToImage();
-        this.updateCbPreviewOverlay();
-      }, { once: true });
+      img.addEventListener('load', () => this.updateCbPreviewOverlay(), { once: true });
     }
-    this.syncCbPreviewWrapToImage();
 
     const overlay = (this.refs && this.refs.previewTextOverlay) || this.querySelector('.personalise-modal__preview-text-overlay');
     if (!overlay) return;
@@ -1144,8 +1117,8 @@ export class PersonaliseDialogComponent extends DialogComponent {
     } catch (e) {
       return;
     }
-    const x = position.x != null ? Number(position.x) : 20;
-    const y = position.y != null ? Number(position.y) : 20;
+    const xPct = position.x != null ? Number(position.x) : 20;
+    const yPct = position.y != null ? Number(position.y) : 20;
     const fontSize = position.font_size != null ? Number(position.font_size) : 20;
 
     const nameInput = (this.refs && this.refs.nameInput) || this.querySelector('#personalise-name');
@@ -1155,12 +1128,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const fontName = (this.personalisationData && this.personalisationData.font) || this.selectedFont || '';
 
     overlay.textContent = name;
-    overlay.style.left = `${x}%`;
-    overlay.style.bottom = `${y}%`;
-    overlay.style.top = '';
-    overlay.style.transform = 'translate(-50%, 50%)';
     overlay.style.fontSize = `${fontSize}px`;
     overlay.style.fontFamily = fontName ? `"${fontName}", sans-serif` : '';
+    overlay.style.transform = 'translate(-50%, 50%)';
+    overlay.style.top = '';
 
     const colorMap = {
       black: '#000000',
@@ -1180,6 +1151,22 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const colorKey = colorName && colorName.toLowerCase ? colorName.toLowerCase() : '';
     const cssColor = (colorKey && colorMap[colorKey]) || colorName || '';
     overlay.style.color = cssColor || 'inherit';
+
+    if (!wrap || !img || !img.naturalWidth) return;
+    const wrapW = wrap.clientWidth;
+    const wrapH = wrap.clientHeight;
+    if (!wrapW || !wrapH) return;
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+    const scale = Math.min(wrapW / nw, wrapH / nh);
+    const vW = nw * scale;
+    const vH = nh * scale;
+    const vL = (wrapW - vW) / 2;
+    const vT = (wrapH - vH) / 2;
+    const leftPx = vL + (vW * xPct / 100);
+    const bottomPx = wrapH - vT - (vH * (1 - yPct / 100));
+    overlay.style.left = Math.round(leftPx) + 'px';
+    overlay.style.bottom = Math.round(bottomPx) + 'px';
   }
 
   /**
