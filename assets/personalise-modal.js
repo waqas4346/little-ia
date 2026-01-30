@@ -45,7 +45,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Set up form submit listener
     setTimeout(() => {
-      this.#setupFormSubmitListenerForCurrentSession();
+      this.setupFormSubmitListenerForCurrentSession();
     }, 100);
     
     // Set form attribute on Baby/Kid/Mum inputs
@@ -261,7 +261,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
   /**
    * Sets up form submit listener for current session only
    */
-  #setupFormSubmitListenerForCurrentSession() {
+  setupFormSubmitListenerForCurrentSession() {
     // Find the product form
     let productForm = null;
     const productFormComponent = this.closest('product-form-component');
@@ -282,7 +282,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
       productForm = document.querySelector(`form[data-type="add-to-cart-form"]`);
     }
     if (productForm) {
-      this.#setupFormSubmitListener(productForm);
+      this.setupFormSubmitListener(productForm);
     }
   }
 
@@ -551,6 +551,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
       // Initialize save button state
       this.#initializeSaveButtonState();
 
+      // Keep preview wrap sized to image on resize (dynamic personalization)
+      if (this.dataset.cbPersonalizationImage) {
+        if (!this._cbPreviewResizeHandler) {
+          this._cbPreviewResizeHandler = () => {
+            this.syncCbPreviewWrapToImage();
+            this.updateCbPreviewOverlay();
+          };
+        }
+        window.addEventListener('resize', this._cbPreviewResizeHandler);
+      }
+
       // Only add keydown listener for Escape key, NOT click listener
       // This prevents the personalise dialog from closing parent dialog
       this.addEventListener('keydown', this.#handleKeyDownPersonalise);
@@ -735,6 +746,8 @@ export class PersonaliseDialogComponent extends DialogComponent {
             this.#populateFieldsFromSavedData();
             // Set up input listeners after fields are populated
             this.#attachInputListeners();
+            // Update dynamic personalization text overlay if variant/product has cb metafields
+            this.updateCbPreviewOverlay();
           } catch (error) {
             console.error('Error populating fields:', error);
           }
@@ -748,6 +761,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
           this.#populateFieldsFromSavedData();
           // Set up input listeners after fields are populated
           this.#attachInputListeners();
+          this.updateCbPreviewOverlay();
         } catch (error) {
           console.error('Error populating fields after max attempts:', error);
         }
@@ -777,7 +791,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
    * This method name is unique and won't conflict with anything
    */
   closePersonaliseOnly = async () => {
-    
+    if (this._cbPreviewResizeHandler) {
+      window.removeEventListener('resize', this._cbPreviewResizeHandler);
+    }
+
     // Clear internal state when closing (especially for build-your-set to prevent font persistence)
     this.selectedFont = null;
     this.selectedColor = null;
@@ -1078,6 +1095,94 @@ export class PersonaliseDialogComponent extends DialogComponent {
   }
 
   /**
+   * Syncs the preview image wrap size to the image's displayed size (object-fit: contain)
+   * so the overlay's left/top % are always relative to the image, not the container.
+   */
+  syncCbPreviewWrapToImage() {
+    const wrap = this.querySelector('.personalise-modal__preview-image-wrap');
+    const img = wrap && wrap.querySelector('.personalise-modal__preview-image--dynamic');
+    if (!wrap || !img || !img.naturalWidth) return;
+
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+    const cw = img.clientWidth;
+    const ch = img.clientHeight;
+    if (!cw || !ch) return;
+
+    const scale = Math.min(cw / nw, ch / nh);
+    const dispW = Math.round(nw * scale);
+    const dispH = Math.round(nh * scale);
+    // wrap.style.width = dispW + 'px';
+    // wrap.style.height = dispH + 'px';
+  }
+
+  /**
+   * Updates the dynamic personalization text overlay on the preview image when
+   * variant/product has cb_personalization_image and cb_personalization_position metafields.
+   */
+  updateCbPreviewOverlay() {
+    const imageUrl = this.dataset.cbPersonalizationImage;
+    const positionJson = this.dataset.cbPersonalizationPosition;
+    if (!imageUrl || !positionJson) return;
+
+    const wrap = this.querySelector('.personalise-modal__preview-image-wrap');
+    const img = wrap && wrap.querySelector('.personalise-modal__preview-image--dynamic');
+    if (img && !img.complete) {
+      img.addEventListener('load', () => {
+        this.syncCbPreviewWrapToImage();
+        this.updateCbPreviewOverlay();
+      }, { once: true });
+    }
+    this.syncCbPreviewWrapToImage();
+
+    const overlay = (this.refs && this.refs.previewTextOverlay) || this.querySelector('.personalise-modal__preview-text-overlay');
+    if (!overlay) return;
+
+    let position;
+    try {
+      position = typeof positionJson === 'string' ? JSON.parse(positionJson) : positionJson;
+    } catch (e) {
+      return;
+    }
+    const x = position.x != null ? Number(position.x) : 20;
+    const y = position.y != null ? Number(position.y) : 20;
+    const fontSize = position.font_size != null ? Number(position.font_size) : 20;
+
+    const nameInput = (this.refs && this.refs.nameInput) || this.querySelector('#personalise-name');
+    const nameVal = (nameInput && nameInput.value) || (this.personalisationData && this.personalisationData.name) || '';
+    const name = String(nameVal).trim();
+    const colorName = (this.personalisationData && this.personalisationData.color) || this.selectedColor || '';
+    const fontName = (this.personalisationData && this.personalisationData.font) || this.selectedFont || '';
+
+    overlay.textContent = name;
+    overlay.style.left = `${x}%`;
+    overlay.style.bottom = `${y}%`;
+    overlay.style.top = '';
+    overlay.style.transform = 'translate(-50%, 50%)';
+    overlay.style.fontSize = `${fontSize}px`;
+    overlay.style.fontFamily = fontName ? `"${fontName}", sans-serif` : '';
+
+    const colorMap = {
+      black: '#000000',
+      white: '#ffffff',
+      red: '#c00',
+      blue: '#06c',
+      green: '#080',
+      pink: '#ff69b4',
+      grey: '#666',
+      gray: '#666',
+      gold: '#b8860b',
+      silver: '#c0c0c0',
+      orange: '#f80',
+      yellow: '#fc0',
+      purple: '#606'
+    };
+    const colorKey = colorName && colorName.toLowerCase ? colorName.toLowerCase() : '';
+    const cssColor = (colorKey && colorMap[colorKey]) || colorName || '';
+    overlay.style.color = cssColor || 'inherit';
+  }
+
+  /**
    * Handles name input changes
    * @param {Event} event - The input event
    */
@@ -1097,6 +1202,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Update save button state
     this.updateSaveButton();
+    this.updateCbPreviewOverlay();
   };
 
   /**
@@ -1261,6 +1367,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Update save button state after color selection
     this.updateSaveButton();
+    this.updateCbPreviewOverlay();
   }
 
   /**
@@ -1300,6 +1407,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Update save button state after font selection
     this.updateSaveButton();
+    this.updateCbPreviewOverlay();
   }
 
   /**
@@ -1921,14 +2029,14 @@ export class PersonaliseDialogComponent extends DialogComponent {
     }
     
     // Also set up a listener to re-add fields before form submission
-    this.#setupFormSubmitListener(productForm);
+    this.setupFormSubmitListener(productForm);
   }
   
   /**
    * Sets up a listener to ensure personalisation fields are added before form submission
    * @param {HTMLFormElement} form - The form element
    */
-  #setupFormSubmitListener(form) {
+  setupFormSubmitListener(form) {
     // Remove any existing listener to avoid duplicates
     if (form.dataset.personalisationListenerAdded) {
       return;

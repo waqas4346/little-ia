@@ -88,9 +88,34 @@
   if context == 'cart-drawer'
     assign modal_id = 'personalise-dialog-cart'
   endif
+
+  # Dynamic personalization preview: variant first, then product fallback
+  # Use custom.cb_personalization_image and custom.cb_personalization_position (JSON: x, y, font_size)
+  assign cb_image_metafield = variant.metafields.custom.cb_personalization_image
+  if cb_image_metafield == blank
+    assign cb_image_metafield = product.metafields.custom.cb_personalization_image
+  endif
+  assign cb_position_metafield = variant.metafields.custom.cb_personalization_position
+  if cb_position_metafield == blank
+    assign cb_position_metafield = variant.metafields.custom.cb_personalization_poisition
+  endif
+  if cb_position_metafield == blank
+    assign cb_position_metafield = product.metafields.custom.cb_personalization_position
+  endif
+  if cb_position_metafield == blank
+    assign cb_position_metafield = product.metafields.custom.cb_personalization_poisition
+  endif
+  assign show_cb_dynamic_preview = false
+  assign cb_personalization_image_url = ''
+  assign cb_personalization_position_json = ''
+  if cb_image_metafield != blank and cb_image_metafield.value != blank and cb_position_metafield != blank and cb_position_metafield.value != blank
+    assign show_cb_dynamic_preview = true
+    assign cb_personalization_image_url = cb_image_metafield.value | image_url: width: 600
+    assign cb_personalization_position_json = cb_position_metafield.value | json
+  endif
 %}
 
-<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}">
+<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}"{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}>
   <dialog
     class="personalise-modal dialog-modal"
     ref="dialog"
@@ -133,8 +158,21 @@
       </div>
 
       <!-- Left Section: Product Preview (40%) -->
-      <div class="personalise-modal__preview">
-        {% if product_image %}
+      <div class="personalise-modal__preview" ref="previewContainer">
+        {% if show_cb_dynamic_preview and cb_personalization_image_url != blank %}
+          <div class="personalise-modal__preview-image-wrap">
+            <img
+              src="{{ cb_personalization_image_url }}"
+              alt="{{ product.title | escape }}"
+              class="personalise-modal__preview-image personalise-modal__preview-image--dynamic"
+              loading="lazy"
+              width="600"
+              height="600"
+              ref="previewImage"
+            >
+            <div class="personalise-modal__preview-text-overlay" ref="previewTextOverlay" aria-hidden="true"></div>
+          </div>
+        {% elsif product_image %}
           {% liquid
             assign image_alt = product.title | escape
           %}
@@ -714,10 +752,36 @@
     }
   }
 
+  /* Wrapper: initial 100% so image can load; JS sets exact px to match image displayed size (object-fit: contain) */
+  .personalise-modal__preview-image-wrap {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .personalise-modal__preview-image--dynamic {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
   .personalise-modal__preview-image {
     width: 100%;
     height: 100%;
     object-fit: contain;
+  }
+
+  .personalise-modal__preview-text-overlay {
+    position: absolute;
+    pointer-events: none;
+    white-space: nowrap;
+    transform: translate(-50%, 50%);
+    line-height: 1.2;
   }
 
   .personalise-modal__preview-placeholder {
