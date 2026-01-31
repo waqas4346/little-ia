@@ -843,8 +843,13 @@
             class="personalise-modal__save-button button button--primary"
             ref="saveButton"
             on:click="/savePersonalisation"
+            {% if full_screen_personalisation and context != 'cart-drawer' %}data-add-to-cart-mode="true" data-add-to-cart-text="{{ 'products.product.add_to_cart' | t }}" data-adding-text="{{ 'products.product.adding_to_cart' | t }}"{% endif %}
           >
-            SAVE PERSONALISATION
+            {% if full_screen_personalisation and context != 'cart-drawer' %}
+              {{ 'products.product.add_to_cart' | t }}
+            {% else %}
+              SAVE PERSONALISATION
+            {% endif %}
           </button>
           <button
             type="button"

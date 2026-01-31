@@ -62,8 +62,30 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Set up variant color change listener (when user selects color in modal)
     this.#setupVariantColorChangeListener();
 
+    // If coming from collection page: auto-add ?customize=true to URL (product has personalisation + full-screen metafield)
+    this.#maybeAddCustomizeParamFromCollection();
     // Auto-open personalisation when product page loads with ?customize=true (product has personalisation + full-screen metafield)
     this.#maybeAutoOpenPersonalisation();
+  }
+
+  /**
+   * When navigating from a collection page to product page: adds ?customize=true to URL
+   * so the personalisation modal can auto-open (product has personalisation + full-screen metafield)
+   * @private
+   */
+  #maybeAddCustomizeParamFromCollection() {
+    if (this.dataset.autoOpenPersonalisation !== 'true') return;
+    if (this.dataset.context === 'cart-drawer') return;
+    if (this.hasAttribute('data-quick-add')) return;
+
+    const referrer = document.referrer || '';
+    if (!referrer.includes('/collections/')) return;
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('customize') === 'true') return;
+
+    url.searchParams.set('customize', 'true');
+    history.replaceState({}, '', url.toString());
   }
 
   /**
@@ -2189,21 +2211,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
       
     } else {
       // Write personalisation directly to form inputs (not to storage)
-      form = this.closest('product-form-component')?.querySelector('form[data-type="add-to-cart-form"]');
-      
-      // If not found, check if we're in a quick-add modal context
-      if (!form) {
-        const quickAddModal = document.querySelector('#quick-add-modal-content');
-        if (quickAddModal) {
-          form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
-        }
-      }
-      
-      // Fallback to any form
-      if (!form) {
-        form = document.querySelector('form[data-type="add-to-cart-form"]');
-      }
-      
+      // CRITICAL: Use #getProductForm() to get the form for THIS product (by product ID)
+      // This prevents adding wrong product when personalise-dialog is in body or multiple forms exist
+      form = this.#getProductForm();
+
       if (form) {
         // Remove existing personalisation properties (but keep gift message and other non-personalisation properties)
         const existingProps = form.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
@@ -2349,8 +2360,73 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Also dispatch on document to ensure it's caught
     document.dispatchEvent(customEvent);
 
-    // Close the dialog
-    this.closeDialog();
+    // When full_screen_personalisation: add to cart directly instead of just saving
+    const isAddToCartMode = this.refs?.saveButton?.dataset?.addToCartMode === 'true';
+    if (isAddToCartMode && form && !cartContext) {
+      const saveButton = this.refs.saveButton;
+      const addToCartText = saveButton?.dataset?.addToCartText || 'Add to cart';
+      const addingText = saveButton?.dataset?.addingText || 'Adding...';
+
+      // Show "Adding" state while submitting
+      if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = addingText;
+      }
+
+      // Ensure personalisation confirmation checkbox is checked (user confirmed by clicking Add to cart in modal)
+      const formComponent = form.closest('product-form-component');
+      const confirmCheckbox = formComponent?.querySelector('[data-personalise-confirm-checkbox]');
+      if (confirmCheckbox) {
+        confirmCheckbox.checked = true;
+      }
+
+      const refreshProductSection = () => {
+        const productId = this.dataset?.productId;
+        const productPagePicker = productId
+          ? document.querySelector(`variant-picker[data-product-id="${productId}"]`)
+          : document.querySelector('variant-picker');
+        if (productPagePicker && !productPagePicker.closest('#quick-add-modal-content')) {
+          const sectionEl = productPagePicker.closest('.shopify-section');
+          if (sectionEl?.id) {
+            const sectionId = normalizeSectionId(sectionEl.id);
+            const url = new URL(window.location.href);
+            sectionRenderer.renderSection(sectionId, { cache: false, url });
+          }
+        }
+      };
+
+      // Submit the form - wait for CartAddEvent (success) before closing so cart drawer opens and refreshes first
+      const handleCartAdd = (event) => {
+        const didError = event?.detail?.data?.didError;
+        document.removeEventListener(ThemeEvents.cartUpdate, handleCartAdd);
+        if (this._addToCartCloseTimeout) {
+          clearTimeout(this._addToCartCloseTimeout);
+          this._addToCartCloseTimeout = null;
+        }
+        if (!didError) {
+          this.closeDialog();
+          // Refresh product section to reset personalisations (fetch whole section)
+          requestAnimationFrame(() => setTimeout(refreshProductSection, 100));
+        } else {
+          // Restore button on error
+          if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.textContent = addToCartText;
+          }
+        }
+      };
+      document.addEventListener(ThemeEvents.cartUpdate, handleCartAdd);
+      // Fallback: close after 5s if event never fires (e.g. network error)
+      this._addToCartCloseTimeout = setTimeout(() => {
+        document.removeEventListener(ThemeEvents.cartUpdate, handleCartAdd);
+        this.closeDialog();
+        refreshProductSection();
+      }, 5000);
+      form.requestSubmit();
+    } else {
+      // Normal save flow - close immediately
+      this.closeDialog();
+    }
 
     // Button text is updated by document listener (buy-buttons) on 'personalisation-saved'.
     // We do not update here to avoid duplicate retry loops that caused the Edit
