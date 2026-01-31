@@ -157,6 +157,20 @@
               {% if product_option_value.size > longest_value and option_id_attribute %}
                 {% assign longest_value = product_option_value.size %}
               {% endif %}
+              {% liquid
+                assign variant_ids_for_option = ''
+                if is_color_or_set
+                  assign option_key = 'option' | append: product_option.position
+                  for v in product_resource.variants
+                    if v[option_key] == product_option_value.name
+                      if variant_ids_for_option != ''
+                        assign variant_ids_for_option = variant_ids_for_option | append: ','
+                      endif
+                      assign variant_ids_for_option = variant_ids_for_option | append: v.id
+                    endif
+                  endfor
+                endif
+              %}
               <label
                 class="variant-option__button-label{% if variant_style == 'swatch' %} variant-option__button-label--has-swatch swatch-rounded{% if is_color_or_set %} variant-option__button-label--theme-color{% endif %}{% elsif variant_style == 'image-thumbnail' %} variant-option__button-label--has-swatch variant-option__button-label--image-thumbnail{% elsif variant_style == 'tile' %} variant-option__button-label--tile{% endif %}"
               >
@@ -177,6 +191,9 @@
                   data-connected-product-url="{{ product_option_value.product_url }}"
                   {% if product_option_value.variant.id %}
                     data-variant-id="{{ product_option_value.variant.id }}"
+                  {% endif %}
+                  {% if variant_ids_for_option != '' %}
+                    data-variant-ids="{{ variant_ids_for_option }}"
                   {% endif %}
                   {% if product_option_value.selected %}
                     data-current-checked="true"

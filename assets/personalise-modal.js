@@ -1,7 +1,8 @@
 import { DialogComponent, DialogOpenEvent, DialogCloseEvent } from '@theme/dialog';
 import { Component } from '@theme/component';
 import { onAnimationEnd } from '@theme/utilities';
-import { morphSection } from '@theme/section-renderer';
+import { morph } from '@theme/morph';
+import { morphSection, sectionRenderer, normalizeSectionId, buildSectionSelector } from '@theme/section-renderer';
 import { ThemeEvents, VariantUpdateEvent } from '@theme/events';
 
 /**
@@ -177,38 +178,57 @@ export class PersonaliseDialogComponent extends DialogComponent {
    * @returns {HTMLFormElement|null}
    */
   #getProductForm() {
-    const productId = this.dataset?.productId;
-    let productForm = null;
+    const forms = this.#getAllProductForms();
+    return forms[0] || null;
+  }
 
-    // 1. Quick-add: only when we're INSIDE quick-add modal (not product page)
+  /**
+   * Finds ALL add-to-cart forms for this product (for variant sync).
+   * Needed because: (1) product page has main form, (2) sticky bar uses same form, (3) quick-add has its own form in modal.
+   * @returns {HTMLFormElement[]}
+   */
+  #getAllProductForms() {
+    const productId = this.dataset?.productId;
+    const forms = [];
+
+    const addFormFromComponent = (comp) => {
+      const form = comp?.querySelector('form[data-type="add-to-cart-form"]');
+      if (form && !forms.includes(form)) forms.push(form);
+    };
+
+    // 1. Quick-add: when we're INSIDE quick-add modal, get form from modal
     const quickAddModal = this.closest('#quick-add-modal-content');
     if (quickAddModal) {
       const formComponent = productId
         ? quickAddModal.querySelector(`product-form-component[data-product-id="${productId}"]`)
         : quickAddModal.querySelector('product-form-component');
-      productForm = formComponent?.querySelector('form[data-type="add-to-cart-form"]');
-      if (productForm) return productForm;
+      addFormFromComponent(formComponent);
+      if (forms.length > 0) return forms;
     }
 
-    // 2. Product page: find product-form-component with matching product ID (personalise-dialog is sibling, not child)
+    // 2. Product page: find form(s) in main section (sticky bar uses same form, but form lives in section)
     if (productId) {
       const section = this.closest('.shopify-section');
       const searchRoot = section || document;
       const formComponent = searchRoot.querySelector(`product-form-component[data-product-id="${productId}"]`);
-      productForm = formComponent?.querySelector('form[data-type="add-to-cart-form"]');
-      if (productForm) return productForm;
+      addFormFromComponent(formComponent);
     }
 
-    // 3. Fallback: closest product-form-component (when we're inside it)
+    // 3. Also search document for any other matching form (e.g. when dialog is in drawer/portal)
+    if (productId) {
+      document.querySelectorAll(`product-form-component[data-product-id="${productId}"]`).forEach(addFormFromComponent);
+    }
+
+    // 4. Fallback: closest product-form-component
     const formComponent = this.closest('product-form-component');
-    if (formComponent) {
-      productForm = formComponent.querySelector('form[data-type="add-to-cart-form"]');
-      if (productForm) return productForm;
-    }
+    addFormFromComponent(formComponent);
 
-    // 4. Fallback: any form (last resort)
-    productForm = document.querySelector('form[data-type="add-to-cart-form"]');
-    return productForm;
+    // 5. Last resort: any form for this product
+    if (forms.length === 0) {
+      const anyForm = document.querySelector('form[data-type="add-to-cart-form"]');
+      if (anyForm) forms.push(anyForm);
+    }
+    return forms;
   }
 
   /**
@@ -252,18 +272,116 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
     this.#updateVariantColorSelectedValue(radio);
 
-    const productForm = this.#getProductForm();
-    if (productForm) {
-      const variantInput = productForm.querySelector('input[name="id"]');
+    // Update variant in ALL forms for this product (main page, sticky bar context, quick-add)
+    const forms = this.#getAllProductForms();
+    forms.forEach((form) => {
+      const variantInput = form.querySelector('input[name="id"]');
       if (variantInput) {
         variantInput.value = variantId;
         variantInput.disabled = false;
+        variantInput.dispatchEvent(new Event('change', { bubbles: true }));
       }
-    }
+    });
+
+    // Sync variant picker UI (color swatches on product page / quick-add)
+    this.#syncVariantPickersToVariant(variantId);
 
     this.#updateCbPreviewForVariant(variantId);
 
     const productId = this.dataset?.productId;
+
+    // On product page: update URL and re-render section (media gallery, etc.)
+    const productPagePicker = productId
+      ? document.querySelector(`variant-picker[data-product-id="${productId}"]`)
+      : document.querySelector('variant-picker');
+    const isProductPage = productPagePicker && !productPagePicker.closest('#quick-add-modal-content') && !window.cartPersonalizationContext;
+    if (isProductPage) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('variant', variantId);
+      if (url.href !== window.location.href) {
+        history.replaceState({}, '', url.toString());
+      }
+      // Update only the media gallery - do NOT re-render the entire section, as that would
+      // replace the personalise-modal and reset all user-entered personalisation data.
+      const sectionEl = productPagePicker.closest('.shopify-section');
+      if (sectionEl?.id) {
+        const sectionId = normalizeSectionId(sectionEl.id);
+        const currentMediaGallery = sectionEl.querySelector('media-gallery');
+        if (currentMediaGallery) {
+          const fullUrl = url.toString();
+          fetch(fullUrl)
+            .then((r) => r.text())
+            .then((html) => {
+              const doc = new DOMParser().parseFromString(html, 'text/html');
+              const sectionSelector = buildSectionSelector(sectionId);
+              const newSectionEl = doc.getElementById(sectionSelector);
+              const newMediaGallery = newSectionEl?.querySelector('media-gallery');
+              if (newMediaGallery) {
+                morph(currentMediaGallery, newMediaGallery);
+              }
+            })
+            .catch(() => {});
+        }
+      }
+    }
+
+    // On quick-add: fetch product page with new variant and directly update the image
+    // (Quick-add's VariantUpdateEvent handler needs html; we fetch and update manually here)
+    const isQuickAddContext = this.hasAttribute('data-quick-add');
+    const quickAddModal = isQuickAddContext ? document.getElementById('quick-add-modal-content') : null;
+    if (quickAddModal) {
+      const quickAddPicker = productId
+        ? quickAddModal.querySelector(`variant-picker[data-product-id="${productId}"]`)
+        : quickAddModal.querySelector('variant-picker');
+      const productFormComponent = quickAddModal.querySelector('product-form-component');
+      const productUrl = quickAddPicker?.dataset?.productUrl || productFormComponent?.dataset?.productUrl;
+      if (productUrl) {
+        const fetchUrl = productUrl.includes('?')
+          ? `${productUrl.split('?')[0]}?variant=${variantId}`
+          : `${productUrl}?variant=${variantId}`;
+        const fullUrl = fetchUrl.startsWith('/')
+          ? new URL(fetchUrl, window.location.origin).toString()
+          : fetchUrl;
+        fetch(fullUrl)
+          .then((r) => r.text())
+          .then((html) => {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const newMediaGallery = doc.querySelector('media-gallery');
+            const newFirstImage =
+              newMediaGallery?.querySelector(
+                '.product-media img, slideshow-slide img, .product-media-container img, img[src], img[data-src]'
+              ) || doc.querySelector('.product-information__media img, media-gallery img');
+            const findCurrentImage = () =>
+              quickAddModal.querySelector(
+                '.product-information__media slideshow-slide:first-child img, .product-information__media .product-media img, .product-information__media .product-media-container img, .product-information__media img, media-gallery img'
+              );
+            const currentFirstImage = findCurrentImage();
+            if (newFirstImage && currentFirstImage) {
+              const newImageSrc =
+                newFirstImage.getAttribute('src') ||
+                newFirstImage.src ||
+                newFirstImage.getAttribute('data-src') ||
+                newFirstImage.getAttribute('srcset')?.trim().split(/\s+/)[0];
+              if (newImageSrc && currentFirstImage.src !== newImageSrc) {
+                currentFirstImage.style.transition = 'none';
+                currentFirstImage.style.opacity = '1';
+                currentFirstImage.src = newImageSrc;
+                if (newFirstImage.getAttribute('srcset')) {
+                  currentFirstImage.srcset = newFirstImage.getAttribute('srcset');
+                }
+                if (newFirstImage.getAttribute('sizes')) {
+                  currentFirstImage.sizes = newFirstImage.getAttribute('sizes');
+                }
+                if (newFirstImage.getAttribute('alt')) {
+                  currentFirstImage.alt = newFirstImage.getAttribute('alt');
+                }
+              }
+            }
+          })
+          .catch(() => {});
+      }
+    }
+
     const variantResource = { id: Number(variantId) };
     const section = this.closest('.shopify-section') || document.body;
     section.dispatchEvent(new VariantUpdateEvent(variantResource, this.id || 'personalise-dialog', {
@@ -294,6 +412,42 @@ export class PersonaliseDialogComponent extends DialogComponent {
       if (radio.checked) checkedRadio = radio;
     });
     this.#updateVariantColorSelectedValue(checkedRadio);
+  }
+
+  /**
+   * Syncs variant picker UI (product page / quick-add) to show the selected variant.
+   * Called when color is changed in the personalisation modal.
+   * @param {string} variantId - The selected variant ID
+   * @private
+   */
+  #syncVariantPickersToVariant(variantId) {
+    if (!variantId) return;
+    const variantIdStr = String(variantId);
+    const productId = this.dataset?.productId;
+    const variantPickers = productId
+      ? document.querySelectorAll(`variant-picker[data-product-id="${productId}"]`)
+      : document.querySelectorAll('variant-picker');
+    variantPickers.forEach((picker) => {
+      const inputs = picker.querySelectorAll('input[type="radio"][data-variant-id], input[type="radio"][data-variant-ids]');
+      let matchingInput = null;
+      for (const input of inputs) {
+        const matchesId = input.dataset.variantId === variantIdStr;
+        const variantIds = (input.dataset.variantIds || '').split(',').map((id) => id.trim());
+        const matchesIds = variantIds.includes(variantIdStr);
+        if (matchesId || matchesIds) {
+          matchingInput = input;
+          break;
+        }
+      }
+      if (matchingInput) {
+        picker.updateSelectedOption?.(matchingInput);
+        const fieldset = matchingInput.closest('fieldset');
+        const valueSpan = fieldset?.querySelector('.variant-option__selected-value');
+        if (valueSpan) {
+          valueSpan.textContent = matchingInput.value || '';
+        }
+      }
+    });
   }
 
   /**

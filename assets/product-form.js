@@ -834,11 +834,6 @@ class ProductFormComponent extends Component {
     // Update button state (this will handle both main button and sticky bar button)
     this.#updateAddToCartButtonState();
 
-    const newAddToCartButton = event.detail.data.html.querySelector('product-form-component [ref="addToCartButton"]');
-    if (newAddToCartButton && currentAddToCartButton) {
-      morph(currentAddToCartButton, newAddToCartButton);
-    }
-
     if (acceleratedCheckoutButtonContainer) {
       if (event.detail.resource == null || event.detail.resource.available == false) {
         acceleratedCheckoutButtonContainer?.setAttribute('hidden', 'true');
@@ -858,6 +853,15 @@ class ProductFormComponent extends Component {
       }
     }
 
+    // Skip morph operations when html is not provided (e.g. variant changed from personalisation modal)
+    const html = event.detail.data?.html;
+    if (!html) return;
+
+    const newAddToCartButton = html.querySelector('product-form-component [ref="addToCartButton"]');
+    if (newAddToCartButton && currentAddToCartButton) {
+      morph(currentAddToCartButton, newAddToCartButton);
+    }
+
     // Check if quantity rules, price-per-item, or add-to-cart are appearing/disappearing (causes layout shift)
     const {
       quantityRules,
@@ -870,31 +874,31 @@ class ProductFormComponent extends Component {
 
     // Update quantity selector's min/max/step attributes and cart quantity for the new variant
     const newQuantityInput = /** @type {HTMLInputElement | null} */ (
-      event.detail.data.html.querySelector('quantity-selector-component input[ref="quantityInput"]')
+      html.querySelector('quantity-selector-component input[ref="quantityInput"]')
     );
 
     if (quantitySelector?.updateConstraints && newQuantityInput) {
       quantitySelector.updateConstraints(newQuantityInput.min, newQuantityInput.max || null, newQuantityInput.step);
     }
 
-    const newQuantityRules = event.detail.data.html.querySelector('.quantity-rules');
+    const newQuantityRules = html.querySelector('.quantity-rules');
     const isQuantityRulesChanging = !!quantityRules !== !!newQuantityRules;
 
-    const newPricePerItem = event.detail.data.html.querySelector('price-per-item');
+    const newPricePerItem = html.querySelector('price-per-item');
     const isPricePerItemChanging = !!pricePerItem !== !!newPricePerItem;
 
     if ((isQuantityRulesChanging || isPricePerItemChanging) && quantitySelector) {
       // Store quantity value before morphing entire container
       const currentQuantityValue = quantitySelector.getValue?.();
 
-      const newProductFormButtons = event.detail.data.html.querySelector('.product-form-buttons');
+      const newProductFormButtons = html.querySelector('.product-form-buttons');
 
       if (productFormButtons && newProductFormButtons) {
         morph(productFormButtons, newProductFormButtons);
 
         // Get the NEW quantity selector after morphing and update its constraints
         const newQuantityInputElement = /** @type {HTMLInputElement | null} */ (
-          event.detail.data.html.querySelector('quantity-selector-component input[ref="quantityInput"]')
+          html.querySelector('quantity-selector-component input[ref="quantityInput"]')
         );
 
         if (this.refs.quantitySelector?.updateConstraints && newQuantityInputElement && currentQuantityValue) {
@@ -918,13 +922,13 @@ class ProductFormComponent extends Component {
       ];
 
       for (const [selector, currentElement, fallback] of morphTargets) {
-        this.#morphOrUpdateElement(currentElement, event.detail.data.html.querySelector(selector), fallback);
+        this.#morphOrUpdateElement(currentElement, html.querySelector(selector), fallback);
       }
     }
 
     // Morph volume pricing if it exists
     const currentVolumePricing = this.refs.volumePricing;
-    const newVolumePricing = event.detail.data.html.querySelector('volume-pricing');
+    const newVolumePricing = html.querySelector('volume-pricing');
     this.#morphOrUpdateElement(currentVolumePricing, newVolumePricing, this.refs.productFormButtons);
 
     const hasB2BFeatures =
