@@ -387,14 +387,20 @@
               }
               
               if (dialog) {
+                // Capture current variant from form (form that contains the Personalise button) so modal shows correct variant
+                let variantIdFromForm = null;
+                const buttonForm = button.closest('product-form-component')?.querySelector('form[data-type="add-to-cart-form"]') || button.closest('form');
+                const variantInput = buttonForm?.querySelector('input[name="id"]');
+                if (variantInput?.value) variantIdFromForm = variantInput.value;
+
                 // Check if custom element class is defined
                 const isCustomElementDefined = customElements.get('personalise-dialog');
                 
                 if (isCustomElementDefined) {
-                  // Try using the showDialog method
+                  // Try using the showDialog method (pass variant so modal syncs to current selection)
                   if (typeof dialog.showDialog === 'function') {
                     try {
-                      dialog.showDialog();
+                      dialog.showDialog(variantIdFromForm);
                       return; // Success!
                     } catch (err) {
                       // Continue to fallback

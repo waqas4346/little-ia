@@ -1520,7 +1520,7 @@ export class QuickAddComponent extends Component {
                   personalizations[`properties[${propName}]`] = input.value;
                 }
               }
-            } else if (input.type !== 'hidden' && input.value) {
+            } else if (input.value) {
               const propName = input.name.match(/properties\[(.+)\]/)?.[1];
               if (propName) {
                 personalizations[`properties[${propName}]`] = input.value;
@@ -1597,7 +1597,7 @@ export class QuickAddComponent extends Component {
               personalizations['personalise-name'] = formNameInput.value;
             }
             
-            // Check for properties in form
+            // Check for properties in form (include hidden - Save personalisation writes to hidden inputs)
             const formPropertyInputs = form.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
             formPropertyInputs.forEach((input) => {
               if (input.type === 'radio') {
@@ -1607,7 +1607,7 @@ export class QuickAddComponent extends Component {
                     personalizations[`properties[${propName}]`] = input.value;
                   }
                 }
-              } else if (input.type !== 'hidden' && input.value) {
+              } else if (input.value) {
                 const propName = input.name.match(/properties\[(.+)\]/)?.[1];
                 if (propName) {
                   personalizations[`properties[${propName}]`] = input.value;
@@ -1615,6 +1615,24 @@ export class QuickAddComponent extends Component {
               }
             });
           }
+        }
+        
+        // Normalise keys to match Build Your Set modal (so Edit pre-fills all fields)
+        if (personalizations['properties[Name]']) {
+          personalizations['personalise-name'] = personalizations['properties[Name]'];
+          delete personalizations['properties[Name]'];
+        }
+        if (personalizations['properties[Text Font]']) {
+          personalizations['personalise-font'] = personalizations['properties[Text Font]'];
+          delete personalizations['properties[Text Font]'];
+        }
+        if (personalizations['properties[Text Color]']) {
+          personalizations['personalise-color'] = personalizations['properties[Text Color]'];
+          delete personalizations['properties[Text Color]'];
+        }
+        if (personalizations['properties[Personalise Date of Birth]']) {
+          personalizations['optionalDob'] = personalizations['properties[Personalise Date of Birth]'];
+          delete personalizations['properties[Personalise Date of Birth]'];
         }
         
         // If personalizations found, update productData

@@ -1,5 +1,8 @@
-
-<div class="section section--{{ section.settings.section_width }} page-banner{% if section.settings.video or section.settings.image %} page-banner--has-image{% endif %}"
+{% assign has_media = false %}
+{% if section.settings.video != blank or section.settings.image != blank %}
+  {% assign has_media = true %}
+{% endif %}
+<div class="section section--{{ section.settings.section_width }} page-banner{% if section.settings.video or section.settings.image %} page-banner--has-image{% endif %}{% if section.settings.content_position == 'under' and has_media %} page-banner--content-under{% endif %}"
   data-testid="page-banner"
 >
   {% if section.settings.video or section.settings.image %}
@@ -305,6 +308,7 @@
     .page-banner__content {
       padding-block: var(--padding-md, 24px);
       padding-block-end: 25px;
+      padding-inline: 12px;
     }
 
     .page-banner__title {
@@ -317,6 +321,74 @@
       display: none;
     }
   }
+
+  /* Content under image layout */
+  .page-banner--content-under {
+    display: flex;
+    flex-direction: column;
+    min-height: auto;
+    height: auto;
+    max-height: none;
+  }
+
+  .page-banner--content-under .page-banner__background {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .page-banner--content-under .page-banner__content-wrapper {
+    align-self: stretch;
+    align-items: stretch;
+    min-height: auto;
+    margin-top: 20px;
+  }
+
+  @media screen and (max-width: 749px) {
+    .page-banner--content-under .page-banner__content-wrapper {
+      margin-top: 12px;
+    }
+  }
+
+  .page-banner--content-under .page-banner__content {
+    align-items: center;
+    text-align: center;
+    justify-content: flex-start;
+  }
+
+  @media screen and (max-width: 749px) {
+    .page-banner--content-under .page-banner__content {
+      align-items: flex-start;
+      text-align: left;
+    }
+  }
+
+  .page-banner--content-under.page-banner--has-image .page-banner__title,
+  .page-banner--content-under.page-banner--has-image .page-banner__description,
+  .page-banner--content-under.page-banner--has-image .page-banner__feature-text,
+  .page-banner--content-under.page-banner--has-image .page-banner__feature-icon {
+    color: #1D425A;
+  }
+
+  .page-banner--content-under .page-banner__description {
+    margin-inline: auto;
+  }
+
+  @media screen and (max-width: 749px) {
+    .page-banner--content-under .page-banner__description {
+      margin-inline: 0;
+    }
+  }
+
+  .page-banner--content-under .page-banner__features {
+    justify-content: center;
+  }
+
+  @media screen and (max-width: 749px) {
+    .page-banner--content-under .page-banner__features {
+      justify-content: flex-start;
+    }
+  }
+
 {% endstylesheet %}
 
 {% schema %}
@@ -363,6 +435,23 @@
       "type": "textarea",
       "id": "description",
       "label": "Page description"
+    },
+    {
+      "type": "select",
+      "id": "content_position",
+      "label": "Content position",
+      "options": [
+        {
+          "value": "on_top",
+          "label": "On top of image"
+        },
+        {
+          "value": "under",
+          "label": "Under image"
+        }
+      ],
+      "default": "on_top",
+      "info": "When 'Under image' is selected, content appears below the image with center alignment on desktop and left alignment on mobile"
     }
   ],
   "blocks": [

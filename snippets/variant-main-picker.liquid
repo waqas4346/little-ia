@@ -65,9 +65,9 @@
           assign swatch_count = product_option.values | map: 'swatch' | compact | size
           assign variant_style = block_settings.variant_style
 
-          # Force image display for Color and Set options (highest priority)
+          # Use swatch (circle) style for Color and Set options - matches collection filter design
           if is_color_or_set
-            assign variant_style = 'image-thumbnail'
+            assign variant_style = 'swatch'
           # For all other variants (size, gold, etc.), use tile style like size
           else
             assign variant_style = 'tile'
@@ -83,7 +83,7 @@
         {%- if variant_style == 'swatch' or variant_style == 'image-thumbnail' or block_settings.variant_style == 'buttons' or variant_style == 'tile' -%}
           {%- assign fieldset_index = forloop.index0 -%}
           <fieldset
-            class="variant-option variant-option--buttons{% if variant_style == 'swatch' or variant_style == 'image-thumbnail' %} variant-option--swatches variant-option--image-thumbnails{% elsif variant_style == 'tile' %} variant-option--tiles{% else %} variant-option--{{ settings.variant_button_width }}{% endif %}"
+            class="variant-option variant-option--buttons{% if variant_style == 'swatch' %} variant-option--swatches{% if is_color_or_set %} variant-option--theme-color{% endif %}{% elsif variant_style == 'image-thumbnail' %} variant-option--swatches variant-option--image-thumbnails{% elsif variant_style == 'tile' %} variant-option--tiles{% else %} variant-option--{{ settings.variant_button_width }}{% endif %}"
             data-fieldset-index="{{ fieldset_index }}"
             ref="fieldsets[]"
             {{ option_id_attribute }}
@@ -157,8 +157,22 @@
               {% if product_option_value.size > longest_value and option_id_attribute %}
                 {% assign longest_value = product_option_value.size %}
               {% endif %}
+              {% liquid
+                assign variant_ids_for_option = ''
+                if is_color_or_set
+                  assign option_key = 'option' | append: product_option.position
+                  for v in product_resource.variants
+                    if v[option_key] == product_option_value.name
+                      if variant_ids_for_option != ''
+                        assign variant_ids_for_option = variant_ids_for_option | append: ','
+                      endif
+                      assign variant_ids_for_option = variant_ids_for_option | append: v.id
+                    endif
+                  endfor
+                endif
+              %}
               <label
-                class="variant-option__button-label{% if variant_style == 'swatch' or variant_style == 'image-thumbnail' %} variant-option__button-label--has-swatch variant-option__button-label--image-thumbnail{% elsif variant_style == 'tile' %} variant-option__button-label--tile{% endif %}"
+                class="variant-option__button-label{% if variant_style == 'swatch' %} variant-option__button-label--has-swatch swatch-rounded{% if is_color_or_set %} variant-option__button-label--theme-color{% endif %}{% elsif variant_style == 'image-thumbnail' %} variant-option__button-label--has-swatch variant-option__button-label--image-thumbnail{% elsif variant_style == 'tile' %} variant-option__button-label--tile{% endif %}"
               >
                 <input
                   type="radio"
@@ -178,6 +192,9 @@
                   {% if product_option_value.variant.id %}
                     data-variant-id="{{ product_option_value.variant.id }}"
                   {% endif %}
+                  {% if variant_ids_for_option != '' %}
+                    data-variant-ids="{{ variant_ids_for_option }}"
+                  {% endif %}
                   {% if product_option_value.selected %}
                     data-current-checked="true"
                     checked
@@ -185,104 +202,70 @@
                     data-current-checked="false"
                   {% endif %}
                 >
-                {% if variant_style == 'swatch' or variant_style == 'image-thumbnail' %}
-                  {% liquid
-                    assign option_key = 'option' | append: product_option.position
-                    assign featured_media = product_option_value.variant.featured_media
-                    assign first_available_variant = null
-
-                    # If variant is blank or has no featured media, search through all variants
-                    if product_option_value.variant == blank or featured_media == blank
-                      # First try to find an available variant with this option value
-                      for variant in product_resource.variants
-                        assign variant_option_value = variant[option_key]
-                        if variant.available and variant_option_value == product_option_value.name
-                          if variant.featured_media != blank
-                            assign featured_media = variant.featured_media
-                            assign first_available_variant = variant
-                            break
-                          endif
-                        endif
-                      endfor
-                      
-                      # If still no media, try any variant (available or not) with this option value
-                      if featured_media == blank
+                {% if variant_style == 'swatch' %}
+                  {% if is_color_or_set %}
+                    <div class="variant-option__swatch-wrapper">
+                      {% render 'swatch', swatch: product_option_value.swatch, mode: 'filter' %}
+                    </div>
+                  {% else %}
+                    {% liquid
+                      assign option_key = 'option' | append: product_option.position
+                      assign featured_media = product_option_value.variant.featured_media
+                      if product_option_value.variant == blank or featured_media == blank
                         for variant in product_resource.variants
                           assign variant_option_value = variant[option_key]
-                          if variant_option_value == product_option_value.name
-                            if variant.featured_media != blank
-                              assign featured_media = variant.featured_media
-                              if first_available_variant == null
-                                assign first_available_variant = variant
-                              endif
-                              break
-                            endif
+                          if variant_option_value == product_option_value.name and variant.featured_media != blank
+                            assign featured_media = variant.featured_media
+                            break
                           endif
                         endfor
                       endif
-                    else
-                      # If we have a variant with media, use it
-                      if featured_media != blank
-                        assign first_available_variant = product_option_value.variant
+                      if featured_media == blank and product_resource.featured_media
+                        assign featured_media = product_resource.featured_media
                       endif
-                    endif
-
-                    # If the variant has no featured media, and we have a combined listing product, then fall back to
-                    # using the featured media of the child product that is linked to this option value.
-                    if featured_media == blank and product_option_value.product_url
-                      assign featured_media = product_option_value.variant.product.featured_media
-                    endif
-
-                    # Last resort: try to get from product media if available
-                    if featured_media == blank and product_resource.featured_media
-                      assign featured_media = product_resource.featured_media
-                    endif
-                  %}
-
-                  {% if variant_style == 'image-thumbnail' %}
-                    <div class="variant-option__image-thumbnail">
-                      {% if featured_media %}
-                        {% assign thumbnail_image = featured_media.preview_image | default: featured_media %}
-                        {% if thumbnail_image %}
-                          {{
-                            thumbnail_image
-                            | image_url: width: 160
-                            | image_tag:
-                              loading: 'lazy',
-                              alt: product_option_value.name | default: 'Product image',
-                              class: 'variant-option__thumbnail-img',
-                              widths: '80, 160'
-                          }}
-                        {% else %}
-                          <div class="variant-option__thumbnail-placeholder"></div>
-                        {% endif %}
-                      {% elsif product_resource.featured_media %}
-                        {% comment %} Fallback to product featured image {% endcomment %}
-                        {% assign fallback_image = product_resource.featured_media.preview_image | default: product_resource.featured_media %}
-                        {% if fallback_image %}
-                          {{
-                            fallback_image
-                            | image_url: width: 160
-                            | image_tag:
-                              loading: 'lazy',
-                              alt: product_option_value.name | default: 'Product image',
-                              class: 'variant-option__thumbnail-img',
-                              widths: '80, 160'
-                          }}
-                        {% else %}
-                          <div class="variant-option__thumbnail-placeholder"></div>
-                        {% endif %}
-                      {% else %}
-                        <div class="variant-option__thumbnail-placeholder"></div>
-                      {% endif %}
-                    </div>
-                  {% else %}
+                    %}
                     {% render 'swatch',
                       swatch: product_option_value.swatch,
                       variant_image: featured_media,
                       mode: 'unscaled'
                     %}
                   {% endif %}
+                {% elsif variant_style == 'image-thumbnail' %}
+                  {% liquid
+                    assign option_key = 'option' | append: product_option.position
+                    assign featured_media = product_option_value.variant.featured_media
+                    if product_option_value.variant == blank or featured_media == blank
+                      for variant in product_resource.variants
+                        assign variant_option_value = variant[option_key]
+                        if variant_option_value == product_option_value.name and variant.featured_media != blank
+                          assign featured_media = variant.featured_media
+                          break
+                        endif
+                      endfor
+                    endif
+                    if featured_media == blank and product_resource.featured_media
+                      assign featured_media = product_resource.featured_media
+                    endif
+                  %}
+                  <div class="variant-option__image-thumbnail">
+                    {% if featured_media %}
+                      {% assign thumbnail_image = featured_media.preview_image | default: featured_media %}
+                      {% if thumbnail_image %}
+                        {{ thumbnail_image | image_url: width: 160 | image_tag: loading: 'lazy', alt: product_option_value.name | default: 'Product image', class: 'variant-option__thumbnail-img', widths: '80, 160' }}
+                      {% else %}
+                        <div class="variant-option__thumbnail-placeholder"></div>
+                      {% endif %}
+                    {% elsif product_resource.featured_media %}
+                      {% assign fallback_image = product_resource.featured_media.preview_image | default: product_resource.featured_media %}
+                      {% if fallback_image %}
+                        {{ fallback_image | image_url: width: 160 | image_tag: loading: 'lazy', alt: product_option_value.name | default: 'Product image', class: 'variant-option__thumbnail-img', widths: '80, 160' }}
+                      {% else %}
+                        <div class="variant-option__thumbnail-placeholder"></div>
+                      {% endif %}
+                    {% else %}
+                      <div class="variant-option__thumbnail-placeholder"></div>
+                    {% endif %}
+                  </div>
                 {% else %}
                   {% if product_option_value.available == true %}
                     <span class="variant-option__button-label__pill"></span>
@@ -938,7 +921,87 @@
     justify-content: right;
   }
 
-  /* Image thumbnail styles for Color and Set options */
+  /* Color swatch styles - circle design matching collection filter */
+  .variant-option--theme-color {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 18px 24px;
+    align-items: flex-start;
+  }
+
+  .variant-option--theme-color .variant-option__button-label--theme-color {
+    width: 60px;
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 140%;
+    text-align: center;
+    color: #8A8A8A;
+    box-sizing: border-box;
+    position: relative;
+    padding: 3px;
+    border: none !important;
+    outline: none !important;
+    background: transparent;
+    border-radius: 0 !important;
+  }
+
+  .variant-option--theme-color .variant-option__button-label--theme-color:hover,
+  .variant-option--theme-color .variant-option__button-label--theme-color:has(:checked) {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .variant-option--theme-color .variant-option__button-label--theme-color::after {
+    display: none !important;
+  }
+
+  .variant-option--theme-color .variant-option__button-label--theme-color:has(:checked) {
+    color: #1D425A;
+  }
+
+  .variant-option--theme-color .variant-option__swatch-wrapper {
+    width: 60px;
+    height: 60px;
+    position: relative;
+    border-radius: 100000px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: none;
+    box-sizing: border-box;
+  }
+
+  .variant-option--theme-color .variant-option__button-label--theme-color:has(:checked) .variant-option__swatch-wrapper {
+    outline: 1px solid #1D425A;
+    outline-offset: 2px;
+    /* Outline with offset creates gap between circle and selection ring, no size change */
+  }
+
+  .variant-option--theme-color .swatch {
+    width: 100%;
+    height: 100%;
+    border-radius: 100000px;
+    box-sizing: border-box;
+  }
+
+  .variant-option--theme-color .variant-option__button-label--theme-color:has([data-option-available='false']) {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .variant-option--theme-color .variant-option__button-label--theme-color:has(:focus-visible) {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  /* Image thumbnail styles for Color and Set options (kept for backwards compatibility) */
   .variant-option--image-thumbnails {
     display: flex;
     flex-wrap: wrap;

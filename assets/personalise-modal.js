@@ -1,8 +1,9 @@
 import { DialogComponent, DialogOpenEvent, DialogCloseEvent } from '@theme/dialog';
 import { Component } from '@theme/component';
 import { onAnimationEnd } from '@theme/utilities';
-import { morphSection } from '@theme/section-renderer';
-import { ThemeEvents } from '@theme/events';
+import { morph } from '@theme/morph';
+import { morphSection, sectionRenderer, normalizeSectionId, buildSectionSelector } from '@theme/section-renderer';
+import { ThemeEvents, VariantUpdateEvent } from '@theme/events';
 
 /**
  * A custom element that manages the personalisation modal.
@@ -57,6 +58,62 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
     // Set up variant change listener for dynamic personalization (cb metafields)
     this.#setupCbVariantChangeListener();
+
+    // Set up variant color change listener (when user selects color in modal)
+    this.#setupVariantColorChangeListener();
+
+    // If coming from collection page: auto-add ?customize=true to URL (product has personalisation + full-screen metafield)
+    this.#maybeAddCustomizeParamFromCollection();
+    // Auto-open personalisation when product page loads with ?customize=true (product has personalisation + full-screen metafield)
+    this.#maybeAutoOpenPersonalisation();
+  }
+
+  /**
+   * When navigating from a collection page to product page: adds ?customize=true to URL
+   * so the personalisation modal can auto-open (product has personalisation + full-screen metafield)
+   * @private
+   */
+  #maybeAddCustomizeParamFromCollection() {
+    if (this.dataset.autoOpenPersonalisation !== 'true') return;
+    if (this.dataset.context === 'cart-drawer') return;
+    if (this.hasAttribute('data-quick-add')) return;
+
+    const referrer = document.referrer || '';
+    if (!referrer.includes('/collections/')) return;
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('customize') === 'true') return;
+
+    url.searchParams.set('customize', 'true');
+    history.replaceState({}, '', url.toString());
+  }
+
+  /**
+   * Auto-opens the personalisation modal when product page is loaded with ?customize=true
+   * Only when: product has personalisation options, metafield cb_full_screen_personalisation is true, and not quick-add/cart context
+   * @private
+   */
+  #maybeAutoOpenPersonalisation() {
+    if (this.dataset.autoOpenPersonalisation !== 'true') return;
+    if (this.dataset.context === 'cart-drawer') return;
+    if (this.hasAttribute('data-quick-add')) return;
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('customize') !== 'true') return;
+
+    // Prevent multiple dialogs from auto-opening (product page may have multiple personalise-dialog elements)
+    if (window._personalisationAutoOpened) return;
+    window._personalisationAutoOpened = true;
+
+    // Small delay to ensure DOM is ready and refs are populated
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (this.refs?.dialog?.open) return;
+        if (typeof this.showDialog === 'function') {
+          this.showDialog();
+        }
+      }, 100);
+    });
   }
 
   /**
@@ -82,17 +139,20 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const map = this.#getCbPersonalizationMap();
     if (!map) return;
 
+    // Normalise to string so lookup in JSON-parsed map works (keys are strings)
+    const variantKey = variantId != null ? String(variantId) : '';
+
     const { product, variants, variantFallbackImages } = map;
     let showDynamic = false;
     let imageUrl = '';
     let positionJson = '';
 
-    if (variantId && variants && variants[variantId]?.image && variants[variantId]?.position) {
+    if (variantKey && variants && variants[variantKey]?.image && variants[variantKey]?.position) {
       showDynamic = true;
-      imageUrl = variants[variantId].image;
-      positionJson = typeof variants[variantId].position === 'string'
-        ? variants[variantId].position
-        : JSON.stringify(variants[variantId].position);
+      imageUrl = variants[variantKey].image;
+      positionJson = typeof variants[variantKey].position === 'string'
+        ? variants[variantKey].position
+        : JSON.stringify(variants[variantKey].position);
     } else if (product?.image && product?.position) {
       showDynamic = true;
       imageUrl = product.image;
@@ -123,9 +183,11 @@ export class PersonaliseDialogComponent extends DialogComponent {
       if (fallbackWrap) {
         fallbackWrap.style.display = '';
         const fallbackImg = fallbackWrap.querySelector('.personalise-modal__preview-image');
-        const fallbackImageUrl = variantFallbackImages?.[variantId] || product?.fallbackImage;
+        const fallbackImageUrl = variantFallbackImages?.[variantKey] || product?.fallbackImage;
         if (fallbackImg && fallbackImageUrl) {
           fallbackImg.src = fallbackImageUrl;
+          // Clear srcset so the browser uses src (Shopify image_tag adds srcset)
+          fallbackImg.removeAttribute('srcset');
         }
       }
       if (placeholder && !fallbackWrap) placeholder.style.display = '';
@@ -150,16 +212,365 @@ export class PersonaliseDialogComponent extends DialogComponent {
       const variantId = variant?.id?.toString?.() ?? variant?.id;
       if (!variantId) return;
 
+      // Store so when modal opens we sync to this variant (form may not have updated yet)
+      this._lastVariantIdFromProductPage = String(variantId);
       this.#updateCbPreviewForVariant(variantId);
     };
 
-    const section = this.closest('.shopify-section') || document.body;
-    section.addEventListener(ThemeEvents.variantUpdate, handleVariantUpdate);
+    // Listen on document so we catch variant updates from any section (variant picker may be in different block)
+    const target = document.body;
+    target.addEventListener(ThemeEvents.variantUpdate, handleVariantUpdate);
 
     this._cbVariantUpdateHandler = handleVariantUpdate;
-    this._cbVariantUpdateTarget = section;
+    this._cbVariantUpdateTarget = target;
   }
-  
+
+  /**
+   * Finds the add-to-cart form (product page or quick-add modal).
+   * Personalise-dialog is often a sibling of product-form-component (not inside it), so we find by product ID.
+   * @returns {HTMLFormElement|null}
+   */
+  #getProductForm() {
+    const forms = this.#getAllProductForms();
+    return forms[0] || null;
+  }
+
+  /**
+   * Finds ALL add-to-cart forms for this product (for variant sync).
+   * Needed because: (1) product page has main form, (2) sticky bar uses same form, (3) quick-add has its own form in modal.
+   * @returns {HTMLFormElement[]}
+   */
+  #getAllProductForms() {
+    const productId = this.dataset?.productId;
+    const forms = [];
+
+    const addFormFromComponent = (comp) => {
+      const form = comp?.querySelector('form[data-type="add-to-cart-form"]');
+      if (form && !forms.includes(form)) forms.push(form);
+    };
+
+    // 1. Quick-add: when we're INSIDE quick-add modal, get form from modal
+    const quickAddModal = this.closest('#quick-add-modal-content');
+    if (quickAddModal) {
+      const formComponent = productId
+        ? quickAddModal.querySelector(`product-form-component[data-product-id="${productId}"]`)
+        : quickAddModal.querySelector('product-form-component');
+      addFormFromComponent(formComponent);
+      if (forms.length > 0) return forms;
+    }
+
+    // 2. Product page: find form(s) in main section (sticky bar uses same form, but form lives in section)
+    if (productId) {
+      const section = this.closest('.shopify-section');
+      const searchRoot = section || document;
+      const formComponent = searchRoot.querySelector(`product-form-component[data-product-id="${productId}"]`);
+      addFormFromComponent(formComponent);
+    }
+
+    // 3. Also search document for any other matching form (e.g. when dialog is in drawer/portal)
+    if (productId) {
+      document.querySelectorAll(`product-form-component[data-product-id="${productId}"]`).forEach(addFormFromComponent);
+    }
+
+    // 4. Fallback: closest product-form-component
+    const formComponent = this.closest('product-form-component');
+    addFormFromComponent(formComponent);
+
+    // 5. Last resort: any form for this product
+    if (forms.length === 0) {
+      const anyForm = document.querySelector('form[data-type="add-to-cart-form"]');
+      if (anyForm) forms.push(anyForm);
+    }
+    return forms;
+  }
+
+  /**
+   * Sets up listener for variant color selection inside the modal.
+   * Updates form variant ID and preview when user selects a color variant.
+   * @private
+   */
+  #setupVariantColorChangeListener() {
+    const dialog = this.refs?.dialog || this.querySelector('dialog');
+    if (!dialog) {
+      setTimeout(() => this.#setupVariantColorChangeListener(), 100);
+      return;
+    }
+
+    const attachVariantColorListeners = () => {
+      const variantColorRadios = this.querySelectorAll('.personalise-modal__variant-color-grid input[type="radio"][data-variant-id]');
+      variantColorRadios.forEach((radio) => {
+        if (radio.dataset.variantColorListener) return;
+        radio.dataset.variantColorListener = 'true';
+        radio.addEventListener('change', this.#handleVariantColorChange.bind(this));
+      });
+    };
+
+    attachVariantColorListeners();
+
+    const observer = new MutationObserver(() => attachVariantColorListeners());
+    observer.observe(dialog, { childList: true, subtree: true });
+  }
+
+  /**
+   * Handles variant color selection change inside the modal.
+   * Updates form variant ID, preview image, and dispatches variant update event.
+   * @private
+   */
+  #handleVariantColorChange(event) {
+    const radio = event.target;
+    if (!radio?.checked) return;
+
+    const variantId = radio.dataset?.variantId;
+    if (!variantId) return;
+
+    this.#updateVariantColorSelectedValue(radio);
+
+    // Update variant in ALL forms for this product (main page, sticky bar context, quick-add)
+    const forms = this.#getAllProductForms();
+    forms.forEach((form) => {
+      const variantInput = form.querySelector('input[name="id"]');
+      if (variantInput) {
+        variantInput.value = variantId;
+        variantInput.disabled = false;
+        variantInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+
+    // Sync variant picker UI (color swatches on product page / quick-add)
+    this.#syncVariantPickersToVariant(variantId);
+
+    this.#updateCbPreviewForVariant(variantId);
+
+    const productId = this.dataset?.productId;
+
+    // On product page: update URL and re-render section (media gallery, etc.)
+    const productPagePicker = productId
+      ? document.querySelector(`variant-picker[data-product-id="${productId}"]`)
+      : document.querySelector('variant-picker');
+    const isProductPage = productPagePicker && !productPagePicker.closest('#quick-add-modal-content') && !window.cartPersonalizationContext;
+    if (isProductPage) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('variant', variantId);
+      if (url.href !== window.location.href) {
+        history.replaceState({}, '', url.toString());
+      }
+      // Update only the media gallery - do NOT re-render the entire section, as that would
+      // replace the personalise-modal and reset all user-entered personalisation data.
+      const sectionEl = productPagePicker.closest('.shopify-section');
+      if (sectionEl?.id) {
+        const sectionId = normalizeSectionId(sectionEl.id);
+        const currentMediaGallery = sectionEl.querySelector('media-gallery');
+        if (currentMediaGallery) {
+          const fullUrl = url.toString();
+          fetch(fullUrl)
+            .then((r) => r.text())
+            .then((html) => {
+              const doc = new DOMParser().parseFromString(html, 'text/html');
+              const sectionSelector = buildSectionSelector(sectionId);
+              const newSectionEl = doc.getElementById(sectionSelector);
+              const newMediaGallery = newSectionEl?.querySelector('media-gallery');
+              if (newMediaGallery) {
+                morph(currentMediaGallery, newMediaGallery);
+              }
+            })
+            .catch(() => {});
+        }
+      }
+    }
+
+    // On quick-add: fetch product page with new variant and directly update the image
+    // (Quick-add's VariantUpdateEvent handler needs html; we fetch and update manually here)
+    const isQuickAddContext = this.hasAttribute('data-quick-add');
+    const quickAddModal = isQuickAddContext ? document.getElementById('quick-add-modal-content') : null;
+    if (quickAddModal) {
+      const quickAddPicker = productId
+        ? quickAddModal.querySelector(`variant-picker[data-product-id="${productId}"]`)
+        : quickAddModal.querySelector('variant-picker');
+      const productFormComponent = quickAddModal.querySelector('product-form-component');
+      const productUrl = quickAddPicker?.dataset?.productUrl || productFormComponent?.dataset?.productUrl;
+      if (productUrl) {
+        const fetchUrl = productUrl.includes('?')
+          ? `${productUrl.split('?')[0]}?variant=${variantId}`
+          : `${productUrl}?variant=${variantId}`;
+        const fullUrl = fetchUrl.startsWith('/')
+          ? new URL(fetchUrl, window.location.origin).toString()
+          : fetchUrl;
+        fetch(fullUrl)
+          .then((r) => r.text())
+          .then((html) => {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const newMediaGallery = doc.querySelector('media-gallery');
+            const newFirstImage =
+              newMediaGallery?.querySelector(
+                '.product-media img, slideshow-slide img, .product-media-container img, img[src], img[data-src]'
+              ) || doc.querySelector('.product-information__media img, media-gallery img');
+            const findCurrentImage = () =>
+              quickAddModal.querySelector(
+                '.product-information__media slideshow-slide:first-child img, .product-information__media .product-media img, .product-information__media .product-media-container img, .product-information__media img, media-gallery img'
+              );
+            const currentFirstImage = findCurrentImage();
+            if (newFirstImage && currentFirstImage) {
+              const newImageSrc =
+                newFirstImage.getAttribute('src') ||
+                newFirstImage.src ||
+                newFirstImage.getAttribute('data-src') ||
+                newFirstImage.getAttribute('srcset')?.trim().split(/\s+/)[0];
+              if (newImageSrc && currentFirstImage.src !== newImageSrc) {
+                currentFirstImage.style.transition = 'none';
+                currentFirstImage.style.opacity = '1';
+                currentFirstImage.src = newImageSrc;
+                if (newFirstImage.getAttribute('srcset')) {
+                  currentFirstImage.srcset = newFirstImage.getAttribute('srcset');
+                }
+                if (newFirstImage.getAttribute('sizes')) {
+                  currentFirstImage.sizes = newFirstImage.getAttribute('sizes');
+                }
+                if (newFirstImage.getAttribute('alt')) {
+                  currentFirstImage.alt = newFirstImage.getAttribute('alt');
+                }
+              }
+            }
+          })
+          .catch(() => {});
+      }
+    }
+
+    const variantResource = { id: Number(variantId) };
+    const section = this.closest('.shopify-section') || document.body;
+    section.dispatchEvent(new VariantUpdateEvent(variantResource, this.id || 'personalise-dialog', {
+      productId: productId || '',
+      html: null
+    }));
+
+    this.updateSaveButton();
+  }
+
+  /**
+   * Syncs the variant color radio selection to match the current variant from the form.
+   * Called when modal opens so the correct variant is shown as selected.
+   * Handles products with color-only and color+size: checks data-variant-id and data-variant-ids.
+   * @param {string} variantId - The current variant ID from the form
+   * @private
+   */
+  #syncVariantColorSelection(variantId) {
+    if (!variantId) return;
+    const variantIdStr = String(variantId);
+    const radios = this.querySelectorAll('.personalise-modal__variant-color-grid input[type="radio"][data-variant-id]');
+    let checkedRadio = null;
+    radios.forEach((radio) => {
+      const matchesId = radio.dataset.variantId === variantIdStr;
+      const variantIds = radio.dataset.variantIds || '';
+      const matchesIds = variantIds.split(',').map((id) => id.trim()).includes(variantIdStr);
+      radio.checked = matchesId || matchesIds;
+      if (radio.checked) checkedRadio = radio;
+    });
+    this.#updateVariantColorSelectedValue(checkedRadio);
+  }
+
+  /**
+   * Syncs variant picker UI (product page / quick-add) to show the selected variant.
+   * Called when color is changed in the personalisation modal.
+   * @param {string} variantId - The selected variant ID
+   * @private
+   */
+  #syncVariantPickersToVariant(variantId) {
+    if (!variantId) return;
+    const variantIdStr = String(variantId);
+    const productId = this.dataset?.productId;
+    const variantPickers = productId
+      ? document.querySelectorAll(`variant-picker[data-product-id="${productId}"]`)
+      : document.querySelectorAll('variant-picker');
+    variantPickers.forEach((picker) => {
+      const inputs = picker.querySelectorAll('input[type="radio"][data-variant-id], input[type="radio"][data-variant-ids]');
+      let matchingInput = null;
+      for (const input of inputs) {
+        const matchesId = input.dataset.variantId === variantIdStr;
+        const variantIds = (input.dataset.variantIds || '').split(',').map((id) => id.trim());
+        const matchesIds = variantIds.includes(variantIdStr);
+        if (matchesId || matchesIds) {
+          matchingInput = input;
+          break;
+        }
+      }
+      if (matchingInput) {
+        picker.updateSelectedOption?.(matchingInput);
+        const fieldset = matchingInput.closest('fieldset');
+        const valueSpan = fieldset?.querySelector('.variant-option__selected-value');
+        if (valueSpan) {
+          valueSpan.textContent = matchingInput.value || '';
+        }
+      }
+    });
+  }
+
+  /**
+   * Updates the selected value label text above the variant color swatches.
+   * @param {HTMLInputElement|null} checkedRadio - The checked radio input
+   * @private
+   */
+  #updateVariantColorSelectedValue(checkedRadio) {
+    const span = this.querySelector('[data-variant-color-selected-value]');
+    if (!span) return;
+    span.textContent = checkedRadio?.value ?? '';
+  }
+
+  /**
+   * Gets the current variant ID for sync - from product form (product page/quick-add) or cart context (cart drawer).
+   * @returns {string|null} - The variant ID to sync
+   * @private
+   */
+  #getVariantIdForSync() {
+    // Cart drawer context: use variant from cart line
+    const cartContext = window.cartPersonalizationContext;
+    if (cartContext?.variantId) {
+      return String(cartContext.variantId);
+    }
+    // Quick-add: use form in modal only
+    if (this.closest('#quick-add-modal-content')) {
+      const productForm = this.#getProductForm();
+      const variantInput = productForm?.querySelector('input[name="id"]');
+      if (variantInput?.value) return String(variantInput.value);
+      if (this._openingVariantId) {
+        const id = this._openingVariantId;
+        this._openingVariantId = null;
+        return id;
+      }
+      return null;
+    }
+    // Product page: prefer last variant from VariantUpdateEvent (form can lag after morph)
+    if (this._lastVariantIdFromProductPage) {
+      return this._lastVariantIdFromProductPage;
+    }
+    // Then form value
+    const productForm = this.#getProductForm();
+    if (productForm) {
+      const variantInput = productForm.querySelector('input[name="id"]');
+      if (variantInput?.value) {
+        return String(variantInput.value);
+      }
+    }
+    // Then variant passed when Personalise button was clicked
+    if (this._openingVariantId) {
+      const id = this._openingVariantId;
+      this._openingVariantId = null;
+      return id;
+    }
+    return null;
+  }
+
+  /**
+   * Syncs variant color selection and preview image when modal opens.
+   * Handles both product form context (product page, quick-add) and cart drawer context.
+   * @private
+   */
+  #syncVariantAndPreviewOnOpen() {
+    const variantId = this.#getVariantIdForSync();
+    if (variantId) {
+      this.#updateCbPreviewForVariant(variantId);
+      this.#syncVariantColorSelection(variantId);
+    }
+  }
+
   /**
    * Sets up event listeners for all input changes to update save button state
    * @private
@@ -670,11 +1081,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
   /**
    * Shows the dialog.
    * Overridden to prevent click handlers from interfering with parent dialog
+   * @param {string} [variantIdFromButton] - Optional variant ID captured when Personalise button was clicked (ensures we show the variant the user had selected)
    */
-  showDialog() {
+  showDialog(variantIdFromButton) {
     const { dialog } = this.refs;
 
     if (dialog.open) return;
+
+    // Capture variant from form at open time so we can use it if form hasn't been updated yet by variant picker
+    if (variantIdFromButton) {
+      this._openingVariantId = String(variantIdFromButton);
+    }
 
     const scrollY = window.scrollY;
     this.#previousScrollY = scrollY;
@@ -682,6 +1099,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Set up close button handlers BEFORE opening dialog
     // This ensures they're ready when the dialog opens
     this.#setupCloseButtonHandlers();
+
+    // Add customize=true to URL when full-screen personalisation (product metafield custom.cb_full_screen_personalisation)
+    // Only on product page - not when opened from quick-add or cart drawer
+    if (this.dataset.fullScreenPersonalisation === 'true' && !this.hasAttribute('data-quick-add') && !window.cartPersonalizationContext) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('customize') !== 'true') {
+        url.searchParams.set('customize', 'true');
+        history.replaceState({}, '', url.toString());
+        this._weAddedCustomizeParam = true;
+      }
+    }
 
     // Prevent layout thrashing by separating DOM reads from DOM writes
     requestAnimationFrame(() => {
@@ -887,8 +1315,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
             this.#populateFieldsFromSavedData();
             // Set up input listeners after fields are populated
             this.#attachInputListeners();
+            // Sync preview image and variant color selection with current variant
+            this.#syncVariantAndPreviewOnOpen();
             // Update dynamic personalization text overlay if variant/product has cb metafields
             this.updateCbPreviewOverlay();
+            // Retry sync at intervals (variant picker updates form async after morph - this catches the update)
+            setTimeout(() => this.#syncVariantAndPreviewOnOpen(), 150);
+            setTimeout(() => this.#syncVariantAndPreviewOnOpen(), 350);
+            setTimeout(() => {
+              this.#syncVariantAndPreviewOnOpen();
+              this._openingVariantId = null; // clear after last retry
+            }, 550);
           } catch (error) {
             console.error('Error populating fields:', error);
           }
@@ -902,6 +1339,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
           this.#populateFieldsFromSavedData();
           // Set up input listeners after fields are populated
           this.#attachInputListeners();
+          this.#syncVariantAndPreviewOnOpen();
           this.updateCbPreviewOverlay();
         } catch (error) {
           console.error('Error populating fields after max attempts:', error);
@@ -932,6 +1370,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
    * This method name is unique and won't conflict with anything
    */
   closePersonaliseOnly = async () => {
+    this._openingVariantId = null; // clear so next open doesn't use stale variant
     if (this._cbPreviewResizeHandler) {
       window.removeEventListener('resize', this._cbPreviewResizeHandler);
     }
@@ -1025,6 +1464,16 @@ export class PersonaliseDialogComponent extends DialogComponent {
       // Restore scroll position using saved value
       window.scrollTo({ top: this.#previousScrollY, behavior: 'instant' });
     }
+
+    // Remove customize=true from URL when closing (product page only, not quick-add/cart)
+    if (this.dataset.context !== 'cart-drawer' && !this.hasAttribute('data-quick-add')) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('customize') === 'true') {
+        url.searchParams.delete('customize');
+        history.replaceState({}, '', url.toString());
+      }
+    }
+    this._weAddedCustomizeParam = false;
 
     try {
       this.dispatchEvent(new DialogCloseEvent());
@@ -1265,10 +1714,27 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const yPct = position.y != null ? Number(position.y) : 20;
     const fontSize = position.font_size != null ? Number(position.font_size) : 20;
 
-    const nameInput = (this.refs && this.refs.nameInput) || this.querySelector('#personalise-name');
-    const nameVal = (nameInput && nameInput.value) || (this.personalisationData && this.personalisationData.name) || '';
-    const name = String(nameVal).trim();
     const supported = this.#getSupportedPersonalisationFields();
+    let name = '';
+    if (supported.babyName || supported.kidName || supported.mumName) {
+      const activePanel = this.querySelector('.personalise-name-tabs__panel.is-active');
+      const panelType = activePanel && activePanel.dataset.panel;
+      if (panelType === 'baby') {
+        const babyInput = (this.refs && this.refs.babyNameInput) || this.querySelector('[data-name-input="baby"]');
+        name = (babyInput && babyInput.value) || (this.personalisationData && this.personalisationData.babyName) || '';
+      } else if (panelType === 'kid') {
+        const kidInput = (this.refs && this.refs.kidNameInput) || this.querySelector('[data-name-input="kid"]');
+        name = (kidInput && kidInput.value) || (this.personalisationData && this.personalisationData.kidName) || '';
+      } else if (panelType === 'mum') {
+        const mumInput = (this.refs && this.refs.mumNameInput) || this.querySelector('[data-name-input="mum"]');
+        name = (mumInput && mumInput.value) || (this.personalisationData && this.personalisationData.mumName) || '';
+      }
+      name = String(name).trim();
+    } else {
+      const nameInput = (this.refs && this.refs.nameInput) || this.querySelector('#personalise-name');
+      const nameVal = (nameInput && nameInput.value) || (this.personalisationData && this.personalisationData.name) || '';
+      name = String(nameVal).trim();
+    }
     const colorName = supported.color ? ((this.personalisationData && this.personalisationData.color) || this.selectedColor || '') : '';
     const fontName = supported.font ? ((this.personalisationData && this.personalisationData.font) || this.selectedFont || '') : '';
 
@@ -1286,6 +1752,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
       green: '#E4EFDB',
       grey: '#E8EBEC',
       gray: '#E8EBEC',
+      multicolour: '#8B4789',
       orange: '#F8CF89',
       pink: '#F7DDE2',
       purple: '#F0D9E6',
@@ -1371,6 +1838,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Update save button state
     this.updateSaveButton();
+    this.updateCbPreviewOverlay();
   };
   
   /**
@@ -1431,6 +1899,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (activePanel) {
       activePanel.classList.add('is-active');
     }
+    this.updateCbPreviewOverlay();
   };
 
   /**
@@ -1742,21 +2211,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
       
     } else {
       // Write personalisation directly to form inputs (not to storage)
-      form = this.closest('product-form-component')?.querySelector('form[data-type="add-to-cart-form"]');
-      
-      // If not found, check if we're in a quick-add modal context
-      if (!form) {
-        const quickAddModal = document.querySelector('#quick-add-modal-content');
-        if (quickAddModal) {
-          form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
-        }
-      }
-      
-      // Fallback to any form
-      if (!form) {
-        form = document.querySelector('form[data-type="add-to-cart-form"]');
-      }
-      
+      // CRITICAL: Use #getProductForm() to get the form for THIS product (by product ID)
+      // This prevents adding wrong product when personalise-dialog is in body or multiple forms exist
+      form = this.#getProductForm();
+
       if (form) {
         // Remove existing personalisation properties (but keep gift message and other non-personalisation properties)
         const existingProps = form.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
@@ -1902,8 +2360,73 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // Also dispatch on document to ensure it's caught
     document.dispatchEvent(customEvent);
 
-    // Close the dialog
-    this.closeDialog();
+    // When full_screen_personalisation: add to cart directly instead of just saving
+    const isAddToCartMode = this.refs?.saveButton?.dataset?.addToCartMode === 'true';
+    if (isAddToCartMode && form && !cartContext) {
+      const saveButton = this.refs.saveButton;
+      const addToCartText = saveButton?.dataset?.addToCartText || 'Add to cart';
+      const addingText = saveButton?.dataset?.addingText || 'Adding...';
+
+      // Show "Adding" state while submitting
+      if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = addingText;
+      }
+
+      // Ensure personalisation confirmation checkbox is checked (user confirmed by clicking Add to cart in modal)
+      const formComponent = form.closest('product-form-component');
+      const confirmCheckbox = formComponent?.querySelector('[data-personalise-confirm-checkbox]');
+      if (confirmCheckbox) {
+        confirmCheckbox.checked = true;
+      }
+
+      const refreshProductSection = () => {
+        const productId = this.dataset?.productId;
+        const productPagePicker = productId
+          ? document.querySelector(`variant-picker[data-product-id="${productId}"]`)
+          : document.querySelector('variant-picker');
+        if (productPagePicker && !productPagePicker.closest('#quick-add-modal-content')) {
+          const sectionEl = productPagePicker.closest('.shopify-section');
+          if (sectionEl?.id) {
+            const sectionId = normalizeSectionId(sectionEl.id);
+            const url = new URL(window.location.href);
+            sectionRenderer.renderSection(sectionId, { cache: false, url });
+          }
+        }
+      };
+
+      // Submit the form - wait for CartAddEvent (success) before closing so cart drawer opens and refreshes first
+      const handleCartAdd = (event) => {
+        const didError = event?.detail?.data?.didError;
+        document.removeEventListener(ThemeEvents.cartUpdate, handleCartAdd);
+        if (this._addToCartCloseTimeout) {
+          clearTimeout(this._addToCartCloseTimeout);
+          this._addToCartCloseTimeout = null;
+        }
+        if (!didError) {
+          this.closeDialog();
+          // Refresh product section to reset personalisations (fetch whole section)
+          requestAnimationFrame(() => setTimeout(refreshProductSection, 100));
+        } else {
+          // Restore button on error
+          if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.textContent = addToCartText;
+          }
+        }
+      };
+      document.addEventListener(ThemeEvents.cartUpdate, handleCartAdd);
+      // Fallback: close after 5s if event never fires (e.g. network error)
+      this._addToCartCloseTimeout = setTimeout(() => {
+        document.removeEventListener(ThemeEvents.cartUpdate, handleCartAdd);
+        this.closeDialog();
+        refreshProductSection();
+      }, 5000);
+      form.requestSubmit();
+    } else {
+      // Normal save flow - close immediately
+      this.closeDialog();
+    }
 
     // Button text is updated by document listener (buy-buttons) on 'personalisation-saved'.
     // We do not update here to avoid duplicate retry loops that caused the Edit

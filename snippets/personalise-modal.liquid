@@ -82,11 +82,48 @@
   if has_baby_name or has_kid_name or has_mum_name
     assign show_name_tabs = true
   endif
+
+  # Detect if product has color-type variant option (same logic as variant-main-picker)
+  assign color_option = nil
+  assign has_color_option = false
+  for product_option in product.options_with_values
+    assign option_name_lower = product_option.name | downcase | strip
+    assign is_color_or_set = false
+    if option_name_lower == 'color' or option_name_lower == 'set' or option_name_lower == 'colour'
+      assign is_color_or_set = true
+    elsif option_name_lower contains 'color' or option_name_lower contains 'set' or option_name_lower contains 'colour'
+      unless option_name_lower contains 'size'
+        assign is_color_or_set = true
+      endunless
+    endif
+    if is_color_or_set
+      assign color_option = product_option
+      assign has_color_option = true
+      break
+    endif
+  endfor
   
   # Generate unique ID based on context
   assign modal_id = 'personalise-dialog'
   if context == 'cart-drawer'
     assign modal_id = 'personalise-dialog-cart'
+  endif
+
+  # Full-screen personalisation: when product metafield custom.cb_full_screen_personalisation is true
+  assign full_screen_personalisation = false
+  assign cb_full_screen_val = product.metafields.custom.cb_full_screen_personalisation
+  if cb_full_screen_val != blank and cb_full_screen_val.value == true
+    assign full_screen_personalisation = true
+  endif
+
+  # Auto-open personalisation: when product has personalisation options and full-screen metafield is true
+  assign auto_open_personalisation = false
+  assign has_personalisation_option = false
+  if show_personalized or has_color_option or show_name_tabs or personalized_name or personalized_textbox
+    assign has_personalisation_option = true
+  endif
+  if full_screen_personalisation and has_personalisation_option
+    assign auto_open_personalisation = true
   endif
 
   # Dynamic personalization preview: show ONLY if selected variant has ALL required metafields OR product has ALL.
@@ -144,7 +181,7 @@
   endif
 %}
 
-<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}" data-product-id="{{ product.id }}"{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}>
+<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}" data-product-id="{{ product.id }}"{% if has_color_option %} data-has-color-variant="true"{% endif %}{% if full_screen_personalisation %} data-full-screen-personalisation="true"{% endif %}{% if auto_open_personalisation and context != 'cart-drawer' %} data-auto-open-personalisation="true"{% endif %}{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}>
   {%- comment -%} Variant metafields for dynamic preview when variant changes - keyed by variant ID {%- endcomment -%}
   <script type="application/json" data-cb-personalization-variants>
     {
@@ -266,6 +303,174 @@
           </span>
           <span>Personalise Your Product</span>
         </h2>
+
+        {% if has_color_option and color_option %}
+          {%- liquid
+            assign display_option_name = color_option.name
+            if display_option_name contains 'colour' or display_option_name contains 'Colour' or display_option_name contains 'COLOUR'
+              assign display_option_name = display_option_name | replace: 'COLOUR', 'COLOR' | replace: 'Colour', 'Color' | replace: 'colour', 'color'
+            endif
+            assign display_option_name_lower = display_option_name | downcase
+            if display_option_name_lower contains 'text '
+              if display_option_name contains 'Text '
+                assign display_option_name = display_option_name | replace: 'Text ', ''
+              elsif display_option_name contains 'TEXT '
+                assign display_option_name = display_option_name | replace: 'TEXT ', ''
+              else
+                assign display_option_name = display_option_name | replace: 'text ', ''
+              endif
+            endif
+            if display_option_name_lower contains 'choose '
+              if display_option_name contains 'Choose '
+                assign display_option_name = display_option_name | replace: 'Choose ', ''
+              elsif display_option_name contains 'CHOOSE '
+                assign display_option_name = display_option_name | replace: 'CHOOSE ', ''
+              else
+                assign display_option_name = display_option_name | replace: 'choose ', ''
+              endif
+            endif
+            assign display_option_name = display_option_name | strip
+            assign option_key = 'option' | append: color_option.position
+            assign has_limited_edition = false
+            for pv_check in color_option.values
+              for v_check in product.variants
+                if v_check[option_key] == pv_check.name
+                  assign v_lim = v_check.metafields.custom.cb_limited_edition
+                  if v_lim != blank and v_lim.value == true
+                    assign has_limited_edition = true
+                    break
+                  endif
+                endif
+              endfor
+              if has_limited_edition
+                break
+              endif
+            endfor
+          -%}
+          <div class="personalise-modal__field" data-personalise-variant-color-wrap ref="variantColorWrap">
+            <label class="personalise-modal__label">
+              <span class="variant-option__label-text">Select {{ display_option_name }}:</span>
+              <span class="variant-option__selected-value" data-variant-color-selected-value>{{ variant[option_key] | default: color_option.values.first }}</span>
+            </label>
+            <fieldset class="personalise-modal__variant-color-grid variant-option variant-option--buttons variant-option--swatches variant-option--theme-color" ref="variantColorGrid">
+              {% for product_option_value in color_option.values %}
+                {% assign is_limited_edition_val = false %}
+                {% for v in product.variants %}
+                  {% if v[option_key] == product_option_value.name %}
+                    {% assign v_limited = v.metafields.custom.cb_limited_edition %}
+                    {% if v_limited != blank and v_limited.value == true %}
+                      {% assign is_limited_edition_val = true %}
+                      {% break %}
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+                {% unless is_limited_edition_val %}
+                  {% assign variant_ids_for_option = '' %}
+                  {% assign option_variant = product_option_value.variant %}
+                  {% for v in product.variants %}
+                    {% if v[option_key] == product_option_value.name %}
+                      {% if variant_ids_for_option != '' %}
+                        {% assign variant_ids_for_option = variant_ids_for_option | append: ',' %}
+                      {% endif %}
+                      {% assign variant_ids_for_option = variant_ids_for_option | append: v.id %}
+                      {% if option_variant == blank %}
+                        {% assign option_variant = v %}
+                      {% endif %}
+                    {% endif %}
+                  {% endfor %}
+                  <label
+                    class="variant-option__button-label variant-option__button-label--has-swatch swatch-rounded variant-option__button-label--theme-color personalise-modal__variant-color-button"
+                    data-variant-id="{{ option_variant.id }}"
+                    data-variant-ids="{{ variant_ids_for_option }}"
+                    data-option-value="{{ product_option_value | escape }}"
+                  >
+                    <input
+                      type="radio"
+                      name="personalise-variant-color-{{ product.id }}"
+                      value="{{ product_option_value | escape }}"
+                      aria-label="{{ product_option_value | escape }}"
+                      data-variant-id="{{ option_variant.id }}"
+                      data-variant-ids="{{ variant_ids_for_option }}"
+                      data-option-available="{{ product_option_value.available }}"
+                      {% if option_variant.id == variant.id %}checked{% endif %}
+                    >
+                    <div class="variant-option__swatch-wrapper">
+                      {% assign cb_color_img = option_variant.metafields.custom.cb_color_image %}
+                      {% if cb_color_img != blank and cb_color_img.value != blank %}
+                        {% assign cb_image_url = cb_color_img.value | image_url: width: 80 %}
+                        <span class="swatch swatch--filter personalise-modal__swatch-image" style="--swatch-background: url({{ cb_image_url }});" aria-hidden="true"></span>
+                      {% else %}
+                        {% render 'swatch', swatch: product_option_value.swatch, mode: 'filter' %}
+                      {% endif %}
+                    </div>
+                    {% render 'strikethrough-variant', product_option: product_option_value %}
+                  </label>
+                {% endunless %}
+              {% endfor %}
+            </fieldset>
+            {% if has_limited_edition %}
+              <div class="personalise-modal__limited-edition-colors">
+                <span class="personalise-modal__limited-edition-label">Limited Edition</span>
+                <fieldset class="personalise-modal__variant-color-grid personalise-modal__variant-color-grid--limited-edition variant-option variant-option--buttons variant-option--swatches variant-option--theme-color">
+                  {% for product_option_value in color_option.values %}
+                    {% assign is_limited_edition_val = false %}
+                    {% for v in product.variants %}
+                      {% if v[option_key] == product_option_value.name %}
+                        {% assign v_limited = v.metafields.custom.cb_limited_edition %}
+                        {% if v_limited != blank and v_limited.value == true %}
+                          {% assign is_limited_edition_val = true %}
+                          {% break %}
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                    {% if is_limited_edition_val %}
+                      {% assign variant_ids_for_option = '' %}
+                      {% assign option_variant = product_option_value.variant %}
+                      {% for v in product.variants %}
+                        {% if v[option_key] == product_option_value.name %}
+                          {% if variant_ids_for_option != '' %}
+                            {% assign variant_ids_for_option = variant_ids_for_option | append: ',' %}
+                          {% endif %}
+                          {% assign variant_ids_for_option = variant_ids_for_option | append: v.id %}
+                          {% if option_variant == blank %}
+                            {% assign option_variant = v %}
+                          {% endif %}
+                        {% endif %}
+                      {% endfor %}
+                      <label
+                        class="variant-option__button-label variant-option__button-label--has-swatch swatch-rounded variant-option__button-label--theme-color personalise-modal__variant-color-button personalise-modal__variant-color-button--limited-edition"
+                        data-variant-id="{{ option_variant.id }}"
+                        data-variant-ids="{{ variant_ids_for_option }}"
+                        data-option-value="{{ product_option_value | escape }}"
+                      >
+                        <input
+                          type="radio"
+                          name="personalise-variant-color-{{ product.id }}"
+                          value="{{ product_option_value | escape }}"
+                          aria-label="{{ product_option_value | escape }}"
+                          data-variant-id="{{ option_variant.id }}"
+                          data-variant-ids="{{ variant_ids_for_option }}"
+                          data-option-available="{{ product_option_value.available }}"
+                          {% if option_variant.id == variant.id %}checked{% endif %}
+                        >
+                        <div class="variant-option__swatch-wrapper">
+                          {% assign cb_color_img = option_variant.metafields.custom.cb_color_image %}
+                          {% if cb_color_img != blank and cb_color_img.value != blank %}
+                            {% assign cb_image_url = cb_color_img.value | image_url: width: 80 %}
+                            <span class="swatch swatch--filter personalise-modal__swatch-image" style="--swatch-background: url({{ cb_image_url }});" aria-hidden="true"></span>
+                          {% else %}
+                            {% render 'swatch', swatch: product_option_value.swatch, mode: 'filter' %}
+                          {% endif %}
+                        </div>
+                        {% render 'strikethrough-variant', product_option: product_option_value %}
+                      </label>
+                    {% endif %}
+                  {% endfor %}
+                </fieldset>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
 
         {% if show_name_tabs %}
           <!-- Baby/Kid/Mum Name Tabs -->
@@ -731,8 +936,13 @@
             class="personalise-modal__save-button button button--primary"
             ref="saveButton"
             on:click="/savePersonalisation"
+            {% if full_screen_personalisation and context != 'cart-drawer' %}data-add-to-cart-mode="true" data-add-to-cart-text="{{ 'products.product.add_to_cart' | t }}" data-adding-text="{{ 'products.product.adding_to_cart' | t }}"{% endif %}
           >
-            SAVE PERSONALISATION
+            {% if full_screen_personalisation and context != 'cart-drawer' %}
+              {{ 'products.product.add_to_cart' | t }}
+            {% else %}
+              SAVE PERSONALISATION
+            {% endif %}
           </button>
           <button
             type="button"
@@ -753,21 +963,32 @@
     padding: 20px;
     border: var(--style-border-popover);
     max-width: 90vw;
-    width: 79.86vw; /* 1150px at 1440px screen size */
+    width: 79.86vw;
     max-height: 90vh;
     overflow: hidden;
     box-shadow: 0 5px 30px rgb(0 0 0 / var(--opacity-15));
     background-color: var(--color-background);
   }
 
-  /* At 1440px screen size, modal should be exactly 1150px */
+  /* Full-screen when product has color-type variant OR product metafield custom.cb_full_screen_personalisation is true */
+  personalise-dialog[data-has-color-variant="true"] .personalise-modal,
+  personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal {
+    width: 100vw;
+    max-width: none;
+    height: 100vh;
+    max-height: none;
+  }
+
   @media screen and (min-width: 1440px) {
     .personalise-modal {
       width: 1150px;
     }
+    personalise-dialog[data-has-color-variant="true"] .personalise-modal,
+    personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal {
+      width: 100vw;
+    }
   }
 
-  /* Scale down proportionally for smaller screens */
   @media screen and (max-width: 1439px) {
     .personalise-modal {
       width: 79.86vw;
@@ -806,7 +1027,7 @@
 
   /* Left Section: Preview */
   .personalise-modal__preview {
-    flex: 0 0 52%; /* 525px / 1150px = 45.65% for proportional scaling */
+    flex: 0 0 52%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -815,10 +1036,13 @@
     overflow: hidden;
   }
 
-  /* At 1150px modal width, preview should be exactly 525px */
   @media screen and (min-width: 1440px) {
     .personalise-modal__preview {
       flex: 0 0 525px;
+    }
+    personalise-dialog[data-has-color-variant="true"] .personalise-modal__preview,
+    personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__preview {
+      flex: 0 0 52%;
     }
   }
 
@@ -865,17 +1089,20 @@
 
   /* Right Section: Form */
   .personalise-modal__form {
-    flex: 0 0 46.09%; /* 530px / 1150px = 46.09% for proportional scaling */
+    flex: 0 0 46.09%;
     display: flex;
     flex-direction: column;
     padding-left: 20px; 
     overflow-y: auto;
   }
 
-  /* At 1150px modal width, form should be exactly 530px */
   @media screen and (min-width: 1440px) {
     .personalise-modal__form {
       flex: 0 0 530px;
+    }
+    personalise-dialog[data-has-color-variant="true"] .personalise-modal__form,
+    personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__form {
+      flex: 0 0 46.09%;
     }
   }
 
@@ -929,6 +1156,50 @@
     margin-top: 25px;
   }
 
+  /* Variant color option (product color/set) - same design as main variant picker */
+  .personalise-modal__variant-color-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-sm);
+    margin-block-start: var(--margin-sm);
+    border: none;
+    padding: 0;
+  }
+
+  .personalise-modal__variant-color-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Image swatches from variant metafield custom.cb_color_image - fill circle with cover */
+  .personalise-modal__swatch-image {
+    background-size: cover !important;
+    background-position: center !important;
+  }
+
+  .personalise-modal__limited-edition-colors {
+    margin-top: var(--margin-lg);
+    padding-top: var(--margin-lg);
+    border-top: 1px solid #D0D0D0;
+  }
+
+  .personalise-modal__limited-edition-label {
+    display: block;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 156%;
+    color: #777777;
+    margin-block-end: var(--margin-sm);
+    letter-spacing: 0.02em;
+  }
+
+  .personalise-modal__variant-color-grid--limited-edition {
+    margin-block-start: var(--margin-sm);
+  }
+
   .personalise-modal__label {
     display: block;
     font-family: 'Outfit', sans-serif;
@@ -938,6 +1209,12 @@
     line-height: 156%;
     color: #1D425A;
     margin-block-end: var(--margin-sm);
+  }
+
+  .personalise-modal__label .variant-option__selected-value {
+    padding-inline-start: var(--padding-xs);
+    font-weight: 400;
+    color: rgb(var(--color-foreground-rgb));
   }
 
   .personalise-modal__input-wrapper {
