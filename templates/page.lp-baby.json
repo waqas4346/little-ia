@@ -9,11 +9,28 @@
  */
 {
   "sections": {
+    "page_banner_eX4hnp": {
+      "type": "page-banner",
+      "name": "Page banner",
+      "settings": {
+        "section_width": "full-width",
+        "image": "shopify://shop_images/08.jpg",
+        "title": "",
+        "description": ""
+      }
+    },
     "collection_banner_baby": {
       "type": "collection-banner-below",
       "name": "Collection banner",
       "settings": {
         "section_width": "full-width"
+      }
+    },
+    "collection_featured_tiles": {
+      "type": "collection-featured-tiles",
+      "name": "Collection featured tiles",
+      "settings": {
+        "section_width": "page-width"
       }
     },
     "collection_featured_yqmTeP": {
@@ -147,16 +164,10 @@
         "padding-block-start": 32,
         "padding-block-end": 32
       }
-    },
-    "collection_featured_tiles": {
-      "type": "collection-featured-tiles",
-      "name": "Collection featured tiles",
-      "settings": {
-        "section_width": "page-width"
-      }
     }
   },
   "order": [
+    "page_banner_eX4hnp",
     "collection_banner_baby",
     "collection_featured_tiles",
     "collection_featured_yqmTeP"
