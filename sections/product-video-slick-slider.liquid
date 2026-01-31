@@ -268,7 +268,8 @@
   /* Ensure consistent spacing between slides and fixed width */
   .product-video-slick-slider-section .slick-slide {
     width: 280px !important;
-    margin-right: 24px !important;
+    margin-left: 12px !important;
+    margin-right: 12px !important;
     box-sizing: border-box;
   }
 
@@ -337,13 +338,11 @@
     .product-video-slick-slider-section .slick-slide.slick-center .product-video-slick-slider__item {
       width: 100% !important;
       max-width: 100% !important;
-      padding: 0 20px;
       box-sizing: border-box;
     }
     
     /* Non-center slides also need proper padding */
     .product-video-slick-slider-section .slick-slide:not(.slick-center) .product-video-slick-slider__item {
-      padding: 0 20px;
       box-sizing: border-box;
     }
     
@@ -506,7 +505,6 @@
     max-width: 100% !important;
     aspect-ratio: 204 / 321;
     overflow: hidden;
-    border-radius: 4px;
     box-sizing: border-box;
   }
 
@@ -528,25 +526,39 @@
   }
 
   .product-video-slick-slider__product-info {
-    margin-top: 16px;
+    margin-top: 10px;
     display: flex;
     align-items: center;
     gap: 5px;
     padding: 5px;
     background-color: #FFFFFF;
-    border-radius: 4px;
     box-sizing: border-box;
     position: relative;
     width: 100%;
     flex-shrink: 0;
   }
 
+  @media screen and (max-width: 749px) {
+    .product-video-slick-slider__product-info,
+    .product-video-slick-slider-section .slick-center .product-video-slick-slider__product-info {
+      padding: 5px;
+    }
+  }
+
+  @media screen and (min-width: 750px) {
+    .product-video-slick-slider-section .slick-slide:not(.slick-center) .product-video-slick-slider__product-info {
+      padding: 5px 11px 5px 5px;
+    }
+    .product-video-slick-slider-section .slick-center .product-video-slick-slider__product-info {
+      padding: 3px 9px 3px 8px;
+    }
+  }
+
   .product-video-slick-slider__product-image-wrapper {
     flex-shrink: 0;
-    width: 50px;
-    height: 50px;
+    width: 57px;
+    height: 57px;
     overflow: visible;
-    border-radius: 4px;
     background-color: #F7F7F7;
     display: flex;
     align-items: center;
@@ -554,9 +566,9 @@
   }
 
   @media screen and (min-width: 750px) {
-    .product-video-slick-slider__product-image-wrapper {
-      width: 53px;
-      height: 53px;
+    .product-video-slick-slider-section .slick-center .product-video-slick-slider__product-image-wrapper {
+      width: 69px;
+      height: 69px;
     }
   }
 
@@ -803,7 +815,6 @@
     max-width: 100% !important;
     aspect-ratio: 204 / 321;
     overflow: hidden;
-    border-radius: 4px;
     cursor: default;
     box-sizing: border-box;
   }
@@ -877,8 +888,8 @@
   }
 
   .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden) {
-    width: 49px !important;
-    height: 49px !important;
+    width: 48px !important;
+    height: 48px !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
@@ -887,9 +898,9 @@
   .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden)::after {
     content: '';
     display: block;
-    width: 49px;
-    height: 49px;
-    background-image: url("data:image/svg+xml,%3Csvg width='49' height='49' viewBox='0 0 49 49' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-2.28349' y='-2.28349' width='53.0909' height='53.0909'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.14px);clip-path:url(%23bgblur_0_860_8379_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='2.28349' cx='24.2621' cy='24.2621' r='24.2621' fill='%23222222' fill-opacity='0.36'/%3E%3Cpath d='M19 15L19 33L31 24L19 15Z' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_8379_clip_path' transform='translate(2.28349 2.28349)'%3E%3Ccircle cx='24.2621' cy='24.2621' r='24.2621'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+    width: 48px;
+    height: 48px;
+    background-image: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 49 49' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-2.28349' y='-2.28349' width='53.0909' height='53.0909'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.14px);clip-path:url(%23bgblur_0_860_8379_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='2.28349' cx='24.2621' cy='24.2621' r='24.2621' fill='%23222222' fill-opacity='0.36'/%3E%3Cpath d='M19 15L19 33L31 24L19 15Z' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_8379_clip_path' transform='translate(2.28349 2.28349)'%3E%3Ccircle cx='24.2621' cy='24.2621' r='24.2621'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -908,8 +919,8 @@
   }
 
   .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden) {
-    width: 49px !important;
-    height: 49px !important;
+    width: 48px !important;
+    height: 48px !important;
     display: flex !important;
     align-items: center;
     justify-content: center;
@@ -918,9 +929,9 @@
   .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden)::after {
     content: '';
     display: block;
-    width: 49px;
-    height: 49px;
-    background-image: url("data:image/svg+xml,%3Csvg width='49' height='49' viewBox='0 0 49 49' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-2.28349' y='-2.28349' width='53.0909' height='53.0909'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.14px);clip-path:url(%23bgblur_0_860_8379_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='2.28349' cx='24.2621' cy='24.2621' r='24.2621' fill='%23222222' fill-opacity='0.36'/%3E%3Crect x='18' y='14' width='4' height='20' fill='white'/%3E%3Crect x='27' y='14' width='4' height='20' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_8379_clip_path' transform='translate(2.28349 2.28349)'%3E%3Ccircle cx='24.2621' cy='24.2621' r='24.2621'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+    width: 48px;
+    height: 48px;
+    background-image: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 49 49' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-2.28349' y='-2.28349' width='53.0909' height='53.0909'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.14px);clip-path:url(%23bgblur_0_860_8379_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='2.28349' cx='24.2621' cy='24.2621' r='24.2621' fill='%23222222' fill-opacity='0.36'/%3E%3Crect x='18' y='14' width='4' height='20' fill='white'/%3E%3Crect x='27' y='14' width='4' height='20' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_8379_clip_path' transform='translate(2.28349 2.28349)'%3E%3Ccircle cx='24.2621' cy='24.2621' r='24.2621'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -931,23 +942,47 @@
   }
 
   @media screen and (min-width: 750px) {
-    .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden) {
+    /* Non-active: 60px play/pause icons */
+    .product-video-slick-slider-section .slick-slide:not(.slick-center) .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden) {
+      width: 60px !important;
+      height: 60px !important;
+    }
+    
+    .product-video-slick-slider-section .slick-slide:not(.slick-center) .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden)::after {
+      width: 60px;
+      height: 60px;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 70 70' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-3.2696' y='-3.2696' width='76.0182' height='76.0182'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.63px);clip-path:url(%23bgblur_0_860_7705_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='3.2696' cx='34.7395' cy='34.7395' r='34.7395' fill='%23222222' fill-opacity='0.36'/%3E%3Cpath d='M27 21L27 48L43 34.5L27 21Z' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_7705_clip_path' transform='translate(3.2696 3.2696)'%3E%3Ccircle cx='34.7395' cy='34.7395' r='34.7395'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+    }
+    
+    .product-video-slick-slider-section .slick-slide:not(.slick-center) .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden) {
+      width: 60px !important;
+      height: 60px !important;
+    }
+    
+    .product-video-slick-slider-section .slick-slide:not(.slick-center) .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden)::after {
+      width: 60px;
+      height: 60px;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 70 70' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-3.2696' y='-3.2696' width='76.0182' height='76.0182'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.63px);clip-path:url(%23bgblur_0_860_7705_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='3.2696' cx='34.7395' cy='34.7395' r='34.7395' fill='%23222222' fill-opacity='0.36'/%3E%3Crect x='25' y='20' width='6' height='30' fill='white'/%3E%3Crect x='39' y='20' width='6' height='30' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_7705_clip_path' transform='translate(3.2696 3.2696)'%3E%3Ccircle cx='34.7395' cy='34.7395' r='34.7395'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+    }
+    
+    /* Active (center): 70px play/pause icons */
+    .product-video-slick-slider-section .slick-center .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden) {
       width: 70px !important;
       height: 70px !important;
     }
     
-    .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden)::after {
+    .product-video-slick-slider-section .slick-center .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-play:not(.hidden)::after {
       width: 70px;
       height: 70px;
       background-image: url("data:image/svg+xml,%3Csvg width='70' height='70' viewBox='0 0 70 70' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-3.2696' y='-3.2696' width='76.0182' height='76.0182'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.63px);clip-path:url(%23bgblur_0_860_7705_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='3.2696' cx='34.7395' cy='34.7395' r='34.7395' fill='%23222222' fill-opacity='0.36'/%3E%3Cpath d='M27 21L27 48L43 34.5L27 21Z' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_7705_clip_path' transform='translate(3.2696 3.2696)'%3E%3Ccircle cx='34.7395' cy='34.7395' r='34.7395'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
     }
     
-    .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden) {
+    .product-video-slick-slider-section .slick-center .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden) {
       width: 70px !important;
       height: 70px !important;
     }
     
-    .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden)::after {
+    .product-video-slick-slider-section .slick-center .product-video-slick-slider__video-wrapper .deferred-media__poster-icon.icon-pause:not(.hidden)::after {
       width: 70px;
       height: 70px;
       background-image: url("data:image/svg+xml,%3Csvg width='70' height='70' viewBox='0 0 70 70' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3CforeignObject x='-3.2696' y='-3.2696' width='76.0182' height='76.0182'%3E%3Cdiv xmlns='http://www.w3.org/1999/xhtml' style='backdrop-filter:blur(1.63px);clip-path:url(%23bgblur_0_860_7705_clip_path);height:100%25;width:100%25'%3E%3C/div%3E%3C/foreignObject%3E%3Ccircle data-figma-bg-blur-radius='3.2696' cx='34.7395' cy='34.7395' r='34.7395' fill='%23222222' fill-opacity='0.36'/%3E%3Crect x='25' y='20' width='6' height='30' fill='white'/%3E%3Crect x='39' y='20' width='6' height='30' fill='white'/%3E%3Cdefs%3E%3CclipPath id='bgblur_0_860_7705_clip_path' transform='translate(3.2696 3.2696)'%3E%3Ccircle cx='34.7395' cy='34.7395' r='34.7395'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
@@ -1080,84 +1115,13 @@
       // Ensure center slide is selected after initialization and properly centered
       setTimeout(function() {
         jQuery('#' + carouselId).slick('slickGoTo', initialSlide, false);
-        // Force a refresh to ensure proper centering
         jQuery('#' + carouselId).slick('setPosition');
-        
-        // Ensure first slide is visible on desktop - adjust if cut off
-        if (window.innerWidth > 750) {
-          setTimeout(function() {
-            const firstSlide = jQuery('#' + carouselId).find('.slick-slide').first();
-            const list = jQuery('#' + carouselId).find('.slick-list');
-            const track = jQuery('#' + carouselId).find('.slick-track');
-            
-            if (firstSlide.length && list.length && track.length) {
-              const firstSlideRect = firstSlide[0].getBoundingClientRect();
-              const listRect = list[0].getBoundingClientRect();
-              
-              // Check if first slide's left edge is visible (within list bounds accounting for centerPadding)
-              const centerPadding = 60; // Match the centerPadding value
-              if (firstSlideRect.left < listRect.left + centerPadding) {
-                // First slide is cut off, adjust track position
-                const adjustment = (listRect.left + centerPadding) - firstSlideRect.left;
-                const currentTransform = track.css('transform');
-                
-                let currentX = 0;
-                if (currentTransform && currentTransform !== 'none') {
-                  const matrix = currentTransform.match(/matrix\(([^)]+)\)/);
-                  if (matrix && matrix[1]) {
-                    const values = matrix[1].split(',');
-                    if (values.length >= 6) {
-                      currentX = parseFloat(values[4]) || 0;
-                    }
-                  }
-                }
-                
-                // Adjust track to show first slide
-                track.css('transform', 'translate3d(' + (currentX + adjustment) + 'px, 0px, 0px)');
-              }
-            }
-          }, 150);
-        }
       }, 200);
       
       // Ensure proper positioning after slide changes
       jQuery('#' + carouselId).on('afterChange', function(event, slick, currentSlide) {
-        // Refresh position to ensure proper centering
         setTimeout(function() {
           jQuery('#' + carouselId).slick('setPosition');
-          
-          // On desktop, ensure first slide is still visible after slide change
-          if (window.innerWidth > 750) {
-            setTimeout(function() {
-              const firstSlide = jQuery('#' + carouselId).find('.slick-slide').first();
-              const list = jQuery('#' + carouselId).find('.slick-list');
-              const track = jQuery('#' + carouselId).find('.slick-track');
-              
-              if (firstSlide.length && list.length && track.length) {
-                const firstSlideRect = firstSlide[0].getBoundingClientRect();
-                const listRect = list[0].getBoundingClientRect();
-                const centerPadding = 60;
-                
-                if (firstSlideRect.left < listRect.left + centerPadding) {
-                  const adjustment = (listRect.left + centerPadding) - firstSlideRect.left;
-                  const currentTransform = track.css('transform');
-                  
-                  let currentX = 0;
-                  if (currentTransform && currentTransform !== 'none') {
-                    const matrix = currentTransform.match(/matrix\(([^)]+)\)/);
-                    if (matrix && matrix[1]) {
-                      const values = matrix[1].split(',');
-                      if (values.length >= 6) {
-                        currentX = parseFloat(values[4]) || 0;
-                      }
-                    }
-                  }
-                  
-                  track.css('transform', 'translate3d(' + (currentX + adjustment) + 'px, 0px, 0px)');
-                }
-              }
-            }, 50);
-          }
         }, 50);
       });
       
