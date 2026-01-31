@@ -88,9 +88,101 @@
   if context == 'cart-drawer'
     assign modal_id = 'personalise-dialog-cart'
   endif
+
+  # Dynamic personalization preview: show ONLY if selected variant has ALL required metafields OR product has ALL.
+  # Required: cb_personalization_image AND cb_personalization_position (also check typo poisition).
+  # Check selected variant first; if it has both, use variant. Else check product; if product has both, use product.
+  assign show_cb_dynamic_preview = false
+  assign cb_personalization_image_url = ''
+  assign cb_personalization_position_json = ''
+
+  assign variant_has_image = false
+  assign variant_has_position = false
+  assign variant_image_val = variant.metafields.custom.cb_personalization_image
+  if variant_image_val != blank and variant_image_val.value != blank
+    assign variant_has_image = true
+  endif
+  assign variant_pos_val = variant.metafields.custom.cb_personalization_position | default: variant.metafields.custom.cb_personalization_poisition
+  if variant_pos_val != blank and variant_pos_val.value != blank
+    assign variant_has_position = true
+  endif
+
+  assign product_has_image = false
+  assign product_has_position = false
+  assign product_image_val = product.metafields.custom.cb_personalization_image
+  if product_image_val != blank and product_image_val.value != blank
+    assign product_has_image = true
+  endif
+  assign product_pos_val = product.metafields.custom.cb_personalization_position | default: product.metafields.custom.cb_personalization_poisition
+  if product_pos_val != blank and product_pos_val.value != blank
+    assign product_has_position = true
+  endif
+
+  if variant_has_image and variant_has_position
+    assign show_cb_dynamic_preview = true
+    assign cb_personalization_image_url = variant_image_val.value | image_url: width: 600
+    assign cb_personalization_position_json = variant_pos_val.value | json
+  elsif product_has_image and product_has_position
+    assign show_cb_dynamic_preview = true
+    assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
+    assign cb_personalization_position_json = product_pos_val.value | json
+  endif
+
+  # Build variant/product cb personalization map for JS (used when variant changes)
+  assign product_image_url = ''
+  assign product_position_json = ''
+  if product_has_image and product_has_position
+    assign product_image_url = product_image_val.value | image_url: width: 600
+    assign product_position_json = product_pos_val.value | json
+  endif
+  if product.featured_media
+    assign product_fallback_image = product.featured_media.preview_image | default: product.featured_image | image_url: width: 600
+  elsif product.featured_image
+    assign product_fallback_image = product.featured_image | image_url: width: 600
+  else
+    assign product_fallback_image = ''
+  endif
 %}
 
-<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}">
+<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}" data-product-id="{{ product.id }}"{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}>
+  {%- comment -%} Variant metafields for dynamic preview when variant changes - keyed by variant ID {%- endcomment -%}
+  <script type="application/json" data-cb-personalization-variants>
+    {
+      "product": {
+        "image": {{ product_image_url | json }},
+        "position": {{ product_position_json | json }},
+        "fallbackImage": {{ product_fallback_image | json }}
+      },
+      "variants": {
+        {%- assign first_variant_entry = true -%}
+        {%- for v in product.variants -%}
+        {%- assign v_img = v.metafields.custom.cb_personalization_image -%}
+        {%- assign v_pos = v.metafields.custom.cb_personalization_position | default: v.metafields.custom.cb_personalization_poisition -%}
+        {%- if v_img != blank and v_img.value != blank and v_pos != blank and v_pos.value != blank -%}
+        {%- unless first_variant_entry -%},{%- endunless -%}
+        "{{ v.id }}": {
+          "image": {{ v_img.value | image_url: width: 600 | json }},
+          "position": {{ v_pos.value | json }}
+        }
+        {%- assign first_variant_entry = false -%}
+        {%- endif -%}
+        {%- endfor -%}
+      },
+      "variantFallbackImages": {
+        {%- assign first_fb = true -%}
+        {%- for v in product.variants -%}
+        {%- if v.featured_image -%}
+          {%- assign v_fb = v.featured_image | image_url: width: 600 -%}
+        {%- else -%}
+          {%- assign v_fb = product_fallback_image -%}
+        {%- endif -%}
+        {%- unless first_fb -%},{%- endunless -%}
+        "{{ v.id }}": {{ v_fb | json }}
+        {%- assign first_fb = false -%}
+        {%- endfor -%}
+      }
+    }
+  </script>
   <dialog
     class="personalise-modal dialog-modal"
     ref="dialog"
@@ -133,21 +225,37 @@
       </div>
 
       <!-- Left Section: Product Preview (40%) -->
-      <div class="personalise-modal__preview">
+      <div class="personalise-modal__preview" ref="previewContainer">
+        {% comment %} Dynamic preview (cb metafields) - always rendered for variant-switch updates, visibility toggled via JS {% endcomment %}
+        <div class="personalise-modal__preview-image-wrap" data-cb-dynamic-wrap style="{% unless show_cb_dynamic_preview and cb_personalization_image_url != blank %}display: none;{% endunless %}">
+          <img
+            src="{{ cb_personalization_image_url | default: '' }}"
+            alt="{{ product.title | escape }}"
+            class="personalise-modal__preview-image personalise-modal__preview-image--dynamic"
+            loading="lazy"
+            width="600"
+            height="600"
+            ref="previewImage"
+          >
+          <div class="personalise-modal__preview-text-overlay" ref="previewTextOverlay" aria-hidden="true"></div>
+        </div>
         {% if product_image %}
           {% liquid
             assign image_alt = product.title | escape
           %}
-          {{
-            product_image
-            | image_url: width: 600
-            | image_tag: loading: 'lazy', alt: image_alt, class: 'personalise-modal__preview-image'
-          }}
-        {% else %}
-          <div class="personalise-modal__preview-placeholder">
-            {{ product.title | escape }}
+          <div data-cb-fallback-wrap style="{% if show_cb_dynamic_preview and cb_personalization_image_url != blank %}display: none;{% endif %}">
+            {{
+              product_image
+              | image_url: width: 600
+              | image_tag: loading: 'lazy', alt: image_alt, class: 'personalise-modal__preview-image'
+            }}
           </div>
         {% endif %}
+        {% unless product_image %}
+          <div class="personalise-modal__preview-placeholder" data-cb-placeholder style="{% if show_cb_dynamic_preview and cb_personalization_image_url != blank %}display: none;{% endif %}">
+            {{ product.title | escape }}
+          </div>
+        {% endunless %}
       </div>
 
       <!-- Right Section: Personalisation Form (60%) -->
@@ -409,77 +517,77 @@
               <div class="personalise-modal__font-grid" ref="fontGrid">
                 {% if product.tags contains 'font_rockwell-condensed' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Rockwell Condensed" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: Rockwell Condensed;">Rockwell Condensed</span>
+                    <span style="font-family: 'Rockwell Condensed', sans-serif;">Rockwell Condensed</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_ariel' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Ariel round" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: 'Arial Rounded MT Bold', sans-serif;">Ariel round</span>
+                    <span style="font-family: 'Ariel round', sans-serif;">Ariel round</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_monotype-corsiva' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Monotype Corsiva" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: 'Monotype Corsiva';">Monotype Corsiva</span>
+                    <span style="font-family: 'Monotype Corsiva', serif;">Monotype Corsiva</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_coronation' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Coronation" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: Coronation;">Coronation</span>
+                    <span style="font-family: 'Coronation', sans-serif;">Coronation</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_ballantines' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Ballantines" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: Ballantines;">Ballantines</span>
+                    <span style="font-family: 'Ballantines', sans-serif;">Ballantines</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_jester' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Jester" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: Jester;">Jester</span>
+                    <span style="font-family: 'Jester', sans-serif;">Jester</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_miss-neally' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Miss Neally" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: 'Miss Neally';">Miss Neally</span>
+                    <span style="font-family: 'Miss Neally', sans-serif;">Miss Neally</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_castle' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Castle" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: Castle;">Castle</span>
+                    <span style="font-family: 'Castle', sans-serif;">Castle</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_london' %}
                   <button type="button" class="personalise-modal__font-button" data-font="London" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: London;">London</span>
+                    <span style="font-family: 'London', sans-serif;">London</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_garamond' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Garamond" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: Garamond;">Garamond</span>
+                    <span style="font-family: 'Garamond', serif;">Garamond</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_comic-sans' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Comic Sans" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: 'Comic Sans MS', cursive;">Comic Sans</span>
+                    <span style="font-family: 'Comic Sans', cursive;">Comic Sans</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_amsterdam' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Amsterdam" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: Amsterdam; font-size:12px;">Amsterdam</span>
+                    <span style="font-family: 'Amsterdam', sans-serif; font-size:12px;">Amsterdam</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_black_jack' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Black Jack" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: 'Black Jack';">Black Jack</span>
+                    <span style="font-family: 'Black Jack', sans-serif;">Black Jack</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_rochester' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Rochester" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: Rochester;">Rochester</span>
+                    <span style="font-family: 'Rochester', cursive;">Rochester</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_poppins' %}
                   <button type="button" class="personalise-modal__font-button" data-font="Poppins" ref="fontButton" on:click="/selectFont">
-                    <span style="font-family: Poppins;">Poppins</span>
+                    <span style="font-family: 'Poppins', sans-serif;">Poppins</span>
                   </button>
                 {% endif %}
                 {% if product.tags contains 'font_playfair-display' %}
@@ -607,7 +715,7 @@
           <div class="personalise-modal__field">
             <label class="personalise-modal__label">Choose Font Style</label>
             <div class="personalise-modal__font-grid" ref="fontGrid">
-              <button type="button" class="personalise-modal__font-button" data-font="Ariel Round" ref="fontButton" on:click="/selectFont">Ariel Round</button>
+              <button type="button" class="personalise-modal__font-button" data-font="Ariel round" ref="fontButton" on:click="/selectFont">Ariel round</button>
               <button type="button" class="personalise-modal__font-button" data-font="Comic Sans" ref="fontButton" on:click="/selectFont">Comic Sans</button>
               <button type="button" class="personalise-modal__font-button" data-font="Playfair Display" ref="fontButton" on:click="/selectFont">Playfair Display</button>
               <button type="button" class="personalise-modal__font-button" data-font="Playball" ref="fontButton" on:click="/selectFont">Playball</button>
@@ -714,10 +822,36 @@
     }
   }
 
+  /* Wrapper: initial 100% so image can load; JS sets exact px to match image displayed size (object-fit: contain) */
+  .personalise-modal__preview-image-wrap {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .personalise-modal__preview-image--dynamic {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
   .personalise-modal__preview-image {
     width: 100%;
     height: 100%;
     object-fit: contain;
+  }
+
+  .personalise-modal__preview-text-overlay {
+    position: absolute;
+    pointer-events: none;
+    white-space: nowrap;
+    transform: translate(-50%, 50%);
+    line-height: 1.2;
   }
 
   .personalise-modal__preview-placeholder {
@@ -866,7 +1000,7 @@
     font-style: normal;
     font-weight: 400;
     line-height: 156%;
-    font-family: 'Arial Rounded MT Bold', sans-serif;
+    font-family: 'Poppins', sans-serif;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
@@ -890,30 +1024,26 @@
     line-height: 156%;
   }
 
-  /* Font-specific styles - override base font for unselected buttons */
-  .personalise-modal__font-button[data-font="Playball"] {
-    font-family: 'Playball', cursive;
-  }
-
-  .personalise-modal__font-button[data-font="Ariel Round"] {
-    font-family: 'Arial Rounded MT Bold', sans-serif;
-  }
-
-  .personalise-modal__font-button[data-font="Comic Sans"] {
-    font-family: 'Comic Sans MS', cursive;
-  }
-
-  .personalise-modal__font-button[data-font="Playfair Display"] {
-    font-family: 'Playfair Display', serif;
-  }
-
-  .personalise-modal__font-button[data-font="Roboto Serif"] {
-    font-family: 'Roboto Serif', serif;
-  }
-
-  .personalise-modal__font-button[data-font="Helvetica"] {
-    font-family: 'Helvetica', sans-serif;
-  }
+  /* Font-specific styles – reference: PERSONALISATION_FONT_FAMILIES_REFERENCE.md */
+  .personalise-modal__font-button[data-font="Rockwell Condensed"] { font-family: 'Rockwell Condensed', sans-serif; }
+  .personalise-modal__font-button[data-font="Ariel round"] { font-family: 'Ariel round', sans-serif; }
+  .personalise-modal__font-button[data-font="Monotype Corsiva"] { font-family: 'Monotype Corsiva', serif; }
+  .personalise-modal__font-button[data-font="Coronation"] { font-family: 'Coronation', sans-serif; }
+  .personalise-modal__font-button[data-font="Ballantines"] { font-family: 'Ballantines', sans-serif; }
+  .personalise-modal__font-button[data-font="Jester"] { font-family: 'Jester', sans-serif; }
+  .personalise-modal__font-button[data-font="Miss Neally"] { font-family: 'Miss Neally', sans-serif; }
+  .personalise-modal__font-button[data-font="Castle"] { font-family: 'Castle', sans-serif; }
+  .personalise-modal__font-button[data-font="London"] { font-family: 'London', sans-serif; }
+  .personalise-modal__font-button[data-font="Garamond"] { font-family: 'Garamond', serif; }
+  .personalise-modal__font-button[data-font="Comic Sans"] { font-family: 'Comic Sans', cursive; }
+  .personalise-modal__font-button[data-font="Amsterdam"] { font-family: 'Amsterdam', sans-serif; }
+  .personalise-modal__font-button[data-font="Black Jack"] { font-family: 'Black Jack', sans-serif; }
+  .personalise-modal__font-button[data-font="Rochester"] { font-family: 'Rochester', cursive; }
+  .personalise-modal__font-button[data-font="Poppins"] { font-family: 'Poppins', sans-serif; }
+  .personalise-modal__font-button[data-font="Playfair Display"] { font-family: 'Playfair Display', serif; }
+  .personalise-modal__font-button[data-font="Playball"] { font-family: 'Playball', cursive; }
+  .personalise-modal__font-button[data-font="Roboto Serif"] { font-family: 'Roboto Serif', serif; }
+  .personalise-modal__font-button[data-font="Helvetica"] { font-family: Helvetica, sans-serif; }
 
   .personalise-modal__info-text {
     font-size: var(--font-size--sm);
