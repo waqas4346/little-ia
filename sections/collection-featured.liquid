@@ -76,17 +76,7 @@
       {% endif %}
 
       <div
-        class="collection-featured__content-panel collection-featured__content-panel--v-{{ section.settings.text_container_vertical_alignment | default: 'center' }} collection-featured__content-panel--h-d-{{ section.settings.text_container_horizontal_desktop | default: 'left' }} collection-featured__content-panel--h-m-{{ section.settings.text_container_horizontal_mobile | default: 'center' }}"
-        style="
-          --text-padding-top-d: {{ section.settings.text_container_padding_top_desktop | default: 40 }}px;
-          --text-padding-right-d: {{ section.settings.text_container_padding_right_desktop | default: 32 }}px;
-          --text-padding-bottom-d: {{ section.settings.text_container_padding_bottom_desktop | default: 40 }}px;
-          --text-padding-left-d: {{ section.settings.text_container_padding_left_desktop | default: 32 }}px;
-          --text-padding-top-m: {{ section.settings.text_container_padding_top_mobile | default: 24 }}px;
-          --text-padding-right-m: {{ section.settings.text_container_padding_right_mobile | default: 16 }}px;
-          --text-padding-bottom-m: {{ section.settings.text_container_padding_bottom_mobile | default: 24 }}px;
-          --text-padding-left-m: {{ section.settings.text_container_padding_left_mobile | default: 16 }}px;
-        "
+        class="collection-featured__content-panel collection-featured__content-panel--v-center collection-featured__content-panel--h-d-left collection-featured__content-panel--h-m-center"
       >
         {% if collection_heading != blank %}
           <h1 class="collection-featured__heading">{{ collection_heading }}</h1>
@@ -245,6 +235,14 @@
   .collection-featured__content-panel {
     width: 100%;
     background-color: #F8F3ED;
+    --text-padding-top-d: 40px;
+    --text-padding-right-d: 32px;
+    --text-padding-bottom-d: 40px;
+    --text-padding-left-d: 32px;
+    --text-padding-top-m: 24px;
+    --text-padding-right-m: 16px;
+    --text-padding-bottom-m: 24px;
+    --text-padding-left-m: 16px;
     padding: var(--text-padding-top-m) var(--text-padding-right-m) var(--text-padding-bottom-m) var(--text-padding-left-m);
     display: flex;
     flex-direction: column;
@@ -632,124 +630,6 @@
       "type": "richtext",
       "id": "description",
       "label": "Description"
-    },
-    {
-      "type": "header",
-      "content": "Text container"
-    },
-    {
-      "type": "range",
-      "id": "text_container_padding_top_desktop",
-      "label": "Padding top (desktop)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 40
-    },
-    {
-      "type": "range",
-      "id": "text_container_padding_right_desktop",
-      "label": "Padding right (desktop)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 32
-    },
-    {
-      "type": "range",
-      "id": "text_container_padding_bottom_desktop",
-      "label": "Padding bottom (desktop)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 40
-    },
-    {
-      "type": "range",
-      "id": "text_container_padding_left_desktop",
-      "label": "Padding left (desktop)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 100
-    },
-    {
-      "type": "range",
-      "id": "text_container_padding_top_mobile",
-      "label": "Padding top (mobile)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 24
-    },
-    {
-      "type": "range",
-      "id": "text_container_padding_right_mobile",
-      "label": "Padding right (mobile)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 16
-    },
-    {
-      "type": "range",
-      "id": "text_container_padding_bottom_mobile",
-      "label": "Padding bottom (mobile)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 24
-    },
-    {
-      "type": "range",
-      "id": "text_container_padding_left_mobile",
-      "label": "Padding left (mobile)",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 16
-    },
-    {
-      "type": "select",
-      "id": "text_container_vertical_alignment",
-      "label": "Vertical alignment",
-      "info": "Mobile and desktop",
-      "options": [
-        { "value": "top", "label": "Top" },
-        { "value": "center", "label": "Center" },
-        { "value": "bottom", "label": "Bottom" }
-      ],
-      "default": "center"
-    },
-    {
-      "type": "select",
-      "id": "text_container_horizontal_desktop",
-      "label": "Horizontal alignment (desktop)",
-      "options": [
-        { "value": "left", "label": "Left" },
-        { "value": "center", "label": "Center" },
-        { "value": "right", "label": "Right" }
-      ],
-      "default": "left"
-    },
-    {
-      "type": "select",
-      "id": "text_container_horizontal_mobile",
-      "label": "Horizontal alignment (mobile)",
-      "options": [
-        { "value": "left", "label": "Left" },
-        { "value": "center", "label": "Center" },
-        { "value": "right", "label": "Right" }
-      ],
-      "default": "center"
     },
     {
       "type": "header",

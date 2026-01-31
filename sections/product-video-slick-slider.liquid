@@ -387,7 +387,7 @@
     z-index: 2;
   }
   .product-video-slick-slider-section .slick-center .slick-slide > div {
-    max-width: 328px !important;
+    /* max-width: 328px !important; */
         width: 100% !important;
   }
 
@@ -749,7 +749,7 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    color: #1D425A;
+    color: #7295BB;
     margin: 0;
     padding: 0;
     height: 100%;
@@ -1147,7 +1147,7 @@
             jQuery(this).css({
               'width': slideWidth + 'px',
               'max-width': slideWidth + 'px',
-              'min-width': slideWidth + 'px'
+              'min-width': "220" + 'px'
             });
           });
         }
@@ -1201,11 +1201,19 @@
               jQuery(this).css({
                 'width': slideWidth + 'px',
                 'max-width': slideWidth + 'px',
-                'min-width': slideWidth + 'px'
+                'min-width': "220" + 'px'
               });
             });
             // Refresh slick position after resize
             jQuery('#' + carouselId).slick('setPosition');
+          } else {
+             jQuery('#' + carouselId).find('.slick-slide').each(function() {
+            jQuery(this).css({
+              'width': '280px',
+              'max-width': '280px',
+              'min-width': '280px'
+            });
+          });
           }
           
           // Reapply gap on resize
