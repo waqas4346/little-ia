@@ -9,7 +9,7 @@
 {%- enddoc -%}
 
 <div
-  class="product-badges product-badges--{{ settings.badge_position }}"
+  class="product-badges product-badges--{{ settings.badge_position }}{% if product.available and product.compare_at_price > product.price %} product-badges--sale-tag-wrap{% endif %}"
   style="
     --badge-border-radius: {{ settings.badge_corner_radius }}px;
     --badge-font-family: var(--font-{{ settings.badge_font_family }}--family); --badge-font-weight: var(--font-{{ settings.badge_font_family }}--weight); --badge-text-transform: {{ settings.badge_text_transform }};
@@ -19,7 +19,7 @@
     <div
       class="
         product-badges__badge product-badges__badge--rectangle
-        {% if product.available == false %} color-{{ settings.badge_sold_out_color_scheme }}{% elsif product.compare_at_price > product.price %} color-{{ settings.badge_sale_color_scheme }}{% endif %}
+        {% if product.available == false %} color-{{ settings.badge_sold_out_color_scheme }}{% elsif product.compare_at_price > product.price %} product-badges__badge--sale-tag{% endif %}
       "
     >
       {%- if product.available == false -%}
@@ -37,6 +37,14 @@
 
     position: absolute;
     z-index: var(--layer-flat);
+  }
+
+  .product-badges--sale-tag-wrap {
+    left: 0;
+    right: 0;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
   }
 
   .product-badges--bottom-left {
@@ -73,5 +81,19 @@
   .product-badges__badge--rectangle {
     padding-block: var(--badge-rectangle-padding-block);
     padding-inline: var(--badge-rectangle-padding-inline);
+  }
+
+  .product-badges__badge--sale-tag {
+    padding: 2px 16px;
+    background: #FFFFFF;
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 160%;
+    color: #FFC746;
+    border: 1px solid #FFC746;
+    border-radius: 0;
+    border-width: 1px 0 1px 1px;
   }
 {% endstylesheet %}

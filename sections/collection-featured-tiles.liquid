@@ -32,6 +32,15 @@
         link.href = '#' + sectionId;
         link.className = 'collection-featured-tiles__tile-link';
         link.textContent = text.toUpperCase();
+        link.addEventListener('click', function (event) {
+          event.preventDefault();
+          const headerGroupHeight = parseFloat(
+            getComputedStyle(document.body).getPropertyValue('--header-group-height')
+          ) || 0;
+          const sectionTop = sectionWrapper.getBoundingClientRect().top + window.scrollY;
+          const targetTop = Math.max(0, sectionTop - headerGroupHeight);
+          window.scrollTo({ top: targetTop, behavior: 'smooth' });
+        });
         tile.appendChild(link);
       } else {
         const span = document.createElement('span');

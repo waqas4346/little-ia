@@ -175,16 +175,31 @@
           <div class="collection-featured__products-subheading">{{ product_subheading }}</div>
         {% endif %}
       </div>
-      <div class="collection-featured__products-grid">
+      <ul
+        class="product-grid collection-featured__products-grid"
+        role="list"
+        style="
+          --product-grid-gap-mobile: 22px 12px;
+          --product-grid-gap-desktop: 32px 12px;
+          --product-grid-gap: var(--product-grid-gap-mobile);
+        "
+      >
         {% for product in collection_object.products limit: top_picks_count %}
-          <div class="collection-featured__product-item">
+          <li class="product-grid__item collection-featured__product-item">
             {% # theme-check-disable UniqueStaticBlockId %}
               {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: product %}
             {% # theme-check-enable UniqueStaticBlockId %}
-          </div>
+          </li>
         {% endfor %}
-      </div>
+      </ul>
     </div>
+        {% if collection_object.url != blank %}
+        <div class="collection-featured__products-cta">
+          <a href="{{ collection_object.url }}" class="button button--primary collection-featured__products-button">
+            {{ shop_all_text }}
+          </a>
+        </div>
+      {% endif %}
     </div>
   {% endif %}
 </div>
@@ -399,23 +414,41 @@
     word-break: break-word;
   }
 
-  /* Match collection page gaps: mobile 22px row, 12px column */
+  /* Match collection page product grid behavior */
   .collection-featured__products-grid {
     width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 22px 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    isolation: isolate;
+    --product-grid-columns-desktop: repeat(3, 1fr);
   }
 
   .collection-featured__product-item {
     min-width: 0;
   }
 
-  /* 768–1024: match collection page – 32px row, 12px column */
-  @media screen and (min-width: 768px) and (max-width: 1024px) {
+  .collection-featured__products-cta {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+  }
+
+  .collection-featured__products-button {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    font-size: 16px;
+    line-height: 140%;
+    letter-spacing: 0%;
+    text-transform: uppercase;
+  }
+
+  @media screen and (min-width: 1024px) {
     .collection-featured__products-grid {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px 12px;
+      --product-grid-gap: var(--product-grid-gap-desktop);
+      --product-grid-columns-desktop: repeat(4, 1fr);
     }
   }
 
@@ -515,6 +548,10 @@
       min-width: 0;
       grid-template-columns: repeat(3, 1fr);
       gap: 32px 12px;
+    }
+
+    .collection-featured__products-cta {
+      margin-top: 32px;
     }
   }
 

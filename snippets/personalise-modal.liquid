@@ -395,7 +395,13 @@
                       {% if option_variant.id == variant.id %}checked{% endif %}
                     >
                     <div class="variant-option__swatch-wrapper">
-                      {% render 'swatch', swatch: product_option_value.swatch, mode: 'filter' %}
+                      {% assign cb_color_img = option_variant.metafields.custom.cb_color_image %}
+                      {% if cb_color_img != blank and cb_color_img.value != blank %}
+                        {% assign cb_image_url = cb_color_img.value | image_url: width: 80 %}
+                        <span class="swatch swatch--filter personalise-modal__swatch-image" style="--swatch-background: url({{ cb_image_url }});" aria-hidden="true"></span>
+                      {% else %}
+                        {% render 'swatch', swatch: product_option_value.swatch, mode: 'filter' %}
+                      {% endif %}
                     </div>
                     {% render 'strikethrough-variant', product_option: product_option_value %}
                   </label>
@@ -448,7 +454,13 @@
                           {% if option_variant.id == variant.id %}checked{% endif %}
                         >
                         <div class="variant-option__swatch-wrapper">
-                          {% render 'swatch', swatch: product_option_value.swatch, mode: 'filter' %}
+                          {% assign cb_color_img = option_variant.metafields.custom.cb_color_image %}
+                          {% if cb_color_img != blank and cb_color_img.value != blank %}
+                            {% assign cb_image_url = cb_color_img.value | image_url: width: 80 %}
+                            <span class="swatch swatch--filter personalise-modal__swatch-image" style="--swatch-background: url({{ cb_image_url }});" aria-hidden="true"></span>
+                          {% else %}
+                            {% render 'swatch', swatch: product_option_value.swatch, mode: 'filter' %}
+                          {% endif %}
                         </div>
                         {% render 'strikethrough-variant', product_option: product_option_value %}
                       </label>
@@ -1160,6 +1172,12 @@
     justify-content: center;
   }
 
+  /* Image swatches from variant metafield custom.cb_color_image - fill circle with cover */
+  .personalise-modal__swatch-image {
+    background-size: cover !important;
+    background-position: center !important;
+  }
+
   .personalise-modal__limited-edition-colors {
     margin-top: var(--margin-lg);
     padding-top: var(--margin-lg);
@@ -1175,7 +1193,6 @@
     line-height: 156%;
     color: #777777;
     margin-block-end: var(--margin-sm);
-    text-transform: uppercase;
     letter-spacing: 0.02em;
   }
 

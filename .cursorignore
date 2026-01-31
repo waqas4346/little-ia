@@ -1,0 +1,20 @@
+# Build / tooling
+node_modules
+dist
+build
+.cache
+.git
+
+# Shopify assets (very expensive tokens)
+assets/*.min.*
+assets/*.map
+assets/vendor*
+assets/*.svg
+assets/*.png
+assets/*.jpg
+assets/*.webp
+assets/*.woff*
+assets/*.ttf
+
+# Logs & temp
+*.log
