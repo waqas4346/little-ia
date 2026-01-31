@@ -109,6 +109,23 @@
     assign modal_id = 'personalise-dialog-cart'
   endif
 
+  # Full-screen personalisation: when product metafield custom.cb_full_screen_personalisation is true
+  assign full_screen_personalisation = false
+  assign cb_full_screen_val = product.metafields.custom.cb_full_screen_personalisation
+  if cb_full_screen_val != blank and cb_full_screen_val.value == true
+    assign full_screen_personalisation = true
+  endif
+
+  # Auto-open personalisation: when product has personalisation options and full-screen metafield is true
+  assign auto_open_personalisation = false
+  assign has_personalisation_option = false
+  if show_personalized or has_color_option or show_name_tabs or personalized_name or personalized_textbox
+    assign has_personalisation_option = true
+  endif
+  if full_screen_personalisation and has_personalisation_option
+    assign auto_open_personalisation = true
+  endif
+
   # Dynamic personalization preview: show ONLY if selected variant has ALL required metafields OR product has ALL.
   # Required: cb_personalization_image AND cb_personalization_position (also check typo poisition).
   # Check selected variant first; if it has both, use variant. Else check product; if product has both, use product.
@@ -164,7 +181,7 @@
   endif
 %}
 
-<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}" data-product-id="{{ product.id }}"{% if has_color_option %} data-has-color-variant="true"{% endif %}{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}>
+<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}" data-product-id="{{ product.id }}"{% if has_color_option %} data-has-color-variant="true"{% endif %}{% if full_screen_personalisation %} data-full-screen-personalisation="true"{% endif %}{% if auto_open_personalisation and context != 'cart-drawer' %} data-auto-open-personalisation="true"{% endif %}{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}>
   {%- comment -%} Variant metafields for dynamic preview when variant changes - keyed by variant ID {%- endcomment -%}
   <script type="application/json" data-cb-personalization-variants>
     {
@@ -855,8 +872,9 @@
     background-color: var(--color-background);
   }
 
-  /* Full-screen only when product has color-type variant */
-  personalise-dialog[data-has-color-variant="true"] .personalise-modal {
+  /* Full-screen when product has color-type variant OR product metafield custom.cb_full_screen_personalisation is true */
+  personalise-dialog[data-has-color-variant="true"] .personalise-modal,
+  personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal {
     width: 100vw;
     max-width: none;
     height: 100vh;
@@ -867,7 +885,8 @@
     .personalise-modal {
       width: 1150px;
     }
-    personalise-dialog[data-has-color-variant="true"] .personalise-modal {
+    personalise-dialog[data-has-color-variant="true"] .personalise-modal,
+    personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal {
       width: 100vw;
     }
   }
@@ -923,7 +942,8 @@
     .personalise-modal__preview {
       flex: 0 0 525px;
     }
-    personalise-dialog[data-has-color-variant="true"] .personalise-modal__preview {
+    personalise-dialog[data-has-color-variant="true"] .personalise-modal__preview,
+    personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__preview {
       flex: 0 0 52%;
     }
   }
@@ -982,7 +1002,8 @@
     .personalise-modal__form {
       flex: 0 0 530px;
     }
-    personalise-dialog[data-has-color-variant="true"] .personalise-modal__form {
+    personalise-dialog[data-has-color-variant="true"] .personalise-modal__form,
+    personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__form {
       flex: 0 0 46.09%;
     }
   }

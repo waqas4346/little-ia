@@ -61,6 +61,37 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
     // Set up variant color change listener (when user selects color in modal)
     this.#setupVariantColorChangeListener();
+
+    // Auto-open personalisation when product page loads with ?customize=true (product has personalisation + full-screen metafield)
+    this.#maybeAutoOpenPersonalisation();
+  }
+
+  /**
+   * Auto-opens the personalisation modal when product page is loaded with ?customize=true
+   * Only when: product has personalisation options, metafield cb_full_screen_personalisation is true, and not quick-add/cart context
+   * @private
+   */
+  #maybeAutoOpenPersonalisation() {
+    if (this.dataset.autoOpenPersonalisation !== 'true') return;
+    if (this.dataset.context === 'cart-drawer') return;
+    if (this.hasAttribute('data-quick-add')) return;
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('customize') !== 'true') return;
+
+    // Prevent multiple dialogs from auto-opening (product page may have multiple personalise-dialog elements)
+    if (window._personalisationAutoOpened) return;
+    window._personalisationAutoOpened = true;
+
+    // Small delay to ensure DOM is ready and refs are populated
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (this.refs?.dialog?.open) return;
+        if (typeof this.showDialog === 'function') {
+          this.showDialog();
+        }
+      }, 100);
+    });
   }
 
   /**
@@ -1047,6 +1078,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
     // This ensures they're ready when the dialog opens
     this.#setupCloseButtonHandlers();
 
+    // Add customize=true to URL when full-screen personalisation (product metafield custom.cb_full_screen_personalisation)
+    // Only on product page - not when opened from quick-add or cart drawer
+    if (this.dataset.fullScreenPersonalisation === 'true' && !this.hasAttribute('data-quick-add') && !window.cartPersonalizationContext) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('customize') !== 'true') {
+        url.searchParams.set('customize', 'true');
+        history.replaceState({}, '', url.toString());
+        this._weAddedCustomizeParam = true;
+      }
+    }
+
     // Prevent layout thrashing by separating DOM reads from DOM writes
     requestAnimationFrame(() => {
       document.body.style.width = '100%';
@@ -1400,6 +1442,16 @@ export class PersonaliseDialogComponent extends DialogComponent {
       // Restore scroll position using saved value
       window.scrollTo({ top: this.#previousScrollY, behavior: 'instant' });
     }
+
+    // Remove customize=true from URL when closing (product page only, not quick-add/cart)
+    if (this.dataset.context !== 'cart-drawer' && !this.hasAttribute('data-quick-add')) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('customize') === 'true') {
+        url.searchParams.delete('customize');
+        history.replaceState({}, '', url.toString());
+      }
+    }
+    this._weAddedCustomizeParam = false;
 
     try {
       this.dispatchEvent(new DialogCloseEvent());
