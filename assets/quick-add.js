@@ -1617,6 +1617,24 @@ export class QuickAddComponent extends Component {
           }
         }
         
+        // Normalise keys to match Build Your Set modal (so Edit pre-fills all fields)
+        if (personalizations['properties[Name]']) {
+          personalizations['personalise-name'] = personalizations['properties[Name]'];
+          delete personalizations['properties[Name]'];
+        }
+        if (personalizations['properties[Text Font]']) {
+          personalizations['personalise-font'] = personalizations['properties[Text Font]'];
+          delete personalizations['properties[Text Font]'];
+        }
+        if (personalizations['properties[Text Color]']) {
+          personalizations['personalise-color'] = personalizations['properties[Text Color]'];
+          delete personalizations['properties[Text Color]'];
+        }
+        if (personalizations['properties[Personalise Date of Birth]']) {
+          personalizations['optionalDob'] = personalizations['properties[Personalise Date of Birth]'];
+          delete personalizations['properties[Personalise Date of Birth]'];
+        }
+        
         // If personalizations found, update productData
         if (Object.keys(personalizations).length > 0) {
           productData.personalizations = personalizations;
