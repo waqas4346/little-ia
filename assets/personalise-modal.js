@@ -1265,10 +1265,27 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const yPct = position.y != null ? Number(position.y) : 20;
     const fontSize = position.font_size != null ? Number(position.font_size) : 20;
 
-    const nameInput = (this.refs && this.refs.nameInput) || this.querySelector('#personalise-name');
-    const nameVal = (nameInput && nameInput.value) || (this.personalisationData && this.personalisationData.name) || '';
-    const name = String(nameVal).trim();
     const supported = this.#getSupportedPersonalisationFields();
+    let name = '';
+    if (supported.babyName || supported.kidName || supported.mumName) {
+      const activePanel = this.querySelector('.personalise-name-tabs__panel.is-active');
+      const panelType = activePanel && activePanel.dataset.panel;
+      if (panelType === 'baby') {
+        const babyInput = (this.refs && this.refs.babyNameInput) || this.querySelector('[data-name-input="baby"]');
+        name = (babyInput && babyInput.value) || (this.personalisationData && this.personalisationData.babyName) || '';
+      } else if (panelType === 'kid') {
+        const kidInput = (this.refs && this.refs.kidNameInput) || this.querySelector('[data-name-input="kid"]');
+        name = (kidInput && kidInput.value) || (this.personalisationData && this.personalisationData.kidName) || '';
+      } else if (panelType === 'mum') {
+        const mumInput = (this.refs && this.refs.mumNameInput) || this.querySelector('[data-name-input="mum"]');
+        name = (mumInput && mumInput.value) || (this.personalisationData && this.personalisationData.mumName) || '';
+      }
+      name = String(name).trim();
+    } else {
+      const nameInput = (this.refs && this.refs.nameInput) || this.querySelector('#personalise-name');
+      const nameVal = (nameInput && nameInput.value) || (this.personalisationData && this.personalisationData.name) || '';
+      name = String(nameVal).trim();
+    }
     const colorName = supported.color ? ((this.personalisationData && this.personalisationData.color) || this.selectedColor || '') : '';
     const fontName = supported.font ? ((this.personalisationData && this.personalisationData.font) || this.selectedFont || '') : '';
 
@@ -1286,6 +1303,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
       green: '#E4EFDB',
       grey: '#E8EBEC',
       gray: '#E8EBEC',
+      multicolour: '#8B4789',
       orange: '#F8CF89',
       pink: '#F7DDE2',
       purple: '#F0D9E6',
@@ -1371,6 +1389,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     
     // Update save button state
     this.updateSaveButton();
+    this.updateCbPreviewOverlay();
   };
   
   /**
@@ -1431,6 +1450,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     if (activePanel) {
       activePanel.classList.add('is-active');
     }
+    this.updateCbPreviewOverlay();
   };
 
   /**

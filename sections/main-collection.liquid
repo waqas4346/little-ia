@@ -652,8 +652,8 @@
     padding-block-end: 16px;
   }
 
-  /* Hide button when filters sidebar is open */
-  .filters-visible .collection-filters-button-wrapper {
+  /* Hide "Filter & Sort" button when filters sidebar is visible on desktop */
+  results-list:not([data-filters-manually-hidden="true"]) .collection-filters-button-wrapper {
     @media screen and (min-width: 1024px) {
       display: none;
     }
@@ -767,48 +767,45 @@
     }
   }
 
-  /* Hide filter component by default */
-  .facets-block-wrapper:not(#filters-drawer),
-  .facets-controls-wrapper {
-    display: none !important;
-  }
-
-  /* Show filter component when filters-visible class is added (desktop only) */
-  .filters-visible .facets-block-wrapper:not(#filters-drawer) {
-    @media screen and (min-width: 1024px) {
-      display: block !important;
-    }
-  }
-
-  .filters-visible .facets-controls-wrapper {
-    @media screen and (min-width: 1024px) {
-      display: flex !important;
-    }
-  }
-
-  /* Keep filters hidden on mobile even when filters-visible class is present */
+  /* Mobile: hide filter component (sidebar); drawer is separate */
   @media screen and (max-width: 1024px) {
-    .filters-visible .facets-block-wrapper:not(#filters-drawer),
-    .filters-visible .facets-controls-wrapper {
+    .facets-block-wrapper:not(#filters-drawer),
+    .facets-controls-wrapper {
       display: none !important;
     }
   }
 
-  /* Make main-collection-grid full width when filters are hidden */
-  .collection-wrapper .main-collection-grid {
+  /* Desktop: show filters by default so they're visible on first paint (no flicker) */
+  /* Only hide when user has manually closed them */
+  @media screen and (min-width: 1024px) {
+    results-list:not([data-filters-manually-hidden="true"]) .facets-block-wrapper:not(#filters-drawer),
+    results-list:not([data-filters-manually-hidden="true"]) .facets-controls-wrapper {
+      display: block !important;
+    }
+    results-list:not([data-filters-manually-hidden="true"]) .facets-controls-wrapper {
+      display: flex !important;
+    }
+    results-list[data-filters-manually-hidden="true"] .facets-block-wrapper:not(#filters-drawer),
+    results-list[data-filters-manually-hidden="true"] .facets-controls-wrapper {
+      display: none !important;
+    }
+  }
+
+  /* Make main-collection-grid full width when filters are manually hidden on desktop */
+  results-list[data-filters-manually-hidden="true"] .collection-wrapper .main-collection-grid {
     @media screen and (min-width: 1024px) {
       grid-column: 1 / -1 !important;
     }
   }
 
-  /* When filters are visible, ensure they use the existing grid layout */
-  .filters-visible .collection-wrapper .facets-controls-wrapper {
+  /* When filters are visible (desktop default), ensure they use the existing grid layout */
+  results-list:not([data-filters-manually-hidden="true"]) .collection-wrapper .facets-controls-wrapper {
     @media screen and (min-width: 1024px) {
       grid-column: 1 / -1;
     }
   }
 
-  .filters-visible .collection-wrapper .facets-block-wrapper--vertical:not(#filters-drawer) {
+  results-list:not([data-filters-manually-hidden="true"]) .collection-wrapper .facets-block-wrapper--vertical:not(#filters-drawer) {
     @media screen and (min-width: 1024px) {
       display: block !important;
       grid-column: 2 / var(--facets-vertical-col-width);
@@ -819,7 +816,7 @@
   }
 
   /* Position main-collection-grid next to filters when filters are visible */
-  .filters-visible .collection-wrapper .main-collection-grid {
+  results-list:not([data-filters-manually-hidden="true"]) .collection-wrapper .main-collection-grid {
     @media screen and (min-width: 1024px) {
       grid-column: var(--facets-vertical-col-width) / -1 !important;
     }
