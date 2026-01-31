@@ -2,7 +2,7 @@ import { DialogComponent, DialogOpenEvent, DialogCloseEvent } from '@theme/dialo
 import { Component } from '@theme/component';
 import { onAnimationEnd } from '@theme/utilities';
 import { morphSection } from '@theme/section-renderer';
-import { ThemeEvents } from '@theme/events';
+import { ThemeEvents, VariantUpdateEvent } from '@theme/events';
 
 /**
  * A custom element that manages the personalisation modal.
@@ -57,6 +57,9 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
     // Set up variant change listener for dynamic personalization (cb metafields)
     this.#setupCbVariantChangeListener();
+
+    // Set up variant color change listener (when user selects color in modal)
+    this.#setupVariantColorChangeListener();
   }
 
   /**
@@ -82,17 +85,20 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const map = this.#getCbPersonalizationMap();
     if (!map) return;
 
+    // Normalise to string so lookup in JSON-parsed map works (keys are strings)
+    const variantKey = variantId != null ? String(variantId) : '';
+
     const { product, variants, variantFallbackImages } = map;
     let showDynamic = false;
     let imageUrl = '';
     let positionJson = '';
 
-    if (variantId && variants && variants[variantId]?.image && variants[variantId]?.position) {
+    if (variantKey && variants && variants[variantKey]?.image && variants[variantKey]?.position) {
       showDynamic = true;
-      imageUrl = variants[variantId].image;
-      positionJson = typeof variants[variantId].position === 'string'
-        ? variants[variantId].position
-        : JSON.stringify(variants[variantId].position);
+      imageUrl = variants[variantKey].image;
+      positionJson = typeof variants[variantKey].position === 'string'
+        ? variants[variantKey].position
+        : JSON.stringify(variants[variantKey].position);
     } else if (product?.image && product?.position) {
       showDynamic = true;
       imageUrl = product.image;
@@ -123,9 +129,11 @@ export class PersonaliseDialogComponent extends DialogComponent {
       if (fallbackWrap) {
         fallbackWrap.style.display = '';
         const fallbackImg = fallbackWrap.querySelector('.personalise-modal__preview-image');
-        const fallbackImageUrl = variantFallbackImages?.[variantId] || product?.fallbackImage;
+        const fallbackImageUrl = variantFallbackImages?.[variantKey] || product?.fallbackImage;
         if (fallbackImg && fallbackImageUrl) {
           fallbackImg.src = fallbackImageUrl;
+          // Clear srcset so the browser uses src (Shopify image_tag adds srcset)
+          fallbackImg.removeAttribute('srcset');
         }
       }
       if (placeholder && !fallbackWrap) placeholder.style.display = '';
@@ -150,16 +158,212 @@ export class PersonaliseDialogComponent extends DialogComponent {
       const variantId = variant?.id?.toString?.() ?? variant?.id;
       if (!variantId) return;
 
+      // Store so when modal opens we sync to this variant (form may not have updated yet)
+      this._lastVariantIdFromProductPage = String(variantId);
       this.#updateCbPreviewForVariant(variantId);
     };
 
-    const section = this.closest('.shopify-section') || document.body;
-    section.addEventListener(ThemeEvents.variantUpdate, handleVariantUpdate);
+    // Listen on document so we catch variant updates from any section (variant picker may be in different block)
+    const target = document.body;
+    target.addEventListener(ThemeEvents.variantUpdate, handleVariantUpdate);
 
     this._cbVariantUpdateHandler = handleVariantUpdate;
-    this._cbVariantUpdateTarget = section;
+    this._cbVariantUpdateTarget = target;
   }
-  
+
+  /**
+   * Finds the add-to-cart form (product page or quick-add modal).
+   * Personalise-dialog is often a sibling of product-form-component (not inside it), so we find by product ID.
+   * @returns {HTMLFormElement|null}
+   */
+  #getProductForm() {
+    const productId = this.dataset?.productId;
+    let productForm = null;
+
+    // 1. Quick-add: only when we're INSIDE quick-add modal (not product page)
+    const quickAddModal = this.closest('#quick-add-modal-content');
+    if (quickAddModal) {
+      const formComponent = productId
+        ? quickAddModal.querySelector(`product-form-component[data-product-id="${productId}"]`)
+        : quickAddModal.querySelector('product-form-component');
+      productForm = formComponent?.querySelector('form[data-type="add-to-cart-form"]');
+      if (productForm) return productForm;
+    }
+
+    // 2. Product page: find product-form-component with matching product ID (personalise-dialog is sibling, not child)
+    if (productId) {
+      const section = this.closest('.shopify-section');
+      const searchRoot = section || document;
+      const formComponent = searchRoot.querySelector(`product-form-component[data-product-id="${productId}"]`);
+      productForm = formComponent?.querySelector('form[data-type="add-to-cart-form"]');
+      if (productForm) return productForm;
+    }
+
+    // 3. Fallback: closest product-form-component (when we're inside it)
+    const formComponent = this.closest('product-form-component');
+    if (formComponent) {
+      productForm = formComponent.querySelector('form[data-type="add-to-cart-form"]');
+      if (productForm) return productForm;
+    }
+
+    // 4. Fallback: any form (last resort)
+    productForm = document.querySelector('form[data-type="add-to-cart-form"]');
+    return productForm;
+  }
+
+  /**
+   * Sets up listener for variant color selection inside the modal.
+   * Updates form variant ID and preview when user selects a color variant.
+   * @private
+   */
+  #setupVariantColorChangeListener() {
+    const dialog = this.refs?.dialog || this.querySelector('dialog');
+    if (!dialog) {
+      setTimeout(() => this.#setupVariantColorChangeListener(), 100);
+      return;
+    }
+
+    const attachVariantColorListeners = () => {
+      const variantColorRadios = this.querySelectorAll('.personalise-modal__variant-color-grid input[type="radio"][data-variant-id]');
+      variantColorRadios.forEach((radio) => {
+        if (radio.dataset.variantColorListener) return;
+        radio.dataset.variantColorListener = 'true';
+        radio.addEventListener('change', this.#handleVariantColorChange.bind(this));
+      });
+    };
+
+    attachVariantColorListeners();
+
+    const observer = new MutationObserver(() => attachVariantColorListeners());
+    observer.observe(dialog, { childList: true, subtree: true });
+  }
+
+  /**
+   * Handles variant color selection change inside the modal.
+   * Updates form variant ID, preview image, and dispatches variant update event.
+   * @private
+   */
+  #handleVariantColorChange(event) {
+    const radio = event.target;
+    if (!radio?.checked) return;
+
+    const variantId = radio.dataset?.variantId;
+    if (!variantId) return;
+
+    this.#updateVariantColorSelectedValue(radio);
+
+    const productForm = this.#getProductForm();
+    if (productForm) {
+      const variantInput = productForm.querySelector('input[name="id"]');
+      if (variantInput) {
+        variantInput.value = variantId;
+        variantInput.disabled = false;
+      }
+    }
+
+    this.#updateCbPreviewForVariant(variantId);
+
+    const productId = this.dataset?.productId;
+    const variantResource = { id: Number(variantId) };
+    const section = this.closest('.shopify-section') || document.body;
+    section.dispatchEvent(new VariantUpdateEvent(variantResource, this.id || 'personalise-dialog', {
+      productId: productId || '',
+      html: null
+    }));
+
+    this.updateSaveButton();
+  }
+
+  /**
+   * Syncs the variant color radio selection to match the current variant from the form.
+   * Called when modal opens so the correct variant is shown as selected.
+   * Handles products with color-only and color+size: checks data-variant-id and data-variant-ids.
+   * @param {string} variantId - The current variant ID from the form
+   * @private
+   */
+  #syncVariantColorSelection(variantId) {
+    if (!variantId) return;
+    const variantIdStr = String(variantId);
+    const radios = this.querySelectorAll('.personalise-modal__variant-color-grid input[type="radio"][data-variant-id]');
+    let checkedRadio = null;
+    radios.forEach((radio) => {
+      const matchesId = radio.dataset.variantId === variantIdStr;
+      const variantIds = radio.dataset.variantIds || '';
+      const matchesIds = variantIds.split(',').map((id) => id.trim()).includes(variantIdStr);
+      radio.checked = matchesId || matchesIds;
+      if (radio.checked) checkedRadio = radio;
+    });
+    this.#updateVariantColorSelectedValue(checkedRadio);
+  }
+
+  /**
+   * Updates the selected value label text above the variant color swatches.
+   * @param {HTMLInputElement|null} checkedRadio - The checked radio input
+   * @private
+   */
+  #updateVariantColorSelectedValue(checkedRadio) {
+    const span = this.querySelector('[data-variant-color-selected-value]');
+    if (!span) return;
+    span.textContent = checkedRadio?.value ?? '';
+  }
+
+  /**
+   * Gets the current variant ID for sync - from product form (product page/quick-add) or cart context (cart drawer).
+   * @returns {string|null} - The variant ID to sync
+   * @private
+   */
+  #getVariantIdForSync() {
+    // Cart drawer context: use variant from cart line
+    const cartContext = window.cartPersonalizationContext;
+    if (cartContext?.variantId) {
+      return String(cartContext.variantId);
+    }
+    // Quick-add: use form in modal only
+    if (this.closest('#quick-add-modal-content')) {
+      const productForm = this.#getProductForm();
+      const variantInput = productForm?.querySelector('input[name="id"]');
+      if (variantInput?.value) return String(variantInput.value);
+      if (this._openingVariantId) {
+        const id = this._openingVariantId;
+        this._openingVariantId = null;
+        return id;
+      }
+      return null;
+    }
+    // Product page: prefer last variant from VariantUpdateEvent (form can lag after morph)
+    if (this._lastVariantIdFromProductPage) {
+      return this._lastVariantIdFromProductPage;
+    }
+    // Then form value
+    const productForm = this.#getProductForm();
+    if (productForm) {
+      const variantInput = productForm.querySelector('input[name="id"]');
+      if (variantInput?.value) {
+        return String(variantInput.value);
+      }
+    }
+    // Then variant passed when Personalise button was clicked
+    if (this._openingVariantId) {
+      const id = this._openingVariantId;
+      this._openingVariantId = null;
+      return id;
+    }
+    return null;
+  }
+
+  /**
+   * Syncs variant color selection and preview image when modal opens.
+   * Handles both product form context (product page, quick-add) and cart drawer context.
+   * @private
+   */
+  #syncVariantAndPreviewOnOpen() {
+    const variantId = this.#getVariantIdForSync();
+    if (variantId) {
+      this.#updateCbPreviewForVariant(variantId);
+      this.#syncVariantColorSelection(variantId);
+    }
+  }
+
   /**
    * Sets up event listeners for all input changes to update save button state
    * @private
@@ -670,11 +874,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
   /**
    * Shows the dialog.
    * Overridden to prevent click handlers from interfering with parent dialog
+   * @param {string} [variantIdFromButton] - Optional variant ID captured when Personalise button was clicked (ensures we show the variant the user had selected)
    */
-  showDialog() {
+  showDialog(variantIdFromButton) {
     const { dialog } = this.refs;
 
     if (dialog.open) return;
+
+    // Capture variant from form at open time so we can use it if form hasn't been updated yet by variant picker
+    if (variantIdFromButton) {
+      this._openingVariantId = String(variantIdFromButton);
+    }
 
     const scrollY = window.scrollY;
     this.#previousScrollY = scrollY;
@@ -887,8 +1097,17 @@ export class PersonaliseDialogComponent extends DialogComponent {
             this.#populateFieldsFromSavedData();
             // Set up input listeners after fields are populated
             this.#attachInputListeners();
+            // Sync preview image and variant color selection with current variant
+            this.#syncVariantAndPreviewOnOpen();
             // Update dynamic personalization text overlay if variant/product has cb metafields
             this.updateCbPreviewOverlay();
+            // Retry sync at intervals (variant picker updates form async after morph - this catches the update)
+            setTimeout(() => this.#syncVariantAndPreviewOnOpen(), 150);
+            setTimeout(() => this.#syncVariantAndPreviewOnOpen(), 350);
+            setTimeout(() => {
+              this.#syncVariantAndPreviewOnOpen();
+              this._openingVariantId = null; // clear after last retry
+            }, 550);
           } catch (error) {
             console.error('Error populating fields:', error);
           }
@@ -902,6 +1121,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
           this.#populateFieldsFromSavedData();
           // Set up input listeners after fields are populated
           this.#attachInputListeners();
+          this.#syncVariantAndPreviewOnOpen();
           this.updateCbPreviewOverlay();
         } catch (error) {
           console.error('Error populating fields after max attempts:', error);
@@ -932,6 +1152,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
    * This method name is unique and won't conflict with anything
    */
   closePersonaliseOnly = async () => {
+    this._openingVariantId = null; // clear so next open doesn't use stale variant
     if (this._cbPreviewResizeHandler) {
       window.removeEventListener('resize', this._cbPreviewResizeHandler);
     }
