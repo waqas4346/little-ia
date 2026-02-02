@@ -614,6 +614,17 @@
     border-style: solid;
   }
 
+  /* Stack tag below sale badge when both exist */
+  product-card:has(.product-badges__badge--sale-tag),
+  product-card-link:has(.product-badges__badge--sale-tag) {
+    --sale-badge-height: 28px;
+  }
+
+  product-card:has(.product-badges__badge--sale-tag) .product-tag-badge,
+  product-card-link:has(.product-badges__badge--sale-tag) .product-tag-badge {
+    top: calc(20px + var(--sale-badge-height, 28px) + 6px);
+  }
+
   .product-tag-badge__icon {
     display: inline-flex;
     align-items: center;

@@ -38,7 +38,9 @@
             fetchpriority: 'high'
         }}
       {% endif %}
-      <div class="page-banner__overlay"></div>
+      {% unless section.settings.content_position == 'under' %}
+        <div class="page-banner__overlay"></div>
+      {% endunless %}
     </div>
   {% endif %}
 
@@ -307,12 +309,13 @@
 
     .page-banner__content {
       padding-block: var(--padding-md, 24px);
-      padding-block-end: 25px;
+      padding-block-end: 8px;
       padding-inline: 12px;
     }
 
     .page-banner__title {
       font-size: 28px;
+      margin-bottom: 8px;
     }
   }
 
@@ -347,12 +350,24 @@
     .page-banner--content-under .page-banner__content-wrapper {
       margin-top: 12px;
     }
+
+    .page-banner--content-under .page-banner__background {
+      height: 164px;
+      max-height: 164px;
+    }
+
+    .page-banner--content-under .page-banner__image,
+    .page-banner--content-under .page-banner__video {
+      height: 164px;
+      max-height: 164px;
+    }
   }
 
   .page-banner--content-under .page-banner__content {
     align-items: center;
     text-align: center;
     justify-content: flex-start;
+    padding-block-start: 0;
   }
 
   @media screen and (max-width: 749px) {

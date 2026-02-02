@@ -130,8 +130,13 @@ export class QuickAddComponent extends Component {
 
     // Check if this quick-add is from build-your-set or party-favours and mark it
     const productCard = /** @type {import('./product-card').ProductCard | null} */ (this.closest('product-card'));
-    const isFromBuildYourSet = productCard?.hasAttribute('data-build-your-set') || 
-                                productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
+    const explicitBuildYourSet = this.getAttribute('data-build-your-set');
+    const isFromBuildYourSet = explicitBuildYourSet === 'true'
+      ? true
+      : explicitBuildYourSet === 'false'
+        ? false
+        : productCard?.hasAttribute('data-build-your-set') ||
+          productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
     const isFromPartyFavours = this.hasAttribute('data-party-favours') ||
                                productCard?.hasAttribute('data-party-favours') ||
                                productCard?.closest('[data-testid="party-favours"], .party-favours-section') !== null;
@@ -368,8 +373,13 @@ export class QuickAddComponent extends Component {
       const modalContent = document.getElementById('quick-add-modal-content');
       if (modalContent) {
         const productCard = /** @type {import('./product-card').ProductCard | null} */ (this.closest('product-card'));
-        const isFromBuildYourSet = productCard?.hasAttribute('data-build-your-set') || 
-                                    productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
+        const explicitBuildYourSet = this.getAttribute('data-build-your-set');
+        const isFromBuildYourSet = explicitBuildYourSet === 'true'
+          ? true
+          : explicitBuildYourSet === 'false'
+            ? false
+            : productCard?.hasAttribute('data-build-your-set') ||
+              productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
         const isFromPartyFavours = this.hasAttribute('data-party-favours') ||
                                    productCard?.hasAttribute('data-party-favours') ||
                                    productCard?.closest('[data-testid="party-favours"], .party-favours-section') !== null;

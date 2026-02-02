@@ -235,14 +235,14 @@
   .collection-featured__content-panel {
     width: 100%;
     background-color: #F8F3ED;
-    --text-padding-top-d: 40px;
-    --text-padding-right-d: 32px;
-    --text-padding-bottom-d: 40px;
-    --text-padding-left-d: 32px;
-    --text-padding-top-m: 24px;
-    --text-padding-right-m: 16px;
-    --text-padding-bottom-m: 24px;
-    --text-padding-left-m: 16px;
+    --text-padding-top-d: 38px;
+    --text-padding-right-d: 104px;
+    --text-padding-bottom-d: 38px;
+    --text-padding-left-d: 104px;
+    --text-padding-top-m: 15px;
+    --text-padding-right-m: 23px;
+    --text-padding-bottom-m: 23px;
+    --text-padding-left-m: 23px;
     padding: var(--text-padding-top-m) var(--text-padding-right-m) var(--text-padding-bottom-m) var(--text-padding-left-m);
     display: flex;
     flex-direction: column;
@@ -382,7 +382,6 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
-    margin-top: 32px;
   }
 
   .collection-featured__products-heading {
@@ -419,11 +418,18 @@
     padding: 0;
     list-style: none;
     isolation: isolate;
+    align-items: stretch;
+    justify-content: start;
     --product-grid-columns-desktop: repeat(3, 1fr);
   }
 
   .collection-featured__product-item {
     min-width: 0;
+    display: grid;
+  }
+
+  .collection-featured__product-item .product-card {
+    height: 100%;
   }
 
   .collection-featured__products-cta {
@@ -527,25 +533,23 @@
 
   @media screen and (min-width: 1025px) {
     .collection-featured__products {
-      flex-direction: row;
+      display: grid;
+      grid-template-columns: 282px 1fr;
+      column-gap: 32px;
       align-items: center;
-      gap: 32px;
     }
 
     .collection-featured__products-header {
-      flex: 0 0 auto;
-      width: auto;
-      max-width: 320px;
+      width: 100%;
+      max-width: 282px;
       min-width: 0;
       text-align: center;
     }
 
-    /* Match collection page: 32px row gap, 12px column gap */
     .collection-featured__products-grid {
-      flex: 1;
       min-width: 0;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px 12px;
+      --product-grid-columns-desktop: repeat(3, 324px);
+      justify-self: start;
     }
 
     .collection-featured__products-cta {
