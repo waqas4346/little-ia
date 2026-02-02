@@ -126,9 +126,9 @@
     assign auto_open_personalisation = true
   endif
 
-  # Dynamic personalization preview: show ONLY if selected variant has ALL required metafields OR product has ALL.
-  # Required: cb_personalization_image AND cb_personalization_position (also check typo poisition).
-  # Check selected variant first; if it has both, use variant. Else check product; if product has both, use product.
+  # Dynamic personalization preview: show if selected variant OR product has required position metafield.
+  # Required: cb_personalization_position (also check typo poisition).
+  # Check selected variant first; if it has position, use variant. Else check product.
   assign show_cb_dynamic_preview = false
   assign cb_personalization_image_url = ''
   assign cb_personalization_position_json = ''
@@ -155,29 +155,50 @@
     assign product_has_position = true
   endif
 
-  if variant_has_image and variant_has_position
-    assign show_cb_dynamic_preview = true
-    assign cb_personalization_image_url = variant_image_val.value | image_url: width: 600
-    assign cb_personalization_position_json = variant_pos_val.value | json
-  elsif product_has_image and product_has_position
-    assign show_cb_dynamic_preview = true
-    assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
-    assign cb_personalization_position_json = product_pos_val.value | json
-  endif
-
-  # Build variant/product cb personalization map for JS (used when variant changes)
-  assign product_image_url = ''
-  assign product_position_json = ''
-  if product_has_image and product_has_position
-    assign product_image_url = product_image_val.value | image_url: width: 600
-    assign product_position_json = product_pos_val.value | json
-  endif
   if product.featured_media
     assign product_fallback_image = product.featured_media.preview_image | default: product.featured_image | image_url: width: 600
   elsif product.featured_image
     assign product_fallback_image = product.featured_image | image_url: width: 600
   else
     assign product_fallback_image = ''
+  endif
+
+  if variant.featured_image
+    assign variant_fallback_image = variant.featured_image | image_url: width: 600
+  else
+    assign variant_fallback_image = product_fallback_image
+  endif
+
+  if variant_has_position
+    assign show_cb_dynamic_preview = true
+    if variant_has_image
+      assign cb_personalization_image_url = variant_image_val.value | image_url: width: 600
+    elsif product_has_image
+      assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
+    else
+      assign cb_personalization_image_url = variant_fallback_image
+    endif
+    assign cb_personalization_position_json = variant_pos_val.value | json
+  elsif product_has_position
+    assign show_cb_dynamic_preview = true
+    if product_has_image
+      assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
+    else
+      assign cb_personalization_image_url = product_fallback_image
+    endif
+    assign cb_personalization_position_json = product_pos_val.value | json
+  endif
+
+  # Build variant/product cb personalization map for JS (used when variant changes)
+  assign product_image_url = ''
+  assign product_position_json = ''
+  if product_has_position
+    if product_has_image
+      assign product_image_url = product_image_val.value | image_url: width: 600
+    else
+      assign product_image_url = product_fallback_image
+    endif
+    assign product_position_json = product_pos_val.value | json
   endif
 %}
 
@@ -195,10 +216,19 @@
         {%- for v in product.variants -%}
         {%- assign v_img = v.metafields.custom.cb_personalization_image -%}
         {%- assign v_pos = v.metafields.custom.cb_personalization_position | default: v.metafields.custom.cb_personalization_poisition -%}
-        {%- if v_img != blank and v_img.value != blank and v_pos != blank and v_pos.value != blank -%}
+        {%- if v_pos != blank and v_pos.value != blank -%}
         {%- unless first_variant_entry -%},{%- endunless -%}
         "{{ v.id }}": {
+          {%- if v_img != blank and v_img.value != blank -%}
           "image": {{ v_img.value | image_url: width: 600 | json }},
+          {%- else -%}
+            {%- if v.featured_image -%}
+              {%- assign v_fb = v.featured_image | image_url: width: 600 -%}
+            {%- else -%}
+              {%- assign v_fb = product_fallback_image -%}
+            {%- endif -%}
+          "image": {{ v_fb | json }},
+          {%- endif -%}
           "position": {{ v_pos.value | json }}
         }
         {%- assign first_variant_entry = false -%}
@@ -1035,6 +1065,9 @@
     position: relative;
     overflow: hidden;
   }
+  personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__preview {
+    flex: 0 0 60%;
+  }
 
   @media screen and (min-width: 1440px) {
     .personalise-modal__preview {
@@ -1043,6 +1076,9 @@
     personalise-dialog[data-has-color-variant="true"] .personalise-modal__preview,
     personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__preview {
       flex: 0 0 52%;
+    }
+    personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__preview {
+      flex: 0 0 60%;
     }
   }
 
@@ -1095,6 +1131,9 @@
     padding-left: 20px; 
     overflow-y: auto;
   }
+  personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__form {
+    flex: 0 0 40%;
+  }
 
   @media screen and (min-width: 1440px) {
     .personalise-modal__form {
@@ -1103,6 +1142,9 @@
     personalise-dialog[data-has-color-variant="true"] .personalise-modal__form,
     personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__form {
       flex: 0 0 46.09%;
+    }
+    personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__form {
+      flex: 0 0 40%;
     }
   }
 
