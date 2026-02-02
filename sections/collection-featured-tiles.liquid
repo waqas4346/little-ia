@@ -1,5 +1,5 @@
 <div
-  class="section section--{{ section.settings.section_width }} collection-featured-tiles"
+  class="section--{{ section.settings.section_width }} collection-featured-tiles"
   data-testid="collection-featured-tiles"
   id="collection-featured-tiles-{{ section.id }}"
   hidden
@@ -67,18 +67,17 @@
     padding-block: 24px 32px;
   }
 
+
   .collection-featured-tiles__inner {
     width: 100%;
     max-width: var(--page-width, 1200px);
     margin: 0 auto;
-    padding-inline: var(--padding-page, 24px);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
   }
 
   .collection-featured-tiles__list {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
     gap: 12px;
@@ -113,8 +112,21 @@
   }
 
   @media screen and (max-width: 749px) {
+    .collection-featured-tiles__inner {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .collection-featured-tiles__list {
+      flex-wrap: nowrap;
+    }
     .collection-featured-tiles__tile {
-      padding: 6px 12px;
+      padding: 7px 9px;
+    }
+    .collection-featured-tiles {
+      padding: 8px 12px;
+    }
+    .collection-featured-tiles__list {
+      gap: 6px;
     }
     .collection-featured-tiles__tile-link,
     .collection-featured-tiles__tile-text {

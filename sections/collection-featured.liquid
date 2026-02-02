@@ -165,6 +165,17 @@
           <div class="collection-featured__products-subheading">{{ product_subheading }}</div>
         {% endif %}
       </div>
+      {% capture list_items %}
+        {% for product in collection_object.products limit: top_picks_count %}
+          <div class="resource-list__item collection-featured__carousel-item">
+            {% # theme-check-disable UniqueStaticBlockId %}
+              {% content_for 'block', type: '_product-card', id: 'product-card', closest.product: product %}
+            {% # theme-check-enable UniqueStaticBlockId %}
+          </div>
+          {% unless forloop.last %}<!--@list/split-->{% endunless %}
+        {% endfor %}
+      {% endcapture %}
+      {% assign list_items_array = list_items | strip | split: '<!--@list/split-->' %}
       <ul
         class="product-grid collection-featured__products-grid"
         role="list"
@@ -182,6 +193,40 @@
           </li>
         {% endfor %}
       </ul>
+      {% capture slides %}
+        {% for item in list_items_array %}
+          {% render 'slideshow-slide'
+            index: forloop.index0,
+            children: item,
+            class: 'resource-list__slide collection-featured__products-slide'
+          %}
+        {% endfor %}
+      {% endcapture %}
+      <div class="collection-featured__products-carousel-wrapper">
+        <div
+          class="resource-list resource-list__carousel collection-featured__products-carousel"
+          style="
+            --resource-list-column-gap-desktop: 12px;
+            --column-count: 2;
+            --column-count-mobile: 2;
+            --mobile-card-size: 60cqw;
+          "
+          data-testid="collection-featured-products-carousel"
+        >
+          {% render 'slideshow',
+            ref: 'collectionFeaturedProductsMobile-' | append: section.id,
+            class: 'resource-list__carousel',
+            slides: slides,
+            show_arrows: false,
+            auto_hide_controls: false,
+            infinite: false,
+            initial_slide: 0,
+            slide_count: list_items_array.size,
+            slideshow_gutters: null,
+            arrows_position: 'center'
+          %}
+        </div>
+      </div>
     </div>
         {% if collection_object.url != blank %}
         <div class="collection-featured__products-cta">
@@ -235,14 +280,14 @@
   .collection-featured__content-panel {
     width: 100%;
     background-color: #F8F3ED;
-    --text-padding-top-d: 40px;
-    --text-padding-right-d: 32px;
-    --text-padding-bottom-d: 40px;
-    --text-padding-left-d: 32px;
-    --text-padding-top-m: 24px;
-    --text-padding-right-m: 16px;
-    --text-padding-bottom-m: 24px;
-    --text-padding-left-m: 16px;
+    --text-padding-top-d: 38px;
+    --text-padding-right-d: 104px;
+    --text-padding-bottom-d: 38px;
+    --text-padding-left-d: 104px;
+    --text-padding-top-m: 15px;
+    --text-padding-right-m: 23px;
+    --text-padding-bottom-m: 23px;
+    --text-padding-left-m: 23px;
     padding: var(--text-padding-top-m) var(--text-padding-right-m) var(--text-padding-bottom-m) var(--text-padding-left-m);
     display: flex;
     flex-direction: column;
@@ -373,8 +418,8 @@
     max-width: var(--page-width, 1200px);
     margin-left: auto;
     margin-right: auto;
-    padding-left: var(--page-margin, 16px);
-    padding-right: var(--page-margin, 16px);
+    padding-left: var(--page-margin, 12px);
+    padding-right: var(--page-margin, 12px);
   }
 
   .collection-featured__products {
@@ -382,7 +427,6 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
-    margin-top: 32px;
   }
 
   .collection-featured__products-heading {
@@ -419,11 +463,26 @@
     padding: 0;
     list-style: none;
     isolation: isolate;
+    align-items: stretch;
+    justify-content: start;
     --product-grid-columns-desktop: repeat(3, 1fr);
+  }
+
+  .collection-featured__products-carousel {
+    display: none;
+  }
+
+  .collection-featured__products-carousel-wrapper {
+    width: 100%;
   }
 
   .collection-featured__product-item {
     min-width: 0;
+    display: grid;
+  }
+
+  .collection-featured__product-item .product-card {
+    height: 100%;
   }
 
   .collection-featured__products-cta {
@@ -527,25 +586,23 @@
 
   @media screen and (min-width: 1025px) {
     .collection-featured__products {
-      flex-direction: row;
+      display: grid;
+      grid-template-columns: 282px 1fr;
+      column-gap: 32px;
       align-items: center;
-      gap: 32px;
     }
 
     .collection-featured__products-header {
-      flex: 0 0 auto;
-      width: auto;
-      max-width: 320px;
+      width: 100%;
+      max-width: 282px;
       min-width: 0;
       text-align: center;
     }
 
-    /* Match collection page: 32px row gap, 12px column gap */
     .collection-featured__products-grid {
-      flex: 1;
       min-width: 0;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px 12px;
+      --product-grid-columns-desktop: repeat(3, 324px);
+      justify-self: start;
     }
 
     .collection-featured__products-cta {
@@ -554,6 +611,42 @@
   }
 
   @media screen and (max-width: 749px) {
+    .collection-featured__products-grid {
+      display: none;
+    }
+  .collection-featured__products-wrapper {
+
+    padding-right: 0;
+  }
+    .collection-featured__products-carousel {
+      display: block;
+    }
+
+    .collection-featured__products-carousel {
+      --column-count: 2;
+      --resource-list-column-gap: 5px;
+    }
+
+    .collection-featured__products-carousel slideshow-component {
+      overflow: visible;
+    }
+
+    .collection-featured__products-carousel slideshow-component slideshow-slides,
+    .collection-featured__products-carousel slideshow-component[disabled='true'] slideshow-slides {
+      overflow-x: auto !important;
+      overflow-y: visible !important;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-snap-type: x mandatory;
+    }
+
+    .collection-featured__products-carousel slideshow-slides::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
     .collection-featured__features {
       gap: 6px 16px;
     }
