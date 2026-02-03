@@ -181,10 +181,12 @@
     assign cb_personalization_position_json = variant_pos_val.value | json
   elsif product_has_position
     assign show_cb_dynamic_preview = true
-    if product_has_image
+    if variant_has_image
+      assign cb_personalization_image_url = variant_image_val.value | image_url: width: 600
+    elsif product_has_image
       assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
     else
-      assign cb_personalization_image_url = product_fallback_image
+      assign cb_personalization_image_url = variant_fallback_image
     endif
     assign cb_personalization_position_json = product_pos_val.value | json
   endif
@@ -216,7 +218,13 @@
         {%- for v in product.variants -%}
         {%- assign v_img = v.metafields.custom.cb_personalization_image -%}
         {%- assign v_pos = v.metafields.custom.cb_personalization_position | default: v.metafields.custom.cb_personalization_poisition -%}
-        {%- if v_pos != blank and v_pos.value != blank -%}
+        {%- assign v_pos_effective = v_pos -%}
+        {%- if v_pos_effective == blank or v_pos_effective.value == blank -%}
+          {%- if product_has_position -%}
+            {%- assign v_pos_effective = product_pos_val -%}
+          {%- endif -%}
+        {%- endif -%}
+        {%- if v_pos_effective != blank and v_pos_effective.value != blank -%}
         {%- unless first_variant_entry -%},{%- endunless -%}
         "{{ v.id }}": {
           {%- if v_img != blank and v_img.value != blank -%}
@@ -229,7 +237,7 @@
             {%- endif -%}
           "image": {{ v_fb | json }},
           {%- endif -%}
-          "position": {{ v_pos.value | json }}
+          "position": {{ v_pos_effective.value | json }}
         }
         {%- assign first_variant_entry = false -%}
         {%- endif -%}
