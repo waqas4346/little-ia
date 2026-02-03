@@ -62,6 +62,56 @@
             {% endfor %}
           </div>
         {% endif %}
+        {% assign product_features_card = closest.product.metafields.custom.cb_product_features_card.value %}
+        {% if product_features_card != blank %}
+          {% if product_features_card.size > 0 %}
+            {% for card in product_features_card %}
+              <div class="product-features-card">
+                {% if card.icon != blank %}
+                  <div class="product-features-card__icon-wrap">
+                    {% assign card_icon_alt = card.heading | escape %}
+                    {{ card.icon | image_url: width: 28 | image_tag: class: 'product-features-card__icon', alt: card_icon_alt }}
+                  </div>
+                {% endif %}
+                <div class="product-features-card__content">
+                  {% if card.heading != blank %}
+                    <h3 class="product-features-card__heading">{{ card.heading }}</h3>
+                  {% endif %}
+                  {% if card.description != blank %}
+                    <div class="product-features-card__description">{{ card.description }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="product-features-card">
+              {% if product_features_card.icon != blank %}
+                <div class="product-features-card__icon-wrap">
+                  {% assign single_card_icon_alt = product_features_card.heading | escape %}
+                  {{ product_features_card.icon | image_url: width: 28 | image_tag: class: 'product-features-card__icon', alt: single_card_icon_alt }}
+                </div>
+              {% endif %}
+              <div class="product-features-card__content">
+                {% if product_features_card.heading != blank %}
+                  <h3 class="product-features-card__heading">{{ product_features_card.heading }}</h3>
+                {% endif %}
+                {% if product_features_card.description != blank %}
+                  <div class="product-features-card__description">{{ product_features_card.description }}</div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        {% endif %}
+      {% elsif block_settings.heading == 'Fabric & Care' %}
+        {% assign fabric_care = closest.product.metafields.custom.cb_fabric_and_care %}
+        {% if fabric_care != blank %}
+          <div class="accordion-row__fabric-care">
+            <img src="{{ 'GOTS.png' | asset_url }}" alt="GOTS" class="accordion-row__fabric-care-image" width="55" height="55" loading="lazy">
+            <div class="accordion-row__fabric-care-text rte">
+              {{ fabric_care | metafield_tag }}
+            </div>
+          </div>
+        {% endif %}
       {% endif %}
     </div>
   </details>
@@ -107,6 +157,71 @@
     line-height: 130%;
     letter-spacing: 0;
     text-align: center;
+  }
+
+  .product-features-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #FDF8E7;
+    padding: 16px;
+    margin-top: 24px;
+    border-radius: 4px;
+  }
+
+  .product-features-card__icon-wrap {
+    flex-shrink: 0;
+  }
+
+  .product-features-card__icon {
+    width: 28px;
+    height: 28px;
+    display: block;
+  }
+
+  .product-features-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .product-features-card__heading {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 23px;
+    color: #1D425A;
+    margin: 0;
+  }
+
+  .product-features-card__description {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 130%;
+    color: #1D425A;
+    margin: 0;
+  }
+
+  .accordion-row__fabric-care {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .accordion-row__fabric-care-image {
+    width: 55px;
+    height: 55px;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+
+  .accordion-row__fabric-care-text {
+    min-width: 0;
   }
 
 {% endstylesheet %}

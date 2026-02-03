@@ -302,7 +302,7 @@
                   "type": "_accordion-row",
                   "settings": {
                     "heading": "Product Features",
-                    "open_by_default": false,
+                    "open_by_default": true,
                     "icon": "none",
                     "width": 20
                   },
@@ -336,6 +336,28 @@
                   "block_order": [
                     "text_product_description"
                   ]
+                },
+                "accordion_row_fabric_care": {
+                  "type": "_accordion-row",
+                  "settings": {
+                    "heading": "Fabric & Care",
+                    "open_by_default": false,
+                    "icon": "none",
+                    "width": 20
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "accordion_row_delivery_date_time": {
+                  "type": "_accordion-row",
+                  "settings": {
+                    "heading": "Delivery date and time",
+                    "open_by_default": false,
+                    "icon": "none",
+                    "width": 20
+                  },
+                  "blocks": {},
+                  "block_order": []
                 },
                 "accordion_row_highlights": {
                   "type": "_accordion-row",
@@ -378,6 +400,8 @@
               },
               "block_order": [
                 "accordion_row_product_feature",
+                "accordion_row_fabric_care",
+                "accordion_row_delivery_date_time",
                 "accordion_row_highlights",
                 "accordion_row_delivery_return"
               ]
