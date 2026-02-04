@@ -46,6 +46,158 @@
 
     <div class="details-content">
       {% content_for 'blocks' %}
+      {% if block_settings.heading == 'Product Features' %}
+        {% assign product_features = closest.product.metafields.custom.cb_product_features_icons_with_texts.value %}
+        {% if product_features != blank %}
+          <div class="product-features-icons">
+            {% for feature in product_features %}
+              <div class="product-features-icons__item">
+                {% if feature.icon != blank %}
+                  {{ feature.icon | image_url: width: 28 | image_tag: widths: '28', height: 28, alt: feature.text | escape }}
+                {% endif %}
+                {% if feature.text != blank %}
+                  <div class="product-features-icons__text">{{ feature.text }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% assign product_features_card = closest.product.metafields.custom.cb_product_features_card.value %}
+        {% if product_features_card != blank %}
+          {% if product_features_card.size > 0 %}
+            {% for card in product_features_card %}
+              <div class="product-features-card">
+                {% if card.icon != blank %}
+                  <div class="product-features-card__icon-wrap">
+                    {% assign card_icon_alt = card.heading | escape %}
+                    {{ card.icon | image_url: width: 28 | image_tag: class: 'product-features-card__icon', alt: card_icon_alt }}
+                  </div>
+                {% endif %}
+                <div class="product-features-card__content">
+                  {% if card.heading != blank %}
+                    <h3 class="product-features-card__heading">{{ card.heading }}</h3>
+                  {% endif %}
+                  {% if card.description != blank %}
+                    <div class="product-features-card__description">{{ card.description }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="product-features-card">
+              {% if product_features_card.icon != blank %}
+                <div class="product-features-card__icon-wrap">
+                  {% assign single_card_icon_alt = product_features_card.heading | escape %}
+                  {{ product_features_card.icon | image_url: width: 28 | image_tag: class: 'product-features-card__icon', alt: single_card_icon_alt }}
+                </div>
+              {% endif %}
+              <div class="product-features-card__content">
+                {% if product_features_card.heading != blank %}
+                  <h3 class="product-features-card__heading">{{ product_features_card.heading }}</h3>
+                {% endif %}
+                {% if product_features_card.description != blank %}
+                  <div class="product-features-card__description">{{ product_features_card.description }}</div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+        {% endif %}
+      {% elsif block_settings.heading == 'Fabric & Care' %}
+        {% assign fabric_care = closest.product.metafields.custom.cb_fabric_and_care %}
+        {% if fabric_care != blank %}
+          <div class="accordion-row__fabric-care">
+            <img src="{{ 'GOTS.png' | asset_url }}" alt="GOTS" class="accordion-row__fabric-care-image" width="55" height="55" loading="lazy">
+            <div class="accordion-row__fabric-care-text rte">
+              {{ fabric_care | metafield_tag }}
+            </div>
+          </div>
+        {% endif %}
+      {% elsif block_settings.heading == 'Delivery Time & Return' %}
+        {% assign delivery_return = closest.product.metafields.custom.cb_delivery_time_and_return.value %}
+        {% if delivery_return != blank %}
+          <div class="accordion-row__delivery-return">
+            <div class="accordion-row__delivery-return-row">
+              <div class="accordion-row__delivery-return-item">
+                <span class="accordion-row__delivery-return-icon">
+                  {{- 'truck-duotone.svg' | inline_asset_content -}}
+                </span>
+                {% if delivery_return.free_shipping_text != blank %}
+                  <span class="accordion-row__delivery-return-text">{{ delivery_return.free_shipping_text }}</span>
+                {% endif %}
+              </div>
+              <div class="accordion-row__delivery-return-item">
+                <span class="accordion-row__delivery-return-icon">
+                  <img src="{{ 'rectangle.svg' | asset_url }}" alt="" width="20" height="20" loading="lazy">
+                </span>
+                {% if delivery_return.cut_off_time_text != blank %}
+                  <span class="accordion-row__delivery-return-text">{{ delivery_return.cut_off_time_text }}</span>
+                {% endif %}
+              </div>
+            </div>
+            {% if delivery_return.return_policy != blank %}
+              <div class="accordion-row__delivery-return-policy rte">
+                {{ delivery_return.return_policy | metafield_tag }}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% elsif block_settings.heading == 'Gift Wrapping' %}
+        {% assign gift_wrapping = closest.product.metafields.custom.cb_gift_wrapping.value %}
+        {% if gift_wrapping != blank %}
+          <div class="accordion-row__gift-wrapping">
+            <div class="accordion-row__gift-wrapping-images">
+              {% if gift_wrapping.image1 != blank %}
+                <div class="accordion-row__gift-wrapping-image-wrap">
+                  <img src="{{ gift_wrapping.image1 | image_url: width: 240 }}" alt="" class="accordion-row__gift-wrapping-image" width="120" height="120" loading="lazy">
+                </div>
+              {% endif %}
+              {% if gift_wrapping.image2 != blank %}
+                <div class="accordion-row__gift-wrapping-image-wrap">
+                  <img src="{{ gift_wrapping.image2 | image_url: width: 240 }}" alt="" class="accordion-row__gift-wrapping-image" width="120" height="120" loading="lazy">
+                </div>
+              {% endif %}
+              {% if gift_wrapping.image3 != blank %}
+                <div class="accordion-row__gift-wrapping-image-wrap">
+                  <img src="{{ gift_wrapping.image3 | image_url: width: 240 }}" alt="" class="accordion-row__gift-wrapping-image" width="120" height="120" loading="lazy">
+                </div>
+              {% endif %}
+              {% if gift_wrapping.image4 != blank %}
+                <div class="accordion-row__gift-wrapping-image-wrap">
+                  <img src="{{ gift_wrapping.image4 | image_url: width: 240 }}" alt="" class="accordion-row__gift-wrapping-image" width="120" height="120" loading="lazy">
+                </div>
+              {% endif %}
+            </div>
+            {% if gift_wrapping.gift_wrap_text != blank %}
+              <div class="accordion-row__gift-wrapping-text rte">
+                {{ gift_wrapping.gift_wrap_text | metafield_tag }}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% elsif block_settings.heading == 'Need Help?' %}
+        {% assign need_help = closest.product.metafields.custom.cb_need_help.value %}
+        {% if need_help != blank %}
+          <div class="accordion-row__need-help">
+            {% if need_help.need_help_text != blank %}
+              <div class="accordion-row__need-help-text rte">
+                {{ need_help.need_help_text | metafield_tag }}
+              </div>
+            {% endif %}
+            {% if need_help.email != blank %}
+              <div class="accordion-row__need-help-row">
+                <img src="{{ 'email.png' | asset_url }}" alt="" class="accordion-row__need-help-icon" width="18" height="18" loading="lazy">
+                <a href="mailto:{{ need_help.email | escape }}" class="accordion-row__need-help-link">{{ need_help.email }}</a>
+              </div>
+            {% endif %}
+            {% if need_help.phone_number != blank %}
+              <div class="accordion-row__need-help-row">
+                <img src="{{ 'phone-number.png' | asset_url }}" alt="" class="accordion-row__need-help-icon" width="18" height="18" loading="lazy">
+                <a href="tel:{{ need_help.phone_number | replace: ' ', '' | escape }}" class="accordion-row__need-help-link accordion-row__need-help-link--phone">{{ need_help.phone_number }}</a>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endif %}
     </div>
   </details>
 </accordion-custom>
@@ -60,6 +212,209 @@
 .accordion-details .details__header {
   padding: 16px;
 }
+
+  .product-features-icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    margin-top: 20px;
+  }
+
+  .product-features-icons__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    max-width: 104px;
+    text-align: center;
+  }
+
+  .product-features-icons__item img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .product-features-icons__text {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 16px;
+    line-height: 130%;
+    letter-spacing: 0;
+    text-align: center;
+  }
+
+  .product-features-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #FDF8E7;
+    padding: 16px;
+    margin-top: 24px;
+    border-radius: 4px;
+  }
+
+  .product-features-card__icon-wrap {
+    flex-shrink: 0;
+  }
+
+  .product-features-card__icon {
+    width: 28px;
+    height: 28px;
+    display: block;
+  }
+
+  .product-features-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .product-features-card__heading {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 23px;
+    color: #1D425A;
+    margin: 0;
+  }
+
+  .product-features-card__description {
+    font-family: 'Outfit', sans-serif;
+    font-style: normal;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 130%;
+    color: #1D425A;
+    margin: 0;
+  }
+
+  .accordion-row__fabric-care {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .accordion-row__fabric-care-image {
+    width: 55px;
+    height: 55px;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+
+  .accordion-row__fabric-care-text {
+    min-width: 0;
+  }
+
+  .accordion-row__delivery-return {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .accordion-row__delivery-return-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+    align-items: flex-start;
+  }
+
+  .accordion-row__delivery-return-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .accordion-row__delivery-return-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  .accordion-row__delivery-return-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .accordion-row__delivery-return-icon img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
+
+  .accordion-row__delivery-return-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  .accordion-row__delivery-return-policy {
+    margin-top: 4px;
+  }
+
+  .accordion-row__gift-wrapping {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .accordion-row__gift-wrapping-images {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .accordion-row__gift-wrapping-image-wrap {
+    flex-shrink: 0;
+  }
+
+  .accordion-row__gift-wrapping-image {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+    border: none;
+    border-radius: 0;
+  }
+
+  .accordion-row__gift-wrapping-text {
+    margin: 0;
+  }
+
+  .accordion-row__need-help {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .accordion-row__need-help-text {
+    margin: 0;
+    color: #1D425A;
+  }
+
+  .accordion-row__need-help-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .accordion-row__need-help-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+
+  .accordion-row__need-help-link {
+    text-decoration: underline;
+    color: #1D425A;
+  }
+
+  .accordion-row__need-help-link--phone {
+    font-size: 14px;
+  }
 
 {% endstylesheet %}
 
