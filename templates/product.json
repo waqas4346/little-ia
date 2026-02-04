@@ -348,17 +348,6 @@
                   "blocks": {},
                   "block_order": []
                 },
-                "accordion_row_delivery_date_time": {
-                  "type": "_accordion-row",
-                  "settings": {
-                    "heading": "Delivery date and time",
-                    "open_by_default": false,
-                    "icon": "none",
-                    "width": 20
-                  },
-                  "blocks": {},
-                  "block_order": []
-                },
                 "accordion_row_highlights": {
                   "type": "_accordion-row",
                   "settings": {
@@ -386,24 +375,39 @@
                     "icon": "none",
                     "width": 20
                   },
-                  "blocks": {
-                    "delivery_return_content": {
-                      "type": "_delivery-return-content",
-                      "settings": {},
-                      "blocks": {}
-                    }
+                  "blocks": {},
+                  "block_order": []
+                },
+                "accordion_row_gift_wrapping": {
+                  "type": "_accordion-row",
+                  "settings": {
+                    "heading": "Gift Wrapping",
+                    "open_by_default": false,
+                    "icon": "none",
+                    "width": 20
                   },
-                  "block_order": [
-                    "delivery_return_content"
-                  ]
+                  "blocks": {},
+                  "block_order": []
+                },
+                "accordion_row_need_help": {
+                  "type": "_accordion-row",
+                  "settings": {
+                    "heading": "Need Help?",
+                    "open_by_default": false,
+                    "icon": "none",
+                    "width": 20
+                  },
+                  "blocks": {},
+                  "block_order": []
                 }
               },
               "block_order": [
                 "accordion_row_product_feature",
                 "accordion_row_fabric_care",
-                "accordion_row_delivery_date_time",
-                "accordion_row_highlights",
-                "accordion_row_delivery_return"
+                "accordion_row_delivery_return",
+                "accordion_row_gift_wrapping",
+                "accordion_row_need_help",
+                "accordion_row_highlights"
               ]
             }
           },
