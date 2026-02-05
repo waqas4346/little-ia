@@ -4,10 +4,22 @@
   if collection_object == blank
     assign collection_object = collections.all
   endif
+
+  assign banner_text_color = collection_object.metafields.custom.cb_banner_tex_color.value | default: blank
+  assign banner_overlay_color = collection_object.metafields.custom.cb_banner_overlay_color.value | default: blank
 %}
 
 <div class="section section--{{ section.settings.section_width }} collection-banner{% if collection_object.featured_image %} collection-banner--has-image{% endif %}"
   data-testid="collection-banner"
+  {% if banner_text_color != blank or banner_overlay_color != blank %}
+    style="
+      {% if banner_text_color != blank %}--collection-banner-text-color: {{ banner_text_color }};{% endif %}
+      {% if banner_overlay_color != blank %}
+        --collection-banner-overlay-gradient: linear-gradient(89.97deg, {{ banner_overlay_color | color_modify: 'alpha', 1 }} -12.75%, {{ banner_overlay_color | color_modify: 'alpha', 0.810876 }} -3.35%, {{ banner_overlay_color | color_modify: 'alpha', 0.648265 }} 29.36%, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 67.56%);
+        --collection-banner-overlay-gradient-mobile: linear-gradient(202.37deg, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 23.99%, {{ banner_overlay_color | color_modify: 'alpha', 0.485081 }} 38.69%, {{ banner_overlay_color | color_modify: 'alpha', 0.821329 }} 102.45%, {{ banner_overlay_color | color_modify: 'alpha', 1 }} 127.08%);
+      {% endif %}
+    "
+  {% endif %}
 >
   {% if collection_object.featured_image %}
     <div class="collection-banner__background">
@@ -151,13 +163,13 @@
     position: absolute;
     inset: 0;
     z-index: 1;
-    background: linear-gradient(89.97deg, #000000 -12.75%, rgba(0, 0, 0, 0.810876) -3.35%, rgba(0, 0, 0, 0.648265) 29.36%, rgba(0, 0, 0, 0) 67.56%);
+    background-image: var(--collection-banner-overlay-gradient, linear-gradient(89.97deg, #000000 -12.75%, rgba(0, 0, 0, 0.810876) -3.35%, rgba(0, 0, 0, 0.648265) 29.36%, rgba(0, 0, 0, 0) 67.56%));
     pointer-events: none;
   }
 
   @media screen and (max-width: 749px) {
     .collection-banner__overlay {
-      background: linear-gradient(202.37deg, rgba(0, 0, 0, 0) 23.99%, rgba(0, 0, 0, 0.485081) 38.69%, rgba(0, 0, 0, 0.821329) 102.45%, #000000 127.08%);
+      background-image: var(--collection-banner-overlay-gradient-mobile, linear-gradient(202.37deg, rgba(0, 0, 0, 0) 23.99%, rgba(0, 0, 0, 0.485081) 38.69%, rgba(0, 0, 0, 0.821329) 102.45%, #000000 127.08%));
     }
   }
 
@@ -215,13 +227,13 @@
   .collection-banner--has-image .collection-breadcrumbs__list,
   .collection-banner--has-image .collection-breadcrumbs__link,
   .collection-banner--has-image .collection-breadcrumbs__separator {
-    color: #ffffff;
+    color: var(--collection-banner-text-color, #ffffff);
   }
 
   .collection-banner:not(.collection-banner--has-image) .collection-breadcrumbs__list,
   .collection-banner:not(.collection-banner--has-image) .collection-breadcrumbs__link,
   .collection-banner:not(.collection-banner--has-image) .collection-breadcrumbs__separator {
-    color: #1D425A;
+    color: var(--collection-banner-text-color, #1D425A);
   }
 
   .collection-banner__title {
@@ -233,11 +245,11 @@
   }
 
   .collection-banner--has-image .collection-banner__title {
-    color: #ffffff;
+    color: var(--collection-banner-text-color, #ffffff);
   }
 
   .collection-banner:not(.collection-banner--has-image) .collection-banner__title {
-    color: #1D425A;
+    color: var(--collection-banner-text-color, #1D425A);
   }
 
   .collection-banner__description {
@@ -248,11 +260,11 @@
   }
 
   .collection-banner--has-image .collection-banner__description {
-    color: #ffffff;
+    color: var(--collection-banner-text-color, #ffffff);
   }
 
   .collection-banner:not(.collection-banner--has-image) .collection-banner__description {
-    color: #1D425A;
+    color: var(--collection-banner-text-color, #1D425A);
   }
 
   .collection-banner__features {
@@ -307,19 +319,19 @@
   }
 
   .collection-banner--has-image .collection-banner__feature-text {
-    color: #ffffff;
+    color: var(--collection-banner-text-color, #ffffff);
   }
 
   .collection-banner:not(.collection-banner--has-image) .collection-banner__feature-text {
-    color: #1D425A;
+    color: var(--collection-banner-text-color, #1D425A);
   }
 
   .collection-banner--has-image .collection-banner__feature-icon {
-    color: #ffffff;
+    color: var(--collection-banner-text-color, #ffffff);
   }
 
   .collection-banner:not(.collection-banner--has-image) .collection-banner__feature-icon {
-    color: #1D425A;
+    color: var(--collection-banner-text-color, #1D425A);
   }
 
   @media screen and (max-width: 749px) {
