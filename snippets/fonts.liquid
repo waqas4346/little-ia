@@ -6,8 +6,6 @@
 {%- if settings.type_body_font.family == 'Outfit' or settings.type_subheading_font.family == 'Outfit' or settings.type_heading_font.family == 'Outfit' or settings.type_accent_font.family == 'Outfit' -%}
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 {%- endif -%}
-{% comment %} Google Fonts: Sacramento (used in image-with-text block) {% endcomment %}
-<link href="https://fonts.googleapis.com/css2?family=Sacramento&display=swap" rel="stylesheet">
 {% comment %} Adobe Fonts: Futura PT (fallback to Outfit if not available) {% endcomment %}
 {% comment %} Note: Futura PT should be loaded via Adobe Fonts or theme settings. Outfit is used as fallback. {% endcomment %}
 {%- unless settings.type_body_font.system? -%}
