@@ -12,114 +12,12 @@
     "slideshow_MNadQf": {
       "type": "slideshow",
       "blocks": {
-        "slide_AcK3Mm": {
-          "type": "_slide",
-          "settings": {
-            "media_type_1": "image",
-            "image_1": "shopify://shop_images/Frame_1400008471_2.png",
-            "content_direction": "column",
-            "vertical_on_mobile": true,
-            "horizontal_alignment": "flex-start",
-            "vertical_alignment": "center",
-            "align_baseline": false,
-            "horizontal_alignment_flex_direction_column": "flex-start",
-            "horizontal_alignment_flex_direction_column_mobile": "center",
-            "vertical_alignment_flex_direction_column": "center",
-            "vertical_alignment_flex_direction_column_mobile": "flex-start",
-            "gap": 12,
-            "inherit_color_scheme": false,
-            "color_scheme": "scheme-6",
-            "toggle_overlay": false,
-            "overlay_color": "#00000026",
-            "overlay_style": "solid",
-            "gradient_direction": "to top",
-            "padding-block-start": 48,
-            "padding-block-end": 48,
-            "padding-inline-start": 70,
-            "padding-inline-end": 70,
-            "use_mobile_padding": true,
-            "padding-block-start-mobile": 14,
-            "padding-block-end-mobile": 56,
-            "padding-inline-start-mobile": 40,
-            "padding-inline-end-mobile": 40
-          },
-          "blocks": {
-            "text_9r6ibq": {
-              "type": "text",
-              "settings": {
-                "text": "<h2>Made to Treasure </h2>",
-                "width": "fit-content",
-                "max_width": "normal",
-                "alignment": "left",
-                "type_preset": "h2",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "wrap": "pretty",
-                "color": "var(--color-foreground)",
-                "background": false,
-                "background_color": "#00000026",
-                "corner_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "text_BEGWaL": {
-              "type": "text",
-              "settings": {
-                "text": "<p>Thoughtfully crafted  personalised  essentials that  become keepsakes for life.</p>",
-                "width": "fit-content",
-                "max_width": "normal",
-                "alignment": "left",
-                "type_preset": "rte",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "wrap": "pretty",
-                "color": "var(--color-foreground)",
-                "background": false,
-                "background_color": "#00000026",
-                "corner_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
-              },
-              "blocks": {}
-            },
-            "button_9Bpy3a": {
-              "type": "button",
-              "settings": {
-                "label": "SHOP BABY ESSENTIALS",
-                "link": "shopify://collections/all",
-                "open_in_new_tab": false,
-                "style_class": "button",
-                "width": "fit-content",
-                "custom_width": 100,
-                "width_mobile": "fit-content",
-                "custom_width_mobile": 100
-              },
-              "blocks": {}
-            }
-          },
-          "block_order": [
-            "text_9r6ibq",
-            "text_BEGWaL",
-            "button_9Bpy3a"
-          ]
-        },
         "slide_m4KyYF": {
           "type": "_slide",
           "settings": {
-            "media_type_1": "image",
+            "media_type_1": "video",
             "image_1": "shopify://shop_images/Frame_1400008471_2.png",
+            "video_1": "shopify://files/videos/School essentials.mp4",
             "content_direction": "column",
             "vertical_on_mobile": true,
             "horizontal_alignment": "flex-start",
@@ -217,11 +115,114 @@
             "text_Ghywey",
             "button_nMNGAV"
           ]
+        },
+        "slide_AcK3Mm": {
+          "type": "_slide",
+          "settings": {
+            "media_type_1": "image",
+            "image_1": "shopify://shop_images/f31950ff-c215-4e63-8ab2-65b6db9bd76b.jpg",
+            "content_direction": "column",
+            "vertical_on_mobile": true,
+            "horizontal_alignment": "flex-start",
+            "vertical_alignment": "center",
+            "align_baseline": false,
+            "horizontal_alignment_flex_direction_column": "flex-start",
+            "horizontal_alignment_flex_direction_column_mobile": "center",
+            "vertical_alignment_flex_direction_column": "center",
+            "vertical_alignment_flex_direction_column_mobile": "flex-start",
+            "gap": 12,
+            "inherit_color_scheme": false,
+            "color_scheme": "scheme-6",
+            "toggle_overlay": false,
+            "overlay_color": "#00000026",
+            "overlay_style": "solid",
+            "gradient_direction": "to top",
+            "padding-block-start": 48,
+            "padding-block-end": 48,
+            "padding-inline-start": 70,
+            "padding-inline-end": 70,
+            "use_mobile_padding": true,
+            "padding-block-start-mobile": 14,
+            "padding-block-end-mobile": 56,
+            "padding-inline-start-mobile": 40,
+            "padding-inline-end-mobile": 40
+          },
+          "blocks": {
+            "text_9r6ibq": {
+              "type": "text",
+              "settings": {
+                "text": "<h2>Made to Treasure </h2>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "h2",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "text_BEGWaL": {
+              "type": "text",
+              "settings": {
+                "text": "<p>Thoughtfully crafted  personalised  essentials that  become keepsakes for life.</p>",
+                "width": "fit-content",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "color": "var(--color-foreground)",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "button_9Bpy3a": {
+              "type": "button",
+              "settings": {
+                "label": "SHOP BABY ESSENTIALS",
+                "link": "shopify://collections/all",
+                "open_in_new_tab": false,
+                "style_class": "button",
+                "width": "fit-content",
+                "custom_width": 100,
+                "width_mobile": "fit-content",
+                "custom_width_mobile": 100
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "text_9r6ibq",
+            "text_BEGWaL",
+            "button_9Bpy3a"
+          ]
         }
       },
       "block_order": [
-        "slide_AcK3Mm",
-        "slide_m4KyYF"
+        "slide_m4KyYF",
+        "slide_AcK3Mm"
       ],
       "name": "t:names.slideshow_full_frame",
       "settings": {
@@ -360,6 +361,7 @@
         "icon_PTcDWf": {
           "type": "icon",
           "name": "t:names.icon",
+          "disabled": true,
           "settings": {
             "icon": "price_tag",
             "image_upload": "shopify://shop_images/Ellipse_3042.png",
@@ -383,6 +385,7 @@
         "icon_rQ4BGW": {
           "type": "icon",
           "name": "t:names.icon",
+          "disabled": true,
           "settings": {
             "icon": "price_tag",
             "image_upload": "shopify://shop_images/Ellipse_3042.png",
@@ -406,6 +409,7 @@
         "icon_acMeDi": {
           "type": "icon",
           "name": "t:names.icon",
+          "disabled": true,
           "settings": {
             "icon": "price_tag",
             "image_upload": "shopify://shop_images/Ellipse_3042.png",
@@ -417,6 +421,7 @@
         },
         "text_qmbz7c": {
           "type": "text",
+          "disabled": true,
           "settings": {
             "text": "<p>We make things that work better and last longer</p>",
             "width": "fit-content",
@@ -743,7 +748,7 @@
       "name": "t:names.hero",
       "settings": {
         "media_type_1": "image",
-        "image_1": "shopify://shop_images/birthday-gift.png",
+        "image_1": "shopify://shop_images/8a9d114a-71bf-446e-9f5e-6b158e7b31ba.jpg",
         "media_type_2": "image",
         "stack_media_on_mobile": false,
         "custom_mobile_media": false,
@@ -790,8 +795,7 @@
         "heading": "our promise",
         "heading_icon_left": "none",
         "heading_image_left": "shopify://shop_images/Vector.png",
-        "heading_icon_right": "star",
-        "heading_image_right": "shopify://shop_images/Vector_1.png",
+        "heading_icon_right": "none",
         "heading_icon_size": 40,
         "subheading": "<p>Eco-friendly, high-quality, and personalised with love. So you can celebrate the magic of childhood with items made to be treasured.</p>",
         "subheading_icon_left": "heart",
@@ -1059,7 +1063,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify://shop_images/homepage-party-favours_527eaf2a-5777-4b90-9e75-06fa072ec651.png",
+            "image": "shopify://shop_images/1f0a82df-aa0d-430b-a09b-b746a0f5810b.jpg",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -1336,7 +1340,7 @@
       "type": "brands",
       "name": "Brands",
       "settings": {
-        "image": "shopify://shop_images/brands-section-image.png",
+        "image": "shopify://shop_images/silver_gold_1024x1024_2x_0b61361e-9928-467d-92ba-e7c49a86b08a.webp",
         "logo": "shopify://shop_images/little-ia-logo.png",
         "title": "x  ICONIC BRANDS",
         "body": "<p>Find internationally renowned family favourite brands, alongside homegrown brands and exclusively personalise them.</p>",

@@ -1,3 +1,12 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "type": "footer",
   "name": "Footer",
@@ -9,10 +18,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify:\/\/shop_images\/Union.svg",
+            "image_upload": "shopify://shop_images/Union.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>COMPLIMENTARY<br\/>PERSONALISATION<\/p>",
+            "heading": "<p>COMPLIMENTARY<br/>PERSONALISATION</p>",
             "sub_heading": "on all items",
             "alignment": "vertical",
             "gap": 8
@@ -23,10 +32,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify:\/\/shop_images\/Delivery-Truck-Clock--Streamline-Ultimate.svg",
+            "image_upload": "shopify://shop_images/Delivery-Truck-Clock--Streamline-Ultimate.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>SAME DAY DELIVERY<br\/>IN DUBAI<\/p>",
+            "heading": "<p>SAME DAY DELIVERY<br/>IN DUBAI</p>",
             "sub_heading": "till 12pm",
             "alignment": "vertical",
             "gap": 8
@@ -37,10 +46,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify:\/\/shop_images\/Gift-Card--Streamline-Tabler.svg",
+            "image_upload": "shopify://shop_images/Gift-Card--Streamline-Tabler.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>COMPLIMENTARY<br\/>PACKAGING<\/p>",
+            "heading": "<p>COMPLIMENTARY<br/>PACKAGING</p>",
             "sub_heading": "with gift sets",
             "alignment": "vertical",
             "gap": 8
@@ -51,10 +60,10 @@
           "type": "icon-with-text",
           "name": "Icon with text",
           "settings": {
-            "image_upload": "shopify:\/\/shop_images\/Vector_1.svg",
+            "image_upload": "shopify://shop_images/Vector_1.svg",
             "icon_size": 32,
             "icon_size_mobile": 22,
-            "heading": "<p>WORLDWIDE<br\/>EXPRESS SHIPPING<\/p>",
+            "heading": "<p>WORLDWIDE<br/>EXPRESS SHIPPING</p>",
             "sub_heading": "5 to 7 working days",
             "alignment": "vertical",
             "gap": 8
@@ -102,11 +111,11 @@
       "type": "footer-signup-form",
       "name": "Footer signup form",
       "settings": {
-        "image_one": "shopify:\/\/shop_images\/footer-signup-form-1.png",
+        "image_one": "shopify://shop_images/Tezza-2497.jpg",
         "image_one_alt": "",
-        "image_two": "shopify:\/\/shop_images\/footer-signup-form-2.png",
+        "image_two": "shopify://shop_images/Tezza-8764.jpg",
         "image_two_alt": "",
-        "klaviyo_form": "<div class=\"klaviyo-form-TA3gzb\"><\/div>",
+        "klaviyo_form": "<div class=\"klaviyo-form-TA3gzb\"></div>",
         "section_width": "page-width",
         "gap": 12,
         "color_scheme": "scheme-6",
@@ -122,9 +131,9 @@
           "name": "Footer Icon & Image",
           "settings": {
             "icon": "none",
-            "image_upload": "shopify:\/\/shop_images\/little-ia-logo.png",
+            "image_upload": "shopify://shop_images/little-ia-logo.png",
             "icon_width": 158,
-            "image": "shopify:\/\/shop_images\/footer-image.png",
+            "image": "shopify://shop_images/footer-image.png",
             "hide_image_on_mobile": true,
             "padding-block-start": 0,
             "padding-block-end": 0,
@@ -200,19 +209,19 @@
           "type": "footer-contact-info",
           "name": "Footer Contact Info",
           "settings": {
-            "text": "<p>Contact Us<\/p>",
+            "text": "<p>Contact Us</p>",
             "text_preset": "h3",
             "email": "support@little-ia.com",
-            "email_icon": "shopify:\/\/shop_images\/email-icon.png",
+            "email_icon": "shopify://shop_images/email-icon.png",
             "phone": "+971 50 579 5125",
-            "whatsapp_icon": "shopify:\/\/shop_images\/whatsapp-icon.png",
-            "text_2": "<p>Follow Us<\/p>",
+            "whatsapp_icon": "shopify://shop_images/whatsapp-icon.png",
+            "text_2": "<p>Follow Us</p>",
             "text_2_preset": "h3",
             "show_social_icons": true,
-            "facebook_url": "https:\/\/www.facebook.com\/littleizaakazanei-103995644565115",
-            "instagram_url": "https:\/\/www.instagram.com\/littleiaworld\/?hl=en",
-            "youtube_url": "http:\/\/www.youtube.com\/@LittleIA",
-            "tiktok_url": "https:\/\/www.tiktok.com\/@littleia.world?_t=8oTWCdJMxpi&_r=1",
+            "facebook_url": "https://www.facebook.com/littleizaakazanei-103995644565115",
+            "instagram_url": "https://www.instagram.com/littleiaworld/?hl=en",
+            "youtube_url": "http://www.youtube.com/@LittleIA",
+            "tiktok_url": "https://www.tiktok.com/@littleia.world?_t=8oTWCdJMxpi&_r=1",
             "twitter_url": "",
             "threads_url": "",
             "linkedin_url": "",
@@ -275,11 +284,11 @@
           "type": "social-links",
           "disabled": true,
           "settings": {
-            "facebook_url": "https:\/\/www.facebook.com\/",
-            "instagram_url": "https:\/\/www.instagram.com\/",
-            "youtube_url": "https:\/\/www.youtube.com\/",
-            "tiktok_url": "https:\/\/www.tiktok.com\/",
-            "twitter_url": "https:\/\/x.com\/",
+            "facebook_url": "https://www.facebook.com/",
+            "instagram_url": "https://www.instagram.com/",
+            "youtube_url": "https://www.youtube.com/",
+            "tiktok_url": "https://www.tiktok.com/",
+            "twitter_url": "https://x.com/",
             "threads_url": "",
             "linkedin_url": "",
             "bluesky_url": "",

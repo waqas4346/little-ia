@@ -345,8 +345,7 @@
                     "icon": "none",
                     "width": 20
                   },
-                  "blocks": {},
-                  "block_order": []
+                  "blocks": {}
                 },
                 "accordion_row_highlights": {
                   "type": "_accordion-row",
@@ -375,8 +374,7 @@
                     "icon": "none",
                     "width": 20
                   },
-                  "blocks": {},
-                  "block_order": []
+                  "blocks": {}
                 },
                 "accordion_row_gift_wrapping": {
                   "type": "_accordion-row",
@@ -386,8 +384,7 @@
                     "icon": "none",
                     "width": 20
                   },
-                  "blocks": {},
-                  "block_order": []
+                  "blocks": {}
                 },
                 "accordion_row_need_help": {
                   "type": "_accordion-row",
@@ -397,8 +394,7 @@
                     "icon": "none",
                     "width": 20
                   },
-                  "blocks": {},
-                  "block_order": []
+                  "blocks": {}
                 }
               },
               "block_order": [
