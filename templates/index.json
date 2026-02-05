@@ -18,6 +18,8 @@
             "media_type_1": "video",
             "image_1": "shopify://shop_images/Frame_1400008471_2.png",
             "video_1": "shopify://files/videos/School essentials.mp4",
+            "full_screen_desktop": false,
+            "full_screen_mobile": false,
             "content_direction": "column",
             "vertical_on_mobile": true,
             "horizontal_alignment": "flex-start",
@@ -42,7 +44,7 @@
             "padding-block-start-mobile": 14,
             "padding-block-end-mobile": 56,
             "padding-inline-start-mobile": 40,
-            "padding-inline-end-mobile": 0
+            "padding-inline-end-mobile": 40
           },
           "blocks": {
             "text_Wp3hWa": {
@@ -73,7 +75,7 @@
             "text_Ghywey": {
               "type": "text",
               "settings": {
-                "text": "<p>Thoughtfully crafted  <strong>personalised</strong>  essentials that  become keepsakes for life.</p>",
+                "text": "<p>Thoughtfully crafted  personalised  essentials that  become keepsakes for life.</p>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -121,6 +123,8 @@
           "settings": {
             "media_type_1": "image",
             "image_1": "shopify://shop_images/f31950ff-c215-4e63-8ab2-65b6db9bd76b.jpg",
+            "full_screen_desktop": false,
+            "full_screen_mobile": false,
             "content_direction": "column",
             "vertical_on_mobile": true,
             "horizontal_alignment": "flex-start",

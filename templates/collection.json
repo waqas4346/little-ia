@@ -35,7 +35,7 @@
         "build-card-1": {
           "type": "build-card",
           "settings": {
-            "position": 2,
+            "position": 6,
             "image": "shopify://shop_images/Frame_1437254868.png",
             "title": "Build Your Own Baby Gift Set",
             "body_text": "<p>choose the items, pick the colours and add baby’s name for a personal touch.</p>",
@@ -47,12 +47,12 @@
         "build_card_wLG9Y3": {
           "type": "build-card",
           "settings": {
-            "position": 4,
-            "image": "shopify://shop_images/ramadan_banner_1.png",
-            "title": "sddd",
-            "body_text": "<p>ddd</p>",
-            "link_url": "",
-            "link_copy": "ddd"
+            "position": 6,
+            "image": "shopify://shop_images/Frame_1437254868_1.png",
+            "title": "The Perfect Diaper Bag",
+            "body_text": "<p>Comes with changing mat, in-built wipes case, etc,. and has versatile carrying options</p>",
+            "link_url": "#",
+            "link_copy": "SHOP NOW"
           },
           "blocks": {}
         },
