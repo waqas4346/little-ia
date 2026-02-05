@@ -1,0 +1,83 @@
+{% liquid
+  assign link_text = block.settings.link_copy
+  assign position_value = block.settings.position | default: 0
+%}
+
+<li
+  class="product-grid__item product-grid__item--build-card"
+  data-build-card-position="{{ position_value }}"
+  ref="cards[]"
+>
+  <article class="build-card" {{ block.shopify_attributes }}>
+    {% if block.settings.image != blank %}
+      <div class="build-card__media">
+        {{
+          block.settings.image
+          | image_url: width: 1200
+          | image_tag:
+            loading: 'lazy',
+            class: 'build-card__image',
+            widths: '360, 540, 720, 900, 1200',
+            sizes: '(min-width: 1024px) 25vw, (min-width: 750px) 33vw, 100vw',
+            alt: block.settings.image.alt | default: block.settings.title
+        }}
+      </div>
+    {% endif %}
+    <div class="build-card__content">
+      {% if block.settings.title != blank %}
+        <h3 class="build-card__title">{{ block.settings.title }}</h3>
+      {% endif %}
+      {% if block.settings.body_text != blank %}
+        <div class="build-card__body rte">
+          {{ block.settings.body_text }}
+        </div>
+      {% endif %}
+      {% if block.settings.link_url != blank and link_text != blank %}
+        <a class="build-card__link" href="{{ block.settings.link_url }}">
+          {{ link_text }}
+        </a>
+      {% endif %}
+    </div>
+  </article>
+</li>
+
+{% schema %}
+{
+  "name": "Build card",
+  "tag": null,
+  "settings": [
+    {
+      "type": "number",
+      "id": "position",
+      "label": "Position",
+      "default": 1,
+      "info": "Position in the collection list (1 = first product overall)."
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title"
+    },
+    {
+      "type": "richtext",
+      "id": "body_text",
+      "label": "Body text"
+    },
+    {
+      "type": "url",
+      "id": "link_url",
+      "label": "Link URL"
+    },
+    {
+      "type": "text",
+      "id": "link_copy",
+      "label": "Link copy"
+    }
+  ]
+}
+{% endschema %}
