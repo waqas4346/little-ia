@@ -119,7 +119,7 @@
   # Auto-open personalisation: when product has personalisation options and full-screen metafield is true
   assign auto_open_personalisation = false
   assign has_personalisation_option = false
-  if show_personalized or has_color_option or show_name_tabs or personalized_name or personalized_textbox
+  if show_personalized or show_name_tabs or personalized_name or personalized_textbox
     assign has_personalisation_option = true
   endif
   if full_screen_personalisation and has_personalisation_option
@@ -1008,8 +1008,7 @@
     background-color: var(--color-background);
   }
 
-  /* Full-screen when product has color-type variant OR product metafield custom.cb_full_screen_personalisation is true */
-  personalise-dialog[data-has-color-variant="true"] .personalise-modal,
+  /* Full-screen only when product metafield custom.cb_full_screen_personalisation is true */
   personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal {
     width: 100vw;
     max-width: none;
@@ -1021,7 +1020,6 @@
     .personalise-modal {
       width: 1150px;
     }
-    personalise-dialog[data-has-color-variant="true"] .personalise-modal,
     personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal {
       width: 100vw;
     }
@@ -1080,10 +1078,6 @@
   @media screen and (min-width: 1440px) {
     .personalise-modal__preview {
       flex: 0 0 525px;
-    }
-    personalise-dialog[data-has-color-variant="true"] .personalise-modal__preview,
-    personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__preview {
-      flex: 0 0 52%;
     }
     personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__preview {
       flex: 0 0 60%;
@@ -1146,10 +1140,6 @@
   @media screen and (min-width: 1440px) {
     .personalise-modal__form {
       flex: 0 0 530px;
-    }
-    personalise-dialog[data-has-color-variant="true"] .personalise-modal__form,
-    personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__form {
-      flex: 0 0 46.09%;
     }
     personalise-dialog[data-full-screen-personalisation="true"] .personalise-modal__form {
       flex: 0 0 40%;
