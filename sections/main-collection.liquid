@@ -481,6 +481,51 @@
     {% endpaginate %}
   </div>
 
+  <template id="build-card-template-{{ section.id }}">
+    {% content_for 'blocks' %}
+  </template>
+
+<script>
+  (function insertBuildCards() {
+    const sectionId = '{{ section.id }}';
+    const sectionRoot = document.querySelector(`results-list[section-id="${sectionId}"]`);
+    if (!sectionRoot) return;
+
+    const grid = sectionRoot.querySelector('.product-grid');
+    const template = sectionRoot.querySelector(`#build-card-template-${sectionId}`);
+    if (!grid || !template) return;
+
+    const existingCards = grid.querySelectorAll('.product-grid__item--build-card');
+    existingCards.forEach((card) => card.remove());
+
+    const fragment = template.content ? template.content.cloneNode(true) : template.cloneNode(true);
+    const cards = Array.from(fragment.querySelectorAll('.product-grid__item--build-card'));
+    if (cards.length === 0) return;
+
+    const productItems = Array.from(grid.querySelectorAll('.product-grid__item[data-product-id]'));
+    const page = new URLSearchParams(window.location.search).get('page') || '1';
+
+    cards.forEach((card) => {
+      if (!card.dataset.page) {
+        card.dataset.page = page;
+      }
+
+      const position = parseInt(card.dataset.buildCardPosition || '', 10);
+      if (!position || position < 1) {
+        grid.append(card);
+        return;
+      }
+
+      const targetIndex = Math.min(position - 1, productItems.length);
+      if (targetIndex >= productItems.length) {
+        grid.append(card);
+      } else {
+        productItems[targetIndex].before(card);
+      }
+    });
+  })();
+</script>
+
   {%- comment -%} Mobile sticky bottom bar for Sort By and Filter {%- endcomment -%}
   {%- liquid
     assign sort_by = collection.sort_by | default: collection.default_sort_by
@@ -945,6 +990,74 @@
     }
   }
 
+  .product-grid__item--build-card {
+    display: flex;
+  }
+
+  .build-card {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+  }
+
+  .build-card__media {
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+  }
+
+  .build-card__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .build-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    text-align: center;
+    background: #FDF8E7;
+    padding: 20px 13px;
+  }
+
+  .build-card__title {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 140%;
+    letter-spacing: 0;
+    text-align: center;
+    color: #1D425A;
+  }
+
+  .build-card__body {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 140%;
+    letter-spacing: 0;
+    text-align: center;
+    color: #1D425A;
+  }
+
+  .build-card__link {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 140%;
+    letter-spacing: 0;
+    text-decoration: underline;
+    text-decoration-thickness: 7%;
+    text-underline-offset: 0;
+    text-decoration-skip-ink: auto;
+    color: #7295BB;
+  }
+
   /* Mobile sticky bottom bar */
   .collection-mobile-sticky-bar {
     display: none;
@@ -1269,6 +1382,17 @@
   "enabled_on": {
     "templates": ["collection"]
   },
+  "blocks": [
+    {
+      "type": "filters"
+    },
+    {
+      "type": "_product-card"
+    },
+    {
+      "type": "build-card"
+    }
+  ],
   "settings": [
     {
       "type": "select",
