@@ -2349,5 +2349,16 @@
         "default": "equal-width-buttons"
       }
     ]
+  },
+  {
+    "name": "Gift wrap",
+    "settings": [
+      {
+        "type": "product",
+        "id": "gift_wrap_product",
+        "label": "Gift wrap product",
+        "info": "Used for product page gift wrap add-on."
+      }
+    ]
   }
 ]
