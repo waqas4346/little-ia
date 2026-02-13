@@ -75,13 +75,16 @@
       </a>
     {% endif %}
     
-    {% if block_settings.heading != blank or block_settings.sub_heading != blank or block_settings.links_text != blank %}
+    {% if block_settings.heading != blank or block_settings.sub_heading != blank or block_settings.body_text != blank or block_settings.links_text != blank %}
       <div class="image-with-text-block__card">
         {% if block_settings.heading != blank %}
           <h3 class="image-with-text-block__heading">{{ block_settings.heading }}</h3>
         {% endif %}
         {% if block_settings.sub_heading != blank %}
           <p class="image-with-text-block__sub-heading">{{ block_settings.sub_heading }}</p>
+        {% endif %}
+        {% if block_settings.body_text != blank %}
+          <p class="image-with-text-block__body-text">{{ block_settings.body_text }}</p>
         {% endif %}
         {% if block_settings.links_text != blank and block_settings.link_url != blank %}
           <a href="{{ block_settings.link_url }}" class="image-with-text-block__link">{{ block_settings.links_text }}</a>
@@ -163,6 +166,14 @@
     line-height: 150%;
     text-align: center;
     text-transform: uppercase;
+    color: #1D425A;
+  }
+
+  .image-with-text-block__body-text {
+    margin: 0 0 14px 0;
+    font-size: 16px;
+    line-height: 140%;
+    text-align: center;
     color: #1D425A;
   }
 
@@ -426,6 +437,11 @@
       "type": "text",
       "id": "sub_heading",
       "label": "Sub heading"
+    },
+    {
+      "type": "textarea",
+      "id": "body_text",
+      "label": "Body text"
     },
     {
       "type": "text",

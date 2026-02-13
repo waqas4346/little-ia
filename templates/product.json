@@ -340,7 +340,7 @@
                 "accordion_row_fabric_care": {
                   "type": "_accordion-row",
                   "settings": {
-                    "heading": "Fabric & Care",
+                    "heading": "Material & Care",
                     "open_by_default": false,
                     "icon": "none",
                     "width": 20

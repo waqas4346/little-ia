@@ -102,11 +102,14 @@
             </div>
           {% endif %}
         {% endif %}
-      {% elsif block_settings.heading == 'Fabric & Care' %}
+      {% elsif block_settings.heading == 'Material & Care' %}
         {% assign fabric_care = closest.product.metafields.custom.cb_fabric_and_care %}
+        {% assign material_care_icon = closest.product.metafields.custom.cb_material_and_care_icon.value %}
         {% if fabric_care != blank %}
           <div class="accordion-row__fabric-care">
-            <img src="{{ 'GOTS.png' | asset_url }}" alt="GOTS" class="accordion-row__fabric-care-image" width="55" height="55" loading="lazy">
+            {% if material_care_icon != blank %}
+              <img src="{{ material_care_icon | image_url: width: 110 }}" alt="{{ material_care_icon.alt | escape }}" class="accordion-row__fabric-care-image" width="55" height="55" loading="lazy">
+            {% endif %}
             <div class="accordion-row__fabric-care-text rte">
               {{ fabric_care | metafield_tag }}
             </div>
@@ -121,17 +124,27 @@
                 <span class="accordion-row__delivery-return-icon">
                   {{- 'truck-duotone.svg' | inline_asset_content -}}
                 </span>
-                {% if delivery_return.free_shipping_text != blank %}
-                  <span class="accordion-row__delivery-return-text">{{ delivery_return.free_shipping_text }}</span>
+                <div class="accordion-row__delivery-return-text-list">
+                {% assign free_shipping_list = delivery_return.free_shipping_text.value | default: nil %}
+                {% if free_shipping_list != blank %}
+                  {% for text in free_shipping_list %}
+                    <span class="accordion-row__delivery-return-text">{{ text }}</span>
+                  {% endfor %}
                 {% endif %}
+                </div>
               </div>
               <div class="accordion-row__delivery-return-item">
                 <span class="accordion-row__delivery-return-icon">
                   <img src="{{ 'rectangle.svg' | asset_url }}" alt="" width="20" height="20" loading="lazy">
                 </span>
-                {% if delivery_return.cut_off_time_text != blank %}
-                  <span class="accordion-row__delivery-return-text">{{ delivery_return.cut_off_time_text }}</span>
-                {% endif %}
+                <div class="accordion-row__delivery-return-text-list">
+                  {% assign cut_off_time_list = delivery_return.cut_off_time_text.value | default: nil %}
+                  {% if cut_off_time_list != blank %}
+                    {% for text in cut_off_time_list %}
+                      <span class="accordion-row__delivery-return-text">{{ text }}</span>
+                    {% endfor %}
+                  {% endif %}
+                </div>
               </div>
             </div>
             {% if delivery_return.return_policy != blank %}
@@ -331,6 +344,16 @@
   .accordion-row__delivery-return-icon {
     display: inline-flex;
     flex-shrink: 0;
+  }
+
+  .accordion-row__delivery-return-text-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .accordion-row__delivery-return-text-list span {
+    display: block;
   }
 
   .accordion-row__delivery-return-icon svg {
