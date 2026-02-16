@@ -1,3 +1,12 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
     "main": {
@@ -7,10 +16,10 @@
           "type": "text",
           "name": "Title",
           "settings": {
-            "text": "<h1>{{ closest.page.title }}<\/h1>",
+            "text": "<p>The Wonderful World of</p>",
             "width": "100%",
             "max_width": "normal",
-            "alignment": "left",
+            "alignment": "center",
             "type_preset": "h2",
             "font": "var(--font-primary--family)",
             "font_size": "",
@@ -29,32 +38,52 @@
           },
           "blocks": {}
         },
-        "page-content": {
-          "type": "page-content",
-          "settings": {},
+        "text_PPJ7CU": {
+          "type": "text",
+          "name": "t:names.text",
+          "settings": {
+            "text": "<p>We make things that work better and last longer. Our products solve real problems with clean design and honest materials.</p>",
+            "width": "100%",
+            "max_width": "none",
+            "alignment": "center",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "var(--color-foreground)",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
           "blocks": {}
         }
       },
       "block_order": [
         "heading",
-        "page-content"
+        "text_PPJ7CU"
       ],
-      "disabled": true,
       "settings": {
         "content_direction": "column",
         "gap": 32,
         "color_scheme": "",
-        "padding-block-start": 40,
-        "padding-block-end": 80
+        "padding-block-start": 48,
+        "padding-block-end": 0
       }
     },
     "brands_aUWRB6": {
       "type": "brands",
       "name": "Brands",
       "settings": {
-        "image": "shopify:\/\/shop_images\/silver_gold_1024x1024_2x_0b61361e-9928-467d-92ba-e7c49a86b08a.webp",
+        "image": "shopify://shop_images/silver_gold_1024x1024_2x_0b61361e-9928-467d-92ba-e7c49a86b08a.webp",
         "title": "Featured Brands",
-        "body": "<p>Add your body text here.<\/p>",
+        "body": "<p>Add your body text here.</p>",
         "button_text": "Shop All Brands",
         "button_url": "#",
         "section_width": "page-width",
@@ -195,7 +224,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Frame_1437254868_1.png",
+            "image": "shopify://shop_images/Frame_1437254868_1.png",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -223,7 +252,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Tezza-8764.jpg",
+            "image": "shopify://shop_images/Tezza-8764.jpg",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -289,7 +318,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Frame_1437254868_1.png",
+            "image": "shopify://shop_images/Frame_1437254868_1.png",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -317,7 +346,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Tezza-8764.jpg",
+            "image": "shopify://shop_images/Tezza-8764.jpg",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -383,7 +412,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Frame_1437254868_1.png",
+            "image": "shopify://shop_images/Frame_1437254868_1.png",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -411,7 +440,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Tezza-8764.jpg",
+            "image": "shopify://shop_images/Tezza-8764.jpg",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -477,7 +506,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Frame_1437254868_1.png",
+            "image": "shopify://shop_images/Frame_1437254868_1.png",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -505,7 +534,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Tezza-8764.jpg",
+            "image": "shopify://shop_images/Tezza-8764.jpg",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -571,7 +600,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Frame_1437254868_1.png",
+            "image": "shopify://shop_images/Frame_1437254868_1.png",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -599,7 +628,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Tezza-8764.jpg",
+            "image": "shopify://shop_images/Tezza-8764.jpg",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -662,24 +691,9 @@
       "type": "brands",
       "name": "Brands",
       "settings": {
-        "image": "shopify:\/\/shop_images\/silver_gold_1024x1024_2x_0b61361e-9928-467d-92ba-e7c49a86b08a.webp",
+        "image": "shopify://shop_images/silver_gold_1024x1024_2x_0b61361e-9928-467d-92ba-e7c49a86b08a.webp",
         "title": "Featured Brands",
-        "body": "<p>Add your body text here.<\/p>",
-        "button_text": "Shop All Brands",
-        "button_url": "#",
-        "section_width": "page-width",
-        "color_scheme": "scheme-6",
-        "padding-block-start": 24,
-        "padding-block-end": 24
-      }
-    },
-    "brands_NBX6z9": {
-      "type": "brands",
-      "name": "Brands",
-      "settings": {
-        "image": "shopify:\/\/shop_images\/silver_gold_1024x1024_2x_0b61361e-9928-467d-92ba-e7c49a86b08a.webp",
-        "title": "Featured Brands",
-        "body": "<p>Add your body text here.<\/p>",
+        "body": "<p>Add your body text here.</p>",
         "button_text": "Shop All Brands",
         "button_url": "#",
         "section_width": "page-width",
@@ -695,7 +709,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Frame_1437254868_1.png",
+            "image": "shopify://shop_images/Frame_1437254868_1.png",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -723,7 +737,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Tezza-8764.jpg",
+            "image": "shopify://shop_images/Tezza-8764.jpg",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -789,7 +803,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Frame_1437254868_1.png",
+            "image": "shopify://shop_images/Frame_1437254868_1.png",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -817,7 +831,7 @@
           "type": "image-with-text",
           "name": "Image with text",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Tezza-8764.jpg",
+            "image": "shopify://shop_images/Tezza-8764.jpg",
             "link": "",
             "image_ratio": "adapt",
             "width": "fill",
@@ -872,6 +886,21 @@
         "overlay_color": "#00000026",
         "overlay_style": "solid",
         "gradient_direction": "to top",
+        "padding-block-start": 24,
+        "padding-block-end": 24
+      }
+    },
+    "brands_NBX6z9": {
+      "type": "brands",
+      "name": "Brands",
+      "settings": {
+        "image": "shopify://shop_images/silver_gold_1024x1024_2x_0b61361e-9928-467d-92ba-e7c49a86b08a.webp",
+        "title": "Featured Brands",
+        "body": "<p>Add your body text here.</p>",
+        "button_text": "Shop All Brands",
+        "button_url": "#",
+        "section_width": "page-width",
+        "color_scheme": "scheme-6",
         "padding-block-start": 24,
         "padding-block-end": 24
       }
