@@ -347,25 +347,6 @@
                   },
                   "blocks": {}
                 },
-                "accordion_row_highlights": {
-                  "type": "_accordion-row",
-                  "settings": {
-                    "heading": "Highlights",
-                    "open_by_default": false,
-                    "icon": "none",
-                    "width": 20
-                  },
-                  "blocks": {
-                    "highlights_content": {
-                      "type": "_highlights-content",
-                      "settings": {},
-                      "blocks": {}
-                    }
-                  },
-                  "block_order": [
-                    "highlights_content"
-                  ]
-                },
                 "accordion_row_delivery_return": {
                   "type": "_accordion-row",
                   "settings": {
@@ -402,8 +383,7 @@
                 "accordion_row_fabric_care",
                 "accordion_row_delivery_return",
                 "accordion_row_gift_wrapping",
-                "accordion_row_need_help",
-                "accordion_row_highlights"
+                "accordion_row_need_help"
               ]
             }
           },

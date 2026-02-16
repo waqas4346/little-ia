@@ -16,7 +16,7 @@
   
   if product.tags contains 'custom_gift_wrap'
     assign show_gift_wrap = true
-    assign gift_product = all_products['gift-wrap']
+    assign gift_product = settings.gift_wrap_product
   endif
   
   if product.tags contains 'christmas_gift'
@@ -27,7 +27,7 @@
   if product.tags contains 'gift_message'
     assign show_gift_message = true
     assign show_gift_wrap = true
-    assign gift_product = all_products['gift-wrap']
+    assign gift_product = settings.gift_wrap_product
   endif
 %}
 

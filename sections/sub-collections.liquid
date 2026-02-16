@@ -17,23 +17,23 @@
   endif
 %}
 
-<div class="section-background color-{{ section.settings.color_scheme }}"></div>
-<div
-  data-testid="sub-collections"
-  class="
-    section
-    section--{{ section.settings.section_width }}
-    color-{{ section.settings.color_scheme }}
-    spacing-style
-    gap-style
-    sub-collections-section
-  "
-  style=" 
-    {% render 'spacing-style', settings: section.settings %}
-    {% render 'gap-style', value: section.settings.gap %}
-  "
->
-  {% if sub_collections != blank and sub_collections.size > 0 %}
+{% if sub_collections != blank and sub_collections.size > 0 %}
+  <div class="section-background color-{{ section.settings.color_scheme }}"></div>
+  <div
+    data-testid="sub-collections"
+    class="
+      section
+      section--{{ section.settings.section_width }}
+      color-{{ section.settings.color_scheme }}
+      spacing-style
+      gap-style
+      sub-collections-section
+    "
+    style=" 
+      {% render 'spacing-style', settings: section.settings %}
+      {% render 'gap-style', value: section.settings.gap %}
+    "
+  >
     {% comment %} Collection slider with heading {% endcomment %}
     <div class="sub-collections-slider-wrapper">
       {% if section_heading != blank %}
@@ -43,7 +43,7 @@
       {% endif %}
       <button 
         type="button"
-        class="sub-collections-arrow sub-collections-arrow--prev"
+        class="sub-collections-arrow sub-collections-arrow--prev sub-collections-arrow--hidden"
         aria-label="Previous collections"
         data-collection-arrow="prev"
       >
@@ -55,15 +55,22 @@
         {% for sub_collection in sub_collections %}
           {% liquid
             assign collection_name = sub_collection.title | default: 'Collection'
+            assign is_current_collection = false
+            if collection != blank and sub_collection.handle == collection.handle
+              assign is_current_collection = true
+            endif
           %}
           <a
             href="{{ sub_collection.url }}"
-            class="sub-collections-item"
+            class="sub-collections-item{% if is_current_collection %} sub-collections-item--active{% endif %}"
             data-collection-id="{{ sub_collection.id }}"
             data-collection-handle="{{ sub_collection.handle }}"
             aria-label="{{ collection_name }}"
+            {% if is_current_collection %}
+              aria-current="page"
+            {% endif %}
           >
-            <div class="sub-collections-image-wrapper">
+            <div class="sub-collections-image-wrapper{% if is_current_collection %} sub-collections-image-wrapper--active{% endif %}">
               {% if sub_collection.featured_image != blank %}
                 {{
                   sub_collection.featured_image
@@ -87,7 +94,7 @@
       </div>
       <button 
         type="button"
-        class="sub-collections-arrow sub-collections-arrow--next"
+        class="sub-collections-arrow sub-collections-arrow--next sub-collections-arrow--hidden"
         aria-label="Next collections"
         data-collection-arrow="next"
       >
@@ -96,10 +103,15 @@
         </svg>
       </button>
     </div>
-  {% endif %}
-</div>
+  </div>
+{% endif %}
 
 {% style %}
+  .sub-collections-section {
+    border: 0.5px solid #EBEBEB;
+    margin: 16px 0;
+  }
+
   .sub-collections-heading {
     flex-shrink: 0;
     display: flex;
@@ -129,7 +141,7 @@
 
   .sub-collections-slider {
     display: flex;
-    gap: 18px 24px;
+    gap: 38px;
     justify-content: flex-start;
     align-items: flex-start;
     overflow-x: auto;
@@ -238,6 +250,11 @@
     padding: 0;
   }
 
+  .sub-collections-image-wrapper--active {
+    border: 1.05px solid #1D425A;
+    padding: 2px;
+  }
+
   .sub-collections-image,
   .sub-collections-image-placeholder {
     width: 100%;
@@ -274,13 +291,17 @@
     overflow: visible;
   }
 
+  .sub-collections-item--active .sub-collections-label {
+    color: #1D425A;
+  }
+
   @media screen and (min-width: 750px) {
     .sub-collections-heading-text {
       font-size: 16px;
     }
     
     .sub-collections-slider {
-      gap: 18px 24px;
+      gap: 38px;
     }
 
     .sub-collections-image-wrapper {
@@ -337,7 +358,7 @@
     }
 
     .sub-collections-slider {
-      gap: 18px;
+      gap: 14px;
       justify-content: flex-start;
     }
 

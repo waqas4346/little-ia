@@ -42,6 +42,9 @@
   endif
 
   assign slideshow_class = 'slideshow--content-' | append: section.settings.content_position
+  if section.settings.slide_height != 'auto'
+    assign slideshow_class = slideshow_class | append: ' slideshow--fixed-height'
+  endif
   if section.blocks.size == 1
     assign slideshow_class = slideshow_class | append: ' slideshow--single-media'
   endif
@@ -92,6 +95,22 @@
       height: auto;
     }
   .slideshow-section {
+    slideshow-component.slideshow--fixed-height > slideshow-container > slideshow-slides {
+      height: var(--slide-min-height);
+      min-height: var(--slide-min-height);
+    }
+
+    @media screen and (min-width: 750px) {
+      slideshow-component.slideshow--fixed-height > slideshow-container > slideshow-slides {
+        height: var(--slide-min-height-desktop);
+        min-height: var(--slide-min-height-desktop);
+      }
+    }
+
+    slideshow-component.slideshow--fixed-height slideshow-slide {
+      height: 100%;
+    }
+
     slideshow-arrows .slideshow-control:first-of-type {
       margin-inline-start: var(--padding-xs);
     }

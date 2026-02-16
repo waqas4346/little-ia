@@ -83,7 +83,7 @@
               "type": "_product-card-gallery",
               "name": "t:names.product_card_media",
               "settings": {
-                "image_ratio": "portrait",
+                "image_ratio": "adapt",
                 "border": "none",
                 "border_width": 1,
                 "border_opacity": 100,
@@ -154,7 +154,7 @@
       "name": "Collection Featured",
       "settings": {
         "collection": "baby-sleepsuits",
-        "collection_heading": "",
+        "collection_heading": "Sleepsuits",
         "icon1_image": "shopify://shop_images/image_3033_traced.png",
         "text1": "Soft",
         "icon2_image": "shopify://shop_images/Sleep--Streamline-Core_1.png",
@@ -276,7 +276,7 @@
       "name": "Collection Featured",
       "settings": {
         "collection": "blankets-muslin",
-        "collection_heading": "muslin and blanket",
+        "collection_heading": "muslin & blanket",
         "icon1_image": "shopify://shop_images/image_3034_traced.png",
         "text1": "Lightweight",
         "icon2_image": "shopify://shop_images/image_3035_traced.png",
