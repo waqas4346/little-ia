@@ -1,6 +1,15 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "current": {
-    "logo": "shopify:\/\/shop_images\/little-ia-logo.png",
+    "logo": "shopify://shop_images/little-ia-logo.png",
     "logo_height": 42,
     "logo_height_mobile": 34,
     "type_body_font": "outfit_n4",
@@ -86,15 +95,16 @@
     "variant_button_border_width": 1,
     "variant_button_radius": 14,
     "variant_button_width": "equal-width-buttons",
+    "gift_wrap_product": "gift-wrap",
     "content_for_index": [],
     "blocks": {
       "855628211100114053": {
-        "type": "shopify:\/\/apps\/klaviyo-email-marketing-sms\/blocks\/klaviyo-onsite-embed\/2632fe16-c075-4321-a88b-50b567f42507",
+        "type": "shopify://apps/klaviyo-email-marketing-sms/blocks/klaviyo-onsite-embed/2632fe16-c075-4321-a88b-50b567f42507",
         "disabled": false,
         "settings": {}
       },
       "15316669992541710076": {
-        "type": "shopify:\/\/apps\/reviews-io\/blocks\/reviewsio-rating-snippet\/92a082e5-b297-4e88-b428-ac96cbc505f9",
+        "type": "shopify://apps/reviews-io/blocks/reviewsio-rating-snippet/92a082e5-b297-4e88-b428-ac96cbc505f9",
         "disabled": false,
         "settings": {
           "star": "#000",
@@ -111,7 +121,7 @@
         }
       },
       "10830403595879607806": {
-        "type": "shopify:\/\/apps\/reviews-io\/blocks\/reviewsio-core\/92a082e5-b297-4e88-b428-ac96cbc505f9",
+        "type": "shopify://apps/reviews-io/blocks/reviewsio-core/92a082e5-b297-4e88-b428-ac96cbc505f9",
         "disabled": false,
         "settings": {
           "url_key": "REVIEWS.io",
@@ -120,7 +130,7 @@
         }
       },
       "442549160356511856": {
-        "type": "shopify:\/\/apps\/ck-whatsapp\/blocks\/app-embed-block\/ce4c5d89-06d5-4502-b18d-35d424a3f693",
+        "type": "shopify://apps/ck-whatsapp/blocks/app-embed-block/ce4c5d89-06d5-4502-b18d-35d424a3f693",
         "disabled": false,
         "settings": {}
       }
