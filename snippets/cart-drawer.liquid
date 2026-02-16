@@ -119,6 +119,58 @@
               {% render 'cart-products', drawer_context: 'drawer' %}
             </scroll-hint>
 
+            {%- liquid
+              assign gift_wrap_product = settings.gift_wrap_product
+              assign show_gift_wrap_prompt = false
+
+              if gift_wrap_product != blank and cart.items.size > 0
+                assign has_non_gift_items = false
+                assign has_gift_wrap_in_cart = false
+
+                for item in cart.items
+                  if item.product_id == gift_wrap_product.id
+                    assign has_gift_wrap_in_cart = true
+                  else
+                    assign has_non_gift_items = true
+                  endif
+                endfor
+
+                if has_non_gift_items and has_gift_wrap_in_cart == false
+                  assign show_gift_wrap_prompt = true
+                endif
+              endif
+            -%}
+
+            {%- if show_gift_wrap_prompt -%}
+              <div class="cart-drawer-gift-wrap" data-cart-drawer-gift-wrap>
+                <div class="cart-drawer-gift-wrap__media">
+                  {%- if gift_wrap_product.featured_media -%}
+                    {{
+                      gift_wrap_product.featured_media
+                      | image_url: width: 160
+                      | image_tag: loading: 'lazy', class: 'cart-drawer-gift-wrap__image', alt: gift_wrap_product.title
+                    }}
+                  {%- endif -%}
+                </div>
+                <div class="cart-drawer-gift-wrap__details">
+                  <p class="cart-drawer-gift-wrap__title">{{ gift_wrap_product.title }}</p>
+                  <p class="cart-drawer-gift-wrap__price">{{ gift_wrap_product.price | money }}</p>
+                  <div class="cart-drawer-gift-wrap__actions">
+                    <button
+                      type="button"
+                      class="button cart-drawer-gift-wrap__add"
+                      data-add-gift-wrap-drawer
+                      data-gift-variant-id="{{ gift_wrap_product.selected_or_first_available_variant.id }}"
+                      aria-label="Add {{ gift_wrap_product.title | escape }}"
+                    >
+                      Add
+                    </button>
+                    <span class="cart-drawer-gift-wrap__remove" aria-hidden="true">Remove</span>
+                  </div>
+                </div>
+              </div>
+            {%- endif -%}
+
             {% render 'cart-drawer-recommendations' %}
 
             <div
@@ -167,6 +219,72 @@
     </div>
   </dialog>
 </cart-drawer-component>
+
+{% javascript %}
+  const giftWrapButtonSelector = '[data-add-gift-wrap-drawer]';
+  const loadingClass = 'is-loading';
+
+  document.addEventListener('click', async (event) => {
+    const button = event.target.closest(giftWrapButtonSelector);
+    if (!(button instanceof HTMLButtonElement)) return;
+
+    event.preventDefault();
+    if (button.disabled) return;
+
+    const variantId = button.dataset.giftVariantId;
+    if (!variantId) return;
+
+    const sectionIds = Array.from(document.querySelectorAll('cart-items-component[data-section-id]'))
+      .map((element) => element.dataset.sectionId)
+      .filter(Boolean);
+
+    button.disabled = true;
+    button.classList.add(loadingClass);
+
+    try {
+      const response = await fetch('/cart/add.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: Number(variantId),
+          quantity: 1,
+          properties: {
+            _gift_wrap_source: 'cart_drawer',
+          },
+          sections: sectionIds.join(','),
+          sections_url: window.location.pathname,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add gift wrap');
+      }
+
+      const responseData = await response.json();
+
+      // Trigger cart re-render for all cart item sections.
+      document.dispatchEvent(
+        new CustomEvent('cart:update', {
+          bubbles: true,
+          detail: {
+            sourceId: 'cart-drawer-gift-wrap',
+            data: {
+              source: 'cart-drawer-gift-wrap',
+              sections: responseData?.sections || {},
+            },
+          },
+        })
+      );
+    } catch (error) {
+      console.error('Gift wrap add failed', error);
+    } finally {
+      button.disabled = false;
+      button.classList.remove(loadingClass);
+    }
+  });
+{% endjavascript %}
 
 {% stylesheet %}
   .cart-items-component {
@@ -258,6 +376,92 @@
     @media screen and (min-width: 750px) {
       padding: var(--cart-drawer-padding-desktop);
     }
+  }
+
+  .cart-drawer-gift-wrap {
+    display: flex;
+    gap: 12px;
+    margin: 12px 0;
+    padding: 12px;
+    background: #ffffff;
+    align-items: center;
+  }
+
+  .cart-drawer-gift-wrap__media {
+    width: 88px;
+    min-width: 88px;
+    height: 88px;
+  }
+
+  .cart-drawer-gift-wrap__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .cart-drawer-gift-wrap__details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cart-drawer-gift-wrap__title {
+    margin: 0 0 6px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 140%;
+    letter-spacing: 0;
+    color: #1f364d;
+  }
+
+  .cart-drawer-gift-wrap__price {
+    margin: 0 0 10px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 160%;
+    letter-spacing: 0;
+    color: #1f364d;
+  }
+
+  .cart-drawer-gift-wrap__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .cart-drawer-gift-wrap__add {
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 14.94px;
+    line-height: 100%;
+    letter-spacing: 0;
+    padding: 4px 20px;
+    background: #7f9ec3;
+    border-color: #7f9ec3;
+    color: #fff;
+  }
+
+  .cart-drawer-gift-wrap__add[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .cart-drawer-gift-wrap__remove {
+    margin-left: auto;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 100%;
+    letter-spacing: 0;
+    vertical-align: middle;
+    color: #8e8e8e;
+    text-decoration: underline;
+    text-decoration-style: solid;
+    text-decoration-thickness: 5%;
+    text-underline-offset: 0;
   }
 
   .cart-drawer__dialog {
