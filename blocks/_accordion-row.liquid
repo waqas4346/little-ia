@@ -2,14 +2,60 @@
 {% liquid
   assign block_settings = block.settings
   assign should_show = true
-  
-  # Check if this is the Highlights accordion by checking the heading
-  # If so, check if product has the required tag
+  assign product = closest.product
+
+  # Highlights: only show if product has the required tag
   if block_settings.heading == 'Highlights'
-    assign product = closest.product
     unless product.tags contains 'custom_fabric_size_care'
       assign should_show = false
     endunless
+  endif
+
+  # Product Features: show only if there is description or product features metafield content
+  if block_settings.heading == 'Product Features'
+    assign desc = product.description | strip
+    assign pf_icons = product.metafields.custom.cb_product_features_icons_with_texts.value
+    assign pf_cards = product.metafields.custom.cb_product_features_card.value
+    if desc == blank and pf_icons == blank and pf_cards == blank
+      assign should_show = false
+    endif
+  endif
+
+  # Fabric & Care: show only if metafield has content
+  if block_settings.heading == 'Material & Care'
+    if product.metafields.custom.cb_fabric_and_care == blank
+      assign should_show = false
+    endif
+  endif
+
+  # Delivery Time & Return: show only if metafield has usable content
+  if block_settings.heading == 'Delivery Time & Return'
+    assign dr = product.metafields.custom.cb_delivery_time_and_return.value
+    if dr == blank
+      assign should_show = false
+    elsif dr.free_shipping_text == blank and dr.cut_off_time_text == blank and dr.return_policy == blank
+      assign should_show = false
+    endif
+  endif
+
+  # Gift Wrapping: show only if metafield has usable content
+  if block_settings.heading == 'Gift Wrapping'
+    assign gw = product.metafields.custom.cb_gift_wrapping.value
+    if gw == blank
+      assign should_show = false
+    elsif gw.image1 == blank and gw.image2 == blank and gw.image3 == blank and gw.image4 == blank and gw.gift_wrap_text == blank
+      assign should_show = false
+    endif
+  endif
+
+  # Need Help?: show only if metafield has usable content
+  if block_settings.heading == 'Need Help?'
+    assign nh = product.metafields.custom.cb_need_help.value
+    if nh == blank
+      assign should_show = false
+    elsif nh.need_help_text == blank and nh.email == blank and nh.phone_number == blank
+      assign should_show = false
+    endif
   endif
 %}
 
@@ -198,13 +244,13 @@
             {% endif %}
             {% if need_help.email != blank %}
               <div class="accordion-row__need-help-row">
-                <img src="{{ 'email.png' | asset_url }}" alt="" class="accordion-row__need-help-icon" width="18" height="18" loading="lazy">
+                <img src="{{ 'email.svg' | asset_url }}" alt="" class="accordion-row__need-help-icon" width="18" height="18" loading="lazy">
                 <a href="mailto:{{ need_help.email | escape }}" class="accordion-row__need-help-link">{{ need_help.email }}</a>
               </div>
             {% endif %}
             {% if need_help.phone_number != blank %}
               <div class="accordion-row__need-help-row">
-                <img src="{{ 'phone-number.png' | asset_url }}" alt="" class="accordion-row__need-help-icon" width="18" height="18" loading="lazy">
+                <img src="{{ 'phone_number.svg' | asset_url }}" alt="" class="accordion-row__need-help-icon" width="18" height="18" loading="lazy">
                 <a href="tel:{{ need_help.phone_number | replace: ' ', '' | escape }}" class="accordion-row__need-help-link accordion-row__need-help-link--phone">{{ need_help.phone_number }}</a>
               </div>
             {% endif %}
@@ -264,7 +310,6 @@
     background: #FDF8E7;
     padding: 16px;
     margin-top: 24px;
-    border-radius: 4px;
   }
 
   .product-features-card__icon-wrap {
