@@ -195,7 +195,7 @@
                     # Separate personalization and non-personalization properties
                     for property in item.properties
                       assign property_first_char = property.first | slice: 0
-                      if property.last != blank and property_first_char != '_'
+                      if property.last != blank and property_first_char != '_' and property.first != 'Gift Wrap Instance'
                         assign is_personalization = false
                         for key in personalization_keys
                           if property.first == key
@@ -246,7 +246,7 @@
                       {%- comment -%} Display only non-personalization properties {%- endcomment -%}
                       {%- for property in item.properties -%}
                         {%- assign property_first_char = property.first | slice: 0 -%}
-                        {%- if property.last != blank and property_first_char != '_' -%}
+                        {%- if property.last != blank and property_first_char != '_' and property.first != 'Gift Wrap Instance' -%}
                           {%- assign is_personalization_prop = false -%}
                           {%- for key in personalization_keys -%}
                             {%- if property.first == key -%}
