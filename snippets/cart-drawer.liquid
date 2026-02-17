@@ -513,6 +513,34 @@
     return `gw_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   }
 
+  async function getLiveLineProperties({ key, line }) {
+    try {
+      const response = await fetch('/cart.js', { headers: { Accept: 'application/json' } });
+      if (!response.ok) return null;
+      const cartData = await response.json();
+      if (!Array.isArray(cartData?.items)) return null;
+
+      let item = null;
+      if (key) {
+        item = cartData.items.find((cartItem) => cartItem.key === key) || null;
+      }
+      if (!item && line) {
+        const index = Number(line) - 1;
+        if (index >= 0 && index < cartData.items.length) {
+          item = cartData.items[index];
+        }
+      }
+
+      if (!item || typeof item.properties !== 'object' || item.properties == null) {
+        return null;
+      }
+      return item.properties;
+    } catch (error) {
+      console.error('Failed to read live cart line properties', error);
+      return null;
+    }
+  }
+
   function getGiftMessageModalElements() {
     const modal = document.querySelector(messageModalSelector);
     if (!(modal instanceof HTMLDialogElement)) return null;
@@ -568,7 +596,9 @@
     if (!modalElements || !context) return;
     if (!context.line || !context.quantity) return;
 
-    const properties = { ...context.properties };
+    const liveProperties =
+      (await getLiveLineProperties({ key: context.key, line: context.line })) || context.properties;
+    const properties = { ...liveProperties };
     const trimmed = modalElements.textarea.value.trim();
 
     // Preserve wrapper identity so assigned items stay linked after message updates.
@@ -672,7 +702,10 @@
     const wrapperId = button.dataset.wrapperId;
     if (!line || !quantity || !wrapperId) return;
 
-    const properties = parseLineProperties(button.dataset.lineProperties);
+    const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
+    const liveProperties =
+      (await getLiveLineProperties({ key, line })) || fallbackProperties;
+    const properties = { ...liveProperties };
     properties._gift_wrap_instance_id = wrapperId;
     properties['Gift Wrap Instance'] = wrapperId;
 
@@ -690,7 +723,10 @@
     const quantity = button.dataset.cartLineQuantity;
     if (!line || !quantity) return;
 
-    const properties = parseLineProperties(button.dataset.lineProperties);
+    const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
+    const liveProperties =
+      (await getLiveLineProperties({ key, line })) || fallbackProperties;
+    const properties = { ...liveProperties };
     delete properties._gift_wrap_instance_id;
     delete properties['Gift Wrap Instance'];
 
