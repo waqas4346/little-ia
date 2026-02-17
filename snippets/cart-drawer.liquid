@@ -117,11 +117,11 @@
               class="cart-drawer__items"
             >
               {% render 'cart-products', drawer_context: 'drawer' %}
-            </scroll-hint>
 
             {%- liquid
               assign gift_wrap_product = settings.gift_wrap_product
               assign show_gift_wrap_prompt = false
+              assign show_gift_wrap_assignments = false
 
               if gift_wrap_product != blank and cart.items.size > 0
                 assign has_non_gift_items = false
@@ -137,6 +137,10 @@
 
                 if has_non_gift_items and has_gift_wrap_in_cart == false
                   assign show_gift_wrap_prompt = true
+                endif
+
+                if has_gift_wrap_in_cart
+                  assign show_gift_wrap_assignments = true
                 endif
               endif
             -%}
@@ -171,6 +175,182 @@
               </div>
             {%- endif -%}
 
+            {%- if show_gift_wrap_assignments -%}
+              <div class="cart-drawer-gift-assignments" data-cart-drawer-gift-assignments>
+                {%- assign wrapper_index = 0 -%}
+                {%- for item in cart.items -%}
+                  {%- if item.product_id == gift_wrap_product.id -%}
+                    {%- assign wrapper_index = wrapper_index | plus: 1 -%}
+                    {%- assign wrapper_instance_id = item.properties['_gift_wrap_instance_id'] | default: item.properties['Gift Wrap Instance'] | default: item.key -%}
+                    {%- assign wrapper_message = item.properties['_gift_wrap_message'] -%}
+                    {%- assign wrapper_message_normalized = wrapper_message | strip | downcase -%}
+                    {%- if wrapper_message_normalized == 'no gift message added yet.' -%}
+                      {%- assign wrapper_message = '' -%}
+                    {%- endif -%}
+                    <div
+                      class="cart-drawer-gift-assignment-card"
+                      data-wrapper-id="{{ wrapper_instance_id | escape }}"
+                      data-gift-wrap-cart-key="{{ item.key | escape }}"
+                      data-gift-wrap-variant-id="{{ item.variant.id }}"
+                      data-gift-wrap-line-quantity="{{ item.quantity }}"
+                      data-gift-wrap-line-properties="{{ item.properties | json | escape }}"
+                    >
+                      <div class="cart-drawer-gift-assignment-card__header">
+                        <span class="cart-drawer-gift-assignment-card__index">{{ wrapper_index }}</span>
+                        <p class="cart-drawer-gift-assignment-card__title">Create {{ wrapper_index }}{% if wrapper_index == 1 %}st{% elsif wrapper_index == 2 %}nd{% elsif wrapper_index == 3 %}rd{% else %}th{% endif %} gift wrap</p>
+                      </div>
+
+                      <div class="cart-drawer-gift-assignment-card__section">
+                        <p class="cart-drawer-gift-assignment-card__label">Gift Message:</p>
+                        {% if wrapper_message != blank %}
+                          <div class="cart-drawer-gift-assignment-card__message-box">
+                            <p class="cart-drawer-gift-assignment-card__message">
+                              {{ wrapper_message }}
+                            </p>
+                            <button
+                              type="button"
+                              class="button-unstyled cart-drawer-gift-assignment-card__edit"
+                              data-edit-gift-wrap-message
+                              data-cart-line="{{ item.index | plus: 1 }}"
+                              data-cart-key="{{ item.key | escape }}"
+                              data-cart-line-quantity="{{ item.quantity }}"
+                              data-wrapper-id="{{ wrapper_instance_id | escape }}"
+                              data-current-message="{{ wrapper_message | escape }}"
+                              data-line-properties="{{ item.properties | json | escape }}"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        {% else %}
+                          <button
+                            type="button"
+                            class="cart-drawer-gift-assignment-card__add-message"
+                            data-edit-gift-wrap-message
+                            data-cart-line="{{ item.index | plus: 1 }}"
+                            data-cart-key="{{ item.key | escape }}"
+                            data-cart-line-quantity="{{ item.quantity }}"
+                            data-wrapper-id="{{ wrapper_instance_id | escape }}"
+                            data-current-message=""
+                            data-line-properties="{{ item.properties | json | escape }}"
+                          >
+                            Add
+                          </button>
+                        {% endif %}
+                      </div>
+
+                      {%- assign assigned_count = 0 -%}
+                      {%- for product_item in cart.items -%}
+                        {%- assign product_wrapper_instance_id = product_item.properties['_gift_wrap_instance_id'] | default: product_item.properties['Gift Wrap Instance'] -%}
+                        {%- if product_item.product_id != gift_wrap_product.id and product_wrapper_instance_id == wrapper_instance_id -%}
+                          {%- assign assigned_count = assigned_count | plus: 1 -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+
+                      <div class="cart-drawer-gift-assignment-card__section">
+                        <p class="cart-drawer-gift-assignment-card__label">Gift Items:</p>
+                        {%- if assigned_count > 0 -%}
+                          <div class="cart-drawer-gift-assignment-list">
+                            {%- for product_item in cart.items -%}
+                              {%- assign product_wrapper_instance_id = product_item.properties['_gift_wrap_instance_id'] | default: product_item.properties['Gift Wrap Instance'] -%}
+                              {%- if product_item.product_id != gift_wrap_product.id and product_wrapper_instance_id == wrapper_instance_id -%}
+                                <div class="cart-drawer-gift-assignment-item">
+                                  <div class="cart-drawer-gift-assignment-item__media">
+                                    {%- if product_item.image -%}
+                                      {{
+                                        product_item.image
+                                        | image_url: width: 120
+                                        | image_tag: loading: 'lazy', class: 'cart-drawer-gift-assignment-item__image', alt: product_item.product.title
+                                      }}
+                                    {%- endif -%}
+                                  </div>
+                                  <div class="cart-drawer-gift-assignment-item__details">
+                                    <p class="cart-drawer-gift-assignment-item__title">{{ product_item.product.title }}</p>
+                                    {%- if product_item.options_with_values.size > 0 -%}
+                                      <p class="cart-drawer-gift-assignment-item__variant">
+                                        {%- for option in product_item.options_with_values -%}
+                                          {{ option.value }}{% unless forloop.last %}, {% endunless %}
+                                        {%- endfor -%}
+                                      </p>
+                                    {%- endif -%}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="button-unstyled cart-drawer-gift-assignment-item__remove"
+                                    data-unassign-gift-wrap
+                                    data-cart-line="{{ product_item.index | plus: 1 }}"
+                                    data-cart-key="{{ product_item.key | escape }}"
+                                    data-cart-line-quantity="{{ product_item.quantity }}"
+                                    data-line-properties="{{ product_item.properties | json | escape }}"
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              {%- endif -%}
+                            {%- endfor -%}
+                          </div>
+                        {%- else -%}
+                          <p class="cart-drawer-gift-assignment-card__empty">No products assigned yet.</p>
+                        {%- endif -%}
+                      </div>
+
+                      {%- assign unassigned_count = 0 -%}
+                      {%- for product_item in cart.items -%}
+                        {%- if product_item.product_id != gift_wrap_product.id and product_item.properties['_gift_wrap_instance_id'] == blank and product_item.properties['Gift Wrap Instance'] == blank -%}
+                          {%- assign unassigned_count = unassigned_count | plus: 1 -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                      {%- if unassigned_count > 0 -%}
+                        <div class="cart-drawer-gift-assignment-card__section">
+                          <p class="cart-drawer-gift-assignment-card__label">Add Gift Items:</p>
+                          <div class="cart-drawer-gift-assignment-list">
+                            {%- for product_item in cart.items -%}
+                              {%- if product_item.product_id != gift_wrap_product.id and product_item.properties['_gift_wrap_instance_id'] == blank and product_item.properties['Gift Wrap Instance'] == blank -%}
+                                <div class="cart-drawer-gift-assignment-item">
+                                  <div class="cart-drawer-gift-assignment-item__media">
+                                    {%- if product_item.image -%}
+                                      {{
+                                        product_item.image
+                                        | image_url: width: 120
+                                        | image_tag: loading: 'lazy', class: 'cart-drawer-gift-assignment-item__image', alt: product_item.product.title
+                                      }}
+                                    {%- endif -%}
+                                  </div>
+                                  <div class="cart-drawer-gift-assignment-item__details">
+                                    <p class="cart-drawer-gift-assignment-item__title">{{ product_item.product.title }}</p>
+                                    {%- if product_item.options_with_values.size > 0 -%}
+                                      <p class="cart-drawer-gift-assignment-item__variant">
+                                        {%- for option in product_item.options_with_values -%}
+                                          {{ option.value }}{% unless forloop.last %}, {% endunless %}
+                                        {%- endfor -%}
+                                      </p>
+                                    {%- endif -%}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="button-unstyled cart-drawer-gift-assignment-item__add"
+                                    data-assign-gift-wrap
+                                    data-wrapper-id="{{ wrapper_instance_id | escape }}"
+                                    data-cart-line="{{ product_item.index | plus: 1 }}"
+                                    data-cart-key="{{ product_item.key | escape }}"
+                                    data-cart-line-quantity="{{ product_item.quantity }}"
+                                    data-line-properties="{{ product_item.properties | json | escape }}"
+                                    aria-label="Assign {{ product_item.product.title | escape }}"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              {%- endif -%}
+                            {%- endfor -%}
+                          </div>
+                        </div>
+                      {%- endif -%}
+                    </div>
+                  {%- endif -%}
+                {%- endfor -%}
+              </div>
+            {%- endif -%}
+            </scroll-hint>
+
             {% render 'cart-drawer-recommendations' %}
 
             <div
@@ -181,6 +361,53 @@
               </div>
             </div>
           </div>
+
+          <dialog
+            class="personalise-modal cart-drawer-gift-message-dialog"
+            data-gift-message-modal
+            aria-labelledby="gift-message-modal-title"
+          >
+            <button
+              type="button"
+              class="button button-unstyled close-button personalise-modal__close"
+              data-close-gift-message-modal
+              aria-label="Close gift message modal"
+            >
+              {{- 'icon-close.svg' | inline_asset_content -}}
+            </button>
+            <div class="personalise-modal__content">
+              <div class="personalise-modal__form cart-drawer-gift-message-modal__form">
+                <h2 class="personalise-modal__title" id="gift-message-modal-title">
+                  <span class="personalise-modal__title-icon">
+                    <img src="{{ 'edit_image.png' | asset_url }}" alt="" width="16" height="16">
+                  </span>
+                  <span>Gift Message</span>
+                </h2>
+                <div class="personalise-modal__field">
+                  <label class="personalise-modal__label">Enter your message</label>
+                  <textarea
+                    class="personalise-modal__textarea cart-drawer-gift-message-modal__textarea"
+                    data-gift-message-textarea
+                    maxlength="300"
+                    rows="5"
+                    placeholder="Enter gift message"
+                  ></textarea>
+                </div>
+                <div class="personalise-modal__actions">
+                  <button type="button" class="personalise-modal__save-button button button--primary" data-save-gift-message disabled>
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    class="personalise-modal__cancel-button button button-unstyled"
+                    data-close-gift-message-modal
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </dialog>
           
           {%- comment -%} Personalise Modal for cart editing {%- endcomment -%}
           {%- if cart.items.size > 0 -%}
@@ -222,68 +449,406 @@
 
 {% javascript %}
   const giftWrapButtonSelector = '[data-add-gift-wrap-drawer]';
+  const assignButtonSelector = '[data-assign-gift-wrap]';
+  const unassignButtonSelector = '[data-unassign-gift-wrap]';
+  const editMessageButtonSelector = '[data-edit-gift-wrap-message]';
+  const saveMessageButtonSelector = '[data-save-gift-message]';
+  const closeMessageButtonSelector = '[data-close-gift-message-modal]';
+  const messageTextareaSelector = '[data-gift-message-textarea]';
+  const messageModalSelector = '[data-gift-message-modal]';
+  const giftWrapCardSelector = '[data-gift-wrap-cart-key]';
   const loadingClass = 'is-loading';
+  const giftWrapDrawerState = (window.__giftWrapDrawerState = window.__giftWrapDrawerState || {
+    isNormalizingGiftWrapLines: false,
+    normalizeTimer: null,
+    messageContext: null,
+  });
 
-  document.addEventListener('click', async (event) => {
-    const button = event.target.closest(giftWrapButtonSelector);
-    if (!(button instanceof HTMLButtonElement)) return;
+  function getSectionIds() {
+    return Array.from(document.querySelectorAll('cart-items-component[data-section-id]'))
+      .map((element) => element.dataset.sectionId)
+      .filter(Boolean);
+  }
 
-    event.preventDefault();
-    if (button.disabled) return;
+  function triggerCartUpdate(sections) {
+    document.dispatchEvent(
+      new CustomEvent('cart:update', {
+        bubbles: true,
+        detail: {
+          sourceId: 'cart-drawer-gift-wrap',
+          data: {
+            source: 'cart-drawer-gift-wrap',
+            sections: sections || {},
+          },
+        },
+      })
+    );
+  }
 
+  function parseLineProperties(serializedProperties) {
+    if (!serializedProperties) return {};
+    try {
+      const parsed = JSON.parse(serializedProperties);
+      if (!parsed || typeof parsed !== 'object') return {};
+      return parsed;
+    } catch (error) {
+      console.error('Failed to parse line properties', error);
+      return {};
+    }
+  }
+
+  function normalizeProperties(properties) {
+    if (!properties || typeof properties !== 'object') return {};
+    const normalized = {};
+    for (const [key, value] of Object.entries(properties)) {
+      if (!key) continue;
+      if (value === null || value === undefined) continue;
+      if (typeof value === 'object') continue;
+      normalized[key] = String(value);
+    }
+    return normalized;
+  }
+
+  function generateWrapperInstanceId() {
+    return `gw_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function getGiftMessageModalElements() {
+    const modal = document.querySelector(messageModalSelector);
+    if (!(modal instanceof HTMLDialogElement)) return null;
+    const textarea = modal.querySelector(messageTextareaSelector);
+    const saveButton = modal.querySelector(saveMessageButtonSelector);
+    if (!(textarea instanceof HTMLTextAreaElement)) return null;
+    if (!(saveButton instanceof HTMLButtonElement)) return null;
+    return { modal, textarea, saveButton };
+  }
+
+  function updateGiftMessageSaveButtonState() {
+    const modalElements = getGiftMessageModalElements();
+    if (!modalElements) return;
+    const hasValue = modalElements.textarea.value.trim().length > 0;
+    modalElements.saveButton.disabled = !hasValue;
+  }
+
+  function openGiftMessageModal(button) {
+    const modalElements = getGiftMessageModalElements();
+    if (!modalElements) return;
+
+    giftWrapDrawerState.messageContext = {
+      line: button.dataset.cartLine || '',
+      key: button.dataset.cartKey || '',
+      quantity: button.dataset.cartLineQuantity || '',
+      properties: parseLineProperties(button.dataset.lineProperties),
+    };
+
+    modalElements.textarea.value = button.dataset.currentMessage || '';
+    if (!modalElements.modal.open) {
+      modalElements.modal.showModal();
+    }
+    updateGiftMessageSaveButtonState();
+    window.setTimeout(() => {
+      modalElements.textarea.focus();
+      modalElements.textarea.setSelectionRange(modalElements.textarea.value.length, modalElements.textarea.value.length);
+    }, 0);
+  }
+
+  function closeGiftMessageModal() {
+    const modalElements = getGiftMessageModalElements();
+    if (!modalElements) return;
+    if (modalElements.modal.open) {
+      modalElements.modal.close();
+    }
+    giftWrapDrawerState.messageContext = null;
+  }
+
+  async function saveGiftMessageFromModal(button) {
+    const modalElements = getGiftMessageModalElements();
+    const context = giftWrapDrawerState.messageContext;
+    if (!modalElements || !context) return;
+    if (!context.line || !context.quantity) return;
+
+    const properties = { ...context.properties };
+    const trimmed = modalElements.textarea.value.trim();
+    if (trimmed) {
+      properties._gift_wrap_message = trimmed;
+    } else {
+      delete properties._gift_wrap_message;
+    }
+
+    await updateCartLine({
+      line: context.line,
+      key: context.key,
+      quantity: context.quantity,
+      properties,
+    });
+    closeGiftMessageModal();
+  }
+
+  async function updateCartLine({ line, key, quantity, properties }) {
+    const sectionIds = getSectionIds();
+    const payload = {
+      quantity: Number(quantity),
+      properties: normalizeProperties(properties),
+      sections: sectionIds.join(','),
+      sections_url: window.location.pathname,
+    };
+    if (key) {
+      payload.id = key;
+    } else {
+      payload.line = Number(line);
+    }
+
+    const response = await fetch('/cart/change.js', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let serverError = 'Failed to update cart line';
+      try {
+        const errorData = await response.json();
+        serverError = errorData?.description || errorData?.message || serverError;
+      } catch (error) {
+        // Keep fallback message when response is not JSON.
+      }
+      throw new Error(serverError);
+    }
+
+    const responseData = await response.json();
+    triggerCartUpdate(responseData?.sections);
+  }
+
+  async function handleAddGiftWrap(button) {
     const variantId = button.dataset.giftVariantId;
     if (!variantId) return;
 
-    const sectionIds = Array.from(document.querySelectorAll('cart-items-component[data-section-id]'))
-      .map((element) => element.dataset.sectionId)
-      .filter(Boolean);
+    const sectionIds = getSectionIds();
+    const uniqueInstanceId = generateWrapperInstanceId();
+    const response = await fetch('/cart/add.js', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: Number(variantId),
+        quantity: 1,
+        properties: {
+          _gift_wrap_source: 'cart_drawer',
+          _gift_wrap_instance_id: uniqueInstanceId,
+          'Gift Wrap Instance': uniqueInstanceId,
+        },
+        sections: sectionIds.join(','),
+        sections_url: window.location.pathname,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to add gift wrap');
+    }
+
+    const responseData = await response.json();
+    triggerCartUpdate(responseData?.sections);
+  }
+
+  async function handleAssignProduct(button) {
+    const line = button.dataset.cartLine;
+    const key = button.dataset.cartKey;
+    const quantity = button.dataset.cartLineQuantity;
+    const wrapperId = button.dataset.wrapperId;
+    if (!line || !quantity || !wrapperId) return;
+
+    const properties = parseLineProperties(button.dataset.lineProperties);
+    properties._gift_wrap_instance_id = wrapperId;
+    properties['Gift Wrap Instance'] = wrapperId;
+
+    await updateCartLine({
+      line,
+      key,
+      quantity,
+      properties,
+    });
+  }
+
+  async function handleUnassignProduct(button) {
+    const line = button.dataset.cartLine;
+    const key = button.dataset.cartKey;
+    const quantity = button.dataset.cartLineQuantity;
+    if (!line || !quantity) return;
+
+    const properties = parseLineProperties(button.dataset.lineProperties);
+    delete properties._gift_wrap_instance_id;
+    delete properties['Gift Wrap Instance'];
+
+    await updateCartLine({
+      line,
+      key,
+      quantity,
+      properties,
+    });
+  }
+
+  async function normalizeGiftWrapLines() {
+    if (giftWrapDrawerState.isNormalizingGiftWrapLines) return false;
+
+    const cards = Array.from(document.querySelectorAll(giftWrapCardSelector));
+    if (!cards.length) return false;
+
+    const linesByKey = new Map();
+    for (const card of cards) {
+      const key = card.getAttribute('data-gift-wrap-cart-key');
+      if (!key || linesByKey.has(key)) continue;
+
+      const quantity = Number(card.getAttribute('data-gift-wrap-line-quantity') || '0');
+      const variantId = Number(card.getAttribute('data-gift-wrap-variant-id') || '0');
+      const properties = parseLineProperties(card.getAttribute('data-gift-wrap-line-properties') || '');
+      linesByKey.set(key, { key, quantity, variantId, properties });
+    }
+
+    const linesToSplit = Array.from(linesByKey.values()).filter((lineData) => lineData.quantity > 1 && lineData.variantId > 0);
+    if (!linesToSplit.length) return false;
+
+    giftWrapDrawerState.isNormalizingGiftWrapLines = true;
+    try {
+      for (const lineData of linesToSplit) {
+        const baseProperties = normalizeProperties(lineData.properties);
+        delete baseProperties._gift_wrap_instance_id;
+        delete baseProperties['Gift Wrap Instance'];
+
+        // Remove the merged gift-wrap line first.
+        await fetch('/cart/change.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: lineData.key,
+            quantity: 0,
+          }),
+        });
+
+        // Re-add as individual wrappers (qty 1 each).
+        for (let index = 0; index < lineData.quantity; index += 1) {
+          const wrapperInstanceId = generateWrapperInstanceId();
+          const addResponse = await fetch('/cart/add.js', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              id: lineData.variantId,
+              quantity: 1,
+              properties: {
+                ...baseProperties,
+                _gift_wrap_source: baseProperties._gift_wrap_source || 'cart_drawer',
+                _gift_wrap_instance_id: wrapperInstanceId,
+                'Gift Wrap Instance': wrapperInstanceId,
+              },
+            }),
+          });
+
+          if (!addResponse.ok) {
+            throw new Error('Failed to split gift wrap line');
+          }
+        }
+      }
+
+      triggerCartUpdate({});
+      return true;
+    } catch (error) {
+      console.error('Gift wrap normalization failed', error);
+      return false;
+    } finally {
+      giftWrapDrawerState.isNormalizingGiftWrapLines = false;
+    }
+  }
+
+  function scheduleNormalizeGiftWrapLines(delay = 120) {
+    if (giftWrapDrawerState.normalizeTimer) {
+      window.clearTimeout(giftWrapDrawerState.normalizeTimer);
+    }
+    giftWrapDrawerState.normalizeTimer = window.setTimeout(() => {
+      giftWrapDrawerState.normalizeTimer = null;
+      normalizeGiftWrapLines();
+    }, delay);
+  }
+
+  const handleGiftWrapDrawerClick = async (event) => {
+    const button = event.target.closest(
+      `${giftWrapButtonSelector}, ${assignButtonSelector}, ${unassignButtonSelector}, ${editMessageButtonSelector}, ${saveMessageButtonSelector}, ${closeMessageButtonSelector}`
+    );
+    if (!(button instanceof HTMLButtonElement)) return;
+
+    event.preventDefault();
+
+    if (button.matches(closeMessageButtonSelector)) {
+      closeGiftMessageModal();
+      return;
+    }
+
+    if (button.matches(editMessageButtonSelector)) {
+      openGiftMessageModal(button);
+      return;
+    }
+
+    if (button.disabled) return;
+    if (giftWrapDrawerState.isNormalizingGiftWrapLines) return;
 
     button.disabled = true;
     button.classList.add(loadingClass);
 
     try {
-      const response = await fetch('/cart/add.js', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: Number(variantId),
-          quantity: 1,
-          properties: {
-            _gift_wrap_source: 'cart_drawer',
-          },
-          sections: sectionIds.join(','),
-          sections_url: window.location.pathname,
-        }),
-      });
+      const normalized = await normalizeGiftWrapLines();
+      if (normalized) return;
 
-      if (!response.ok) {
-        throw new Error('Failed to add gift wrap');
+      if (button.matches(giftWrapButtonSelector)) {
+        await handleAddGiftWrap(button);
+      } else if (button.matches(assignButtonSelector)) {
+        await handleAssignProduct(button);
+      } else if (button.matches(unassignButtonSelector)) {
+        await handleUnassignProduct(button);
+      } else if (button.matches(saveMessageButtonSelector)) {
+        await saveGiftMessageFromModal(button);
       }
-
-      const responseData = await response.json();
-
-      // Trigger cart re-render for all cart item sections.
-      document.dispatchEvent(
-        new CustomEvent('cart:update', {
-          bubbles: true,
-          detail: {
-            sourceId: 'cart-drawer-gift-wrap',
-            data: {
-              source: 'cart-drawer-gift-wrap',
-              sections: responseData?.sections || {},
-            },
-          },
-        })
-      );
     } catch (error) {
-      console.error('Gift wrap add failed', error);
+      console.error('Gift wrap drawer action failed', error);
     } finally {
       button.disabled = false;
       button.classList.remove(loadingClass);
     }
-  });
+  };
+
+  if (window.__giftWrapDrawerClickHandler) {
+    document.removeEventListener('click', window.__giftWrapDrawerClickHandler);
+  }
+  window.__giftWrapDrawerClickHandler = handleGiftWrapDrawerClick;
+  document.addEventListener('click', window.__giftWrapDrawerClickHandler);
+
+  const handleGiftWrapDrawerCartUpdate = () => {
+    closeGiftMessageModal();
+    scheduleNormalizeGiftWrapLines(120);
+  };
+  if (window.__giftWrapDrawerCartUpdateHandler) {
+    document.removeEventListener('cart:update', window.__giftWrapDrawerCartUpdateHandler);
+  }
+  window.__giftWrapDrawerCartUpdateHandler = handleGiftWrapDrawerCartUpdate;
+  document.addEventListener('cart:update', window.__giftWrapDrawerCartUpdateHandler);
+
+  const handleGiftWrapDrawerInput = (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLTextAreaElement)) return;
+    if (!target.matches(messageTextareaSelector)) return;
+    updateGiftMessageSaveButtonState();
+  };
+  if (window.__giftWrapDrawerInputHandler) {
+    document.removeEventListener('input', window.__giftWrapDrawerInputHandler);
+  }
+  window.__giftWrapDrawerInputHandler = handleGiftWrapDrawerInput;
+  document.addEventListener('input', window.__giftWrapDrawerInputHandler);
+
+  scheduleNormalizeGiftWrapLines(0);
 {% endjavascript %}
 
 {% stylesheet %}
@@ -462,6 +1027,246 @@
     text-decoration-style: solid;
     text-decoration-thickness: 5%;
     text-underline-offset: 0;
+  }
+
+  .cart-drawer-gift-assignments {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .cart-drawer-gift-assignment-card {
+    border: 1px solid #7295bb;
+    padding: 12px;
+    background: #fff;
+  }
+
+  .cart-drawer-gift-assignment-card__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .cart-drawer-gift-assignment-card__index {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: #7295bb;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .cart-drawer-gift-assignment-card__title {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    font-size: 24px;
+    line-height: 1.2;
+    color: #1f364d;
+  }
+
+  .cart-drawer-gift-assignment-card__section {
+    margin-top: 10px;
+  }
+
+  .cart-drawer-gift-assignment-card__label {
+    margin: 0 0 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    line-height: 1.2;
+    color: #1f364d;
+    font-weight: 600;
+  }
+
+  .cart-drawer-gift-assignment-card__message-box {
+    background: #f5f5f5;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .cart-drawer-gift-assignment-card__message {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #1f364d;
+    flex: 1;
+  }
+
+  .cart-drawer-gift-assignment-card__edit {
+    color: #7295bb;
+    text-decoration: underline;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .cart-drawer-gift-assignment-card__add-message {
+    display: inline-block;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 14.94px;
+    line-height: 100%;
+    letter-spacing: 0;
+    padding: 4px 20px;
+    background: #7f9ec3;
+    border: 1px solid #7f9ec3;
+    color: #fff;
+    border-radius: 0;
+    box-shadow: none;
+    white-space: nowrap;
+  }
+
+  .cart-drawer-gift-assignment-card__add-message:hover,
+  .cart-drawer-gift-assignment-card__add-message:focus-visible,
+  .cart-drawer-gift-assignment-card__add-message:active {
+    color: #fff;
+    background: #7f9ec3;
+    border-color: #7f9ec3;
+  }
+
+  .cart-drawer-gift-assignment-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .cart-drawer-gift-assignment-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .cart-drawer-gift-assignment-item__media {
+    width: 50px;
+    min-width: 50px;
+    height: 50px;
+    background: #f4f4f4;
+  }
+
+  .cart-drawer-gift-assignment-item__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .cart-drawer-gift-assignment-item__details {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .cart-drawer-gift-assignment-item__title {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    line-height: 1.3;
+    color: #1f364d;
+  }
+
+  .cart-drawer-gift-assignment-item__variant {
+    margin: 4px 0 0;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    line-height: 1.2;
+    color: #1f364d;
+  }
+
+  .cart-drawer-gift-assignment-item__add {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #7295bb;
+    border-radius: 50%;
+    color: #7295bb;
+    font-size: 24px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+  }
+
+  .cart-drawer-gift-assignment-item__remove {
+    margin-left: auto;
+    color: #8e8e8e;
+    text-decoration: underline;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .cart-drawer-gift-assignment-card__empty {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #5f7184;
+  }
+
+  .cart-drawer-gift-message-dialog {
+    position: fixed;
+    inset: 0;
+    width: min(760px, calc(100vw - 32px));
+    background: #fff;
+    border-radius: 0;
+    padding: 20px;
+    box-shadow: 0 18px 34px rgb(0 0 0 / 20%);
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    height: fit-content;
+    margin: auto;
+    max-width: none;
+    border: none;
+  }
+
+  .cart-drawer-gift-message-dialog[open] {
+    inset: 0;
+    margin: auto;
+    animation: none;
+  }
+
+  .cart-drawer-gift-message-dialog::backdrop {
+    background: rgb(0 0 0 / 35%);
+  }
+
+  .cart-drawer-gift-message-dialog .personalise-modal__content {
+    display: flex;
+    justify-content: center;
+  }
+
+  .cart-drawer-gift-message-modal__form {
+    width: 100%;
+    padding-right: 0;
+  }
+
+  .cart-drawer-gift-message-dialog .personalise-modal__close {
+    cursor: pointer;
+    right: 20px;
+    top: 20px;
+  }
+
+  .cart-drawer-gift-message-modal__textarea {
+    min-height: 120px;
+    max-height: 240px;
+  }
+
+  .cart-drawer-gift-message-dialog .personalise-modal__actions {
+    justify-content: flex-start;
+  }
+
+  .cart-drawer-gift-message-dialog .personalise-modal__save-button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .cart-drawer__dialog {
