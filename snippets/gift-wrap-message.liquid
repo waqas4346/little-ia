@@ -29,6 +29,11 @@
     assign show_gift_wrap = true
     assign gift_product = settings.gift_wrap_product
   endif
+
+  if gift_product == blank
+    assign show_gift_wrap = false
+    assign show_gift_message = false
+  endif
 %}
 
 {% if show_gift_wrap or show_christmas_gift or show_gift_message %}
@@ -124,12 +129,11 @@
         <div class="gift-message-section__input-wrapper">
           <input
             type="text"
-            id="gift-message-input"
-            name="properties[Gift Message]"
+            id="gift-message-input-{{ form_id }}"
             class="gift-message-section__input"
+            data-gift-message-input
             placeholder="Enter a Gift Message"
             maxlength="300"
-            form="{{ form_id }}"
             {% comment %} required {% endcomment %}
           >
           <button
@@ -289,6 +293,10 @@
 
   .gift-message-section {
     margin-block-start: 16px;
+  }
+
+  .gift-message-section--hidden {
+    display: none;
   }
 
   .gift-message-section__input-wrapper {

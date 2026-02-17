@@ -6,6 +6,7 @@
 
 (function() {
   'use strict';
+  const pendingGiftWrapAdds = [];
 
   // Wait for DOM to be ready
   if (document.readyState === 'loading') {
@@ -18,20 +19,48 @@
     const productForms = document.querySelectorAll('form[data-type="add-to-cart-form"]');
     
     productForms.forEach(form => {
+      if (form.dataset.giftWrapHandlerBound === 'true') return;
+      form.dataset.giftWrapHandlerBound = 'true';
       form.addEventListener('submit', handleFormSubmit);
+      setupGiftMessageVisibility(form);
     });
+
+    if (!window.__giftWrapCartUpdateBound) {
+      window.__giftWrapCartUpdateBound = true;
+      document.addEventListener('cart:update', handleCartUpdate);
+    }
+  }
+
+  function setupGiftMessageVisibility(form) {
+    const giftWrapCheckbox = form.querySelector('.chk_add_gift');
+    const christmasGiftCheckbox = form.querySelector('.christmas-chk_add_gift');
+    const giftMessageSection = form.querySelector('.gift-message-section');
+    if (!giftMessageSection) return;
+
+    const toggle = () => {
+      const hasGiftWrapSelected = !!(giftWrapCheckbox?.checked || christmasGiftCheckbox?.checked);
+      giftMessageSection.classList.toggle('gift-message-section--hidden', !hasGiftWrapSelected);
+    };
+
+    giftWrapCheckbox?.addEventListener('change', toggle);
+    christmasGiftCheckbox?.addEventListener('change', toggle);
+    toggle();
   }
 
   async function handleFormSubmit(event) {
     const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
     const giftWrapCheckbox = form.querySelector('.chk_add_gift');
     const christmasGiftCheckbox = form.querySelector('.christmas-chk_add_gift');
+    const giftMessageInput = form.querySelector('[data-gift-message-input]');
     
     let giftWrapChecked = false;
     let christmasGiftChecked = false;
     let giftWrapVariantId = null;
     let christmasGiftVariantId = null;
     let productId = null;
+    const giftMessage = giftMessageInput?.value?.trim() || '';
 
     // Check regular gift wrap
     if (giftWrapCheckbox && giftWrapCheckbox.checked) {
@@ -49,81 +78,108 @@
 
     // If no gift wrap is selected, proceed with normal form submission
     if (!giftWrapChecked && !christmasGiftChecked) {
+      removeHiddenInput(form, 'properties[_gift_wrap_instance_id]');
+      removeHiddenInput(form, 'properties[Gift Wrap Instance]');
       return;
     }
 
-    // Prevent default form submission
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
+    const wrapperInstanceId = giftWrapChecked && giftWrapVariantId ? generateWrapperInstanceId() : '';
+    if (wrapperInstanceId) {
+      addHiddenInput(form, 'properties[_gift_wrap_instance_id]', wrapperInstanceId);
+      addHiddenInput(form, 'properties[Gift Wrap Instance]', wrapperInstanceId);
+    }
 
+    const giftWrapLabel = giftWrapCheckbox?.closest('.gift-wrap-option__content')
+      ?.querySelector('.gift-wrap-option__text')?.textContent?.trim();
+    if (giftWrapLabel) {
+      addHiddenInput(form, 'properties[Add-On]', giftWrapLabel);
+    }
+
+    const christmasLabel = christmasGiftCheckbox?.closest('.gift-wrap-option__content')
+      ?.querySelector('.gift-wrap-option__text')?.textContent?.trim();
+    if (christmasLabel) {
+      addHiddenInput(form, 'properties[Christmas Add-On]', christmasLabel);
+    }
+
+    // Queue gift-wrap add to run only after main product is successfully added.
+    pendingGiftWrapAdds.push({
+      productId: productId ? String(productId) : '',
+      createdAt: Date.now(),
+      regular: giftWrapChecked && giftWrapVariantId ? {
+        variantId: giftWrapVariantId,
+        wrapperInstanceId,
+      } : null,
+      christmas: christmasGiftChecked && christmasGiftVariantId ? {
+        variantId: christmasGiftVariantId,
+      } : null,
+      giftMessage,
+      processing: false,
+    });
+  }
+
+  async function handleCartUpdate(event) {
+    const source = event?.detail?.data?.source;
+    if (source !== 'product-form-component') return;
+
+    const productId = String(event?.detail?.data?.productId || '');
+    const pending = pendingGiftWrapAdds.find((item) => !item.processing && item.productId === productId);
+    if (!pending) return;
+
+    pending.processing = true;
     try {
-      // Add regular gift wrap first if checked
-      if (giftWrapChecked && giftWrapVariantId) {
-        await addGiftWrapToCart(giftWrapVariantId, productId, form, 'regular');
-        
-        // Add property to form for the original product
-        const giftWrapLabel = giftWrapCheckbox.closest('.gift-wrap-option__content')
-          ?.querySelector('.gift-wrap-option__text')?.textContent?.trim();
-        if (giftWrapLabel) {
-          addHiddenInput(form, 'properties[Add-On]', giftWrapLabel);
-        }
+      if (pending.regular) {
+        await addGiftWrapToCart(pending.regular.variantId, productId, null, 'regular', {
+          wrapperInstanceId: pending.regular.wrapperInstanceId,
+          giftMessage: pending.giftMessage
+        });
       }
-
-      // Add Christmas gift wrap if checked
-      if (christmasGiftChecked && christmasGiftVariantId) {
-        await addGiftWrapToCart(christmasGiftVariantId, productId, form, 'christmas');
-        
-        // Add property to form for the original product
-        const christmasLabel = christmasGiftCheckbox.closest('.gift-wrap-option__content')
-          ?.querySelector('.gift-wrap-option__text')?.textContent?.trim();
-        if (christmasLabel) {
-          addHiddenInput(form, 'properties[Christmas Add-On]', christmasLabel);
-        }
+      if (pending.christmas) {
+        await addGiftWrapToCart(pending.christmas.variantId, productId, null, 'christmas', {
+          giftMessage: pending.giftMessage
+        });
       }
-
-      // Now submit the original form by triggering the product form component's handleSubmit
-      const productFormComponent = form.closest('product-form-component');
-      if (productFormComponent && typeof productFormComponent.handleSubmit === 'function') {
-        // Create a synthetic event that mimics the original
-        const syntheticEvent = {
-          target: form,
-          currentTarget: form,
-          preventDefault: () => {},
-          stopPropagation: () => {},
-          stopImmediatePropagation: () => {},
-          type: 'submit',
-          bubbles: true,
-          cancelable: true,
-          defaultPrevented: false
-        };
-        
-        // Call handleSubmit directly
-        productFormComponent.handleSubmit(syntheticEvent);
-      } else {
-        // Fallback: create a new submit event and dispatch it
-        const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-        form.dispatchEvent(submitEvent);
-      }
-
     } catch (error) {
-      console.error('Error adding gift wrap to cart:', error);
-      // Show error message to user
+      console.error('Error adding pending gift wrap:', error);
       showError('Failed to add gift wrap. Please try again.');
-      // Re-enable form submission
-      form.removeAttribute('data-gift-wrap-processing');
+    } finally {
+      const index = pendingGiftWrapAdds.indexOf(pending);
+      if (index > -1) {
+        pendingGiftWrapAdds.splice(index, 1);
+      }
     }
   }
 
-  async function addGiftWrapToCart(variantId, productId, form, type) {
+  function generateWrapperInstanceId() {
+    return `gw_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function getSectionIds() {
+    return Array.from(document.querySelectorAll('cart-items-component[data-section-id]'))
+      .map((element) => element.dataset.sectionId)
+      .filter(Boolean);
+  }
+
+  async function addGiftWrapToCart(variantId, productId, form, type, options) {
+    const wrapperInstanceId = options?.wrapperInstanceId;
+    const giftMessage = options?.giftMessage;
     const properties = {
-      '_added_with_product': productId
+      '_added_with_product': productId,
+      '_gift_wrap_source': 'product_page'
     };
+    if (wrapperInstanceId) {
+      properties['_gift_wrap_instance_id'] = wrapperInstanceId;
+      properties['Gift Wrap Instance'] = wrapperInstanceId;
+    }
+    if (giftMessage) {
+      properties['_gift_wrap_message'] = giftMessage;
+    }
 
     const data = {
       id: variantId,
       quantity: 1,
-      properties: properties
+      properties: properties,
+      sections: getSectionIds().join(','),
+      sections_url: window.location.pathname
     };
 
     try {
@@ -143,7 +199,18 @@
       const result = await response.json();
       
       // Dispatch cart update event
-      document.dispatchEvent(new CustomEvent('cart:update', { detail: result }));
+      document.dispatchEvent(
+        new CustomEvent('cart:update', {
+          bubbles: true,
+          detail: {
+            sourceId: 'gift-wrap-handler',
+            data: {
+              source: 'gift-wrap-handler',
+              sections: result?.sections || {},
+            },
+          },
+        })
+      );
       
       return result;
     } catch (error) {
@@ -165,6 +232,13 @@
     input.name = name;
     input.value = value;
     form.appendChild(input);
+  }
+
+  function removeHiddenInput(form, name) {
+    const existing = form.querySelector(`input[name="${name}"]`);
+    if (existing) {
+      existing.remove();
+    }
   }
 
   function formatMoney(cents) {
