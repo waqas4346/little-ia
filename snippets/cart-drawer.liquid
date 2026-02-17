@@ -284,17 +284,6 @@
                                       </p>
                                     {%- endif -%}
                                   </div>
-                                  <button
-                                    type="button"
-                                    class="button-unstyled cart-drawer-gift-assignment-item__remove"
-                                    data-unassign-gift-wrap
-                                    data-cart-line="{{ product_item.index | plus: 1 }}"
-                                    data-cart-key="{{ product_item.key | escape }}"
-                                    data-cart-line-quantity="{{ product_item.quantity }}"
-                                    data-line-properties="{{ product_item.properties | json | escape }}"
-                                  >
-                                    Remove
-                                  </button>
                                 </div>
                               {%- endif -%}
                             {%- endfor -%}
@@ -549,6 +538,7 @@
       line: button.dataset.cartLine || '',
       key: button.dataset.cartKey || '',
       quantity: button.dataset.cartLineQuantity || '',
+      wrapperId: button.dataset.wrapperId || '',
       properties: parseLineProperties(button.dataset.lineProperties),
     };
 
@@ -580,6 +570,17 @@
 
     const properties = { ...context.properties };
     const trimmed = modalElements.textarea.value.trim();
+
+    // Preserve wrapper identity so assigned items stay linked after message updates.
+    if (context.wrapperId) {
+      if (!properties._gift_wrap_instance_id) {
+        properties._gift_wrap_instance_id = context.wrapperId;
+      }
+      if (!properties['Gift Wrap Instance']) {
+        properties['Gift Wrap Instance'] = context.wrapperId;
+      }
+    }
+
     if (trimmed) {
       properties._gift_wrap_message = trimmed;
     } else {
