@@ -115,6 +115,8 @@
                 ref="cartItemRows[]"
                 data-parent-key="{{ item.parent_relationship.parent.key }}"
                 data-key="{{ item.key }}"
+                data-product-id="{{ item.product.id }}"
+                data-variant-id="{{ item.variant.id }}"
               >
                 <td
                   class="cart-items__media"
