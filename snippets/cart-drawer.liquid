@@ -542,6 +542,7 @@
     normalizeTimer: null,
     messageContext: null,
     isFastAddingGiftWrap: false,
+    isAssigningGiftItem: false,
   });
 
   function getSectionIds() {
@@ -796,9 +797,11 @@
     if (!line || !quantity || !wrapperId) return;
 
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
-    const liveProperties =
-      (await getLiveLineProperties({ key, line })) || fallbackProperties;
-    const properties = { ...liveProperties };
+    let properties = { ...fallbackProperties };
+    if (!Object.keys(properties).length) {
+      const liveProperties = await getLiveLineProperties({ key, line });
+      properties = { ...(liveProperties || {}) };
+    }
     properties._gift_wrap_instance_id = wrapperId;
     properties['Gift Wrap Instance'] = wrapperId;
 
@@ -817,9 +820,11 @@
     if (!line || !quantity) return;
 
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
-    const liveProperties =
-      (await getLiveLineProperties({ key, line })) || fallbackProperties;
-    const properties = { ...liveProperties };
+    let properties = { ...fallbackProperties };
+    if (!Object.keys(properties).length) {
+      const liveProperties = await getLiveLineProperties({ key, line });
+      properties = { ...(liveProperties || {}) };
+    }
     delete properties._gift_wrap_instance_id;
     delete properties['Gift Wrap Instance'];
 
@@ -966,6 +971,14 @@
     }, delay);
   }
 
+  function setGiftAssignmentActionsDisabled(disabled) {
+    const actionButtons = document.querySelectorAll(`${assignButtonSelector}, ${unassignButtonSelector}`);
+    actionButtons.forEach((element) => {
+      if (!(element instanceof HTMLButtonElement)) return;
+      element.disabled = disabled;
+    });
+  }
+
   const handleGiftWrapDrawerClick = async (event) => {
     const button = event.target.closest(
       `${giftWrapButtonSelector}, ${assignButtonSelector}, ${unassignButtonSelector}, ${editMessageButtonSelector}, ${saveMessageButtonSelector}, ${closeMessageButtonSelector}`
@@ -986,13 +999,22 @@
 
     if (button.disabled) return;
     if (giftWrapDrawerState.isNormalizingGiftWrapLines) return;
+    const isAssignmentAction = button.matches(assignButtonSelector) || button.matches(unassignButtonSelector);
+    if (isAssignmentAction && giftWrapDrawerState.isAssigningGiftItem) return;
 
     button.disabled = true;
     button.classList.add(loadingClass);
+    if (isAssignmentAction) {
+      giftWrapDrawerState.isAssigningGiftItem = true;
+      setGiftAssignmentActionsDisabled(true);
+    }
 
     try {
-      const normalized = await normalizeGiftWrapLines();
-      if (normalized) return;
+      // Assignment/unassignment should feel immediate and not wait for normalize preflight.
+      if (button.matches(giftWrapButtonSelector)) {
+        const normalized = await normalizeGiftWrapLines();
+        if (normalized) return;
+      }
 
       if (button.matches(giftWrapButtonSelector)) {
         await handleAddGiftWrap(button);
@@ -1008,6 +1030,10 @@
     } finally {
       button.disabled = false;
       button.classList.remove(loadingClass);
+      if (isAssignmentAction) {
+        giftWrapDrawerState.isAssigningGiftItem = false;
+        setGiftAssignmentActionsDisabled(false);
+      }
     }
   };
 
@@ -1485,6 +1511,34 @@
     align-items: center;
     justify-content: center;
     margin-left: auto;
+    cursor: pointer;
+  }
+
+  .cart-drawer-gift-assignment-item__add[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .cart-drawer-gift-assignment-item__add.is-loading {
+    position: relative;
+    color: transparent;
+  }
+
+  .cart-drawer-gift-assignment-item__add.is-loading::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border: 2px solid #7295bb;
+    border-right-color: transparent;
+    border-radius: 50%;
+    position: absolute;
+    animation: cart-drawer-gift-spin 0.8s linear infinite;
+  }
+
+  @keyframes cart-drawer-gift-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .cart-drawer-gift-assignment-item__remove {
