@@ -546,6 +546,11 @@
     isFastAddingGiftWrap: false,
     isAssigningGiftItem: false,
   });
+  const liveCartCache = {
+    data: null,
+    fetchedAt: 0,
+    pending: null,
+  };
 
   function getSectionIds() {
     return Array.from(document.querySelectorAll('cart-items-component[data-section-id]'))
@@ -553,12 +558,13 @@
       .filter(Boolean);
   }
 
-  function triggerCartUpdate(sections) {
+  function triggerCartUpdate(sections, resource = null) {
     document.dispatchEvent(
       new CustomEvent('cart:update', {
         bubbles: true,
         detail: {
           sourceId: 'cart-drawer-gift-wrap',
+          resource: resource || undefined,
           data: {
             source: 'cart-drawer-gift-wrap',
             sections: sections || {},
@@ -596,21 +602,31 @@
     return `gw_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   }
 
-  async function getLiveLineProperties({ key, line }) {
+  function setLiveCartCache(cartData) {
+    if (!Array.isArray(cartData?.items)) return;
+    liveCartCache.data = cartData;
+    liveCartCache.fetchedAt = Date.now();
+  }
+
+  function clearLiveCartCache() {
+    liveCartCache.data = null;
+    liveCartCache.fetchedAt = 0;
+    liveCartCache.pending = null;
+  }
+
+  async function getLiveLineProperties({ key, line, cartData = null }) {
     try {
-      const response = await fetch('/cart.js', { headers: { Accept: 'application/json' } });
-      if (!response.ok) return null;
-      const cartData = await response.json();
-      if (!Array.isArray(cartData?.items)) return null;
+      const resolvedCartData = cartData || (await getLiveCartData());
+      if (!Array.isArray(resolvedCartData?.items)) return null;
 
       let item = null;
       if (key) {
-        item = cartData.items.find((cartItem) => cartItem.key === key) || null;
+        item = resolvedCartData.items.find((cartItem) => cartItem.key === key) || null;
       }
       if (!item && line) {
         const index = Number(line) - 1;
-        if (index >= 0 && index < cartData.items.length) {
-          item = cartData.items[index];
+        if (index >= 0 && index < resolvedCartData.items.length) {
+          item = resolvedCartData.items[index];
         }
       }
 
@@ -624,16 +640,33 @@
     }
   }
 
-  async function getLiveCartData() {
-    try {
+  async function getLiveCartData({ force = false } = {}) {
+    const now = Date.now();
+    const isFresh = now - liveCartCache.fetchedAt < 400;
+    if (!force && liveCartCache.data && isFresh) {
+      return liveCartCache.data;
+    }
+    if (!force && liveCartCache.pending) {
+      return liveCartCache.pending;
+    }
+
+    const fetchPromise = (async () => {
       const response = await fetch('/cart.js', { headers: { Accept: 'application/json' } });
       if (!response.ok) return null;
       const cartData = await response.json();
       if (!Array.isArray(cartData?.items)) return null;
+      setLiveCartCache(cartData);
       return cartData;
+    })();
+
+    liveCartCache.pending = fetchPromise;
+    try {
+      return await fetchPromise;
     } catch (error) {
       console.error('Failed to read live cart data', error);
       return null;
+    } finally {
+      liveCartCache.pending = null;
     }
   }
 
@@ -687,12 +720,12 @@
     });
   }
 
-  async function syncGiftWrapDisplayProperties({ wrapperId, giftWrapLineKey = '', giftMessage = null }) {
+  async function syncGiftWrapDisplayProperties({ wrapperId, giftWrapLineKey = '', giftMessage = null, cartData = null }) {
     if (!wrapperId) return;
-    const cartData = await getLiveCartData();
-    if (!cartData) return;
+    const resolvedCartData = cartData || (await getLiveCartData());
+    if (!resolvedCartData) return;
 
-    const items = cartData.items || [];
+    const items = resolvedCartData.items || [];
     let giftWrapLine = null;
     if (giftWrapLineKey) {
       giftWrapLine = items.find((item) => item.key === giftWrapLineKey) || null;
@@ -932,8 +965,9 @@
     if (!responseData) {
       throw new Error(lastError);
     }
+    setLiveCartCache(responseData);
     if (includeSections) {
-      triggerCartUpdate(responseData?.sections);
+      triggerCartUpdate(responseData?.sections, Array.isArray(responseData?.items) ? responseData : null);
     }
     return responseData;
   }
@@ -973,7 +1007,9 @@
     }
 
     const responseData = await response.json();
-    triggerCartUpdate(responseData?.sections);
+    clearLiveCartCache();
+    const liveCartData = await getLiveCartData({ force: true });
+    triggerCartUpdate(responseData?.sections, liveCartData);
   }
 
   async function handleAddGiftWrap(button) {
@@ -993,20 +1029,21 @@
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
     let properties = { ...fallbackProperties };
     if (!Object.keys(properties).length) {
-      const liveProperties = await getLiveLineProperties({ key, line });
+      const liveCartData = await getLiveCartData();
+      const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
       properties = { ...(liveProperties || {}) };
     }
     properties._gift_wrap_instance_id = wrapperId;
     delete properties['Gift Wrap Instance'];
 
-    await updateCartLine({
+    const updateResult = await updateCartLine({
       line,
       key,
       quantity,
       properties,
       includeSections: true,
     });
-    await syncGiftWrapDisplayProperties({ wrapperId, giftWrapLineKey: wrapperCartKey }).catch((error) => {
+    await syncGiftWrapDisplayProperties({ wrapperId, giftWrapLineKey: wrapperCartKey, cartData: updateResult }).catch((error) => {
       console.error('Failed to sync gift wrap display properties after assign', error);
     });
   }
@@ -1022,13 +1059,14 @@
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
     let properties = { ...fallbackProperties };
     if (!Object.keys(properties).length) {
-      const liveProperties = await getLiveLineProperties({ key, line });
+      const liveCartData = await getLiveCartData();
+      const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
       properties = { ...(liveProperties || {}) };
     }
     delete properties._gift_wrap_instance_id;
     delete properties['Gift Wrap Instance'];
 
-    await updateCartLine({
+    const updateResult = await updateCartLine({
       line,
       key,
       quantity,
@@ -1036,7 +1074,11 @@
       includeSections: true,
     });
     if (previousWrapperId) {
-      await syncGiftWrapDisplayProperties({ wrapperId: previousWrapperId, giftWrapLineKey: previousWrapperCartKey }).catch(
+      await syncGiftWrapDisplayProperties({
+        wrapperId: previousWrapperId,
+        giftWrapLineKey: previousWrapperCartKey,
+        cartData: updateResult,
+      }).catch(
         (error) => {
           console.error('Failed to sync gift wrap display properties after unassign', error);
         }
@@ -1171,7 +1213,9 @@
         }
       }
 
-      triggerCartUpdate(latestSections);
+      const latestCartData = await getLiveCartData({ force: true });
+      triggerCartUpdate(latestSections, latestCartData);
+      clearLiveCartCache();
       return true;
     } catch (error) {
       console.error('Gift wrap normalization failed', error);
