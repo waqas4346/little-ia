@@ -687,9 +687,6 @@
       if (!properties._gift_wrap_instance_id) {
         properties._gift_wrap_instance_id = context.wrapperId;
       }
-      if (!properties['Gift Wrap Instance']) {
-        properties['Gift Wrap Instance'] = context.wrapperId;
-      }
     }
 
     if (trimmed) {
@@ -758,7 +755,6 @@
         properties: {
           _gift_wrap_source: 'cart_drawer',
           _gift_wrap_instance_id: uniqueInstanceId,
-          'Gift Wrap Instance': uniqueInstanceId,
         },
       });
     }
@@ -803,7 +799,7 @@
       properties = { ...(liveProperties || {}) };
     }
     properties._gift_wrap_instance_id = wrapperId;
-    properties['Gift Wrap Instance'] = wrapperId;
+    delete properties['Gift Wrap Instance'];
 
     await updateCartLine({
       line,
@@ -874,8 +870,8 @@
           ...currentProperties,
           _gift_wrap_source: currentProperties._gift_wrap_source || 'cart_drawer',
           _gift_wrap_instance_id: primaryWrapperInstanceId,
-          'Gift Wrap Instance': primaryWrapperInstanceId,
         };
+        delete primaryLineProperties['Gift Wrap Instance'];
 
         // Keep one line item as quantity 1 and normalize its properties.
         const additionalWrappers = lineData.quantity - 1;
@@ -923,7 +919,6 @@
                 ...baseProperties,
                 _gift_wrap_source: baseProperties._gift_wrap_source || 'cart_drawer',
                 _gift_wrap_instance_id: wrapperInstanceId,
-                'Gift Wrap Instance': wrapperInstanceId,
               },
             });
           }

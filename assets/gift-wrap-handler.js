@@ -86,7 +86,7 @@
     const wrapperInstanceId = giftWrapChecked && giftWrapVariantId ? generateWrapperInstanceId() : '';
     if (wrapperInstanceId) {
       addHiddenInput(form, 'properties[_gift_wrap_instance_id]', wrapperInstanceId);
-      addHiddenInput(form, 'properties[Gift Wrap Instance]', wrapperInstanceId);
+      removeHiddenInput(form, 'properties[Gift Wrap Instance]');
     }
 
     const giftWrapLabel = giftWrapCheckbox?.closest('.gift-wrap-option__content')
@@ -168,7 +168,6 @@
     };
     if (wrapperInstanceId) {
       properties['_gift_wrap_instance_id'] = wrapperInstanceId;
-      properties['Gift Wrap Instance'] = wrapperInstanceId;
     }
     if (giftMessage) {
       properties['_gift_wrap_message'] = giftMessage;
