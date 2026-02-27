@@ -676,6 +676,27 @@
     return properties._gift_wrap_instance_id || properties['Gift Wrap Instance'] || '';
   }
 
+  function getAssignmentPropertyLines(properties) {
+    if (!properties || typeof properties !== 'object') return [];
+    const excludedKeys = new Set([
+      '_gift_wrap_instance_id',
+      'Gift Wrap Instance',
+      '_gift_wrap_source',
+      '_added_with_product',
+      '_gift_wrap_message',
+      'Gift Message',
+      'Attached Products',
+    ]);
+    return Object.entries(properties)
+      .filter(([key, value]) => {
+        if (!key || excludedKeys.has(key)) return false;
+        if (typeof value === 'object' || value === null || value === undefined || String(value).trim() === '') return false;
+        if (/^Attached Product \d+$/.test(key)) return false;
+        return true;
+      })
+      .map(([key, value]) => `${key}: ${String(value).trim()}`);
+  }
+
   function buildAttachedProductsSummary(items, wrapperId, options = {}) {
     if (!wrapperId || !Array.isArray(items)) return '';
     const excludedKeys = options.excludedKeys instanceof Set ? options.excludedKeys : new Set();
@@ -692,7 +713,9 @@
         const title = item.product_title || item.title || 'Product';
         const variantTitle = item.variant_title && item.variant_title !== 'Default Title' ? ` (${item.variant_title})` : '';
         const quantitySuffix = Number(item.quantity) > 1 ? ` x${item.quantity}` : '';
-        return `${title}${variantTitle}${quantitySuffix}`;
+        const propertyLines = getAssignmentPropertyLines(item.properties || {});
+        const propertiesSuffix = propertyLines.length ? ` - ${propertyLines.join(' | ')}` : '';
+        return `${title}${variantTitle}${quantitySuffix}${propertiesSuffix}`;
       })
       .join('\n');
   }
@@ -786,8 +809,12 @@
       .map((item) => {
         const title = item.querySelector('.cart-drawer-gift-assignment-item__title')?.textContent?.trim() || '';
         const variant = item.querySelector('.cart-drawer-gift-assignment-item__variant')?.textContent?.trim() || '';
+        const propertyLines = Array.from(item.querySelectorAll('.cart-drawer-gift-assignment-item__property'))
+          .map((node) => node.textContent?.trim() || '')
+          .filter(Boolean);
         if (!title) return '';
-        return variant ? `${title} (${variant})` : title;
+        const base = variant ? `${title} (${variant})` : title;
+        return propertyLines.length ? `${base} - ${propertyLines.join(' | ')}` : base;
       })
       .filter(Boolean);
   }
@@ -1027,12 +1054,10 @@
     if (!line || !quantity || !wrapperId) return;
 
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
-    let properties = { ...fallbackProperties };
-    if (!Object.keys(properties).length) {
-      const liveCartData = await getLiveCartData();
-      const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
-      properties = { ...(liveProperties || {}) };
-    }
+    const liveCartData = await getLiveCartData();
+    const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
+    // Always prefer live line properties to avoid dropping hidden personalization fields.
+    let properties = { ...(liveProperties || fallbackProperties) };
     properties._gift_wrap_instance_id = wrapperId;
     delete properties['Gift Wrap Instance'];
 
@@ -1057,12 +1082,10 @@
     if (!line || !quantity) return;
 
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
-    let properties = { ...fallbackProperties };
-    if (!Object.keys(properties).length) {
-      const liveCartData = await getLiveCartData();
-      const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
-      properties = { ...(liveProperties || {}) };
-    }
+    const liveCartData = await getLiveCartData();
+    const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
+    // Always prefer live line properties to avoid dropping hidden personalization fields.
+    let properties = { ...(liveProperties || fallbackProperties) };
     delete properties._gift_wrap_instance_id;
     delete properties['Gift Wrap Instance'];
 
@@ -1390,9 +1413,13 @@
   window.__giftWrapDrawerQuantityUpdateHandler = handleGiftWrapQuantitySelectorUpdate;
   document.addEventListener(cartQuantityUpdateEventName, window.__giftWrapDrawerQuantityUpdateHandler, true);
 
-  const handleGiftWrapDrawerCartUpdate = () => {
+  const handleGiftWrapDrawerCartUpdate = (event) => {
     closeGiftMessageModal();
     scheduleNormalizeGiftWrapLines(40);
+    const eventSource = event?.detail?.data?.source;
+    if (eventSource === 'cart-drawer-gift-wrap') {
+      return;
+    }
     window.setTimeout(() => {
       syncGiftWrapDisplayPropertiesFromDom().catch((error) => {
         console.error('Failed to sync gift wrap summaries from DOM', error);
