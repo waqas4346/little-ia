@@ -743,7 +743,13 @@
     });
   }
 
-  async function syncGiftWrapDisplayProperties({ wrapperId, giftWrapLineKey = '', giftMessage = null, cartData = null }) {
+  async function syncGiftWrapDisplayProperties({
+    wrapperId,
+    giftWrapLineKey = '',
+    giftMessage = null,
+    cartData = null,
+    includeSections = true,
+  }) {
     if (!wrapperId) return;
     const resolvedCartData = cartData || (await getLiveCartData());
     if (!resolvedCartData) return;
@@ -785,8 +791,32 @@
       key: giftWrapLine.key,
       quantity: giftWrapLine.quantity,
       properties,
-      includeSections: true,
+      includeSections,
     });
+  }
+
+  async function syncAllGiftWrapDisplayPropertiesFromCart(cartData = null) {
+    const resolvedCartData = Array.isArray(cartData?.items) ? cartData : await getLiveCartData({ force: true });
+    if (!resolvedCartData || !Array.isArray(resolvedCartData.items)) return;
+    if (!configuredGiftWrapProductIdNumber) return;
+
+    const giftWrapItems = resolvedCartData.items.filter(
+      (item) => Number(item?.product_id || 0) === configuredGiftWrapProductIdNumber
+    );
+    if (!giftWrapItems.length) return;
+
+    for (let index = 0; index < giftWrapItems.length; index += 1) {
+      const giftWrapItem = giftWrapItems[index];
+      const wrapperId = getWrapperInstanceIdFromItem(giftWrapItem) || giftWrapItem.key || '';
+      if (!wrapperId) continue;
+      const includeSections = index === giftWrapItems.length - 1;
+      await syncGiftWrapDisplayProperties({
+        wrapperId,
+        giftWrapLineKey: giftWrapItem.key || '',
+        cartData: resolvedCartData,
+        includeSections,
+      });
+    }
   }
 
   function getWrapperSummaryLinesFromDom(wrapperCard) {
@@ -1418,6 +1448,15 @@
     scheduleNormalizeGiftWrapLines(40);
     const eventSource = event?.detail?.data?.source;
     if (eventSource === 'cart-drawer-gift-wrap') {
+      return;
+    }
+    if (eventSource === 'cart-items-component') {
+      const eventCartData = event?.detail?.resource;
+      window.setTimeout(() => {
+        syncAllGiftWrapDisplayPropertiesFromCart(eventCartData).catch((error) => {
+          console.error('Failed to sync gift wrap summaries from cart', error);
+        });
+      }, 120);
       return;
     }
     window.setTimeout(() => {
