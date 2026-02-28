@@ -35,6 +35,8 @@ export class QuickAddComponent extends Component {
   #abortController = null;
   /** @type {Map<string, Element>} */
   #cachedContent = new Map();
+  /** @type {Map<string, Promise<void>>} */
+  #prefetchRequests = new Map();
   /** @type {AbortController} */
   #cartUpdateAbortController = new AbortController();
 
@@ -97,6 +99,9 @@ export class QuickAddComponent extends Component {
     super.connectedCallback();
 
     mediaQueryLarge.addEventListener('change', this.#closeQuickAddModal);
+    this.addEventListener('pointerenter', this.#handlePrefetchIntent, { passive: true });
+    this.addEventListener('focusin', this.#handlePrefetchIntent);
+    this.addEventListener('touchstart', this.#handlePrefetchIntent, { passive: true });
     document.addEventListener(ThemeEvents.cartUpdate, this.#handleCartUpdate, {
       signal: this.#cartUpdateAbortController.signal,
     });
@@ -107,8 +112,12 @@ export class QuickAddComponent extends Component {
     super.disconnectedCallback();
 
     mediaQueryLarge.removeEventListener('change', this.#closeQuickAddModal);
+    this.removeEventListener('pointerenter', this.#handlePrefetchIntent);
+    this.removeEventListener('focusin', this.#handlePrefetchIntent);
+    this.removeEventListener('touchstart', this.#handlePrefetchIntent);
     this.#abortController?.abort();
     this.#cartUpdateAbortController.abort();
+    this.#prefetchRequests.clear();
     document.removeEventListener(ThemeEvents.variantSelected, this.#updateQuickAddButtonState.bind(this));
   }
 
@@ -117,7 +126,44 @@ export class QuickAddComponent extends Component {
    */
   #handleCartUpdate = () => {
     this.#cachedContent.clear();
+    this.#prefetchRequests.clear();
   };
+
+  #handlePrefetchIntent = () => {
+    void this.#prefetchCurrentProduct();
+  };
+
+  async #prefetchCurrentProduct() {
+    const currentUrl = this.productPageUrl;
+    if (!currentUrl) return;
+    if (this.#cachedContent.has(currentUrl)) return;
+    if (this.#prefetchRequests.has(currentUrl)) return;
+
+    const request = (async () => {
+      try {
+        // Prefetch uses a plain request; click flow keeps abortable fetch behavior.
+        const html = await this.fetchProductPage(currentUrl, null);
+        if (!html) return;
+
+        const gridElement = html.querySelector('[data-product-grid-content]');
+        if (gridElement) {
+          const productGrid = /** @type {Element} */ (gridElement.cloneNode(true));
+          this.#cachedContent.set(currentUrl, productGrid);
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.warn('Quick Add: Prefetch failed', error);
+        }
+      }
+    })();
+
+    this.#prefetchRequests.set(currentUrl, request);
+    try {
+      await request;
+    } finally {
+      this.#prefetchRequests.delete(currentUrl);
+    }
+  }
 
   /**
    * Handles quick add button click
@@ -221,6 +267,14 @@ export class QuickAddComponent extends Component {
     // Load content asynchronously
     (async () => {
       try {
+        if (!productGrid) {
+          const prefetchRequest = this.#prefetchRequests.get(currentUrl);
+          if (prefetchRequest) {
+            await prefetchRequest;
+            productGrid = this.#cachedContent.get(currentUrl);
+          }
+        }
+
         // Check if we have cached content for this URL (double check after fetch)
         if (!productGrid) {
           let timeoutId;
@@ -452,20 +506,24 @@ export class QuickAddComponent extends Component {
   /**
    * Fetches the product page content
    * @param {string} productPageUrl - The URL of the product page to fetch
+   * @param {AbortSignal | null | undefined} [signal] - undefined uses click abort controller, null disables signal
    * @returns {Promise<Document | null>}
    */
-  async fetchProductPage(productPageUrl) {
+  async fetchProductPage(productPageUrl, signal = undefined) {
     if (!productPageUrl) return null;
 
-    // Use the existing abort controller (should be set by handleClick)
-    if (!this.#abortController) {
-      this.#abortController = new AbortController();
+    let requestSignal = signal;
+    if (signal === undefined) {
+      // Use the existing abort controller for click-driven requests.
+      if (!this.#abortController) {
+        this.#abortController = new AbortController();
+      }
+      requestSignal = this.#abortController.signal;
     }
 
     try {
-      const response = await fetch(productPageUrl, {
-        signal: this.#abortController.signal,
-      });
+      const fetchOptions = requestSignal ? { signal: requestSignal } : {};
+      const response = await fetch(productPageUrl, fetchOptions);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch product page: HTTP error ${response.status}`);
