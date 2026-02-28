@@ -859,7 +859,8 @@
     const cards = Array.from(document.querySelectorAll(giftWrapCardSelector));
     if (!cards.length) return;
 
-    for (const card of cards) {
+    for (let index = 0; index < cards.length; index += 1) {
+      const card = cards[index];
       const wrapperCard = card instanceof HTMLElement ? card : null;
       if (!wrapperCard) continue;
       const wrapperId = wrapperCard.getAttribute('data-wrapper-id') || '';
@@ -897,7 +898,7 @@
         key: lineKey,
         quantity,
         properties,
-        includeSections: false,
+        includeSections: index === cards.length - 1,
       });
     }
   }
