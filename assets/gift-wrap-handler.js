@@ -80,6 +80,7 @@
     let giftWrapVariantId = null;
     let christmasGiftVariantId = null;
     let productId = null;
+    const mainVariantId = form.querySelector('input[name="id"]')?.value || '';
     const giftMessage = giftMessageInput?.value?.trim() || '';
 
     // Check regular gift wrap
@@ -133,6 +134,7 @@
     pendingGiftWrapAdds.push({
       productId: productId ? String(productId) : '',
       createdAt: Date.now(),
+      mainVariantId: mainVariantId ? String(mainVariantId) : '',
       regular: giftWrapChecked && giftWrapVariantId ? {
         variantId: giftWrapVariantId,
         wrapperInstanceId,
@@ -158,7 +160,7 @@
     try {
       const preferredWrapperInstanceId = pending.regular?.wrapperInstanceId || pending.christmas?.wrapperInstanceId || '';
       if (preferredWrapperInstanceId) {
-        await ensureMainProductLinkedToWrapper(productId, preferredWrapperInstanceId);
+        await ensureMainProductLinkedToWrapper(productId, preferredWrapperInstanceId, pending.mainVariantId);
       }
       if (pending.regular) {
         await addGiftWrapToCart(pending.regular.variantId, productId, null, 'regular', {
@@ -193,7 +195,7 @@
       .filter(Boolean);
   }
 
-  async function ensureMainProductLinkedToWrapper(productId, wrapperInstanceId) {
+  async function ensureMainProductLinkedToWrapper(productId, wrapperInstanceId, mainVariantId = '') {
     if (!productId || !wrapperInstanceId) return;
     const cartResponse = await fetch('/cart.js', { headers: { Accept: 'application/json' } });
     if (!cartResponse.ok) return;
@@ -202,6 +204,7 @@
 
     const targetItem = cart.items.find((item) => {
       if (!item || String(item.product_id) !== String(productId)) return false;
+      if (mainVariantId && String(item.variant_id) !== String(mainVariantId)) return false;
       const properties = item.properties || {};
       if (properties._gift_wrap_source === 'product_page') return false;
       return !properties._gift_wrap_instance_id && !properties['Gift Wrap Instance'];
