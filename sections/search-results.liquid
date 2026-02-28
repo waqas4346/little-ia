@@ -62,6 +62,19 @@
   </div>
 </results-list>
 
+{% style %}
+  /* Keep search results at 4 columns on desktop only */
+  @media (min-width: 1024px) {
+    results-list[section-id="{{ section.id }}"] .collection-wrapper .main-collection-grid {
+      grid-column: var(--grid-column--desktop) !important;
+    }
+
+    results-list[section-id="{{ section.id }}"] .product-grid--{{ section.id }}:is(.product-grid--grid) {
+      --product-grid-columns-desktop: repeat(4, 1fr) !important;
+    }
+  }
+{% endstyle %}
+
 {% schema %}
 {
   "name": "t:names.search_results",
