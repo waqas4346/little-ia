@@ -36,15 +36,34 @@
     const giftWrapCheckbox = form.querySelector('.chk_add_gift');
     const christmasGiftCheckbox = form.querySelector('.christmas-chk_add_gift');
     const giftMessageSection = form.querySelector('.gift-message-section');
+    const giftMessageInput = form.querySelector('[data-gift-message-input]');
     if (!giftMessageSection) return;
+
+    const submitButtons = Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'));
 
     const toggle = () => {
       const hasGiftWrapSelected = !!(giftWrapCheckbox?.checked || christmasGiftCheckbox?.checked);
       giftMessageSection.classList.toggle('gift-message-section--hidden', !hasGiftWrapSelected);
+      const hasMessage = !!giftMessageInput?.value?.trim();
+      const disableAddToCart = hasGiftWrapSelected && !hasMessage;
+
+      submitButtons.forEach((button) => {
+        if (!(button instanceof HTMLButtonElement || button instanceof HTMLInputElement)) return;
+        if (disableAddToCart) {
+          button.disabled = true;
+          button.dataset.giftWrapMessageDisabled = 'true';
+          return;
+        }
+        if (button.dataset.giftWrapMessageDisabled === 'true') {
+          button.disabled = false;
+          delete button.dataset.giftWrapMessageDisabled;
+        }
+      });
     };
 
     giftWrapCheckbox?.addEventListener('change', toggle);
     christmasGiftCheckbox?.addEventListener('change', toggle);
+    giftMessageInput?.addEventListener('input', toggle);
     toggle();
   }
 
@@ -81,6 +100,13 @@
     if (!giftWrapChecked && !christmasGiftChecked) {
       removeHiddenInput(form, 'properties[_gift_wrap_instance_id]');
       removeHiddenInput(form, 'properties[Gift Wrap Instance]');
+      return;
+    }
+
+    if (!giftMessage) {
+      event.preventDefault();
+      showError('Please enter a gift message before adding gift wrap.');
+      giftMessageInput?.focus();
       return;
     }
 
