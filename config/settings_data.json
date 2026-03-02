@@ -71,6 +71,7 @@
     "global_link_hover_color": "#1d425a",
     "cart_type": "drawer",
     "cart_price_font": "secondary",
+    "auto_open_cart_drawer": true,
     "show_cart_note": false,
     "show_add_discount_code": false,
     "show_installments": false,

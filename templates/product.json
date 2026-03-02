@@ -745,7 +745,7 @@
       "name": "Explore More Products",
       "settings": {
         "top_label": "explore",
-        "section_title": "EXPLORE MORE PRODUCTS",
+        "section_title": "MORE PRODUCTS",
         "items_per_view": 4,
         "max_products": 8,
         "columns_gap": 12,
