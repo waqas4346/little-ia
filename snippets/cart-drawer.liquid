@@ -144,6 +144,10 @@
                 endif
               endif
             -%}
+            <span
+              hidden
+              data-cart-drawer-gift-wrap-product-id="{{ gift_wrap_product.id | default: '' }}"
+            ></span>
 
             {%- if show_gift_wrap_prompt -%}
               <div class="cart-drawer-gift-wrap" data-cart-drawer-gift-wrap>
@@ -177,6 +181,13 @@
 
             {%- if show_gift_wrap_assignments -%}
               <div class="cart-drawer-gift-assignments" data-cart-drawer-gift-assignments>
+                {%- assign gift_wrap_instance_tokens = '|' -%}
+                {%- for item in cart.items -%}
+                  {%- if item.product_id == gift_wrap_product.id -%}
+                    {%- assign wrapper_instance_id = item.properties['_gift_wrap_instance_id'] | default: item.properties['Gift Wrap Instance'] | default: item.key -%}
+                    {%- assign gift_wrap_instance_tokens = gift_wrap_instance_tokens | append: wrapper_instance_id | append: '|' -%}
+                  {%- endif -%}
+                {%- endfor -%}
                 {%- assign wrapper_index = 0 -%}
                 {%- for item in cart.items -%}
                   {%- if item.product_id == gift_wrap_product.id -%}
@@ -314,8 +325,20 @@
 
                       {%- assign unassigned_count = 0 -%}
                       {%- for product_item in cart.items -%}
-                        {%- if product_item.product_id != gift_wrap_product.id and product_item.properties['_gift_wrap_instance_id'] == blank and product_item.properties['Gift Wrap Instance'] == blank -%}
-                          {%- assign unassigned_count = unassigned_count | plus: 1 -%}
+                        {%- if product_item.product_id != gift_wrap_product.id -%}
+                          {%- assign product_wrapper_instance_id = product_item.properties['_gift_wrap_instance_id'] | default: product_item.properties['Gift Wrap Instance'] -%}
+                          {%- assign product_wrapper_instance_token = '|' | append: product_wrapper_instance_id | append: '|' -%}
+                          {%- assign is_unassigned_product = false -%}
+                          {%- if product_wrapper_instance_id == blank -%}
+                            {%- assign is_unassigned_product = true -%}
+                          {%- elsif gift_wrap_instance_tokens contains product_wrapper_instance_token -%}
+                            {%- assign is_unassigned_product = false -%}
+                          {%- else -%}
+                            {%- assign is_unassigned_product = true -%}
+                          {%- endif -%}
+                          {%- if is_unassigned_product -%}
+                            {%- assign unassigned_count = unassigned_count | plus: 1 -%}
+                          {%- endif -%}
                         {%- endif -%}
                       {%- endfor -%}
                       {%- if unassigned_count > 0 -%}
@@ -323,7 +346,19 @@
                           <p class="cart-drawer-gift-assignment-card__label">Add Gift Items:</p>
                           <div class="cart-drawer-gift-assignment-list">
                             {%- for product_item in cart.items -%}
-                              {%- if product_item.product_id != gift_wrap_product.id and product_item.properties['_gift_wrap_instance_id'] == blank and product_item.properties['Gift Wrap Instance'] == blank -%}
+                              {%- if product_item.product_id != gift_wrap_product.id -%}
+                                {%- assign product_wrapper_instance_id = product_item.properties['_gift_wrap_instance_id'] | default: product_item.properties['Gift Wrap Instance'] -%}
+                                {%- assign product_wrapper_instance_token = '|' | append: product_wrapper_instance_id | append: '|' -%}
+                                {%- assign is_unassigned_product = false -%}
+                                {%- if product_wrapper_instance_id == blank -%}
+                                  {%- assign is_unassigned_product = true -%}
+                                {%- elsif gift_wrap_instance_tokens contains product_wrapper_instance_token -%}
+                                  {%- assign is_unassigned_product = false -%}
+                                {%- else -%}
+                                  {%- assign is_unassigned_product = true -%}
+                                {%- endif -%}
+                              {%- endif -%}
+                              {%- if product_item.product_id != gift_wrap_product.id and is_unassigned_product -%}
                                 <div class="cart-drawer-gift-assignment-item">
                                   <div class="cart-drawer-gift-assignment-item__media">
                                     {%- if product_item.image -%}
@@ -368,6 +403,7 @@
                                     class="button-unstyled cart-drawer-gift-assignment-item__add"
                                     data-assign-gift-wrap
                                     data-wrapper-id="{{ wrapper_instance_id | escape }}"
+                                    data-wrapper-cart-key="{{ item.key | escape }}"
                                     data-cart-line="{{ product_item.index | plus: 1 }}"
                                     data-cart-key="{{ product_item.key | escape }}"
                                     data-cart-line-quantity="{{ product_item.quantity }}"
@@ -401,7 +437,7 @@
           </div>
 
           <dialog
-            class="personalise-modal cart-drawer-gift-message-dialog"
+            class="cart-drawer-gift-message-dialog"
             data-gift-message-modal
             aria-labelledby="gift-message-modal-title"
           >
@@ -495,12 +531,26 @@
   const messageTextareaSelector = '[data-gift-message-textarea]';
   const messageModalSelector = '[data-gift-message-modal]';
   const giftWrapCardSelector = '[data-gift-wrap-cart-key]';
+  const quantityPlusSelector = '.quantity-plus';
+  const cartQuantityUpdateEventName = 'quantity-selector:update';
+  const configuredGiftWrapProductId =
+    document
+      .querySelector('[data-cart-drawer-gift-wrap-product-id]')
+      ?.getAttribute('data-cart-drawer-gift-wrap-product-id') || '';
+  const configuredGiftWrapProductIdNumber = Number(configuredGiftWrapProductId || 0);
   const loadingClass = 'is-loading';
   const giftWrapDrawerState = (window.__giftWrapDrawerState = window.__giftWrapDrawerState || {
     isNormalizingGiftWrapLines: false,
     normalizeTimer: null,
     messageContext: null,
+    isFastAddingGiftWrap: false,
+    isAssigningGiftItem: false,
   });
+  const liveCartCache = {
+    data: null,
+    fetchedAt: 0,
+    pending: null,
+  };
 
   function getSectionIds() {
     return Array.from(document.querySelectorAll('cart-items-component[data-section-id]'))
@@ -508,12 +558,13 @@
       .filter(Boolean);
   }
 
-  function triggerCartUpdate(sections) {
+  function triggerCartUpdate(sections, resource = null) {
     document.dispatchEvent(
       new CustomEvent('cart:update', {
         bubbles: true,
         detail: {
           sourceId: 'cart-drawer-gift-wrap',
+          resource: resource || undefined,
           data: {
             source: 'cart-drawer-gift-wrap',
             sections: sections || {},
@@ -551,21 +602,31 @@
     return `gw_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   }
 
-  async function getLiveLineProperties({ key, line }) {
+  function setLiveCartCache(cartData) {
+    if (!Array.isArray(cartData?.items)) return;
+    liveCartCache.data = cartData;
+    liveCartCache.fetchedAt = Date.now();
+  }
+
+  function clearLiveCartCache() {
+    liveCartCache.data = null;
+    liveCartCache.fetchedAt = 0;
+    liveCartCache.pending = null;
+  }
+
+  async function getLiveLineProperties({ key, line, cartData = null }) {
     try {
-      const response = await fetch('/cart.js', { headers: { Accept: 'application/json' } });
-      if (!response.ok) return null;
-      const cartData = await response.json();
-      if (!Array.isArray(cartData?.items)) return null;
+      const resolvedCartData = cartData || (await getLiveCartData());
+      if (!Array.isArray(resolvedCartData?.items)) return null;
 
       let item = null;
       if (key) {
-        item = cartData.items.find((cartItem) => cartItem.key === key) || null;
+        item = resolvedCartData.items.find((cartItem) => cartItem.key === key) || null;
       }
       if (!item && line) {
         const index = Number(line) - 1;
-        if (index >= 0 && index < cartData.items.length) {
-          item = cartData.items[index];
+        if (index >= 0 && index < resolvedCartData.items.length) {
+          item = resolvedCartData.items[index];
         }
       }
 
@@ -576,6 +637,269 @@
     } catch (error) {
       console.error('Failed to read live cart line properties', error);
       return null;
+    }
+  }
+
+  async function getLiveCartData({ force = false } = {}) {
+    const now = Date.now();
+    const isFresh = now - liveCartCache.fetchedAt < 400;
+    if (!force && liveCartCache.data && isFresh) {
+      return liveCartCache.data;
+    }
+    if (!force && liveCartCache.pending) {
+      return liveCartCache.pending;
+    }
+
+    const fetchPromise = (async () => {
+      const response = await fetch('/cart.js', { headers: { Accept: 'application/json' } });
+      if (!response.ok) return null;
+      const cartData = await response.json();
+      if (!Array.isArray(cartData?.items)) return null;
+      setLiveCartCache(cartData);
+      return cartData;
+    })();
+
+    liveCartCache.pending = fetchPromise;
+    try {
+      return await fetchPromise;
+    } catch (error) {
+      console.error('Failed to read live cart data', error);
+      return null;
+    } finally {
+      liveCartCache.pending = null;
+    }
+  }
+
+  function getWrapperInstanceIdFromItem(cartItem) {
+    if (!cartItem || typeof cartItem !== 'object') return '';
+    const properties = cartItem.properties || {};
+    return properties._gift_wrap_instance_id || properties['Gift Wrap Instance'] || '';
+  }
+
+  function getAssignmentPropertyLines(properties) {
+    if (!properties || typeof properties !== 'object') return [];
+    const excludedKeys = new Set([
+      '_gift_wrap_instance_id',
+      'Gift Wrap Instance',
+      '_gift_wrap_source',
+      '_added_with_product',
+      '_gift_wrap_message',
+      'Gift Message',
+      'Attached Products',
+    ]);
+    return Object.entries(properties)
+      .filter(([key, value]) => {
+        if (!key || excludedKeys.has(key)) return false;
+        if (typeof value === 'object' || value === null || value === undefined || String(value).trim() === '') return false;
+        if (/^Attached Product \d+$/.test(key)) return false;
+        return true;
+      })
+      .map(([key, value]) => `${key}: ${String(value).trim()}`);
+  }
+
+  function buildAttachedProductsSummary(items, wrapperId, options = {}) {
+    if (!wrapperId || !Array.isArray(items)) return '';
+    const excludedKeys = options.excludedKeys instanceof Set ? options.excludedKeys : new Set();
+    const attachedItems = items.filter((item) => {
+      if (!item) return false;
+      if (excludedKeys.has(item.key)) return false;
+      if (Number(item.product_id || 0) === configuredGiftWrapProductIdNumber) return false;
+      return getWrapperInstanceIdFromItem(item) === wrapperId;
+    });
+    if (!attachedItems.length) return '';
+
+    return attachedItems
+      .map((item) => {
+        const title = item.product_title || item.title || 'Product';
+        const variantTitle = item.variant_title && item.variant_title !== 'Default Title' ? ` (${item.variant_title})` : '';
+        const quantitySuffix = Number(item.quantity) > 1 ? ` x${item.quantity}` : '';
+        const propertyLines = getAssignmentPropertyLines(item.properties || {});
+        const propertiesSuffix = propertyLines.length ? ` - ${propertyLines.join(' | ')}` : '';
+        return `${title}${variantTitle}${quantitySuffix}${propertiesSuffix}`;
+      })
+      .join('\n');
+  }
+
+  function clearAttachedProductProperties(properties) {
+    if (!properties || typeof properties !== 'object') return;
+    delete properties['Attached Products'];
+    for (const key of Object.keys(properties)) {
+      if (/^Attached Product \d+$/.test(key)) {
+        delete properties[key];
+      }
+    }
+  }
+
+  function applyAttachedProductProperties(properties, attachedSummary) {
+    clearAttachedProductProperties(properties);
+    if (!attachedSummary) return;
+    const lines = attachedSummary
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (!lines.length) return;
+    lines.forEach((line, index) => {
+      properties[`Attached Product ${index + 1}`] = line;
+    });
+  }
+
+  async function syncGiftWrapDisplayProperties({
+    wrapperId,
+    giftWrapLineKey = '',
+    giftMessage = null,
+    cartData = null,
+    includeSections = true,
+  }) {
+    if (!wrapperId) return;
+    const resolvedCartData = cartData || (await getLiveCartData());
+    if (!resolvedCartData) return;
+
+    const items = resolvedCartData.items || [];
+    let giftWrapLine = null;
+    if (giftWrapLineKey) {
+      giftWrapLine = items.find((item) => item.key === giftWrapLineKey) || null;
+    }
+    if (!giftWrapLine) {
+      giftWrapLine =
+        items.find(
+          (item) =>
+            item.product_id === configuredGiftWrapProductId && getWrapperInstanceIdFromItem(item) === wrapperId
+        ) || null;
+    }
+    if (!giftWrapLine) return;
+
+    const properties = normalizeProperties(giftWrapLine.properties || {});
+    properties._gift_wrap_instance_id = getWrapperInstanceIdFromItem(giftWrapLine) || wrapperId;
+    delete properties['Gift Wrap Instance'];
+
+    const attachedSummary = buildAttachedProductsSummary(items, wrapperId, {
+      excludedKeys: new Set([giftWrapLine.key]),
+    });
+    applyAttachedProductProperties(properties, attachedSummary);
+
+    const normalizedMessage =
+      giftMessage === null ? String(properties._gift_wrap_message || '').trim() : String(giftMessage).trim();
+    if (normalizedMessage) {
+      properties._gift_wrap_message = normalizedMessage;
+      properties['Gift Message'] = normalizedMessage;
+    } else {
+      delete properties._gift_wrap_message;
+      delete properties['Gift Message'];
+    }
+
+    await updateCartLine({
+      key: giftWrapLine.key,
+      quantity: giftWrapLine.quantity,
+      properties,
+      includeSections,
+    });
+  }
+
+  async function syncAllGiftWrapDisplayPropertiesFromCart(cartData = null) {
+    const resolvedCartData = Array.isArray(cartData?.items) ? cartData : await getLiveCartData({ force: true });
+    if (!resolvedCartData || !Array.isArray(resolvedCartData.items)) return;
+    if (!configuredGiftWrapProductIdNumber) return;
+
+    const giftWrapItems = resolvedCartData.items.filter(
+      (item) => Number(item?.product_id || 0) === configuredGiftWrapProductIdNumber
+    );
+    if (!giftWrapItems.length) return;
+
+    for (let index = 0; index < giftWrapItems.length; index += 1) {
+      const giftWrapItem = giftWrapItems[index];
+      const wrapperId = getWrapperInstanceIdFromItem(giftWrapItem) || giftWrapItem.key || '';
+      if (!wrapperId) continue;
+      const includeSections = index === giftWrapItems.length - 1;
+      await syncGiftWrapDisplayProperties({
+        wrapperId,
+        giftWrapLineKey: giftWrapItem.key || '',
+        cartData: resolvedCartData,
+        includeSections,
+      });
+    }
+  }
+
+  function getWrapperSummaryLinesFromDom(wrapperCard) {
+    if (!(wrapperCard instanceof HTMLElement)) return [];
+    const productItems = Array.from(
+      wrapperCard.querySelectorAll('.cart-drawer-gift-assignment-card__section .cart-drawer-gift-assignment-list .cart-drawer-gift-assignment-item')
+    );
+    if (!productItems.length) return [];
+
+    const section = wrapperCard.querySelector('.cart-drawer-gift-assignment-card__section');
+    const assignedSection =
+      Array.from(wrapperCard.querySelectorAll('.cart-drawer-gift-assignment-card__section')).find((node) =>
+        node.querySelector('.cart-drawer-gift-assignment-card__label')?.textContent?.trim() === 'Gift Items:'
+      ) || section;
+    const assignedItems = assignedSection
+      ? Array.from(assignedSection.querySelectorAll('.cart-drawer-gift-assignment-item'))
+      : [];
+
+    return assignedItems
+      .map((item) => {
+        const title = item.querySelector('.cart-drawer-gift-assignment-item__title')?.textContent?.trim() || '';
+        const variant = item.querySelector('.cart-drawer-gift-assignment-item__variant')?.textContent?.trim() || '';
+        const propertyLines = Array.from(item.querySelectorAll('.cart-drawer-gift-assignment-item__property'))
+          .map((node) => node.textContent?.trim() || '')
+          .filter(Boolean);
+        if (!title) return '';
+        const base = variant ? `${title} (${variant})` : title;
+        return propertyLines.length ? `${base} - ${propertyLines.join(' | ')}` : base;
+      })
+      .filter(Boolean);
+  }
+
+  function getGiftMessageFromDom(wrapperCard) {
+    if (!(wrapperCard instanceof HTMLElement)) return '';
+    const summary = wrapperCard.querySelector('.cart-drawer-gift-assignment-card__message-summary');
+    return summary?.textContent?.trim() || '';
+  }
+
+  async function syncGiftWrapDisplayPropertiesFromDom() {
+    const cards = Array.from(document.querySelectorAll(giftWrapCardSelector));
+    if (!cards.length) return;
+
+    for (let index = 0; index < cards.length; index += 1) {
+      const card = cards[index];
+      const wrapperCard = card instanceof HTMLElement ? card : null;
+      if (!wrapperCard) continue;
+      const wrapperId = wrapperCard.getAttribute('data-wrapper-id') || '';
+      const lineKey = wrapperCard.getAttribute('data-gift-wrap-cart-key') || '';
+      const quantity = Number(wrapperCard.getAttribute('data-gift-wrap-line-quantity') || '0');
+      if (!wrapperId || !lineKey || quantity <= 0) continue;
+
+      const baseProperties = parseLineProperties(wrapperCard.getAttribute('data-gift-wrap-line-properties') || '');
+      const properties = normalizeProperties(baseProperties);
+      properties._gift_wrap_instance_id = properties._gift_wrap_instance_id || wrapperId;
+      delete properties['Gift Wrap Instance'];
+
+      const summaryLines = getWrapperSummaryLinesFromDom(wrapperCard);
+      clearAttachedProductProperties(properties);
+      summaryLines.forEach((line, index) => {
+        properties[`Attached Product ${index + 1}`] = line;
+      });
+
+      const giftMessage = getGiftMessageFromDom(wrapperCard);
+      if (giftMessage) {
+        properties._gift_wrap_message = giftMessage;
+        properties['Gift Message'] = giftMessage;
+      } else {
+        delete properties._gift_wrap_message;
+        delete properties['Gift Message'];
+      }
+
+      const normalizedCurrent = normalizeProperties(baseProperties);
+      delete normalizedCurrent['Gift Wrap Instance'];
+      const nextSerialized = JSON.stringify(properties);
+      const currentSerialized = JSON.stringify(normalizedCurrent);
+      if (nextSerialized === currentSerialized) continue;
+
+      await updateCartLine({
+        key: lineKey,
+        quantity,
+        properties,
+        includeSections: index === cards.length - 1,
+      });
     }
   }
 
@@ -633,93 +957,104 @@
     const context = giftWrapDrawerState.messageContext;
     if (!modalElements || !context) return;
     if (!context.line || !context.quantity) return;
-
-    const liveProperties =
-      (await getLiveLineProperties({ key: context.key, line: context.line })) || context.properties;
-    const properties = { ...liveProperties };
     const trimmed = modalElements.textarea.value.trim();
-
-    // Preserve wrapper identity so assigned items stay linked after message updates.
-    if (context.wrapperId) {
-      if (!properties._gift_wrap_instance_id) {
-        properties._gift_wrap_instance_id = context.wrapperId;
-      }
-      if (!properties['Gift Wrap Instance']) {
-        properties['Gift Wrap Instance'] = context.wrapperId;
-      }
-    }
-
-    if (trimmed) {
-      properties._gift_wrap_message = trimmed;
-    } else {
-      delete properties._gift_wrap_message;
-    }
-
-    await updateCartLine({
-      line: context.line,
-      key: context.key,
-      quantity: context.quantity,
-      properties,
+    await syncGiftWrapDisplayProperties({
+      wrapperId: context.wrapperId,
+      giftWrapLineKey: context.key,
+      giftMessage: trimmed,
     });
     closeGiftMessageModal();
   }
 
-  async function updateCartLine({ line, key, quantity, properties }) {
+  async function updateCartLine({ line, key, quantity, properties, includeSections = true }) {
     const sectionIds = getSectionIds();
-    const payload = {
+    const basePayload = {
       quantity: Number(quantity),
       properties: normalizeProperties(properties),
-      sections: sectionIds.join(','),
-      sections_url: window.location.pathname,
     };
-    if (key) {
-      payload.id = key;
-    } else {
-      payload.line = Number(line);
+    if (includeSections) {
+      basePayload.sections = sectionIds.join(',');
+      basePayload.sections_url = window.location.pathname;
     }
 
-    const response = await fetch('/cart/change.js', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+    const lineNumber = Number(line);
+    const hasValidLine = Number.isFinite(lineNumber) && lineNumber > 0;
+    const payloads = [];
+    if (key) {
+      payloads.push({ ...basePayload, id: key });
+    }
+    if (hasValidLine) {
+      payloads.push({ ...basePayload, line: lineNumber });
+    }
+    if (!payloads.length) {
+      throw new Error('Missing valid line reference for cart update');
+    }
 
-    if (!response.ok) {
-      let serverError = 'Failed to update cart line';
+    let responseData = null;
+    let lastError = 'Failed to update cart line';
+    for (let index = 0; index < payloads.length; index += 1) {
+      const payload = payloads[index];
+      const response = await fetch('/cart/change.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        responseData = await response.json();
+        break;
+      }
+
       try {
         const errorData = await response.json();
-        serverError = errorData?.description || errorData?.message || serverError;
+        lastError = errorData?.description || errorData?.message || lastError;
       } catch (error) {
         // Keep fallback message when response is not JSON.
       }
-      throw new Error(serverError);
+
+      const canRetryWithAlternateReference = index < payloads.length - 1;
+      if (!canRetryWithAlternateReference) {
+        throw new Error(lastError);
+      }
     }
 
-    const responseData = await response.json();
-    triggerCartUpdate(responseData?.sections);
+    if (!responseData) {
+      throw new Error(lastError);
+    }
+    setLiveCartCache(responseData);
+    if (includeSections) {
+      triggerCartUpdate(responseData?.sections, Array.isArray(responseData?.items) ? responseData : null);
+    }
+    return responseData;
   }
 
-  async function handleAddGiftWrap(button) {
-    const variantId = button.dataset.giftVariantId;
-    if (!variantId) return;
-
+  async function addGiftWrapInstances(variantId, count = 1) {
+    const normalizedVariantId = Number(variantId);
+    const normalizedCount = Number(count);
+    if (!normalizedVariantId || normalizedCount <= 0) return;
     const sectionIds = getSectionIds();
-    const uniqueInstanceId = generateWrapperInstanceId();
+    const items = [];
+    for (let index = 0; index < normalizedCount; index += 1) {
+      const uniqueInstanceId = generateWrapperInstanceId();
+      items.push({
+        id: normalizedVariantId,
+        quantity: 1,
+        properties: {
+          _gift_wrap_source: 'cart_drawer',
+          _gift_wrap_instance_id: uniqueInstanceId,
+        },
+      });
+    }
+
     const response = await fetch('/cart/add.js', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        id: Number(variantId),
-        quantity: 1,
-        properties: {
-          _gift_wrap_source: 'cart_drawer',
-          _gift_wrap_instance_id: uniqueInstanceId,
-          'Gift Wrap Instance': uniqueInstanceId,
-        },
+        items,
         sections: sectionIds.join(','),
         sections_url: window.location.pathname,
       }),
@@ -730,7 +1065,15 @@
     }
 
     const responseData = await response.json();
-    triggerCartUpdate(responseData?.sections);
+    clearLiveCartCache();
+    const liveCartData = await getLiveCartData({ force: true });
+    triggerCartUpdate(responseData?.sections, liveCartData);
+  }
+
+  async function handleAddGiftWrap(button) {
+    const variantId = button.dataset.giftVariantId;
+    if (!variantId) return;
+    await addGiftWrapInstances(variantId, 1);
   }
 
   async function handleAssignProduct(button) {
@@ -738,20 +1081,26 @@
     const key = button.dataset.cartKey;
     const quantity = button.dataset.cartLineQuantity;
     const wrapperId = button.dataset.wrapperId;
+    const wrapperCartKey = button.dataset.wrapperCartKey || '';
     if (!line || !quantity || !wrapperId) return;
 
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
-    const liveProperties =
-      (await getLiveLineProperties({ key, line })) || fallbackProperties;
-    const properties = { ...liveProperties };
+    const liveCartData = await getLiveCartData();
+    const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
+    // Always prefer live line properties to avoid dropping hidden personalization fields.
+    let properties = { ...(liveProperties || fallbackProperties) };
     properties._gift_wrap_instance_id = wrapperId;
-    properties['Gift Wrap Instance'] = wrapperId;
+    delete properties['Gift Wrap Instance'];
 
-    await updateCartLine({
+    const updateResult = await updateCartLine({
       line,
       key,
       quantity,
       properties,
+      includeSections: true,
+    });
+    await syncGiftWrapDisplayProperties({ wrapperId, giftWrapLineKey: wrapperCartKey, cartData: updateResult }).catch((error) => {
+      console.error('Failed to sync gift wrap display properties after assign', error);
     });
   }
 
@@ -759,21 +1108,38 @@
     const line = button.dataset.cartLine;
     const key = button.dataset.cartKey;
     const quantity = button.dataset.cartLineQuantity;
+    const previousWrapperId = button.dataset.wrapperId || '';
+    const previousWrapperCartKey = button.dataset.wrapperCartKey || '';
     if (!line || !quantity) return;
 
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
-    const liveProperties =
-      (await getLiveLineProperties({ key, line })) || fallbackProperties;
-    const properties = { ...liveProperties };
+    const liveCartData = await getLiveCartData();
+    const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
+    // Always prefer live line properties to avoid dropping hidden personalization fields.
+    let properties = { ...(liveProperties || fallbackProperties) };
     delete properties._gift_wrap_instance_id;
     delete properties['Gift Wrap Instance'];
 
-    await updateCartLine({
+    const updateResult = await updateCartLine({
       line,
       key,
       quantity,
       properties,
+      includeSections: true,
     });
+    if (previousWrapperId) {
+      await syncGiftWrapDisplayProperties({
+        wrapperId: previousWrapperId,
+        giftWrapLineKey: previousWrapperCartKey,
+        cartData: updateResult,
+      }).catch(
+        (error) => {
+          console.error('Failed to sync gift wrap display properties after unassign', error);
+        }
+      );
+    } else {
+      triggerCartUpdate({});
+    }
   }
 
   async function normalizeGiftWrapLines() {
@@ -787,10 +1153,11 @@
       const key = card.getAttribute('data-gift-wrap-cart-key');
       if (!key || linesByKey.has(key)) continue;
 
+      const wrapperId = card.getAttribute('data-wrapper-id') || '';
       const quantity = Number(card.getAttribute('data-gift-wrap-line-quantity') || '0');
       const variantId = Number(card.getAttribute('data-gift-wrap-variant-id') || '0');
       const properties = parseLineProperties(card.getAttribute('data-gift-wrap-line-properties') || '');
-      linesByKey.set(key, { key, quantity, variantId, properties });
+      linesByKey.set(key, { key, wrapperId, quantity, variantId, properties });
     }
 
     const linesToSplit = Array.from(linesByKey.values()).filter((lineData) => lineData.quantity > 1 && lineData.variantId > 0);
@@ -798,83 +1165,111 @@
 
     giftWrapDrawerState.isNormalizingGiftWrapLines = true;
     try {
+      const liveCartData = await getLiveCartData();
+      const liveItemsByKey = new Map((liveCartData?.items || []).map((item) => [item.key, item]));
       const sectionIds = getSectionIds();
       let latestSections = {};
 
-      for (const lineData of linesToSplit) {
-        const currentProperties = normalizeProperties(lineData.properties);
+      for (let lineIndex = 0; lineIndex < linesToSplit.length; lineIndex += 1) {
+        const lineData = linesToSplit[lineIndex];
+        const liveLine = liveItemsByKey.get(lineData.key) || null;
+        const liveLineQuantity = Number(liveLine?.quantity || lineData.quantity || 0);
+        const liveLineVariantId = Number(liveLine?.variant_id || lineData.variantId || 0);
+        if (liveLineQuantity <= 1 || liveLineVariantId <= 0) continue;
+
+        const liveLineProperties = normalizeProperties(liveLine?.properties || {});
+        const fallbackProperties = normalizeProperties(lineData.properties);
+        const currentProperties = Object.keys(liveLineProperties).length ? liveLineProperties : fallbackProperties;
         const primaryWrapperInstanceId =
-          currentProperties._gift_wrap_instance_id || currentProperties['Gift Wrap Instance'] || generateWrapperInstanceId();
+          currentProperties._gift_wrap_instance_id ||
+          currentProperties['Gift Wrap Instance'] ||
+          lineData.wrapperId ||
+          generateWrapperInstanceId();
         const primaryLineProperties = {
           ...currentProperties,
           _gift_wrap_source: currentProperties._gift_wrap_source || 'cart_drawer',
           _gift_wrap_instance_id: primaryWrapperInstanceId,
-          'Gift Wrap Instance': primaryWrapperInstanceId,
         };
+        delete primaryLineProperties['Gift Wrap Instance'];
 
         // Keep one line item as quantity 1 and normalize its properties.
+        const additionalWrappers = liveLineQuantity - 1;
+        const isLastLine = lineIndex === linesToSplit.length - 1;
+        const includeSectionsOnPrimary = isLastLine && additionalWrappers === 0;
+        const primaryPayload = {
+          id: lineData.key,
+          quantity: 1,
+          properties: primaryLineProperties,
+        };
+        if (includeSectionsOnPrimary) {
+          primaryPayload.sections = sectionIds.join(',');
+          primaryPayload.sections_url = window.location.pathname;
+        }
         const primaryLineResponse = await fetch('/cart/change.js', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            id: lineData.key,
-            quantity: 1,
-            properties: primaryLineProperties,
-            sections: sectionIds.join(','),
-            sections_url: window.location.pathname,
-          }),
+          body: JSON.stringify(primaryPayload),
         });
         if (!primaryLineResponse.ok) {
           throw new Error('Failed to normalize primary gift wrap line');
         }
         const primaryLineData = await primaryLineResponse.json();
-        latestSections = primaryLineData?.sections || latestSections;
+        if (includeSectionsOnPrimary) {
+          latestSections = primaryLineData?.sections || latestSections;
+        }
 
         // Add only the additional wrappers needed.
-        const additionalWrappers = lineData.quantity - 1;
         const baseProperties = { ...currentProperties };
         delete baseProperties._gift_wrap_instance_id;
         delete baseProperties['Gift Wrap Instance'];
         delete baseProperties._gift_wrap_message;
+        delete baseProperties['Gift Message'];
+        clearAttachedProductProperties(baseProperties);
 
-        const addRequests = [];
-        for (let index = 0; index < additionalWrappers; index += 1) {
-          const wrapperInstanceId = generateWrapperInstanceId();
-          addRequests.push(
-            fetch('/cart/add.js', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
+        if (additionalWrappers > 0) {
+          const includeSections = isLastLine;
+          const addItems = [];
+          for (let index = 0; index < additionalWrappers; index += 1) {
+            const wrapperInstanceId = generateWrapperInstanceId();
+            addItems.push({
+              id: liveLineVariantId,
+              quantity: 1,
+              properties: {
+                ...baseProperties,
+                _gift_wrap_source: baseProperties._gift_wrap_source || 'cart_drawer',
+                _gift_wrap_instance_id: wrapperInstanceId,
               },
-              body: JSON.stringify({
-                id: lineData.variantId,
-                quantity: 1,
-                properties: {
-                  ...baseProperties,
-                  _gift_wrap_source: baseProperties._gift_wrap_source || 'cart_drawer',
-                  _gift_wrap_instance_id: wrapperInstanceId,
-                  'Gift Wrap Instance': wrapperInstanceId,
-                },
-                sections: sectionIds.join(','),
-                sections_url: window.location.pathname,
-              }),
-            })
-          );
-        }
+            });
+          }
 
-        const addResponses = await Promise.all(addRequests);
-        for (const response of addResponses) {
+          const addPayload = { items: addItems };
+          if (includeSections) {
+            addPayload.sections = sectionIds.join(',');
+            addPayload.sections_url = window.location.pathname;
+          }
+
+          const response = await fetch('/cart/add.js', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(addPayload),
+          });
           if (!response.ok) {
             throw new Error('Failed to split gift wrap line');
           }
           const responseData = await response.json();
-          latestSections = responseData?.sections || latestSections;
+          if (includeSections) {
+            latestSections = responseData?.sections || latestSections;
+          }
         }
       }
 
-      triggerCartUpdate(latestSections);
+      const latestCartData = await getLiveCartData({ force: true });
+      triggerCartUpdate(latestSections, latestCartData);
+      clearLiveCartCache();
       return true;
     } catch (error) {
       console.error('Gift wrap normalization failed', error);
@@ -892,6 +1287,14 @@
       giftWrapDrawerState.normalizeTimer = null;
       normalizeGiftWrapLines();
     }, delay);
+  }
+
+  function setGiftAssignmentActionsDisabled(disabled) {
+    const actionButtons = document.querySelectorAll(`${assignButtonSelector}, ${unassignButtonSelector}`);
+    actionButtons.forEach((element) => {
+      if (!(element instanceof HTMLButtonElement)) return;
+      element.disabled = disabled;
+    });
   }
 
   const handleGiftWrapDrawerClick = async (event) => {
@@ -914,13 +1317,22 @@
 
     if (button.disabled) return;
     if (giftWrapDrawerState.isNormalizingGiftWrapLines) return;
+    const isAssignmentAction = button.matches(assignButtonSelector) || button.matches(unassignButtonSelector);
+    if (isAssignmentAction && giftWrapDrawerState.isAssigningGiftItem) return;
 
     button.disabled = true;
     button.classList.add(loadingClass);
+    if (isAssignmentAction) {
+      giftWrapDrawerState.isAssigningGiftItem = true;
+      setGiftAssignmentActionsDisabled(true);
+    }
 
     try {
-      const normalized = await normalizeGiftWrapLines();
-      if (normalized) return;
+      // Assignment/unassignment should feel immediate and not wait for normalize preflight.
+      if (button.matches(giftWrapButtonSelector)) {
+        const normalized = await normalizeGiftWrapLines();
+        if (normalized) return;
+      }
 
       if (button.matches(giftWrapButtonSelector)) {
         await handleAddGiftWrap(button);
@@ -936,6 +1348,10 @@
     } finally {
       button.disabled = false;
       button.classList.remove(loadingClass);
+      if (isAssignmentAction) {
+        giftWrapDrawerState.isAssigningGiftItem = false;
+        setGiftAssignmentActionsDisabled(false);
+      }
     }
   };
 
@@ -945,9 +1361,110 @@
   window.__giftWrapDrawerClickHandler = handleGiftWrapDrawerClick;
   document.addEventListener('click', window.__giftWrapDrawerClickHandler);
 
-  const handleGiftWrapDrawerCartUpdate = () => {
+  const handleGiftWrapQuantityPlusClick = async (event) => {
+    if (!configuredGiftWrapProductId) return;
+
+    const plusButton = event.target.closest(quantityPlusSelector);
+    if (!(plusButton instanceof HTMLButtonElement)) return;
+
+    const row = plusButton.closest('.cart-items__table-row');
+    if (!(row instanceof HTMLTableRowElement)) return;
+
+    const rowProductId = row.dataset.productId;
+    const rowVariantId = row.dataset.variantId;
+    if (!rowProductId || !rowVariantId) return;
+    if (String(rowProductId) !== String(configuredGiftWrapProductId)) return;
+    if (giftWrapDrawerState.isNormalizingGiftWrapLines || giftWrapDrawerState.isFastAddingGiftWrap) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === 'function') {
+      event.stopImmediatePropagation();
+    }
+
+    giftWrapDrawerState.isFastAddingGiftWrap = true;
+    plusButton.disabled = true;
+    plusButton.classList.add(loadingClass);
+    try {
+      await handleAddGiftWrap({ dataset: { giftVariantId: rowVariantId } });
+    } catch (error) {
+      console.error('Gift wrap fast add failed', error);
+    } finally {
+      giftWrapDrawerState.isFastAddingGiftWrap = false;
+      plusButton.disabled = false;
+      plusButton.classList.remove(loadingClass);
+    }
+  };
+  if (window.__giftWrapDrawerQuantityPlusHandler) {
+    document.removeEventListener('click', window.__giftWrapDrawerQuantityPlusHandler, true);
+  }
+  window.__giftWrapDrawerQuantityPlusHandler = handleGiftWrapQuantityPlusClick;
+  document.addEventListener('click', window.__giftWrapDrawerQuantityPlusHandler, true);
+
+  const handleGiftWrapQuantitySelectorUpdate = async (event) => {
+    if (!configuredGiftWrapProductId) return;
+    const cartLine = Number(event?.detail?.cartLine || 0);
+    const requestedQuantity = Number(event?.detail?.quantity || 0);
+    if (!cartLine || !requestedQuantity) return;
+
+    const quantityInput = document.querySelector(`input[data-cart-line="${cartLine}"]`);
+    if (!(quantityInput instanceof HTMLInputElement)) return;
+    const row = quantityInput.closest('.cart-items__table-row');
+    if (!(row instanceof HTMLTableRowElement)) return;
+
+    const rowProductId = row.dataset.productId;
+    const rowVariantId = row.dataset.variantId;
+    if (!rowProductId || !rowVariantId) return;
+    if (String(rowProductId) !== String(configuredGiftWrapProductId)) return;
+
+    const currentQuantity = Number(quantityInput.defaultValue || quantityInput.getAttribute('value') || quantityInput.value || '0');
+    const quantityDelta = requestedQuantity - currentQuantity;
+    if (quantityDelta <= 0) return;
+    if (giftWrapDrawerState.isNormalizingGiftWrapLines || giftWrapDrawerState.isFastAddingGiftWrap) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === 'function') {
+      event.stopImmediatePropagation();
+    }
+
+    giftWrapDrawerState.isFastAddingGiftWrap = true;
+    quantityInput.value = String(currentQuantity);
+    try {
+      await addGiftWrapInstances(rowVariantId, quantityDelta);
+    } catch (error) {
+      console.error('Gift wrap quantity interception failed', error);
+    } finally {
+      giftWrapDrawerState.isFastAddingGiftWrap = false;
+    }
+  };
+  if (window.__giftWrapDrawerQuantityUpdateHandler) {
+    document.removeEventListener(cartQuantityUpdateEventName, window.__giftWrapDrawerQuantityUpdateHandler, true);
+  }
+  window.__giftWrapDrawerQuantityUpdateHandler = handleGiftWrapQuantitySelectorUpdate;
+  document.addEventListener(cartQuantityUpdateEventName, window.__giftWrapDrawerQuantityUpdateHandler, true);
+
+  const handleGiftWrapDrawerCartUpdate = (event) => {
     closeGiftMessageModal();
-    scheduleNormalizeGiftWrapLines(120);
+    scheduleNormalizeGiftWrapLines(40);
+    const eventSource = event?.detail?.data?.source;
+    if (eventSource === 'cart-drawer-gift-wrap') {
+      return;
+    }
+    if (eventSource === 'cart-items-component') {
+      const eventCartData = event?.detail?.resource;
+      window.setTimeout(() => {
+        syncAllGiftWrapDisplayPropertiesFromCart(eventCartData).catch((error) => {
+          console.error('Failed to sync gift wrap summaries from cart', error);
+        });
+      }, 120);
+      return;
+    }
+    window.setTimeout(() => {
+      syncGiftWrapDisplayPropertiesFromDom().catch((error) => {
+        console.error('Failed to sync gift wrap summaries from DOM', error);
+      });
+    }, 120);
   };
   if (window.__giftWrapDrawerCartUpdateHandler) {
     document.removeEventListener('cart:update', window.__giftWrapDrawerCartUpdateHandler);
@@ -1330,6 +1847,34 @@
     align-items: center;
     justify-content: center;
     margin-left: auto;
+    cursor: pointer;
+  }
+
+  .cart-drawer-gift-assignment-item__add[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .cart-drawer-gift-assignment-item__add.is-loading {
+    position: relative;
+    color: transparent;
+  }
+
+  .cart-drawer-gift-assignment-item__add.is-loading::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    border: 2px solid #7295bb;
+    border-right-color: transparent;
+    border-radius: 50%;
+    position: absolute;
+    animation: cart-drawer-gift-spin 0.8s linear infinite;
+  }
+
+  @keyframes cart-drawer-gift-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .cart-drawer-gift-assignment-item__remove {
@@ -1352,7 +1897,7 @@
   .cart-drawer-gift-message-dialog {
     position: fixed;
     inset: 0;
-    width: min(760px, calc(100vw - 32px));
+    width: min(620px, calc(100vw - 32px));
     background: #fff;
     border-radius: 0;
     padding: 20px;

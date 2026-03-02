@@ -482,7 +482,67 @@
   </div>
 
   <template id="build-card-template-{{ section.id }}">
-    {% content_for 'blocks' %}
+    {% liquid
+      assign collection_cards_metafield = collection.metafields.custom.cb_collection_card
+      assign collection_cards = blank
+      if collection_cards_metafield != blank and collection_cards_metafield.value != blank
+        assign collection_cards = collection_cards_metafield.value
+      endif
+    %}
+
+    {% if collection_cards != blank %}
+      {% for card in collection_cards %}
+        {% liquid
+          assign card_position = card.position.value | default: card.position
+          assign card_image = card.image.value | default: card.image
+          assign card_title = card.title.value | default: card.title
+          assign card_body_text = blank
+          if card.body_text != blank
+            assign card_body_text = card.body_text | metafield_tag
+          endif
+          assign card_url = card.url.value | default: card.url
+          assign card_link_copy = card.link_copy.value | default: card.link_copy
+        %}
+
+        <li
+          class="product-grid__item product-grid__item--build-card"
+          data-build-card-position="{{ card_position | default: 0 }}"
+          ref="cards[]"
+        >
+          <article class="build-card">
+            {% if card_image != blank %}
+              <div class="build-card__media">
+                {{
+                  card_image
+                  | image_url: width: 1200
+                  | image_tag:
+                    loading: 'lazy',
+                    class: 'build-card__image',
+                    widths: '360, 540, 720, 900, 1200',
+                    sizes: '(min-width: 1024px) 25vw, (min-width: 750px) 33vw, 100vw',
+                    alt: card_image.alt | default: card_title
+                }}
+              </div>
+            {% endif %}
+            <div class="build-card__content">
+              {% if card_title != blank %}
+                <h3 class="build-card__title">{{ card_title }}</h3>
+              {% endif %}
+              {% if card_body_text != blank %}
+                <div class="build-card__body rte">
+                  {{ card_body_text }}
+                </div>
+              {% endif %}
+              {% if card_url != blank and card_link_copy != blank %}
+                <a class="build-card__link" href="{{ card_url }}">
+                  {{ card_link_copy }}
+                </a>
+              {% endif %}
+            </div>
+          </article>
+        </li>
+      {% endfor %}
+    {% endif %}
   </template>
 
 <script>
@@ -1391,9 +1451,6 @@
     },
     {
       "type": "@theme"
-    },
-    {
-      "type": "build-card"
     }
   ],
   "settings": [

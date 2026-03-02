@@ -2,8 +2,26 @@
 {% if section.settings.video != blank or section.settings.image != blank %}
   {% assign has_media = true %}
 {% endif %}
+{% assign banner_text_color = section.settings.banner_text_color | default: blank %}
+{% assign banner_overlay_color = section.settings.banner_overlay_color | default: blank %}
+{% assign banner_overlay_is_transparent = false %}
+{% if banner_overlay_color != blank %}
+  {% assign banner_overlay_alpha = banner_overlay_color | color_extract: 'alpha' %}
+  {% if banner_overlay_alpha == 0 %}
+    {% assign banner_overlay_is_transparent = true %}
+  {% endif %}
+{% endif %}
 <div class="section section--{{ section.settings.section_width }} page-banner{% if section.settings.video or section.settings.image %} page-banner--has-image{% endif %}{% if section.settings.content_position == 'under' and has_media %} page-banner--content-under{% endif %}"
   data-testid="page-banner"
+  {% if banner_text_color != blank or banner_overlay_color != blank %}
+    style="
+      {% if banner_text_color != blank %}--page-banner-text-color: {{ banner_text_color }};{% endif %}
+      {% if banner_overlay_color != blank and banner_overlay_is_transparent == false %}
+        --page-banner-overlay-gradient: linear-gradient(89.97deg, {{ banner_overlay_color | color_modify: 'alpha', 1 }} -12.75%, {{ banner_overlay_color | color_modify: 'alpha', 0.810876 }} -3.35%, {{ banner_overlay_color | color_modify: 'alpha', 0.648265 }} 29.36%, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 67.56%);
+        --page-banner-overlay-gradient-mobile: linear-gradient(202.37deg, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 23.99%, {{ banner_overlay_color | color_modify: 'alpha', 0.485081 }} 38.69%, {{ banner_overlay_color | color_modify: 'alpha', 0.821329 }} 102.45%, {{ banner_overlay_color | color_modify: 'alpha', 1 }} 127.08%);
+      {% endif %}
+    "
+  {% endif %}
 >
   {% if section.settings.video or section.settings.image %}
     <div class="page-banner__background">
@@ -38,7 +56,7 @@
             fetchpriority: 'high'
         }}
       {% endif %}
-      {% unless section.settings.content_position == 'under' %}
+      {% unless section.settings.content_position == 'under' or banner_overlay_is_transparent %}
         <div class="page-banner__overlay"></div>
       {% endunless %}
     </div>
@@ -147,13 +165,13 @@
     position: absolute;
     inset: 0;
     z-index: 1;
-    background: linear-gradient(89.97deg, #000000 -12.75%, rgba(0, 0, 0, 0.810876) -3.35%, rgba(0, 0, 0, 0.648265) 29.36%, rgba(0, 0, 0, 0) 67.56%);
+    background-image: var(--page-banner-overlay-gradient, linear-gradient(89.97deg, #000000 -12.75%, rgba(0, 0, 0, 0.810876) -3.35%, rgba(0, 0, 0, 0.648265) 29.36%, rgba(0, 0, 0, 0) 67.56%));
     pointer-events: none;
   }
 
   @media screen and (max-width: 749px) {
     .page-banner__overlay {
-      background: linear-gradient(202.37deg, rgba(0, 0, 0, 0) 23.99%, rgba(0, 0, 0, 0.485081) 38.69%, rgba(0, 0, 0, 0.821329) 102.45%, #000000 127.08%);
+      background-image: var(--page-banner-overlay-gradient-mobile, linear-gradient(202.37deg, rgba(0, 0, 0, 0) 23.99%, rgba(0, 0, 0, 0.485081) 38.69%, rgba(0, 0, 0, 0.821329) 102.45%, #000000 127.08%));
     }
   }
 
@@ -201,11 +219,11 @@
   }
 
   .page-banner--has-image .page-banner__title {
-    color: #ffffff;
+    color: var(--page-banner-text-color, #ffffff);
   }
 
   .page-banner:not(.page-banner--has-image) .page-banner__title {
-    color: #1D425A;
+    color: var(--page-banner-text-color, #1D425A);
   }
 
   .page-banner__description {
@@ -216,11 +234,11 @@
   }
 
   .page-banner--has-image .page-banner__description {
-    color: #ffffff;
+    color: var(--page-banner-text-color, #ffffff);
   }
 
   .page-banner:not(.page-banner--has-image) .page-banner__description {
-    color: #1D425A;
+    color: var(--page-banner-text-color, #1D425A);
   }
 
   .page-banner__features {
@@ -275,19 +293,19 @@
   }
 
   .page-banner--has-image .page-banner__feature-text {
-    color: #ffffff;
+    color: var(--page-banner-text-color, #ffffff);
   }
 
   .page-banner:not(.page-banner--has-image) .page-banner__feature-text {
-    color: #1D425A;
+    color: var(--page-banner-text-color, #1D425A);
   }
 
   .page-banner--has-image .page-banner__feature-icon {
-    color: #ffffff;
+    color: var(--page-banner-text-color, #ffffff);
   }
 
   .page-banner:not(.page-banner--has-image) .page-banner__feature-icon {
-    color: #1D425A;
+    color: var(--page-banner-text-color, #1D425A);
   }
 
   @media screen and (max-width: 749px) {
@@ -381,7 +399,7 @@
   .page-banner--content-under.page-banner--has-image .page-banner__description,
   .page-banner--content-under.page-banner--has-image .page-banner__feature-text,
   .page-banner--content-under.page-banner--has-image .page-banner__feature-icon {
-    color: #1D425A;
+    color: var(--page-banner-text-color, #1D425A);
   }
 
   .page-banner--content-under .page-banner__description {
@@ -450,6 +468,18 @@
       "type": "textarea",
       "id": "description",
       "label": "Page description"
+    },
+    {
+      "type": "color",
+      "id": "banner_text_color",
+      "label": "Text color",
+      "info": "Applies to title, description, and features"
+    },
+    {
+      "type": "color",
+      "id": "banner_overlay_color",
+      "label": "Overlay color",
+      "info": "Leave blank to use default overlay. Select transparent to remove overlay."
     },
     {
       "type": "select",

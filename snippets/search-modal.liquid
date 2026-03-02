@@ -117,4 +117,11 @@
       right: calc(var(--padding-2xl) * 2);
     }
   }
+
+  /* Modal-only: remove gray hover highlight from predictive product cards */
+  .search-modal .predictive-search-results__card--product:hover {
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+  }
 {% endstylesheet %}

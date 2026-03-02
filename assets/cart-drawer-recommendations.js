@@ -276,6 +276,9 @@ class CartDrawerRecommendations extends HTMLElement {
    */
   #handleCartUpdate = async (event) => {
     const eventSource = event?.detail?.data?.source;
+    if (eventSource === 'cart-drawer-gift-wrap' || eventSource === 'gift-wrap-handler') {
+      return;
+    }
     
     // Check if this is a product ADD or quantity CHANGE
     // Product adds have sources like 'product-form-component', 'quick-add-component'
