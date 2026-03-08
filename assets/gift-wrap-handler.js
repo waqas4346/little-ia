@@ -6,7 +6,6 @@
 
 (function() {
   'use strict';
-  const pendingGiftWrapAdds = [];
 
   // Wait for DOM to be ready
   if (document.readyState === 'loading') {
@@ -26,10 +25,6 @@
       setupGiftMessageVisibility(form);
     });
 
-    if (!window.__giftWrapCartUpdateBound) {
-      window.__giftWrapCartUpdateBound = true;
-      document.addEventListener('cart:update', handleCartUpdate);
-    }
   }
 
   function setupGiftMessageVisibility(form) {
@@ -72,7 +67,6 @@
     let giftWrapVariantId = null;
     let christmasGiftVariantId = null;
     let productId = null;
-    const mainVariantId = form.querySelector('input[name="id"]')?.value || '';
     const giftMessage = giftMessageInput?.value?.trim() || '';
 
     // Check regular gift wrap
@@ -91,10 +85,12 @@
 
     // If no gift wrap is selected, proceed with normal form submission
     if (!giftWrapChecked && !christmasGiftChecked) {
+      form.dataset.giftWrapCombined = 'false';
       removeHiddenInput(form, 'properties[_gift_wrap_instance_id]');
       removeHiddenInput(form, 'properties[Gift Wrap Instance]');
       return;
     }
+    form.dataset.giftWrapCombined = 'true';
 
     const shouldCreateWrapperInstance = (giftWrapChecked && giftWrapVariantId) || (christmasGiftChecked && christmasGiftVariantId);
     const wrapperInstanceId = shouldCreateWrapperInstance ? generateWrapperInstanceId() : '';
@@ -115,59 +111,6 @@
       addHiddenInput(form, 'properties[Christmas Add-On]', christmasLabel);
     }
 
-    // Queue gift-wrap add to run only after main product is successfully added.
-    pendingGiftWrapAdds.push({
-      productId: productId ? String(productId) : '',
-      createdAt: Date.now(),
-      mainVariantId: mainVariantId ? String(mainVariantId) : '',
-      regular: giftWrapChecked && giftWrapVariantId ? {
-        variantId: giftWrapVariantId,
-        wrapperInstanceId,
-      } : null,
-      christmas: christmasGiftChecked && christmasGiftVariantId ? {
-        variantId: christmasGiftVariantId,
-        wrapperInstanceId,
-      } : null,
-      giftMessage,
-      processing: false,
-    });
-  }
-
-  async function handleCartUpdate(event) {
-    const source = event?.detail?.data?.source;
-    if (source !== 'product-form-component') return;
-
-    const productId = String(event?.detail?.data?.productId || '');
-    const pending = pendingGiftWrapAdds.find((item) => !item.processing && item.productId === productId);
-    if (!pending) return;
-
-    pending.processing = true;
-    try {
-      const preferredWrapperInstanceId = pending.regular?.wrapperInstanceId || pending.christmas?.wrapperInstanceId || '';
-      if (preferredWrapperInstanceId) {
-        await ensureMainProductLinkedToWrapper(productId, preferredWrapperInstanceId, pending.mainVariantId);
-      }
-      if (pending.regular) {
-        await addGiftWrapToCart(pending.regular.variantId, productId, null, 'regular', {
-          wrapperInstanceId: pending.regular.wrapperInstanceId,
-          giftMessage: pending.giftMessage
-        });
-      }
-      if (pending.christmas) {
-        await addGiftWrapToCart(pending.christmas.variantId, productId, null, 'christmas', {
-          wrapperInstanceId: pending.christmas.wrapperInstanceId,
-          giftMessage: pending.giftMessage
-        });
-      }
-    } catch (error) {
-      console.error('Error adding pending gift wrap:', error);
-      showError('Failed to add gift wrap. Please try again.');
-    } finally {
-      const index = pendingGiftWrapAdds.indexOf(pending);
-      if (index > -1) {
-        pendingGiftWrapAdds.splice(index, 1);
-      }
-    }
   }
 
   function generateWrapperInstanceId() {
@@ -178,115 +121,6 @@
     return Array.from(document.querySelectorAll('cart-items-component[data-section-id]'))
       .map((element) => element.dataset.sectionId)
       .filter(Boolean);
-  }
-
-  async function ensureMainProductLinkedToWrapper(productId, wrapperInstanceId, mainVariantId = '') {
-    if (!productId || !wrapperInstanceId) return;
-    const cartResponse = await fetch('/cart.js', { headers: { Accept: 'application/json' } });
-    if (!cartResponse.ok) return;
-    const cart = await cartResponse.json();
-    if (!Array.isArray(cart?.items)) return;
-
-    const targetItem = cart.items.find((item) => {
-      if (!item || String(item.product_id) !== String(productId)) return false;
-      if (mainVariantId && String(item.variant_id) !== String(mainVariantId)) return false;
-      const properties = item.properties || {};
-      if (properties._gift_wrap_source === 'product_page') return false;
-      return !properties._gift_wrap_instance_id && !properties['Gift Wrap Instance'];
-    });
-    if (!targetItem) return;
-
-    const properties = { ...(targetItem.properties || {}) };
-    properties._gift_wrap_instance_id = wrapperInstanceId;
-    delete properties['Gift Wrap Instance'];
-
-    const sectionIds = getSectionIds();
-    const changeResponse = await fetch('/cart/change.js', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        id: targetItem.key,
-        quantity: targetItem.quantity,
-        properties,
-        sections: sectionIds.join(','),
-        sections_url: window.location.pathname
-      })
-    });
-    if (!changeResponse.ok) return;
-    const result = await changeResponse.json();
-    document.dispatchEvent(
-      new CustomEvent('cart:update', {
-        bubbles: true,
-        detail: {
-          sourceId: 'gift-wrap-handler',
-          data: {
-            source: 'gift-wrap-handler',
-            sections: result?.sections || {},
-          },
-        },
-      })
-    );
-  }
-
-  async function addGiftWrapToCart(variantId, productId, form, type, options) {
-    const wrapperInstanceId = options?.wrapperInstanceId;
-    const giftMessage = options?.giftMessage;
-    const properties = {
-      '_added_with_product': productId,
-      '_gift_wrap_source': 'product_page'
-    };
-    if (wrapperInstanceId) {
-      properties['_gift_wrap_instance_id'] = wrapperInstanceId;
-    }
-    if (giftMessage) {
-      properties['_gift_wrap_message'] = giftMessage;
-    }
-
-    const data = {
-      id: variantId,
-      quantity: 1,
-      properties: properties,
-      sections: getSectionIds().join(','),
-      sections_url: window.location.pathname
-    };
-
-    try {
-      const response = await fetch('/cart/add.js', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add gift wrap to cart');
-      }
-
-      const result = await response.json();
-      
-      // Dispatch cart update event
-      document.dispatchEvent(
-        new CustomEvent('cart:update', {
-          bubbles: true,
-          detail: {
-            sourceId: 'gift-wrap-handler',
-            data: {
-              source: 'gift-wrap-handler',
-              sections: result?.sections || {},
-            },
-          },
-        })
-      );
-      
-      return result;
-    } catch (error) {
-      console.error(`Error adding ${type} gift wrap:`, error);
-      throw error;
-    }
   }
 
   function addHiddenInput(form, name, value) {

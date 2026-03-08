@@ -666,13 +666,103 @@ class ProductFormComponent extends Component {
       formData.append('sections', cartItemComponentsSectionIds.join(','));
     });
 
-    const fetchCfg = fetchConfig('javascript', { body: formData });
+    const formId = form.getAttribute('id') || '';
+    const getAssociatedField = (selector) => {
+      const inForm = form.querySelector(selector);
+      if (inForm) return inForm;
+      if (!formId) return null;
+      return document.querySelector(`${selector}[form="${formId}"]`);
+    };
+
+    const giftWrapMessageInput = /** @type {HTMLInputElement | null} */ (getAssociatedField('[data-gift-message-input]'));
+    const giftWrapMessage = giftWrapMessageInput?.value?.trim() || '';
+    const giftWrapInstanceId = (formData.get('properties[_gift_wrap_instance_id]') || '').toString().trim();
+    const giftWrapCheckbox = /** @type {HTMLInputElement | null} */ (getAssociatedField('.chk_add_gift'));
+    const christmasGiftCheckbox = /** @type {HTMLInputElement | null} */ (getAssociatedField('.christmas-chk_add_gift'));
+    let fallbackGiftWrapInstanceId = giftWrapInstanceId;
+
+    const getGiftWrapInstanceId = () => {
+      if (fallbackGiftWrapInstanceId) return fallbackGiftWrapInstanceId;
+      fallbackGiftWrapInstanceId = `gw_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      return fallbackGiftWrapInstanceId;
+    };
+
+    /** @type {Array<{id: string, quantity: number, properties: Record<string, string>}>} */
+    const giftWrapItems = [];
+    if (this.dataset.productId) {
+      if (giftWrapCheckbox?.checked && giftWrapCheckbox.value) {
+        const resolvedGiftWrapInstanceId = getGiftWrapInstanceId();
+        const properties = {
+          _added_with_product: this.dataset.productId,
+          _gift_wrap_source: 'product_page',
+        };
+        if (resolvedGiftWrapInstanceId) properties._gift_wrap_instance_id = resolvedGiftWrapInstanceId;
+        if (giftWrapMessage) properties._gift_wrap_message = giftWrapMessage;
+        giftWrapItems.push({
+          id: giftWrapCheckbox.value,
+          quantity: 1,
+          properties,
+        });
+      }
+
+      if (christmasGiftCheckbox?.checked && christmasGiftCheckbox.value) {
+        const resolvedGiftWrapInstanceId = getGiftWrapInstanceId();
+        const properties = {
+          _added_with_product: this.dataset.productId,
+          _gift_wrap_source: 'product_page',
+        };
+        if (resolvedGiftWrapInstanceId) properties._gift_wrap_instance_id = resolvedGiftWrapInstanceId;
+        if (giftWrapMessage) properties._gift_wrap_message = giftWrapMessage;
+        giftWrapItems.push({
+          id: christmasGiftCheckbox.value,
+          quantity: 1,
+          properties,
+        });
+      }
+    }
+
+    const mainVariantId = (formData.get('id') || '').toString();
+    const mainQuantity = Number(formData.get('quantity')) || Number(this.dataset.quantityDefault);
+
+    let requestConfig;
+    if (giftWrapItems.length > 0 && mainVariantId) {
+      /** @type {Record<string, string>} */
+      const mainProperties = {};
+      for (const [key, value] of formData.entries()) {
+        if (!key.startsWith('properties[') || !key.endsWith(']')) continue;
+        const propertyName = key.slice('properties['.length, -1);
+        if (typeof value === 'string' && value.trim() !== '') {
+          mainProperties[propertyName] = value.trim();
+        }
+      }
+      if (fallbackGiftWrapInstanceId) {
+        mainProperties._gift_wrap_instance_id = fallbackGiftWrapInstanceId;
+      }
+
+      const sections = cartItemComponentsSectionIds.join(',');
+      const requestBody = JSON.stringify({
+        items: [
+          {
+            id: mainVariantId,
+            quantity: mainQuantity,
+            properties: mainProperties,
+          },
+          ...giftWrapItems,
+        ],
+        sections,
+        sections_url: window.location.pathname,
+      });
+
+      requestConfig = fetchConfig('json', { body: requestBody });
+    } else {
+      requestConfig = fetchConfig('javascript', { body: formData });
+    }
 
     fetch(Theme.routes.cart_add_url, {
-      ...fetchCfg,
+      ...requestConfig,
       headers: {
-        ...fetchCfg.headers,
-        Accept: 'text/html',
+        ...requestConfig.headers,
+        Accept: 'application/json',
       },
     })
       .then((response) => response.json())
@@ -718,7 +808,7 @@ class ProductFormComponent extends Component {
 
           return;
         } else {
-          const id = formData.get('id');
+          const id = mainVariantId || formData.get('id');
 
           if (addToCartTextError) {
             addToCartTextError.classList.add('hidden');
