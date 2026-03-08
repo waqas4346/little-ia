@@ -833,6 +833,44 @@
     }
   }
 
+  async function removeOrphanedAssignedGiftMessages(cartData = null) {
+    const resolvedCartData = Array.isArray(cartData?.items) ? cartData : await getLiveCartData({ force: true });
+    if (!resolvedCartData || !Array.isArray(resolvedCartData.items)) return resolvedCartData;
+
+    const wrapperIdsInCart = new Set(
+      resolvedCartData.items
+        .filter((item) => Number(item?.product_id || 0) === configuredGiftWrapProductIdNumber)
+        .map((item) => getWrapperInstanceIdFromItem(item))
+        .filter(Boolean)
+    );
+
+    const orphanAssignedItems = resolvedCartData.items.filter((item) => {
+      if (!item) return false;
+      if (Number(item.product_id || 0) === configuredGiftWrapProductIdNumber) return false;
+      const wrapperId = getWrapperInstanceIdFromItem(item);
+      if (!wrapperId) return false;
+      if (wrapperIdsInCart.has(wrapperId)) return false;
+      const message = String(item.properties?.['Gift Message'] || '').trim();
+      return message.length > 0;
+    });
+
+    if (!orphanAssignedItems.length) return resolvedCartData;
+
+    for (let index = 0; index < orphanAssignedItems.length; index += 1) {
+      const orphanItem = orphanAssignedItems[index];
+      const properties = normalizeProperties(orphanItem.properties || {});
+      delete properties['Gift Message'];
+      await updateCartLine({
+        key: orphanItem.key,
+        quantity: orphanItem.quantity,
+        properties,
+        includeSections: index === orphanAssignedItems.length - 1,
+      });
+    }
+
+    return getLiveCartData({ force: true });
+  }
+
   async function syncAllGiftWrapDisplayPropertiesFromCart(cartData = null) {
     const resolvedCartData = Array.isArray(cartData?.items) ? cartData : await getLiveCartData({ force: true });
     if (!resolvedCartData || !Array.isArray(resolvedCartData.items)) return;
@@ -1517,7 +1555,10 @@
     if (eventSource === 'cart-items-component') {
       const eventCartData = event?.detail?.resource;
       window.setTimeout(() => {
-        syncAllGiftWrapDisplayPropertiesFromCart(eventCartData).catch((error) => {
+        (async () => {
+          const cleanedCartData = await removeOrphanedAssignedGiftMessages(eventCartData);
+          await syncAllGiftWrapDisplayPropertiesFromCart(cleanedCartData);
+        })().catch((error) => {
           console.error('Failed to sync gift wrap summaries from cart', error);
         });
       }, 120);
