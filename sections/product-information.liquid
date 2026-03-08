@@ -621,6 +621,15 @@
             }
           }
           
+          // Find optional personalization note (only present on product page buy buttons)
+          let noteContainer = button.parentElement?.querySelector('[data-personalise-note]');
+          if (!noteContainer) {
+            const formButtons = button.closest('.product-form-buttons');
+            if (formButtons) {
+              noteContainer = formButtons.querySelector('[data-personalise-note]');
+            }
+          }
+          
           if (textSpan) {
             // Use button-specific personalisation if button is in quick-add modal, otherwise use global personalisation
             const buttonHasPersonalisation = Object.keys(buttonPersonalisation).length > 0;
@@ -754,6 +763,10 @@
                   console.log('Confirmation container not found for button');
                 }
                 
+                if (noteContainer) {
+                  noteContainer.style.display = '';
+                }
+                
                 console.log('Updated button to show summary and EDIT');
               } catch (e) {
                 console.error('Error parsing personalisation:', e);
@@ -766,6 +779,9 @@
                 if (confirmationContainer) {
                   confirmationContainer.style.display = 'none';
                 }
+                if (noteContainer) {
+                  noteContainer.style.display = 'none';
+                }
               }
             } else {
               // Hide summary and show PERSONALISE IT
@@ -776,6 +792,9 @@
               textSpan.textContent = 'PERSONALISE IT';
               if (confirmationContainer) {
                 confirmationContainer.style.display = 'none';
+              }
+              if (noteContainer) {
+                noteContainer.style.display = 'none';
               }
               console.log('Updated button to PERSONALISE IT');
             }

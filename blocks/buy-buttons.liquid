@@ -104,6 +104,12 @@
             <span class="personalise-button__text" data-personalise-text>PERSONALISE IT</span>
             </div>
           </button>
+
+          {% if product.metafields.custom.cb_personalisation_note.value %}
+            <p class="personalise-note" data-personalise-note style="display: none;">
+              Note: Personalisation applies to eligible products only
+            </p>
+          {% endif %}
           
           {%- comment -%} Personalisation Confirmation Checkbox {%- endcomment -%}
           <div class="personalise-confirmation" data-personalise-confirmation style="display: none;">
@@ -569,6 +575,15 @@
             }
           }
           
+          // Find optional personalization note container
+          let noteContainer = button.parentElement?.querySelector('[data-personalise-note]');
+          if (!noteContainer) {
+            const formButtons = button.closest('.product-form-buttons');
+            if (formButtons) {
+              noteContainer = formButtons.querySelector('[data-personalise-note]');
+            }
+          }
+          
           // Find the product ID for THIS specific button
           let buttonProductId = productId;
           if (!buttonProductId) {
@@ -956,6 +971,10 @@
                   }
                 }
               }
+
+              if (noteContainer) {
+                noteContainer.style.display = '';
+              }
             } else {
               // No personalisation found, show default button
               if (summarySpan) {
@@ -969,6 +988,9 @@
                 if (window.updateAddToCartButtonState) {
                   setTimeout(window.updateAddToCartButtonState, 50);
                 }
+              }
+              if (noteContainer) {
+                noteContainer.style.display = 'none';
               }
             }
           }
@@ -1740,6 +1762,14 @@
     font-weight: 400;
     font-size: 14px;
     line-height: 140%;
+    color: #1D425A;
+  }
+
+  .personalise-note {
+    margin: 0 !important;
+    margin-top: var(--margin-xs);
+    font-size: var(--font-size--xs);
+    line-height: 1.4;
     color: #1D425A;
   }
 
