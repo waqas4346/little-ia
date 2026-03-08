@@ -72,10 +72,42 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     // Open the dialog first for immediate visual feedback
     this.showDialog();
     
+    // Build merged personalization field metadata (used for metafield-driven color options)
+    const mergedCollectedFields = [];
+    const mergedColorOptionsMap = new Map();
+    products.forEach((product) => {
+      const fields = Array.isArray(product?.personalization_fields) ? product.personalization_fields : [];
+      fields.forEach((field) => {
+        if (field?.field_type === 'text_color' && Array.isArray(field.options)) {
+          field.options.forEach((option) => {
+            const value = option?.value ? String(option.value).trim() : '';
+            if (!value) return;
+            if (!mergedColorOptionsMap.has(value.toLowerCase())) {
+              mergedColorOptionsMap.set(value.toLowerCase(), {
+                value,
+                label: option?.label || value,
+                display: option?.display || value.toLowerCase()
+              });
+            }
+          });
+        }
+      });
+    });
+    if (mergedColorOptionsMap.size > 0) {
+      mergedCollectedFields.push({
+        field_type: 'text_color',
+        name: 'personalise-color',
+        type: 'radio',
+        options: Array.from(mergedColorOptionsMap.values()),
+        required: true,
+        label: 'Text Colour'
+      });
+    }
+
     // Generate form fields based on union tags
     requestAnimationFrame(() => {
       if (this.unionTags && this.unionTags.length > 0) {
-        this.generateFormFieldsFromTags(this.unionTags, []);
+        this.generateFormFieldsFromTags(this.unionTags, mergedCollectedFields);
       } else {
         this.refs.formContainer.innerHTML = '<p>No personalization options available for these products.</p>';
       }
@@ -297,9 +329,25 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     }
     
     // Color selection
-    if (personalized_textcolour) {
-      const colorOptions = [];
-      tags.forEach(tag => {
+    const collectedColorField = Array.isArray(collectedFields)
+      ? collectedFields.find((field) => field?.field_type === 'text_color' && Array.isArray(field.options) && field.options.length > 0)
+      : null;
+
+    let colorOptions = [];
+    if (collectedColorField && Array.isArray(collectedColorField.options)) {
+      colorOptions = collectedColorField.options
+        .map((option) => {
+          const value = option?.value ? String(option.value).trim() : '';
+          if (!value) return null;
+          return {
+            value,
+            label: option?.label || value,
+            display: option?.display || value.toLowerCase()
+          };
+        })
+        .filter(Boolean);
+    } else if (personalized_textcolour) {
+      tags.forEach((tag) => {
         if (tag.toLowerCase().includes('color_')) {
           const colorParts = tag.split('_');
           if (colorParts.length > 1) {
@@ -312,8 +360,9 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
           }
         }
       });
-      
-      if (colorOptions.length > 0) {
+    }
+
+    if (colorOptions.length > 0) {
         const colorHTML = colorOptions.map((option, idx) => {
           const checked = this.personalisationData['personalise-color'] === option.value ? 'checked' : '';
           return `
@@ -349,7 +398,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
             </div>
           </div>
         `;
-      }
     }
     
     // Font selection
@@ -1151,7 +1199,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
                 isRelevant = true;
               }
               // Color field
-              else if (key === 'personalise-color' && tagsLowercase.some(t => t.includes('personalized_textcolor'))) {
+              else if (key === 'personalise-color' && (tagsLowercase.some(t => t.includes('personalized_textcolor')) || ((product.personalization_fields || []).some(field => field?.field_type === 'text_color')))) {
                 isRelevant = true;
               }
               // Font field
