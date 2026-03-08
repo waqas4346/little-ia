@@ -55,51 +55,64 @@
           </span>
         </legend>
         
-        {% comment %} Show all products from the group {% endcomment %}
+        {% comment %} Show all products from the group (dedupe by product id) {% endcomment %}
+        {% assign seen_product_ids = ',' %}
         {% for product_option in group_products %}
           {% liquid
             assign option_product = product_option.product.value
-            assign is_current_product = false
-            if option_product.id == product.id
-              assign is_current_product = true
-            endif
-            
-            # Get product image
-            assign product_image = option_product.selected_or_first_available_variant.featured_media
-            if product_image == blank
-              assign product_image = option_product.featured_media
-            endif
-            if product_image != blank
-              assign thumbnail_image = product_image.preview_image | default: product_image
-            endif
+            assign product_id = option_product.id | default: blank
+            assign product_token = ',' | append: product_id | append: ','
           %}
-          
-          <label
-            class="variant-option__button-label variant-option__button-label--has-swatch variant-option__button-label--image-thumbnail{% if is_current_product %} variant-option__button-label--current-product{% endif %}"
-            data-product-id="{{ option_product.id }}"
-            {% if is_current_product %}data-current-product="true"{% endif %}
-          >
-            <a
-              href="{{ option_product.url }}"
-              style="display: block; width: 100%; height: 100%; text-decoration: none;"
+          {% if option_product != blank and option_product.url != blank and product_id != blank %}
+            {% unless seen_product_ids contains product_token %}
+              {% assign seen_product_ids = seen_product_ids | append: product_id | append: ',' %}
+            {% liquid
+              assign is_current_product = false
+              if option_product.id == product.id
+                assign is_current_product = true
+              endif
+
+              # Reset to avoid leaking image from previous loop item
+              assign thumbnail_image = blank
+
+              # Get product image
+              assign product_image = option_product.selected_or_first_available_variant.featured_media
+              if product_image == blank
+                assign product_image = option_product.featured_media
+              endif
+              if product_image != blank
+                assign thumbnail_image = product_image.preview_image | default: product_image
+              endif
+            %}
+            
+            <label
+              class="variant-option__button-label variant-option__button-label--has-swatch variant-option__button-label--image-thumbnail{% if is_current_product %} variant-option__button-label--current-product{% endif %}"
+              data-product-id="{{ option_product.id }}"
+              {% if is_current_product %}data-current-product="true"{% endif %}
             >
-              {% if thumbnail_image %}
-                <div class="variant-option__image-thumbnail">
-                  {{
-                    thumbnail_image
-                    | image_url: width: 160
-                    | image_tag:
-                      loading: 'lazy',
-                      alt: option_product.title | default: 'Product image',
-                      class: 'variant-option__thumbnail-img',
-                      widths: '80, 160'
-                  }}
-                </div>
-              {% else %}
-                <div class="variant-option__thumbnail-placeholder"></div>
-              {% endif %}
-            </a>
-          </label>
+              <a
+                href="{{ option_product.url }}"
+                style="display: block; width: 100%; height: 100%; text-decoration: none;"
+              >
+                {% if thumbnail_image %}
+                  <div class="variant-option__image-thumbnail">
+                    {{
+                      thumbnail_image
+                      | image_url: width: 160
+                      | image_tag:
+                        loading: 'lazy',
+                        alt: option_product.title | default: 'Product image',
+                        class: 'variant-option__thumbnail-img',
+                        widths: '80, 160'
+                    }}
+                  </div>
+                {% else %}
+                  <div class="variant-option__thumbnail-placeholder"></div>
+                {% endif %}
+              </a>
+            </label>
+            {% endunless %}
+          {% endif %}
         {% endfor %}
       </fieldset>
     {% endif %}
