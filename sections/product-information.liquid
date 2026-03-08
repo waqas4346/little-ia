@@ -32,10 +32,13 @@
     
     # Check if product has personalization enabled
     assign show_personalise_button = false
-    assign product_tags_lowercase = product.tags | join: ' ' | downcase
-    if product_tags_lowercase contains 'cust_personalized'
-      assign show_personalise_button = true
-    endif
+    for product_tag in product.tags
+      assign product_tag_lowercase = product_tag | downcase | strip
+      if product_tag_lowercase == 'cust_personalized' or product_tag_lowercase == 'personalized'
+        assign show_personalise_button = true
+        break
+      endif
+    endfor
   %}
 
   <sticky-add-to-cart
@@ -457,7 +460,7 @@
             personalisation.font = fontInput.value.trim();
           }
           
-          const textboxInput = form.querySelector('textarea[name="properties[Personalisation:]"]');
+          const textboxInput = form.querySelector('[name="properties[Personalisation:]"]');
           if (textboxInput && textboxInput.value.trim()) {
             personalisation.textbox = textboxInput.value.trim();
           }
@@ -573,7 +576,7 @@
                 buttonPersonalisation.schoolYear = schoolYearInput.value.trim();
               }
               
-              const textboxInput = qForm.querySelector('textarea[name="properties[Personalisation:]"]');
+              const textboxInput = qForm.querySelector('[name="properties[Personalisation:]"]');
               if (textboxInput && textboxInput.value.trim()) {
                 buttonPersonalisation.textbox = textboxInput.value.trim();
               }
@@ -665,6 +668,9 @@
                 }
                 if (personalisationToUse.schoolYear) {
                   parts.push(personalisationToUse.schoolYear);
+                }
+                if (personalisationToUse.textbox && typeof personalisationToUse.textbox === 'string' && personalisationToUse.textbox.trim()) {
+                  parts.push(personalisationToUse.textbox.trim());
                 }
                 // Add baby/kid/mum names
                 if (personalisationToUse.babyName && typeof personalisationToUse.babyName === 'string' && personalisationToUse.babyName.trim()) {

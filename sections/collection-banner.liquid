@@ -5,11 +5,16 @@
     assign collection_object = collections.all
   endif
 
+  assign banner_image = collection_object.metafields.custom.cb_collection_banner_image.value
+  if banner_image == blank
+    assign banner_image = collection_object.featured_image
+  endif
+
   assign banner_text_color = collection_object.metafields.custom.cb_banner_tex_color.value | default: blank
   assign banner_overlay_color = collection_object.metafields.custom.cb_banner_overlay_color.value | default: blank
 %}
 
-<div class="section section--{{ section.settings.section_width }} collection-banner{% if collection_object.featured_image %} collection-banner--has-image{% endif %}"
+<div class="section section--{{ section.settings.section_width }} collection-banner{% if banner_image %} collection-banner--has-image{% endif %}"
   data-testid="collection-banner"
   {% if banner_text_color != blank or banner_overlay_color != blank %}
     style="
@@ -21,7 +26,7 @@
     "
   {% endif %}
 >
-  {% if collection_object.featured_image %}
+  {% if banner_image %}
     <div class="collection-banner__background">
       {% liquid
         assign media_width_desktop = '100vw'
@@ -30,7 +35,7 @@
         assign widths = '832, 1200, 1600, 1920, 2560, 3840'
       %}
       {{
-        collection_object.featured_image
+        banner_image
         | image_url: width: 3840
         | image_tag:
           loading: 'eager',
