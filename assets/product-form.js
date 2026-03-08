@@ -741,9 +741,6 @@ class ProductFormComponent extends Component {
             }, SUCCESS_MESSAGE_DISPLAY_DURATION);
           }
 
-          // Fetch the updated cart to get the actual total quantity for this variant
-          await this.#fetchAndUpdateCartQuantity();
-
           this.dispatchEvent(
             new CartAddEvent({}, id.toString(), {
               source: 'product-form-component',
@@ -752,6 +749,12 @@ class ProductFormComponent extends Component {
               sections: response.sections,
             })
           );
+
+          // Keep cart drawer opening fast by syncing quantity in the background.
+          // This prevents an extra /cart.js network roundtrip from blocking the drawer open event.
+          this.#fetchAndUpdateCartQuantity().catch((error) => {
+            console.error('Failed to sync cart quantity after add:', error);
+          });
         }
       })
       .catch((error) => {

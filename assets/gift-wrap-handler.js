@@ -44,16 +44,8 @@
     const toggle = () => {
       const hasGiftWrapSelected = !!(giftWrapCheckbox?.checked || christmasGiftCheckbox?.checked);
       giftMessageSection.classList.toggle('gift-message-section--hidden', !hasGiftWrapSelected);
-      const hasMessage = !!giftMessageInput?.value?.trim();
-      const disableAddToCart = hasGiftWrapSelected && !hasMessage;
-
       submitButtons.forEach((button) => {
         if (!(button instanceof HTMLButtonElement || button instanceof HTMLInputElement)) return;
-        if (disableAddToCart) {
-          button.disabled = true;
-          button.dataset.giftWrapMessageDisabled = 'true';
-          return;
-        }
         if (button.dataset.giftWrapMessageDisabled === 'true') {
           button.disabled = false;
           delete button.dataset.giftWrapMessageDisabled;
@@ -101,13 +93,6 @@
     if (!giftWrapChecked && !christmasGiftChecked) {
       removeHiddenInput(form, 'properties[_gift_wrap_instance_id]');
       removeHiddenInput(form, 'properties[Gift Wrap Instance]');
-      return;
-    }
-
-    if (!giftMessage) {
-      event.preventDefault();
-      showError('Please enter a gift message before adding gift wrap.');
-      giftMessageInput?.focus();
       return;
     }
 
