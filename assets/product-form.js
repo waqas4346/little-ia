@@ -679,6 +679,7 @@ class ProductFormComponent extends Component {
     const giftWrapInstanceId = (formData.get('properties[_gift_wrap_instance_id]') || '').toString().trim();
     const giftWrapCheckbox = /** @type {HTMLInputElement | null} */ (getAssociatedField('.chk_add_gift'));
     const christmasGiftCheckbox = /** @type {HTMLInputElement | null} */ (getAssociatedField('.christmas-chk_add_gift'));
+    const hasGiftWrapSelected = !!(giftWrapCheckbox?.checked || christmasGiftCheckbox?.checked);
     let fallbackGiftWrapInstanceId = giftWrapInstanceId;
 
     const getGiftWrapInstanceId = () => {
@@ -735,6 +736,9 @@ class ProductFormComponent extends Component {
           mainProperties[propertyName] = value.trim();
         }
       }
+      if (hasGiftWrapSelected && giftWrapMessage) {
+        mainProperties['Gift Message'] = giftWrapMessage;
+      }
       if (fallbackGiftWrapInstanceId) {
         mainProperties._gift_wrap_instance_id = fallbackGiftWrapInstanceId;
       }
@@ -755,6 +759,9 @@ class ProductFormComponent extends Component {
 
       requestConfig = fetchConfig('json', { body: requestBody });
     } else {
+      if (hasGiftWrapSelected && giftWrapMessage) {
+        formData.set('properties[Gift Message]', giftWrapMessage);
+      }
       requestConfig = fetchConfig('javascript', { body: formData });
     }
 

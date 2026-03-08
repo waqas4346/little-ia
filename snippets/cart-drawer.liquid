@@ -795,6 +795,44 @@
     });
   }
 
+  async function syncAssignedProductsGiftMessage({
+    wrapperId,
+    giftMessage = '',
+    cartData = null,
+    includeSections = true,
+  }) {
+    if (!wrapperId) return;
+    const resolvedCartData = cartData || (await getLiveCartData());
+    if (!resolvedCartData || !Array.isArray(resolvedCartData.items)) return;
+
+    const normalizedMessage = String(giftMessage).trim();
+    const assignedItems = resolvedCartData.items.filter((item) => {
+      if (!item) return false;
+      if (Number(item.product_id || 0) === configuredGiftWrapProductIdNumber) return false;
+      return getWrapperInstanceIdFromItem(item) === wrapperId;
+    });
+    if (!assignedItems.length) return;
+
+    for (let index = 0; index < assignedItems.length; index += 1) {
+      const assignedItem = assignedItems[index];
+      const properties = normalizeProperties(assignedItem.properties || {});
+      properties._gift_wrap_instance_id = getWrapperInstanceIdFromItem(assignedItem) || wrapperId;
+      delete properties['Gift Wrap Instance'];
+      if (normalizedMessage) {
+        properties['Gift Message'] = normalizedMessage;
+      } else {
+        delete properties['Gift Message'];
+      }
+
+      await updateCartLine({
+        key: assignedItem.key,
+        quantity: assignedItem.quantity,
+        properties,
+        includeSections: includeSections && index === assignedItems.length - 1,
+      });
+    }
+  }
+
   async function syncAllGiftWrapDisplayPropertiesFromCart(cartData = null) {
     const resolvedCartData = Array.isArray(cartData?.items) ? cartData : await getLiveCartData({ force: true });
     if (!resolvedCartData || !Array.isArray(resolvedCartData.items)) return;
@@ -963,6 +1001,10 @@
       giftWrapLineKey: context.key,
       giftMessage: trimmed,
     });
+    await syncAssignedProductsGiftMessage({
+      wrapperId: context.wrapperId,
+      giftMessage: trimmed,
+    });
     closeGiftMessageModal();
   }
 
@@ -1087,10 +1129,24 @@
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
     const liveCartData = await getLiveCartData();
     const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
+    const wrapperGiftLine = (liveCartData?.items || []).find((item) => {
+      if (!item) return false;
+      if (wrapperCartKey && item.key === wrapperCartKey) return true;
+      if (Number(item.product_id || 0) !== configuredGiftWrapProductIdNumber) return false;
+      return getWrapperInstanceIdFromItem(item) === wrapperId;
+    });
+    const wrapperGiftMessage = String(
+      wrapperGiftLine?.properties?._gift_wrap_message || wrapperGiftLine?.properties?.['Gift Message'] || ''
+    ).trim();
     // Always prefer live line properties to avoid dropping hidden personalization fields.
     let properties = { ...(liveProperties || fallbackProperties) };
     properties._gift_wrap_instance_id = wrapperId;
     delete properties['Gift Wrap Instance'];
+    if (wrapperGiftMessage) {
+      properties['Gift Message'] = wrapperGiftMessage;
+    } else {
+      delete properties['Gift Message'];
+    }
 
     const updateResult = await updateCartLine({
       line,
@@ -1101,6 +1157,13 @@
     });
     await syncGiftWrapDisplayProperties({ wrapperId, giftWrapLineKey: wrapperCartKey, cartData: updateResult }).catch((error) => {
       console.error('Failed to sync gift wrap display properties after assign', error);
+    });
+    await syncAssignedProductsGiftMessage({
+      wrapperId,
+      giftMessage: wrapperGiftMessage,
+      cartData: updateResult,
+    }).catch((error) => {
+      console.error('Failed to sync assigned product gift messages after assign', error);
     });
   }
 
