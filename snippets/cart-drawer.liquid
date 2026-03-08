@@ -660,6 +660,29 @@
     }
   }
 
+  async function getLiveLineItem({ key, line, cartData = null }) {
+    try {
+      const resolvedCartData = cartData || (await getLiveCartData());
+      if (!Array.isArray(resolvedCartData?.items)) return null;
+
+      let item = null;
+      if (key) {
+        item = resolvedCartData.items.find((cartItem) => cartItem.key === key) || null;
+      }
+      if (!item && line) {
+        const index = Number(line) - 1;
+        if (index >= 0 && index < resolvedCartData.items.length) {
+          item = resolvedCartData.items[index];
+        }
+      }
+
+      return item || null;
+    } catch (error) {
+      console.error('Failed to read live cart line item', error);
+      return null;
+    }
+  }
+
   async function getLiveCartData({ force = false } = {}) {
     const now = Date.now();
     const isFresh = now - liveCartCache.fetchedAt < 400;
@@ -1187,6 +1210,7 @@
 
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
     const liveCartData = await getLiveCartData();
+    const liveLineItem = await getLiveLineItem({ key, line, cartData: liveCartData });
     const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
     const wrapperGiftLine = (liveCartData?.items || []).find((item) => {
       if (!item) return false;
@@ -1206,14 +1230,66 @@
     } else {
       delete properties['Gift Message'];
     }
+    const liveQuantity = Number(liveLineItem?.quantity || quantity || 0);
+    const liveVariantId = Number(liveLineItem?.variant_id || 0);
+    const sourceLineKey = liveLineItem?.key || key || '';
+    let updateResult = null;
 
-    const updateResult = await updateCartLine({
-      line,
-      key,
-      quantity,
-      properties,
-      includeSections: true,
-    });
+    // Support per-unit assignment: for multi-qty lines, split one unit into the selected wrapper.
+    if (liveQuantity > 1 && liveVariantId > 0 && sourceLineKey) {
+      const unassignedProperties = normalizeProperties(liveLineItem?.properties || liveProperties || fallbackProperties || {});
+
+      // Keep remaining quantity on the original line without assignment metadata.
+      await updateCartLine({
+        line,
+        key: sourceLineKey,
+        quantity: liveQuantity - 1,
+        properties: unassignedProperties,
+        includeSections: false,
+      });
+
+      const assignedItem = {
+        id: liveVariantId,
+        quantity: 1,
+        properties,
+      };
+
+      const sellingPlanId = Number(liveLineItem?.selling_plan_allocation?.selling_plan?.id || 0);
+      if (sellingPlanId > 0) {
+        assignedItem.selling_plan = sellingPlanId;
+      }
+
+      const sectionIds = getSectionIds();
+      const addResponse = await fetch('/cart/add.js', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: [assignedItem],
+          sections: sectionIds.join(','),
+          sections_url: window.location.pathname,
+        }),
+      });
+
+      if (!addResponse.ok) {
+        throw new Error('Failed to split and assign cart line');
+      }
+
+      const addResponseData = await addResponse.json();
+      clearLiveCartCache();
+      const latestCartData = await getLiveCartData({ force: true });
+      triggerCartUpdate(addResponseData?.sections, latestCartData);
+      updateResult = latestCartData;
+    } else {
+      updateResult = await updateCartLine({
+        line,
+        key,
+        quantity,
+        properties,
+        includeSections: true,
+      });
+    }
     await syncGiftWrapDisplayProperties({ wrapperId, giftWrapLineKey: wrapperCartKey, cartData: updateResult }).catch((error) => {
       console.error('Failed to sync gift wrap display properties after assign', error);
     });
