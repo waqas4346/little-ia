@@ -78,7 +78,7 @@
     "show_accelerated_checkout_buttons": false,
     "drawer_color_scheme": "scheme-e61ffaea-b125-47f9-97f4-7f39823bb857",
     "drawer_border": "solid",
-    "drawer_drop_shadow": true,
+    "drawer_drop_shadow": false,
     "icon_stroke": "default",
     "input_border_width": 1,
     "inputs_border_radius": 0,
