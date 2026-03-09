@@ -9,6 +9,14 @@ import { Component } from '@theme/component';
  */
 export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
   requiredRefs = ['dialog', 'saveButton', 'closeButton', 'cancelButton', 'formContainer'];
+  static FONT_OPTIONS = [
+    { value: 'Ballantines', label: 'Ballantines', display: 'Ballantines' },
+    { value: 'Cormorant Garamond', label: 'Cormorant Garamond', display: 'Cormorant Garamond' },
+    { value: 'Jester', label: 'Jester', display: 'Jester' },
+    { value: 'Arial Rounded Bold', label: 'Arial Rounded Bold', display: 'Arial Rounded Bold' },
+    { value: 'Poppins', label: 'Poppins', display: 'Poppins' },
+    { value: 'Rochester', label: 'Rochester', display: 'Rochester' }
+  ];
 
   connectedCallback() {
     super.connectedCallback();
@@ -72,10 +80,56 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     // Open the dialog first for immediate visual feedback
     this.showDialog();
     
+    // Build merged personalization field metadata (used for metafield-driven color/font options)
+    const mergedCollectedFields = [];
+    const mergedColorOptionsMap = new Map();
+    let hasAnyFontField = false;
+    products.forEach((product) => {
+      const fields = Array.isArray(product?.personalization_fields) ? product.personalization_fields : [];
+      fields.forEach((field) => {
+        if (field?.field_type === 'text_color' && Array.isArray(field.options)) {
+          field.options.forEach((option) => {
+            const value = option?.value ? String(option.value).trim() : '';
+            if (!value) return;
+            if (!mergedColorOptionsMap.has(value.toLowerCase())) {
+              mergedColorOptionsMap.set(value.toLowerCase(), {
+                value,
+                label: option?.label || value,
+                display: option?.display || value.toLowerCase()
+              });
+            }
+          });
+        }
+        if (field?.field_type === 'font') {
+          hasAnyFontField = true;
+        }
+      });
+    });
+    if (mergedColorOptionsMap.size > 0) {
+      mergedCollectedFields.push({
+        field_type: 'text_color',
+        name: 'personalise-color',
+        type: 'radio',
+        options: Array.from(mergedColorOptionsMap.values()),
+        required: true,
+        label: 'Text Colour'
+      });
+    }
+    if (hasAnyFontField) {
+      mergedCollectedFields.push({
+        field_type: 'font',
+        name: 'personalise-font',
+        type: 'select',
+        options: BuildYourSetPersonaliseDialogComponent.FONT_OPTIONS,
+        required: true,
+        label: 'Choose Your Font'
+      });
+    }
+
     // Generate form fields based on union tags
     requestAnimationFrame(() => {
       if (this.unionTags && this.unionTags.length > 0) {
-        this.generateFormFieldsFromTags(this.unionTags, []);
+        this.generateFormFieldsFromTags(this.unionTags, mergedCollectedFields);
       } else {
         this.refs.formContainer.innerHTML = '<p>No personalization options available for these products.</p>';
       }
@@ -197,7 +251,10 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     else if (tagsLowercase.includes('personalise_7')) dynamic_max = 7;
     else if (tagsLowercase.includes('personalise_9')) dynamic_max = 9;
     
-    const font_family_feild = tagsLowercase.some(t => t.includes('font_'));
+    const collectedFontField = Array.isArray(collectedFields)
+      ? collectedFields.find((field) => field?.field_type === 'font' && Array.isArray(field.options) && field.options.length > 0)
+      : null;
+    const font_family_feild = !!collectedFontField;
     const has_school_year = hasTag('school_year');
     const has_name1 = hasTag('name1');
     const has_name2 = hasTag('name2');
@@ -297,9 +354,25 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     }
     
     // Color selection
-    if (personalized_textcolour) {
-      const colorOptions = [];
-      tags.forEach(tag => {
+    const collectedColorField = Array.isArray(collectedFields)
+      ? collectedFields.find((field) => field?.field_type === 'text_color' && Array.isArray(field.options) && field.options.length > 0)
+      : null;
+
+    let colorOptions = [];
+    if (collectedColorField && Array.isArray(collectedColorField.options)) {
+      colorOptions = collectedColorField.options
+        .map((option) => {
+          const value = option?.value ? String(option.value).trim() : '';
+          if (!value) return null;
+          return {
+            value,
+            label: option?.label || value,
+            display: option?.display || value.toLowerCase()
+          };
+        })
+        .filter(Boolean);
+    } else if (personalized_textcolour) {
+      tags.forEach((tag) => {
         if (tag.toLowerCase().includes('color_')) {
           const colorParts = tag.split('_');
           if (colorParts.length > 1) {
@@ -312,8 +385,9 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
           }
         }
       });
-      
-      if (colorOptions.length > 0) {
+    }
+
+    if (colorOptions.length > 0) {
         const colorHTML = colorOptions.map((option, idx) => {
           const checked = this.personalisationData['personalise-color'] === option.value ? 'checked' : '';
           return `
@@ -349,44 +423,11 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
             </div>
           </div>
         `;
-      }
     }
     
-    // Font selection
+    // Font selection (metafield-driven via collected personalization_fields)
     if (font_family_feild) {
-      const fontOptions = [];
-      const fontTagMap = {
-        'font_rockwell-condensed': 'Rockwell Condensed',
-        'font_ariel': 'Ariel round',
-        'font_monotype-corsiva': 'Monotype Corsiva',
-        'font_coronation': 'Coronation',
-        'font_ballantines': 'Ballantines',
-        'font_jester': 'Jester',
-        'font_miss-neally': 'Miss Neally',
-        'font_castle': 'Castle',
-        'font_london': 'London',
-        'font_garamond': 'Garamond',
-        'font_comic-sans': 'Comic Sans',
-        'font_amsterdam': 'Amsterdam',
-        'font_black_jack': 'Black Jack',
-        'font_rochester': 'Rochester',
-        'font_poppins': 'Poppins',
-        'font_playfair-display': 'Playfair Display',
-        'font_playball': 'Playball',
-        'font_roboto-serif': 'Roboto Serif',
-        'font_helvetica': 'Helvetica'
-      };
-      
-      tags.forEach(tag => {
-        const tagLower = tag.toLowerCase();
-        if (fontTagMap[tagLower]) {
-          fontOptions.push({
-            value: fontTagMap[tagLower],
-            label: fontTagMap[tagLower],
-            display: fontTagMap[tagLower]
-          });
-        }
-      });
+      const fontOptions = BuildYourSetPersonaliseDialogComponent.FONT_OPTIONS;
       
       if (fontOptions.length > 0) {
         const fontHTML = fontOptions.map(option => {
@@ -1151,11 +1192,14 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
                 isRelevant = true;
               }
               // Color field
-              else if (key === 'personalise-color' && tagsLowercase.some(t => t.includes('personalized_textcolor'))) {
+              else if (key === 'personalise-color' && (tagsLowercase.some(t => t.includes('personalized_textcolor')) || ((product.personalization_fields || []).some(field => field?.field_type === 'text_color')))) {
                 isRelevant = true;
               }
-              // Font field
-              else if (key === 'personalise-font' && tagsLowercase.some(t => t.includes('font_'))) {
+              // Font field (metafield-driven)
+              else if (
+                key === 'personalise-font' &&
+                ((product.personalization_fields || []).some(field => field?.field_type === 'font'))
+              ) {
                 isRelevant = true;
               }
               // Date of Birth

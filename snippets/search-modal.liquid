@@ -33,7 +33,7 @@
 {% stylesheet %}
   /* Search modal style */
   .search-modal {
-    --search-border-radius: var(--style-border-radius-popover);
+    --search-border-radius: 0;
     --search-border-width: var(--style-border-width);
   }
 
@@ -44,36 +44,90 @@
   }
 
   .search-modal__content {
-    /* Approx set the top so when the content is at max height, the modal is centered */
-    --modal-top-margin: calc(50dvh - var(--modal-max-height) / 2 - 2rem);
-    --modal-width: 66dvw;
-
     padding: 0;
     border: var(--style-border-popover);
+    max-height: 90vh;
+    overflow: hidden;
+    width: 79.86vw;
+    max-width: 90vw;
+    box-shadow: 0 5px 30px rgb(0 0 0 / var(--opacity-15));
+  }
 
-    @media screen and (min-width: 750px) {
-      width: var(--modal-width);
-      margin-block-start: var(--modal-top-margin);
-      overflow: hidden;
+  @media screen and (min-width: 1440px) {
+    .search-modal__content {
+      width: 1150px;
+      max-width: 1150px;
     }
   }
 
-  /* Hide the default dialog backdrop on small screens */
+  @media screen and (max-width: 1439px) {
+    .search-modal__content {
+      width: 79.86vw;
+    }
+  }
+
   @media screen and (max-width: 749px) {
-    .search-modal__content::backdrop {
-      display: none;
+    .search-modal__content {
+      width: 100%;
+      max-width: 100vw;
+      max-height: 100vh;
+      border-radius: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: 0;
     }
   }
 
   .dialog-modal[open].search-modal__content {
     transform-origin: bottom center;
     animation: search-element-slide-in-bottom 300ms var(--ease-out-quad) forwards;
-    border-radius: var(--search-border-radius);
-    box-shadow: var(--shadow-popover);
+    border-radius: 0;
+    box-shadow: 0 5px 30px rgb(0 0 0 / var(--opacity-15));
 
     @media screen and (max-width: 749px) {
       border-radius: 0;
     }
+  }
+
+  .search-modal__content {
+    border-radius: 0;
+  }
+
+  .search-modal .predictive-search-form__header,
+  .search-modal .predictive-search-form__header-inner,
+  .search-modal .predictive-search-form__content-wrapper {
+    border-radius: 0 !important;
+  }
+
+  .search-modal .predictive-search-form__content-wrapper {
+    overflow: visible;
+  }
+
+  /* Keep section headings clearly visible above product cards */
+  .search-modal .predictive-search-results__products .predictive-search-results__title {
+    position: relative;
+    z-index: 2;
+    background-color: var(--color-background);
+    margin-block: var(--margin-sm) var(--margin-sm);
+  }
+
+  .search-modal .predictive-search-results__wrapper-products {
+    margin-block-start: var(--margin-xs);
+  }
+
+  /* Separate recently-viewed cards from the next heading/list */
+  .search-modal .recently-viewed-wrapper {
+    margin-block-end: var(--margin-lg);
+    overflow: visible;
+    padding-block-end: var(--padding-sm);
+  }
+
+  .search-modal .recently-viewed-wrapper .predictive-search-results__wrapper-products {
+    padding-block-end: var(--padding-lg);
+    margin-block-end: var(--margin-xs);
   }
 
   .dialog-modal.search-modal__content.dialog-closing {
@@ -120,8 +174,83 @@
 
   /* Modal-only: remove gray hover highlight from predictive product cards */
   .search-modal .predictive-search-results__card--product:hover {
-    background-color: transparent;
-    padding: 0;
-    margin: 0;
+    background-color: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Keep search card/image size stable on hover (including secondary image swap) */
+  .search-modal .predictive-search-results__card--product:hover,
+  .search-modal .predictive-search-results__card--product .resource-card:hover,
+  .search-modal .predictive-search-results__card--product .resource-card:hover .resource-card__image,
+  .search-modal .predictive-search-results__card--product .resource-card:hover .resource-card__image--secondary {
+    transform: none !important;
+  }
+
+  /* Search product cards: align closer to collection product-card look */
+  .search-modal .predictive-search-results__card--product .resource-card {
+    row-gap: var(--gap-xs);
+    animation: none;
+    opacity: 1;
+  }
+
+  .search-modal .predictive-search-results__card--product .resource-card__media {
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 1;
+    position: relative;
+  }
+
+  .search-modal .predictive-search-results__card--product .resource-card__image,
+  .search-modal .predictive-search-results__card--product .resource-card__image--secondary {
+    border-radius: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  .search-modal .predictive-search-results__card--product .resource-card__image--secondary {
+    inset: 0;
+  }
+
+  .search-modal .predictive-search-results__card--product .resource-card__content {
+    gap: var(--padding-3xs);
+    color: #1D425A;
+  }
+
+  .search-modal .predictive-search-results__card--product .resource-card__title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 140%;
+    color: #1D425A;
+    text-transform: none;
+  }
+
+  @media screen and (max-width: 1023px) {
+    .search-modal .predictive-search-results__card--product .resource-card__title {
+      font-size: 16px;
+      line-height: 140%;
+    }
+  }
+
+  /* Prevent last products row from being clipped in search modal */
+  .search-modal .predictive-search-form__content {
+    padding-block-end: var(--padding-xl);
+  }
+
+  .search-modal .predictive-search-results__wrapper-products:last-child {
+    padding-block-end: var(--padding-xl) !important;
+    margin-block-end: var(--margin-xs);
+  }
+
+  /* Use 3 cards per row in search modal on larger screens */
+  @media screen and (min-width: 750px) {
+    .search-modal .predictive-search-results__wrapper-products {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 {% endstylesheet %}

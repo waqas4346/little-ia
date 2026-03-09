@@ -5,23 +5,28 @@
     assign collection_object = collections.all
   endif
 
+  assign banner_image = collection_object.metafields.custom.cb_collection_banner_image.value
+  if banner_image == blank
+    assign banner_image = collection_object.featured_image
+  endif
+
   assign banner_text_color = collection_object.metafields.custom.cb_banner_tex_color.value | default: blank
   assign banner_overlay_color = collection_object.metafields.custom.cb_banner_overlay_color.value | default: blank
 %}
 
-<div class="section section--{{ section.settings.section_width }} collection-banner{% if collection_object.featured_image %} collection-banner--has-image{% endif %}"
+<div class="section section--{{ section.settings.section_width }} collection-banner{% if banner_image %} collection-banner--has-image{% endif %}"
   data-testid="collection-banner"
-  {% if banner_text_color != blank or banner_overlay_color != blank %}
-    style="
-      {% if banner_text_color != blank %}--collection-banner-text-color: {{ banner_text_color }};{% endif %}
-      {% if banner_overlay_color != blank %}
-        --collection-banner-overlay-gradient: linear-gradient(89.97deg, {{ banner_overlay_color | color_modify: 'alpha', 1 }} -12.75%, {{ banner_overlay_color | color_modify: 'alpha', 0.810876 }} -3.35%, {{ banner_overlay_color | color_modify: 'alpha', 0.648265 }} 29.36%, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 67.56%);
-        --collection-banner-overlay-gradient-mobile: linear-gradient(202.37deg, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 23.99%, {{ banner_overlay_color | color_modify: 'alpha', 0.485081 }} 38.69%, {{ banner_overlay_color | color_modify: 'alpha', 0.821329 }} 102.45%, {{ banner_overlay_color | color_modify: 'alpha', 1 }} 127.08%);
-      {% endif %}
-    "
-  {% endif %}
+  style="
+    --collection-banner-height-desktop: {{ section.settings.banner_height_desktop | default: 336 }}px;
+    --collection-banner-height-mobile: {{ section.settings.banner_height_mobile | default: 382 }}px;
+    {% if banner_text_color != blank %}--collection-banner-text-color: {{ banner_text_color }};{% endif %}
+    {% if banner_overlay_color != blank %}
+      --collection-banner-overlay-gradient: linear-gradient(89.97deg, {{ banner_overlay_color | color_modify: 'alpha', 1 }} -12.75%, {{ banner_overlay_color | color_modify: 'alpha', 0.810876 }} -3.35%, {{ banner_overlay_color | color_modify: 'alpha', 0.648265 }} 29.36%, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 67.56%);
+      --collection-banner-overlay-gradient-mobile: linear-gradient(202.37deg, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 23.99%, {{ banner_overlay_color | color_modify: 'alpha', 0.485081 }} 38.69%, {{ banner_overlay_color | color_modify: 'alpha', 0.821329 }} 102.45%, {{ banner_overlay_color | color_modify: 'alpha', 1 }} 127.08%);
+    {% endif %}
+  "
 >
-  {% if collection_object.featured_image %}
+  {% if banner_image %}
     <div class="collection-banner__background">
       {% liquid
         assign media_width_desktop = '100vw'
@@ -30,7 +35,7 @@
         assign widths = '832, 1200, 1600, 1920, 2560, 3840'
       %}
       {{
-        collection_object.featured_image
+        banner_image
         | image_url: width: 3840
         | image_tag:
           loading: 'eager',
@@ -121,9 +126,9 @@
 
   @media screen and (min-width: 750px) {
     .collection-banner {
-      height: 336px;
-      min-height: 336px;
-      max-height: 336px;
+      height: var(--collection-banner-height-desktop, 336px);
+      min-height: var(--collection-banner-height-desktop, 336px);
+      max-height: var(--collection-banner-height-desktop, 336px);
     }
   }
 
@@ -135,7 +140,7 @@
 
   @media screen and (min-width: 750px) {
     .collection-banner__background {
-      height: 336px;
+      height: var(--collection-banner-height-desktop, 336px);
     }
   }
 
@@ -148,14 +153,14 @@
 
   @media screen and (max-width: 749px) {
     .collection-banner__image {
-      max-height: 382px;
+      max-height: var(--collection-banner-height-mobile, 382px);
     }
   }
 
   @media screen and (min-width: 750px) {
     .collection-banner__image {
-      height: 336px;
-      max-height: 336px;
+      height: var(--collection-banner-height-desktop, 336px);
+      max-height: var(--collection-banner-height-desktop, 336px);
     }
   }
 
@@ -336,18 +341,18 @@
 
   @media screen and (max-width: 749px) {
     .collection-banner {
-      height: 382px;
-      min-height: 382px;
-      max-height: 382px;
+      height: var(--collection-banner-height-mobile, 382px);
+      min-height: var(--collection-banner-height-mobile, 382px);
+      max-height: var(--collection-banner-height-mobile, 382px);
     }
 
     .collection-banner__background {
-      height: 382px;
-      max-height: 382px;
+      height: var(--collection-banner-height-mobile, 382px);
+      max-height: var(--collection-banner-height-mobile, 382px);
     }
 
     .collection-banner__image {
-      height: 382px;
+      height: var(--collection-banner-height-mobile, 382px);
     }
 
     .collection-banner__content {
@@ -382,6 +387,26 @@
         }
       ],
       "default": "full-width"
+    },
+    {
+      "type": "range",
+      "id": "banner_height_desktop",
+      "label": "Banner height desktop",
+      "min": 200,
+      "max": 800,
+      "step": 8,
+      "unit": "px",
+      "default": 336
+    },
+    {
+      "type": "range",
+      "id": "banner_height_mobile",
+      "label": "Banner height mobile",
+      "min": 150,
+      "max": 550,
+      "step": 4,
+      "unit": "px",
+      "default": 382
     }
   ],
   "presets": [

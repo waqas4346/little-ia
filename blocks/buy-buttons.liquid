@@ -36,10 +36,13 @@
 
   # Check if product has personalization enabled
   assign show_personalise_button = false
-  assign product_tags_lowercase = product.tags | join: ' ' | downcase
-  if product_tags_lowercase contains 'cust_personalized'
-    assign show_personalise_button = true
-  endif
+  for product_tag in product.tags
+    assign product_tag_lowercase = product_tag | downcase | strip
+    if product_tag_lowercase == 'cust_personalized' or product_tag_lowercase == 'personalized'
+      assign show_personalise_button = true
+      break
+    endif
+  endfor
 %}
 
 <span
@@ -104,6 +107,12 @@
             <span class="personalise-button__text" data-personalise-text>PERSONALISE IT</span>
             </div>
           </button>
+
+          {% if product.metafields.custom.cb_personalisation_note.value %}
+            <p class="personalise-note" data-personalise-note style="display: none;">
+              Note: Personalisation applies to eligible products only
+            </p>
+          {% endif %}
           
           {%- comment -%} Personalisation Confirmation Checkbox {%- endcomment -%}
           <div class="personalise-confirmation" data-personalise-confirmation style="display: none;">
@@ -569,6 +578,15 @@
             }
           }
           
+          // Find optional personalization note container
+          let noteContainer = button.parentElement?.querySelector('[data-personalise-note]');
+          if (!noteContainer) {
+            const formButtons = button.closest('.product-form-buttons');
+            if (formButtons) {
+              noteContainer = formButtons.querySelector('[data-personalise-note]');
+            }
+          }
+          
           // Find the product ID for THIS specific button
           let buttonProductId = productId;
           if (!buttonProductId) {
@@ -738,6 +756,14 @@
               if (schoolYearInput && schoolYearInput.value.trim()) {
                 parts.push(schoolYearInput.value.trim());
               }
+
+              const textboxInput = buttonForm.querySelector('[name="properties[Personalisation:]"]');
+              if (textboxInput && textboxInput.value.trim()) {
+                const textboxValue = textboxInput.value.trim();
+                if (!parts.includes(textboxValue)) {
+                  parts.push(textboxValue);
+                }
+              }
               
               // Read color from form
               const colorInput = buttonForm.querySelector('input[name="properties[Text Color]"]:checked') || 
@@ -860,6 +886,14 @@
                 if (schoolYearInput && schoolYearInput.value.trim()) {
                   parts.push(schoolYearInput.value.trim());
                 }
+
+                const textboxInput = activeForm.querySelector('[name="properties[Personalisation:]"]');
+                if (textboxInput && textboxInput.value.trim()) {
+                  const textboxValue = textboxInput.value.trim();
+                  if (!parts.includes(textboxValue)) {
+                    parts.push(textboxValue);
+                  }
+                }
                 
                 // Read color from hidden input or visible input
                 const colorInput = activeForm.querySelector('input[name="properties[Text Color]"]');
@@ -956,6 +990,10 @@
                   }
                 }
               }
+
+              if (noteContainer) {
+                noteContainer.style.display = '';
+              }
             } else {
               // No personalisation found, show default button
               if (summarySpan) {
@@ -969,6 +1007,9 @@
                 if (window.updateAddToCartButtonState) {
                   setTimeout(window.updateAddToCartButtonState, 50);
                 }
+              }
+              if (noteContainer) {
+                noteContainer.style.display = 'none';
               }
             }
           }
@@ -1740,6 +1781,14 @@
     font-weight: 400;
     font-size: 14px;
     line-height: 140%;
+    color: #1D425A;
+  }
+
+  .personalise-note {
+    margin: 0 !important;
+    margin-top: var(--margin-xs);
+    font-size: var(--font-size--xs);
+    line-height: 1.4;
     color: #1D425A;
   }
 

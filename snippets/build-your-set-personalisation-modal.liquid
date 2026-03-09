@@ -27,6 +27,8 @@
           alt=""
           class="personalise-modal__preview-image"
           loading="lazy"
+          width="600"
+          height="600"
           onerror="this.style.display='none'"
         >
         <div class="personalise-modal__preview-placeholder" ref="productPlaceholder" style="display: none;">
@@ -68,6 +70,56 @@
     </div>
   </dialog>
 </build-your-set-personalise-dialog>
+
+{% style %}
+  @font-face {
+    font-family: 'Ballantines';
+    src: url({{ 'PERSONALISATION FONTS/Ballantines Regular.ttf' | asset_url }}) format('truetype');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Cormorant Garamond';
+    src: url({{ 'PERSONALISATION FONTS/CormorantGaramond-Medium.ttf' | asset_url }}) format('truetype');
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Jester';
+    src: url({{ 'PERSONALISATION FONTS/Jester.ttf' | asset_url }}) format('truetype');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Arial Rounded Bold';
+    src: url({{ 'PERSONALISATION FONTS/Arial Rounded Bold.ttf' | asset_url }}) format('truetype');
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Poppins';
+    src: url({{ 'PERSONALISATION FONTS/Poppins-Medium.ttf' | asset_url }}) format('truetype');
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Rochester';
+    src: url({{ 'PERSONALISATION FONTS/Rochester-Regular.ttf' | asset_url }}) format('truetype');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+  }
+{% endstyle %}
 
 {% stylesheet %}
   build-your-set-personalise-dialog {

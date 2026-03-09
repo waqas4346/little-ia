@@ -32,10 +32,13 @@
     
     # Check if product has personalization enabled
     assign show_personalise_button = false
-    assign product_tags_lowercase = product.tags | join: ' ' | downcase
-    if product_tags_lowercase contains 'cust_personalized'
-      assign show_personalise_button = true
-    endif
+    for product_tag in product.tags
+      assign product_tag_lowercase = product_tag | downcase | strip
+      if product_tag_lowercase == 'cust_personalized' or product_tag_lowercase == 'personalized'
+        assign show_personalise_button = true
+        break
+      endif
+    endfor
   %}
 
   <sticky-add-to-cart
@@ -457,7 +460,7 @@
             personalisation.font = fontInput.value.trim();
           }
           
-          const textboxInput = form.querySelector('textarea[name="properties[Personalisation:]"]');
+          const textboxInput = form.querySelector('[name="properties[Personalisation:]"]');
           if (textboxInput && textboxInput.value.trim()) {
             personalisation.textbox = textboxInput.value.trim();
           }
@@ -573,7 +576,7 @@
                 buttonPersonalisation.schoolYear = schoolYearInput.value.trim();
               }
               
-              const textboxInput = qForm.querySelector('textarea[name="properties[Personalisation:]"]');
+              const textboxInput = qForm.querySelector('[name="properties[Personalisation:]"]');
               if (textboxInput && textboxInput.value.trim()) {
                 buttonPersonalisation.textbox = textboxInput.value.trim();
               }
@@ -621,6 +624,15 @@
             }
           }
           
+          // Find optional personalization note (only present on product page buy buttons)
+          let noteContainer = button.parentElement?.querySelector('[data-personalise-note]');
+          if (!noteContainer) {
+            const formButtons = button.closest('.product-form-buttons');
+            if (formButtons) {
+              noteContainer = formButtons.querySelector('[data-personalise-note]');
+            }
+          }
+          
           if (textSpan) {
             // Use button-specific personalisation if button is in quick-add modal, otherwise use global personalisation
             const buttonHasPersonalisation = Object.keys(buttonPersonalisation).length > 0;
@@ -656,6 +668,9 @@
                 }
                 if (personalisationToUse.schoolYear) {
                   parts.push(personalisationToUse.schoolYear);
+                }
+                if (personalisationToUse.textbox && typeof personalisationToUse.textbox === 'string' && personalisationToUse.textbox.trim()) {
+                  parts.push(personalisationToUse.textbox.trim());
                 }
                 // Add baby/kid/mum names
                 if (personalisationToUse.babyName && typeof personalisationToUse.babyName === 'string' && personalisationToUse.babyName.trim()) {
@@ -754,6 +769,10 @@
                   console.log('Confirmation container not found for button');
                 }
                 
+                if (noteContainer) {
+                  noteContainer.style.display = '';
+                }
+                
                 console.log('Updated button to show summary and EDIT');
               } catch (e) {
                 console.error('Error parsing personalisation:', e);
@@ -766,6 +785,9 @@
                 if (confirmationContainer) {
                   confirmationContainer.style.display = 'none';
                 }
+                if (noteContainer) {
+                  noteContainer.style.display = 'none';
+                }
               }
             } else {
               // Hide summary and show PERSONALISE IT
@@ -776,6 +798,9 @@
               textSpan.textContent = 'PERSONALISE IT';
               if (confirmationContainer) {
                 confirmationContainer.style.display = 'none';
+              }
+              if (noteContainer) {
+                noteContainer.style.display = 'none';
               }
               console.log('Updated button to PERSONALISE IT');
             }

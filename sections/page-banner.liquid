@@ -13,15 +13,15 @@
 {% endif %}
 <div class="section section--{{ section.settings.section_width }} page-banner{% if section.settings.video or section.settings.image %} page-banner--has-image{% endif %}{% if section.settings.content_position == 'under' and has_media %} page-banner--content-under{% endif %}"
   data-testid="page-banner"
-  {% if banner_text_color != blank or banner_overlay_color != blank %}
-    style="
-      {% if banner_text_color != blank %}--page-banner-text-color: {{ banner_text_color }};{% endif %}
-      {% if banner_overlay_color != blank and banner_overlay_is_transparent == false %}
-        --page-banner-overlay-gradient: linear-gradient(89.97deg, {{ banner_overlay_color | color_modify: 'alpha', 1 }} -12.75%, {{ banner_overlay_color | color_modify: 'alpha', 0.810876 }} -3.35%, {{ banner_overlay_color | color_modify: 'alpha', 0.648265 }} 29.36%, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 67.56%);
-        --page-banner-overlay-gradient-mobile: linear-gradient(202.37deg, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 23.99%, {{ banner_overlay_color | color_modify: 'alpha', 0.485081 }} 38.69%, {{ banner_overlay_color | color_modify: 'alpha', 0.821329 }} 102.45%, {{ banner_overlay_color | color_modify: 'alpha', 1 }} 127.08%);
-      {% endif %}
-    "
-  {% endif %}
+  style="
+    --page-banner-height-desktop: {{ section.settings.banner_height_desktop | default: 336 }}px;
+    --page-banner-height-mobile: {{ section.settings.banner_height_mobile | default: 382 }}px;
+    {% if banner_text_color != blank %}--page-banner-text-color: {{ banner_text_color }};{% endif %}
+    {% if banner_overlay_color != blank and banner_overlay_is_transparent == false %}
+      --page-banner-overlay-gradient: linear-gradient(89.97deg, {{ banner_overlay_color | color_modify: 'alpha', 1 }} -12.75%, {{ banner_overlay_color | color_modify: 'alpha', 0.810876 }} -3.35%, {{ banner_overlay_color | color_modify: 'alpha', 0.648265 }} 29.36%, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 67.56%);
+      --page-banner-overlay-gradient-mobile: linear-gradient(202.37deg, {{ banner_overlay_color | color_modify: 'alpha', 0 }} 23.99%, {{ banner_overlay_color | color_modify: 'alpha', 0.485081 }} 38.69%, {{ banner_overlay_color | color_modify: 'alpha', 0.821329 }} 102.45%, {{ banner_overlay_color | color_modify: 'alpha', 1 }} 127.08%);
+    {% endif %}
+  "
 >
   {% if section.settings.video or section.settings.image %}
     <div class="page-banner__background">
@@ -120,9 +120,9 @@
 
   @media screen and (min-width: 750px) {
     .page-banner {
-      height: 336px;
-      min-height: 336px;
-      max-height: 336px;
+      height: var(--page-banner-height-desktop, 336px);
+      min-height: var(--page-banner-height-desktop, 336px);
+      max-height: var(--page-banner-height-desktop, 336px);
     }
   }
 
@@ -134,7 +134,7 @@
 
   @media screen and (min-width: 750px) {
     .page-banner__background {
-      height: 336px;
+      height: var(--page-banner-height-desktop, 336px);
     }
   }
 
@@ -149,15 +149,15 @@
   @media screen and (max-width: 749px) {
     .page-banner__image,
     .page-banner__video {
-      max-height: 382px;
+      max-height: var(--page-banner-height-mobile, 382px);
     }
   }
 
   @media screen and (min-width: 750px) {
     .page-banner__image,
     .page-banner__video {
-      height: 336px;
-      max-height: 336px;
+      height: var(--page-banner-height-desktop, 336px);
+      max-height: var(--page-banner-height-desktop, 336px);
     }
   }
 
@@ -310,19 +310,19 @@
 
   @media screen and (max-width: 749px) {
     .page-banner {
-      height: 382px;
-      min-height: 382px;
-      max-height: 382px;
+      height: var(--page-banner-height-mobile, 382px);
+      min-height: var(--page-banner-height-mobile, 382px);
+      max-height: var(--page-banner-height-mobile, 382px);
     }
 
     .page-banner__background {
-      height: 382px;
-      max-height: 382px;
+      height: var(--page-banner-height-mobile, 382px);
+      max-height: var(--page-banner-height-mobile, 382px);
     }
 
     .page-banner__image,
     .page-banner__video {
-      height: 382px;
+      height: var(--page-banner-height-mobile, 382px);
     }
 
     .page-banner__content {
@@ -445,6 +445,26 @@
         }
       ],
       "default": "full-width"
+    },
+    {
+      "type": "range",
+      "id": "banner_height_desktop",
+      "label": "Banner height desktop",
+      "min": 200,
+      "max": 800,
+      "step": 8,
+      "unit": "px",
+      "default": 336
+    },
+    {
+      "type": "range",
+      "id": "banner_height_mobile",
+      "label": "Banner height mobile",
+      "min": 150,
+      "max": 550,
+      "step": 4,
+      "unit": "px",
+      "default": 382
     },
     {
       "type": "video",
