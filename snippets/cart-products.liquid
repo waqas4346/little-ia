@@ -453,7 +453,34 @@
                   >
                     {%- if personalization_summary != blank -%}
                     <span class="cart-items__edit-personalization-summary">
-                      <span class="cart-items__edit-personalization-summary-label">Personalised:</span> {{ personalization_summary }}
+                      <span class="cart-items__edit-personalization-summary-label">Personalised:</span>
+                      {%- assign first_p = true -%}
+                      {%- for property in item.properties -%}
+                        {%- assign property_first_char = property.first | slice: 0 -%}
+                        {%- assign is_personalization_prop = false -%}
+                        {%- for key in personalization_keys -%}
+                          {%- if property.first == key -%}{%- assign is_personalization_prop = true -%}{%- break -%}{%- endif -%}
+                        {%- endfor -%}
+                        {%- if property.last != blank and property_first_char != '_' and is_personalization_prop -%}
+                          {%- unless first_p -%} | {%- endunless -%}
+                          {%- assign prop_val = property.last | strip -%}
+                          {%- assign show_swatch = false -%}
+                          {%- if property.first == 'Text Color' -%}
+                            {%- assign prop_lower = prop_val | downcase -%}
+                            {%- if prop_val contains '#' or prop_val contains 'rgb' or prop_val contains 'hsl' -%}
+                              {%- assign show_swatch = true -%}
+                            {%- elsif prop_lower == 'red' or prop_lower == 'blue' or prop_lower == 'green' or prop_lower == 'grey' or prop_lower == 'gray' or prop_lower == 'pink' or prop_lower == 'white' or prop_lower == 'black' or prop_lower == 'orange' or prop_lower == 'yellow' or prop_lower == 'purple' or prop_lower == 'gold' or prop_lower == 'silver' or prop_lower == 'multicolour' -%}
+                              {%- assign show_swatch = true -%}
+                            {%- endif -%}
+                          {%- endif -%}
+                          {%- if show_swatch -%}
+                            <span class="personalise-summary__color"><span class="personalise-summary__swatch" style="background-color: {{ prop_val }}" title="{{ prop_val }}"></span></span>
+                          {%- else -%}
+                            {{ property.last }}
+                          {%- endif -%}
+                          {%- assign first_p = false -%}
+                        {%- endif -%}
+                      {%- endfor -%}
                     </span>
                     {%- endif -%}
                     <div class="icon-tex-container">
@@ -978,6 +1005,21 @@
 
   .cart-items__edit-personalization-summary-label {
     font-weight: 400;
+  }
+
+  .personalise-summary__color {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .personalise-summary__swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 2px;
   }
 
   .cart-items__edit-personalization .icon-tex-container {

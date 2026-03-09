@@ -29,9 +29,6 @@
     if cust_tag_lowercase contains 'cust_personalized'
       assign show_personalized = true
     endif
-    if cust_tag_lowercase contains 'personalized_textcolor'
-      assign personalized_textcolour = true
-    endif
     if cust_tag_lowercase contains 'personalized_name'
       assign personalized_name = true
     endif
@@ -46,9 +43,7 @@
     endif
   endfor
   
-  # Text colour fallback priority:
-  # 1) custom.cb_product_personalisation_colors metafield
-  # 2) product tag personalized_textcolor + color_* tags
+  # Text colour: metafield only (no tag fallback)
   if has_cb_personalisation_colors
     assign personalized_textcolour = true
   endif
@@ -708,12 +703,18 @@
             </div>
           {% endif %}
 
-          {% if personalized_textcolour %}
+          {% if personalized_textbox %}
+            <div class="personalise-modal__field">
+              <label class="personalise-modal__label">Enter the names here:</label>
+              <input type="text" class="personalise-modal__input" name="properties[Personalisation:]" placeholder="(e.g. Sarah,Jane,Robert)" maxlength="500" ref="textboxInput">
+            </div>
+          {% endif %}
+
+          {% if has_cb_personalisation_colors %}
             <div class="personalise-modal__field">
               <label class="personalise-modal__label">Text Colour <span style="color: red;">*</span></label>
               <div class="personalise-modal__color-grid variant-option--image-thumbnails" ref="colorGrid">
-                {% if has_cb_personalisation_colors %}
-                  {% for metafield_color in cb_personalisation_colors.value %}
+                {% for metafield_color in cb_personalisation_colors.value %}
                     {% assign color_value = metafield_color | strip %}
                     {% if color_value != blank %}
                       <label
@@ -766,61 +767,6 @@
                       </label>
                     {% endif %}
                   {% endfor %}
-                {% else %}
-                  {% for product_tag in product.tags %}
-                    {% if product_tag contains 'color_' %}
-                      {% assign color_tag = product_tag | split: '_' %}
-                      <label
-                        class="personalise-modal__color-button variant-option__button-label variant-option__button-label--image-thumbnail"
-                        data-color="{{ color_tag[1] }}"
-                        ref="colorButton"
-                        title="{{ color_tag[1] | capitalize }}"
-                      >
-                        <input
-                          type="radio"
-                          name="personalise-color"
-                          value="{{ color_tag[1] }}"
-                          on:click="/selectColor"
-                        >
-                        <div class="variant-option__image-thumbnail">
-                          {% assign color_name = color_tag[1] | downcase %}
-                          <div class="personalise-modal__color-icon" style="width: 60px; height: 60px;">
-                            {% case color_name %}
-                              {% when 'grey' %}
-                                {% render 'icon-grey' %}
-                              {% when 'pink' %}
-                                {% render 'icon-pink' %}
-                              {% when 'white' %}
-                                {% render 'icon-white' %}
-                              {% when 'red' %}
-                                {% render 'icon-red' %}
-                              {% when 'green' %}
-                                {% render 'icon-green' %}
-                              {% when 'blue' %}
-                                {% render 'icon-blue' %}
-                              {% when 'orange' %}
-                                {% render 'icon-orange' %}
-                              {% when 'yellow' %}
-                                {% render 'icon-yellow' %}
-                              {% when 'purple' %}
-                                {% render 'icon-purple' %}
-                              {% when 'gold' %}
-                                {% render 'icon-gold' %}
-                              {% when 'silver' %}
-                                {% render 'icon-silver' %}
-                              {% when 'multicolour' %}
-                                {% render 'icon-multicolour' %}
-                              {% when 'black' %}
-                                {% render 'icon-black' %}
-                              {% else %}
-                                <span class="swatch swatch--unscaled" style="--swatch-background: {{ color_name }}; background-color: {{ color_name }};"></span>
-                            {% endcase %}
-                          </div>
-                        </div>
-                      </label>
-                    {% endif %}
-                  {% endfor %}
-                {% endif %}
               </div>
             </div>
           {% endif %}
@@ -907,13 +853,6 @@
             <div class="personalise-modal__field">
               <label class="personalise-modal__label">Weight (kg) (optional)</label>
               <input type="text" class="personalise-modal__input" name="properties[Weight]" ref="weightInput">
-            </div>
-          {% endif %}
-
-          {% if personalized_textbox %}
-            <div class="personalise-modal__field">
-              <label class="personalise-modal__label">Enter the names here:</label>
-              <textarea class="personalise-modal__textarea" name="properties[Personalisation:]" placeholder="(e.g. Sarah,Jane,Robert)" maxlength="500" ref="textboxInput"></textarea>
             </div>
           {% endif %}
 

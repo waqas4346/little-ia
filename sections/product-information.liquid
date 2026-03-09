@@ -693,12 +693,14 @@
                   summaryText += ' ' + parts.join(' | ');
                 }
                 if (colorText) {
-                  summaryText += ' (' + colorText + ')';
+                  // Small swatch for color (hex, rgb, hsl, or named colors) - swatch only, no hex text
+                  const colorEscaped = String(colorText).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                  summaryText += ' (<span class="personalise-summary__color"><span class="personalise-summary__swatch" style="background-color: ' + colorEscaped + '" title="' + colorEscaped + '"></span></span>)';
                 }
                 
                 // Show summary and update text
                 if (summarySpan) {
-                  summarySpan.textContent = summaryText;
+                  summarySpan.innerHTML = summaryText;
                   summarySpan.style.display = '';
                   button.classList.add('has-summary');
                 }
@@ -1091,6 +1093,21 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .personalise-summary__color {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .personalise-summary__swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 2px;
   }
 
 

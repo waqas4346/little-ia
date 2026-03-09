@@ -49,6 +49,8 @@
         data-section-id="{{ section.id }}"
       >
         {%- if cart.empty? -%}
+          {%- assign gift_wrap_product_empty = settings.gift_wrap_product -%}
+          <span hidden data-cart-drawer-gift-wrap-product-id="{{ gift_wrap_product_empty.id | default: '' }}"></span>
           <div class="cart-drawer__header">
             <button
               ref="closeButton"
@@ -563,11 +565,13 @@
   const giftWrapCardSelector = '[data-gift-wrap-cart-key]';
   const quantityPlusSelector = '.quantity-plus';
   const cartQuantityUpdateEventName = 'quantity-selector:update';
-  const configuredGiftWrapProductId =
-    document
-      .querySelector('[data-cart-drawer-gift-wrap-product-id]')
-      ?.getAttribute('data-cart-drawer-gift-wrap-product-id') || '';
-  const configuredGiftWrapProductIdNumber = Number(configuredGiftWrapProductId || 0);
+  function getConfiguredGiftWrapProductId() {
+    return (
+      document
+        .querySelector('[data-cart-drawer-gift-wrap-product-id]')
+        ?.getAttribute('data-cart-drawer-gift-wrap-product-id') || ''
+    );
+  }
   const loadingClass = 'is-loading';
   const giftWrapDrawerState = (window.__giftWrapDrawerState = window.__giftWrapDrawerState || {
     isNormalizingGiftWrapLines: false,
@@ -791,7 +795,7 @@
     const attachedItems = items.filter((item) => {
       if (!item) return false;
       if (excludedKeys.has(item.key)) return false;
-      if (Number(item.product_id || 0) === configuredGiftWrapProductIdNumber) return false;
+      if (Number(item.product_id || 0) === Number(getConfiguredGiftWrapProductId() || 0)) return false;
       return getWrapperInstanceIdFromItem(item) === wrapperId;
     });
     if (!attachedItems.length) return '';
@@ -851,7 +855,7 @@
       giftWrapLine =
         items.find(
           (item) =>
-            item.product_id === configuredGiftWrapProductId && getWrapperInstanceIdFromItem(item) === wrapperId
+            item.product_id === getConfiguredGiftWrapProductId() && getWrapperInstanceIdFromItem(item) === wrapperId
         ) || null;
     }
     if (!giftWrapLine) return;
@@ -896,7 +900,7 @@
     const normalizedMessage = String(giftMessage).trim();
     const assignedItems = resolvedCartData.items.filter((item) => {
       if (!item) return false;
-      if (Number(item.product_id || 0) === configuredGiftWrapProductIdNumber) return false;
+      if (Number(item.product_id || 0) === Number(getConfiguredGiftWrapProductId() || 0)) return false;
       return getWrapperInstanceIdFromItem(item) === wrapperId;
     });
     if (!assignedItems.length) return;
@@ -927,14 +931,14 @@
 
     const wrapperIdsInCart = new Set(
       resolvedCartData.items
-        .filter((item) => Number(item?.product_id || 0) === configuredGiftWrapProductIdNumber)
+        .filter((item) => Number(item?.product_id || 0) === Number(getConfiguredGiftWrapProductId() || 0))
         .map((item) => getWrapperInstanceIdFromItem(item))
         .filter(Boolean)
     );
 
     const orphanAssignedItems = resolvedCartData.items.filter((item) => {
       if (!item) return false;
-      if (Number(item.product_id || 0) === configuredGiftWrapProductIdNumber) return false;
+      if (Number(item.product_id || 0) === Number(getConfiguredGiftWrapProductId() || 0)) return false;
       const wrapperId = getWrapperInstanceIdFromItem(item);
       if (!wrapperId) return false;
       if (wrapperIdsInCart.has(wrapperId)) return false;
@@ -962,10 +966,10 @@
   async function syncAllGiftWrapDisplayPropertiesFromCart(cartData = null) {
     const resolvedCartData = Array.isArray(cartData?.items) ? cartData : await getLiveCartData({ force: true });
     if (!resolvedCartData || !Array.isArray(resolvedCartData.items)) return;
-    if (!configuredGiftWrapProductIdNumber) return;
+    if (!Number(getConfiguredGiftWrapProductId() || 0)) return;
 
     const giftWrapItems = resolvedCartData.items.filter(
-      (item) => Number(item?.product_id || 0) === configuredGiftWrapProductIdNumber
+      (item) => Number(item?.product_id || 0) === Number(getConfiguredGiftWrapProductId() || 0)
     );
     if (!giftWrapItems.length) return;
 
@@ -1314,7 +1318,7 @@
     const wrapperGiftLine = (liveCartData?.items || []).find((item) => {
       if (!item) return false;
       if (wrapperCartKey && item.key === wrapperCartKey) return true;
-      if (Number(item.product_id || 0) !== configuredGiftWrapProductIdNumber) return false;
+      if (Number(item.product_id || 0) !== Number(getConfiguredGiftWrapProductId() || 0)) return false;
       return getWrapperInstanceIdFromItem(item) === wrapperId;
     });
     const wrapperGiftMessage = String(
@@ -1676,7 +1680,7 @@
   document.addEventListener('click', window.__giftWrapDrawerClickHandler);
 
   const handleGiftWrapQuantityPlusClick = async (event) => {
-    if (!configuredGiftWrapProductId) return;
+    if (!getConfiguredGiftWrapProductId()) return;
 
     const plusButton = event.target.closest(quantityPlusSelector);
     if (!(plusButton instanceof HTMLButtonElement)) return;
@@ -1687,9 +1691,9 @@
     const rowProductId = row.dataset.productId;
     const rowVariantId = row.dataset.variantId;
     if (!rowProductId || !rowVariantId) return;
-    const isGiftWrapRow = String(rowProductId) === String(configuredGiftWrapProductId);
+    const isGiftWrapRow = String(rowProductId) === String(getConfiguredGiftWrapProductId());
     const hasGiftWrapInCartFromDom = !!document.querySelector(
-      `.cart-items__table-row[data-product-id="${configuredGiftWrapProductId}"]`
+      `.cart-items__table-row[data-product-id="${getConfiguredGiftWrapProductId()}"]`
     );
     if (
       giftWrapDrawerState.isNormalizingGiftWrapLines ||
@@ -1742,7 +1746,7 @@
   document.addEventListener('click', window.__giftWrapDrawerQuantityPlusHandler, true);
 
   const handleGiftWrapQuantitySelectorUpdate = async (event) => {
-    if (!configuredGiftWrapProductId) return;
+    if (!getConfiguredGiftWrapProductId()) return;
     const cartLine = Number(event?.detail?.cartLine || 0);
     const requestedQuantity = Number(event?.detail?.quantity || 0);
     if (!cartLine || !requestedQuantity) return;
@@ -1755,28 +1759,36 @@
     const rowProductId = row.dataset.productId;
     const rowVariantId = row.dataset.variantId;
     if (!rowProductId || !rowVariantId) return;
-    const isGiftWrapRow = String(rowProductId) === String(configuredGiftWrapProductId);
+    const isGiftWrapRow = String(rowProductId) === String(getConfiguredGiftWrapProductId());
     const hasGiftWrapInCartFromDom = !!document.querySelector(
-      `.cart-items__table-row[data-product-id="${configuredGiftWrapProductId}"]`
+      `.cart-items__table-row[data-product-id="${getConfiguredGiftWrapProductId()}"]`
     );
+    if (!hasGiftWrapInCartFromDom) return;
 
-    const currentQuantity = Number(quantityInput.defaultValue || quantityInput.getAttribute('value') || quantityInput.value || '0');
+    // Stop propagation immediately (before any await) so cart-items-component does not
+    // also run updateQuantity and change the existing line.
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === 'function') {
+      event.stopImmediatePropagation();
+    }
+
+    // Use cart's quantity as the "before" value: the input has already been updated by the
+    // quantity selector before dispatching the event, so reading from DOM would give delta = 0.
+    const liveCartData = await getLiveCartData();
+    const liveLineItem = await getLiveLineItem({ line: cartLine, cartData: liveCartData });
+    const currentQuantity = Number(liveLineItem?.quantity ?? quantityInput.value ?? 0);
     const quantityDelta = requestedQuantity - currentQuantity;
-    if (quantityDelta <= 0) return;
+    if (quantityDelta <= 0) {
+      quantityInput.value = String(currentQuantity);
+      return;
+    }
     if (
       giftWrapDrawerState.isNormalizingGiftWrapLines ||
       giftWrapDrawerState.isFastAddingGiftWrap ||
       giftWrapDrawerState.isFastAddingRegularProduct
     ) {
       return;
-    }
-
-    if (!isGiftWrapRow && !hasGiftWrapInCartFromDom) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    if (typeof event.stopImmediatePropagation === 'function') {
-      event.stopImmediatePropagation();
     }
 
     if (isGiftWrapRow) {
@@ -1790,8 +1802,6 @@
       if (isGiftWrapRow) {
         await addGiftWrapInstances(rowVariantId, quantityDelta);
       } else {
-        const liveCartData = await getLiveCartData();
-        const liveLineItem = await getLiveLineItem({ line: cartLine, cartData: liveCartData });
         if (!liveLineItem) return;
         await addRegularProductSplitInstances(liveLineItem, quantityDelta);
       }

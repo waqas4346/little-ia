@@ -237,7 +237,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     // Note: show_personalized is only used as a general flag, not to show specific fields
     const show_personalized = hasTag('cust_personalized');
     const personalized_name = hasTag('personalized_name');
-    const personalized_textcolour = hasTag('personalized_textcolor');
     const personalized_dob = hasTag('personalized_dob');
     const personalized_textbox = hasTag('personalise_textbox');
     const has_baby_name = tagsLowercase.includes('baby_name');
@@ -353,6 +352,16 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
       `;
     }
     
+    // Textbox (Enter the names here) - at top, above Color and Font
+    if (personalized_textbox) {
+      fieldsHTML += `
+        <div class="personalise-modal__field">
+          <label class="personalise-modal__label">Enter the names here:</label>
+          <input type="text" class="personalise-modal__input" name="properties[Personalisation:]" placeholder="(e.g. Sarah,Jane,Robert)" maxlength="500" data-field-name="properties[Personalisation:]" value="${this.personalisationData['properties[Personalisation:]'] || ''}" />
+        </div>
+      `;
+    }
+    
     // Color selection
     const collectedColorField = Array.isArray(collectedFields)
       ? collectedFields.find((field) => field?.field_type === 'text_color' && Array.isArray(field.options) && field.options.length > 0)
@@ -371,20 +380,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
           };
         })
         .filter(Boolean);
-    } else if (personalized_textcolour) {
-      tags.forEach((tag) => {
-        if (tag.toLowerCase().includes('color_')) {
-          const colorParts = tag.split('_');
-          if (colorParts.length > 1) {
-            const colorValue = colorParts.slice(1).join('_');
-            colorOptions.push({
-              value: colorValue,
-              label: colorValue.charAt(0).toUpperCase() + colorValue.slice(1),
-              display: colorValue.toLowerCase()
-            });
-          }
-        }
-      });
     }
 
     if (colorOptions.length > 0) {
@@ -524,16 +519,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         <div class="personalise-modal__field">
           <label class="personalise-modal__label">Weight (kg) (optional)</label>
           <input type="text" class="personalise-modal__input" name="properties[Weight]" data-field-name="properties[Weight]" value="${this.personalisationData['properties[Weight]'] || ''}" />
-        </div>
-      `;
-    }
-    
-    // Textbox
-    if (personalized_textbox) {
-      fieldsHTML += `
-        <div class="personalise-modal__field">
-          <label class="personalise-modal__label">Enter the names here:</label>
-          <textarea class="personalise-modal__input personalise-modal__input--textarea" name="properties[Personalisation:]" placeholder="(e.g. Sarah,Jane,Robert)" maxlength="500" rows="3" data-field-name="properties[Personalisation:]">${this.personalisationData['properties[Personalisation:]'] || ''}</textarea>
         </div>
       `;
     }
@@ -1191,8 +1176,8 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
               if (key === 'personalise-name' && (tagsLowercase.includes('personalized_name') || tagsLowercase.includes('cust_personalized'))) {
                 isRelevant = true;
               }
-              // Color field
-              else if (key === 'personalise-color' && (tagsLowercase.some(t => t.includes('personalized_textcolor')) || ((product.personalization_fields || []).some(field => field?.field_type === 'text_color')))) {
+              // Color field (metafield only)
+              else if (key === 'personalise-color' && (product.personalization_fields || []).some(field => field?.field_type === 'text_color')) {
                 isRelevant = true;
               }
               // Font field (metafield-driven)
