@@ -297,7 +297,11 @@
                                     {%- assign visible_property_count = 0 -%}
                                     {%- for property in product_item.properties -%}
                                       {%- assign property_first_char = property.first | slice: 0 -%}
-                                      {%- if property.last != blank and property_first_char != '_' and property.first != 'Gift Wrap Instance' -%}
+                                      {%- assign is_gift_wrap_prop = false -%}
+                                      {%- if property.first == 'Gift Message' or property.first == 'Attached Products' or property.first == 'gift_wrap_split_instance_id' or property.first contains 'Attached Product' -%}
+                                        {%- assign is_gift_wrap_prop = true -%}
+                                      {%- endif -%}
+                                      {%- if property.last != blank and property_first_char != '_' and property.first != 'Gift Wrap Instance' and is_gift_wrap_prop == false -%}
                                         {%- assign visible_property_count = visible_property_count | plus: 1 -%}
                                       {%- endif -%}
                                     {%- endfor -%}
@@ -305,7 +309,11 @@
                                       <div class="cart-drawer-gift-assignment-item__properties">
                                         {%- for property in product_item.properties -%}
                                           {%- assign property_first_char = property.first | slice: 0 -%}
-                                          {%- if property.last != blank and property_first_char != '_' and property.first != 'Gift Wrap Instance' -%}
+                                          {%- assign is_gift_wrap_prop = false -%}
+                                          {%- if property.first == 'Gift Message' or property.first == 'Attached Products' or property.first == 'gift_wrap_split_instance_id' or property.first contains 'Attached Product' -%}
+                                            {%- assign is_gift_wrap_prop = true -%}
+                                          {%- endif -%}
+                                          {%- if property.last != blank and property_first_char != '_' and property.first != 'Gift Wrap Instance' and is_gift_wrap_prop == false -%}
                                             <p class="cart-drawer-gift-assignment-item__property">
                                               {{ property.first }}: {{ property.last }}
                                             </p>
@@ -395,7 +403,11 @@
                                     {%- assign visible_property_count = 0 -%}
                                     {%- for property in product_item.properties -%}
                                       {%- assign property_first_char = property.first | slice: 0 -%}
-                                      {%- if property.last != blank and property_first_char != '_' and property.first != 'Gift Wrap Instance' -%}
+                                      {%- assign is_gift_wrap_prop = false -%}
+                                      {%- if property.first == 'Gift Message' or property.first == 'Attached Products' or property.first == 'gift_wrap_split_instance_id' or property.first contains 'Attached Product' -%}
+                                        {%- assign is_gift_wrap_prop = true -%}
+                                      {%- endif -%}
+                                      {%- if property.last != blank and property_first_char != '_' and property.first != 'Gift Wrap Instance' and is_gift_wrap_prop == false -%}
                                         {%- assign visible_property_count = visible_property_count | plus: 1 -%}
                                       {%- endif -%}
                                     {%- endfor -%}
@@ -403,7 +415,11 @@
                                       <div class="cart-drawer-gift-assignment-item__properties">
                                         {%- for property in product_item.properties -%}
                                           {%- assign property_first_char = property.first | slice: 0 -%}
-                                          {%- if property.last != blank and property_first_char != '_' and property.first != 'Gift Wrap Instance' -%}
+                                          {%- assign is_gift_wrap_prop = false -%}
+                                          {%- if property.first == 'Gift Message' or property.first == 'Attached Products' or property.first == 'gift_wrap_split_instance_id' or property.first contains 'Attached Product' -%}
+                                            {%- assign is_gift_wrap_prop = true -%}
+                                          {%- endif -%}
+                                          {%- if property.last != blank and property_first_char != '_' and property.first != 'Gift Wrap Instance' and is_gift_wrap_prop == false -%}
                                             <p class="cart-drawer-gift-assignment-item__property">
                                               {{ property.first }}: {{ property.last }}
                                             </p>
