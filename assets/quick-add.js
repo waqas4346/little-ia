@@ -1193,6 +1193,8 @@ export class QuickAddComponent extends Component {
             fieldInfo.field_type = 'time';
           } else if (input.name.includes('Weight')) {
             fieldInfo.field_type = 'weight';
+          } else if (input.name.includes('Personalisation:')) {
+            fieldInfo.field_type = 'textbox';
           }
           
           personalizationFields.push(fieldInfo);

@@ -671,16 +671,34 @@ class ProductFormComponent extends Component {
       const inForm = form.querySelector(selector);
       if (inForm) return inForm;
       if (!formId) return null;
-      return document.querySelector(`${selector}[form="${formId}"]`);
+      const byFormAttr = document.querySelector(`${selector}[form="${formId}"]`);
+      if (byFormAttr) return byFormAttr;
+      const inComponent = this.querySelector(selector);
+      if (inComponent) return inComponent;
+      const section = this.closest('.shopify-section');
+      if (section) {
+        const inSection = section.querySelector(`${selector}[form="${formId}"]`);
+        if (inSection) return inSection;
+      }
+      return null;
     };
 
     const giftWrapMessageInput = /** @type {HTMLInputElement | null} */ (getAssociatedField('[data-gift-message-input]'));
-    const giftWrapMessage = giftWrapMessageInput?.value?.trim() || '';
+    let giftWrapMessage = giftWrapMessageInput?.value?.trim() || '';
     const giftWrapInstanceId = (formData.get('properties[_gift_wrap_instance_id]') || '').toString().trim();
     const giftWrapCheckbox = /** @type {HTMLInputElement | null} */ (getAssociatedField('.chk_add_gift'));
     const christmasGiftCheckbox = /** @type {HTMLInputElement | null} */ (getAssociatedField('.christmas-chk_add_gift'));
-    const hasGiftWrapSelected = !!(giftWrapCheckbox?.checked || christmasGiftCheckbox?.checked);
+    let hasGiftWrapSelected = !!(giftWrapCheckbox?.checked || christmasGiftCheckbox?.checked);
     let fallbackGiftWrapInstanceId = giftWrapInstanceId;
+
+    const productId = this.dataset.productId;
+    const storedGiftWrap = productId && window.currentGiftWrapState?.[productId];
+    if (storedGiftWrap) {
+      if (!giftWrapMessage && storedGiftWrap.giftMessage) giftWrapMessage = storedGiftWrap.giftMessage;
+      if (!hasGiftWrapSelected && (storedGiftWrap.giftWrapChecked || storedGiftWrap.christmasChecked)) {
+        hasGiftWrapSelected = true;
+      }
+    }
 
     const getGiftWrapInstanceId = () => {
       if (fallbackGiftWrapInstanceId) return fallbackGiftWrapInstanceId;
@@ -690,35 +708,33 @@ class ProductFormComponent extends Component {
 
     /** @type {Array<{id: string, quantity: number, properties: Record<string, string>}>} */
     const giftWrapItems = [];
-    if (this.dataset.productId) {
-      if (giftWrapCheckbox?.checked && giftWrapCheckbox.value) {
+    if (productId) {
+      const addGiftWrapItem = (variantId) => {
+        if (!variantId) return;
         const resolvedGiftWrapInstanceId = getGiftWrapInstanceId();
         const properties = {
-          _added_with_product: this.dataset.productId,
+          _added_with_product: productId,
           _gift_wrap_source: 'product_page',
         };
         if (resolvedGiftWrapInstanceId) properties._gift_wrap_instance_id = resolvedGiftWrapInstanceId;
         if (giftWrapMessage) properties._gift_wrap_message = giftWrapMessage;
         giftWrapItems.push({
-          id: giftWrapCheckbox.value,
+          id: String(variantId),
           quantity: 1,
           properties,
         });
+      };
+
+      if (giftWrapCheckbox?.checked && giftWrapCheckbox.value) {
+        addGiftWrapItem(giftWrapCheckbox.value);
+      } else if (storedGiftWrap?.giftWrapChecked && storedGiftWrap.giftWrapVariantId) {
+        addGiftWrapItem(storedGiftWrap.giftWrapVariantId);
       }
 
       if (christmasGiftCheckbox?.checked && christmasGiftCheckbox.value) {
-        const resolvedGiftWrapInstanceId = getGiftWrapInstanceId();
-        const properties = {
-          _added_with_product: this.dataset.productId,
-          _gift_wrap_source: 'product_page',
-        };
-        if (resolvedGiftWrapInstanceId) properties._gift_wrap_instance_id = resolvedGiftWrapInstanceId;
-        if (giftWrapMessage) properties._gift_wrap_message = giftWrapMessage;
-        giftWrapItems.push({
-          id: christmasGiftCheckbox.value,
-          quantity: 1,
-          properties,
-        });
+        addGiftWrapItem(christmasGiftCheckbox.value);
+      } else if (storedGiftWrap?.christmasChecked && storedGiftWrap.christmasVariantId) {
+        addGiftWrapItem(storedGiftWrap.christmasVariantId);
       }
     }
 

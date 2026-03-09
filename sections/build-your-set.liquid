@@ -14,6 +14,21 @@
   endif
 %}
 
+{% comment %}
+  Prevent first-load flicker by hiding section until initialization completes.
+{% endcomment %}
+<style>
+  [data-testid="build-your-set"] {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  [data-testid="build-your-set"].build-your-set--hydrated {
+    opacity: 1;
+    visibility: visible;
+  }
+</style>
+
 <div class="section-background color-{{ section.settings.color_scheme }}"></div>
 <div
   data-testid="build-your-set"
@@ -684,6 +699,15 @@
     
     const section = document.querySelector('[data-testid="build-your-set"]');
     if (!section) return;
+    
+    let didRevealSection = false;
+    const revealSection = () => {
+      if (didRevealSection) return;
+      didRevealSection = true;
+      section.classList.add('build-your-set--hydrated');
+    };
+    // Fallback: never keep the section hidden if something errors in init.
+    setTimeout(revealSection, 1200);
 
     const collectionSlider = section.querySelector('[data-collection-slider]');
     const collectionItems = section.querySelectorAll('.build-your-set-collection-item');
@@ -866,6 +890,11 @@
     
     // Setup initial pagination listeners
     setTimeout(setupPaginationClickListeners, 100);
+
+    // Reveal section after initial setup and first layout pass.
+    requestAnimationFrame(function() {
+      requestAnimationFrame(revealSection);
+    });
 
     // Handle collection item clicks (only if there are multiple collections)
     if (collectionItems.length > 1) {

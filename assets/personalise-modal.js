@@ -819,7 +819,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
       name2: !!(root.querySelector('input[name="properties[Name 2]"]') || root.refs?.name2Input),
       name3: !!(root.querySelector('input[name="properties[Name 3]"]') || root.refs?.name3Input),
       name4: !!(root.querySelector('input[name="properties[Name 4]"]') || root.refs?.name4Input),
-      textbox: !!(root.querySelector('textarea[name="properties[Personalisation:]"]') || root.refs?.textboxInput),
+      textbox: !!(root.querySelector('[name="properties[Personalisation:]"]') || root.refs?.textboxInput),
       message: !!(root.querySelector('textarea[name="properties[Message]"]') || root.refs?.messageInput),
       optionalDob: !!(root.querySelector('#dob_field_val') || root.querySelector('input[id="dob_field_val"]') || root.refs?.optionalDobInput),
       time: !!(root.querySelector('input[name="properties[Time]"]') || root.refs?.timeInput),
@@ -969,7 +969,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     }
     
     // Read textbox
-    const textboxInput = form.querySelector('textarea[name="properties[Personalisation:]"]');
+    const textboxInput = form.querySelector('[name="properties[Personalisation:]"]');
     if (textboxInput && textboxInput.value.trim()) {
       personalisation.textbox = textboxInput.value.trim();
     }
@@ -1586,7 +1586,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const name4Input = this.refs.name4Input || this.querySelector('input[name="properties[Name 4]"]');
     if (name4Input && this.personalisationData.name4) name4Input.value = this.personalisationData.name4;
     
-    const textboxInput = this.refs.textboxInput || this.querySelector('textarea[name="properties[Personalisation:]"]');
+    const textboxInput = this.refs.textboxInput || this.querySelector('[name="properties[Personalisation:]"]');
     if (textboxInput && this.personalisationData.textbox) textboxInput.value = this.personalisationData.textbox;
     
     const messageInput = this.refs.messageInput || this.querySelector('textarea[name="properties[Message]"]');
@@ -2156,7 +2156,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const name4Input = this.refs.name4Input || this.querySelector('input[name="properties[Name 4]"]');
     if (name4Input) personalisation.name4 = name4Input.value.trim();
 
-    const textboxInput = this.refs.textboxInput || this.querySelector('textarea[name="properties[Personalisation:]"]');
+    const textboxInput = this.refs.textboxInput || this.querySelector('[name="properties[Personalisation:]"]');
     if (textboxInput) personalisation.textbox = textboxInput.value.trim();
 
     const messageInput = this.refs.messageInput || this.querySelector('textarea[name="properties[Message]"]');
@@ -2777,7 +2777,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
         personalisation.name4 = name4Input.value.trim();
       }
       
-      const textboxInput = targetForm.querySelector('textarea[name="properties[Personalisation:]"]');
+      const textboxInput = targetForm.querySelector('[name="properties[Personalisation:]"]');
       if (textboxInput && textboxInput.value.trim()) {
         personalisation.textbox = textboxInput.value.trim();
       }

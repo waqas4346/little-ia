@@ -99,6 +99,7 @@ Products with personalization are identified by **product tags**. The main tag i
 - **Field Type:** Textarea
 - **Property Name:** `properties[Personalisation:]`
 - **Max Length:** 500 characters
+- **Element:** Text input (not textarea)
 - **Label:** "Enter the names here:"
 - **Placeholder:** "(e.g. Sarah,Jane,Robert)"
 - **Note:** This appears as a separate block outside the main personalization section
