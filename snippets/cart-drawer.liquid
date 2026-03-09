@@ -1372,13 +1372,19 @@
         includeSections: true,
       });
     }
-    await syncGiftWrapDisplayProperties({ wrapperId, giftWrapLineKey: wrapperCartKey, cartData: updateResult }).catch((error) => {
+    await syncGiftWrapDisplayProperties({
+      wrapperId,
+      giftWrapLineKey: wrapperCartKey,
+      cartData: updateResult,
+      includeSections: false,
+    }).catch((error) => {
       console.error('Failed to sync gift wrap display properties after assign', error);
     });
     await syncAssignedProductsGiftMessage({
       wrapperId,
       giftMessage: wrapperGiftMessage,
       cartData: updateResult,
+      includeSections: false,
     }).catch((error) => {
       console.error('Failed to sync assigned product gift messages after assign', error);
     });
@@ -1405,9 +1411,13 @@
     }
     const liveProperties = liveLineItem.properties || (await getLiveLineProperties({ key, line, cartData: liveCartData }));
     // Always prefer live line properties to avoid dropping hidden personalization fields.
-    let properties = { ...(liveProperties || fallbackProperties) };
-    delete properties._gift_wrap_instance_id;
-    delete properties['Gift Wrap Instance'];
+    let properties = sanitizeSplitLineProperties(liveProperties || fallbackProperties || {});
+    // Ensure we don't send an empty properties object on unassign: Shopify can ignore that edge case.
+    if (!Object.keys(properties).length) {
+      properties = {
+        _gift_wrap_split_instance_id: `gws_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      };
+    }
 
     const updateResult = await updateCartLine({
       key: liveLineItem.key || key,

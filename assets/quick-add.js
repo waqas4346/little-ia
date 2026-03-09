@@ -181,11 +181,11 @@ export class QuickAddComponent extends Component {
       ? true
       : explicitBuildYourSet === 'false'
         ? false
-        : productCard?.hasAttribute('data-build-your-set') ||
-          productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
+        : productCard?.hasAttribute('data-build-your-set') === true ||
+          Boolean(productCard?.closest('[data-testid="build-your-set"], .build-your-set-section'));
     const isFromPartyFavours = this.hasAttribute('data-party-favours') ||
                                productCard?.hasAttribute('data-party-favours') ||
-                               productCard?.closest('[data-testid="party-favours"], .party-favours-section') !== null;
+                               Boolean(productCard?.closest('[data-testid="party-favours"], .party-favours-section'));
     
     // Mark the modal content element with a data attribute if from build-your-set or party-favours
     const modalContent = document.getElementById('quick-add-modal-content');
@@ -432,16 +432,20 @@ export class QuickAddComponent extends Component {
           ? true
           : explicitBuildYourSet === 'false'
             ? false
-            : productCard?.hasAttribute('data-build-your-set') ||
-              productCard?.closest('[data-testid="build-your-set"], .build-your-set-section') !== null;
+            : productCard?.hasAttribute('data-build-your-set') === true ||
+              Boolean(productCard?.closest('[data-testid="build-your-set"], .build-your-set-section'));
         const isFromPartyFavours = this.hasAttribute('data-party-favours') ||
                                    productCard?.hasAttribute('data-party-favours') ||
-                                   productCard?.closest('[data-testid="party-favours"], .party-favours-section') !== null;
+                                   Boolean(productCard?.closest('[data-testid="party-favours"], .party-favours-section'));
         if (isFromBuildYourSet) {
           modalContent.setAttribute('data-build-your-set', 'true');
+        } else {
+          modalContent.removeAttribute('data-build-your-set');
         }
         if (isFromPartyFavours) {
           modalContent.setAttribute('data-party-favours', 'true');
+        } else {
+          modalContent.removeAttribute('data-party-favours');
         }
       }
     });
@@ -597,9 +601,13 @@ export class QuickAddComponent extends Component {
     // Restore markers after morphing
     if (wasBuildYourSet) {
       modalContent.setAttribute('data-build-your-set', 'true');
+    } else {
+      modalContent.removeAttribute('data-build-your-set');
     }
     if (wasPartyFavours) {
       modalContent.setAttribute('data-party-favours', 'true');
+    } else {
+      modalContent.removeAttribute('data-party-favours');
     }
 
     this.#syncVariantSelection(modalContent);
