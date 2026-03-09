@@ -314,6 +314,20 @@
                                       </div>
                                     {%- endif -%}
                                   </div>
+                                  <button
+                                    type="button"
+                                    class="button-unstyled cart-drawer-gift-assignment-item__remove"
+                                    data-unassign-gift-wrap
+                                    data-wrapper-id="{{ wrapper_instance_id | escape }}"
+                                    data-wrapper-cart-key="{{ item.key | escape }}"
+                                    data-cart-line="{{ product_item.index | plus: 1 }}"
+                                    data-cart-key="{{ product_item.key | escape }}"
+                                    data-cart-line-quantity="{{ product_item.quantity }}"
+                                    data-line-properties="{{ product_item.properties | json | escape }}"
+                                    aria-label="Remove {{ product_item.product.title | escape }} from gift wrap"
+                                  >
+                                    REMOVE
+                                  </button>
                                 </div>
                               {%- endif -%}
                             {%- endfor -%}
@@ -2212,6 +2226,7 @@
     font-family: 'Outfit', sans-serif;
     font-size: 13px;
     line-height: 1;
+    cursor: pointer;
   }
 
   .cart-drawer-gift-assignment-card__empty {
