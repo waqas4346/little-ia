@@ -14,6 +14,21 @@
   endif
 %}
 
+{% comment %}
+  Prevent first-load flicker by hiding section until initialization completes.
+{% endcomment %}
+<style>
+  [data-testid="party-favours"] {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  [data-testid="party-favours"].party-favours--hydrated {
+    opacity: 1;
+    visibility: visible;
+  }
+</style>
+
 <div class="section-background color-{{ section.settings.color_scheme }}"></div>
 <div
   data-testid="party-favours"
@@ -500,6 +515,15 @@
   document.addEventListener('DOMContentLoaded', function() {
     const section = document.querySelector('[data-testid="party-favours"]');
     if (!section) return;
+    
+    let didRevealSection = false;
+    const revealSection = () => {
+      if (didRevealSection) return;
+      didRevealSection = true;
+      section.classList.add('party-favours--hydrated');
+    };
+    // Fallback: never keep the section hidden if something errors in init.
+    setTimeout(revealSection, 1200);
 
     const minimumQuantity = parseInt(section.dataset.minimumQuantity) || 5;
     const collectionSlider = section.querySelector('[data-collection-slider]');
@@ -509,7 +533,10 @@
     const prevArrow = section.querySelector('[data-collection-arrow="prev"]');
     const nextArrow = section.querySelector('[data-collection-arrow="next"]');
     
-    if (!productsWrapper) return;
+    if (!productsWrapper) {
+      revealSection();
+      return;
+    }
 
     // Setup collection slider scroll functionality (only if collection slider exists)
     if (prevArrow && nextArrow && collectionSlider) {
@@ -722,6 +749,11 @@
     
     // Setup initial pagination listeners
     setTimeout(setupPaginationClickListeners, 100);
+    
+    // Reveal section after initial setup and first layout pass.
+    requestAnimationFrame(function() {
+      requestAnimationFrame(revealSection);
+    });
 
     // Handle collection item clicks (only if there are multiple collections)
     if (collectionItems.length > 1) {

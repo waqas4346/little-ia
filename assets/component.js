@@ -214,7 +214,7 @@ function registerEventListeners() {
   initialized = true;
 
   const events = ['click', 'change', 'select', 'focus', 'blur', 'submit', 'input', 'keydown', 'keyup', 'toggle'];
-  const shouldBubble = ['focus', 'blur'];
+  const shouldBubble = ['focus', 'blur', 'submit'];
   const expensiveEvents = ['pointerenter', 'pointerleave'];
 
   for (const eventName of [...events, ...expensiveEvents]) {
