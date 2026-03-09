@@ -544,6 +544,7 @@
     normalizeTimer: null,
     messageContext: null,
     isFastAddingGiftWrap: false,
+    isFastAddingRegularProduct: false,
     isAssigningGiftItem: false,
     interactionLockCount: 0,
   });
@@ -620,6 +621,18 @@
 
   function generateWrapperInstanceId() {
     return `gw_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function sanitizeSplitLineProperties(properties) {
+    const cleaned = normalizeProperties(properties || {});
+    delete cleaned._gift_wrap_instance_id;
+    delete cleaned['Gift Wrap Instance'];
+    delete cleaned._gift_wrap_source;
+    delete cleaned._added_with_product;
+    delete cleaned._gift_wrap_message;
+    delete cleaned['Gift Message'];
+    clearAttachedProductProperties(cleaned);
+    return cleaned;
   }
 
   function setLiveCartCache(cartData) {
@@ -727,6 +740,8 @@
       '_gift_wrap_source',
       '_added_with_product',
       '_gift_wrap_message',
+      '_gift_wrap_split_instance_id',
+      'gift_wrap_split_instance_id',
       'Gift Message',
       'Attached Products',
     ]);
@@ -1194,6 +1209,52 @@
     triggerCartUpdate(responseData?.sections);
   }
 
+  async function addRegularProductSplitInstances(lineItem, count = 1) {
+    const normalizedCount = Number(count);
+    const variantId = Number(lineItem?.variant_id || 0);
+    if (!variantId || normalizedCount <= 0) return;
+
+    const baseProperties = sanitizeSplitLineProperties(lineItem?.properties || {});
+    const sectionIds = getSectionIds();
+    const items = [];
+    for (let index = 0; index < normalizedCount; index += 1) {
+      const item = {
+        id: variantId,
+        quantity: 1,
+        properties: {
+          ...baseProperties,
+          _gift_wrap_split_instance_id: `gws_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        },
+      };
+
+      const sellingPlanId = Number(lineItem?.selling_plan_allocation?.selling_plan?.id || 0);
+      if (sellingPlanId > 0) {
+        item.selling_plan = sellingPlanId;
+      }
+      items.push(item);
+    }
+
+    const response = await fetch('/cart/add.js', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        items,
+        sections: sectionIds.join(','),
+        sections_url: window.location.pathname,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to add split product line');
+    }
+
+    const responseData = await response.json();
+    clearLiveCartCache();
+    triggerCartUpdate(responseData?.sections);
+  }
+
   async function handleAddGiftWrap(button) {
     const variantId = button.dataset.giftVariantId;
     if (!variantId) return;
@@ -1209,9 +1270,17 @@
     if (!line || !quantity || !wrapperId) return;
 
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
-    const liveCartData = await getLiveCartData();
-    const liveLineItem = await getLiveLineItem({ key, line, cartData: liveCartData });
-    const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
+    let liveCartData = await getLiveCartData();
+    let liveLineItem = await getLiveLineItem({ key, line, cartData: liveCartData });
+    if (!liveLineItem) {
+      liveCartData = await getLiveCartData({ force: true });
+      liveLineItem = await getLiveLineItem({ key, line, cartData: liveCartData });
+    }
+    if (!liveLineItem) {
+      console.warn('Assign aborted: could not resolve live cart line reference', { key, line });
+      return;
+    }
+    const liveProperties = liveLineItem.properties || (await getLiveLineProperties({ key, line, cartData: liveCartData }));
     const wrapperGiftLine = (liveCartData?.items || []).find((item) => {
       if (!item) return false;
       if (wrapperCartKey && item.key === wrapperCartKey) return true;
@@ -1283,9 +1352,8 @@
       updateResult = latestCartData;
     } else {
       updateResult = await updateCartLine({
-        line,
-        key,
-        quantity,
+        key: sourceLineKey,
+        quantity: liveQuantity,
         properties,
         includeSections: true,
       });
@@ -1311,17 +1379,25 @@
     if (!line || !quantity) return;
 
     const fallbackProperties = parseLineProperties(button.dataset.lineProperties);
-    const liveCartData = await getLiveCartData();
-    const liveProperties = await getLiveLineProperties({ key, line, cartData: liveCartData });
+    let liveCartData = await getLiveCartData();
+    let liveLineItem = await getLiveLineItem({ key, line, cartData: liveCartData });
+    if (!liveLineItem) {
+      liveCartData = await getLiveCartData({ force: true });
+      liveLineItem = await getLiveLineItem({ key, line, cartData: liveCartData });
+    }
+    if (!liveLineItem) {
+      console.warn('Unassign aborted: could not resolve live cart line reference', { key, line });
+      return;
+    }
+    const liveProperties = liveLineItem.properties || (await getLiveLineProperties({ key, line, cartData: liveCartData }));
     // Always prefer live line properties to avoid dropping hidden personalization fields.
     let properties = { ...(liveProperties || fallbackProperties) };
     delete properties._gift_wrap_instance_id;
     delete properties['Gift Wrap Instance'];
 
     const updateResult = await updateCartLine({
-      line,
-      key,
-      quantity,
+      key: liveLineItem.key || key,
+      quantity: Number(liveLineItem.quantity || quantity || 0),
       properties,
       includeSections: true,
     });
@@ -1571,8 +1647,18 @@
     const rowProductId = row.dataset.productId;
     const rowVariantId = row.dataset.variantId;
     if (!rowProductId || !rowVariantId) return;
-    if (String(rowProductId) !== String(configuredGiftWrapProductId)) return;
-    if (giftWrapDrawerState.isNormalizingGiftWrapLines || giftWrapDrawerState.isFastAddingGiftWrap) return;
+    const isGiftWrapRow = String(rowProductId) === String(configuredGiftWrapProductId);
+    const hasGiftWrapInCartFromDom = !!document.querySelector(
+      `.cart-items__table-row[data-product-id="${configuredGiftWrapProductId}"]`
+    );
+    if (
+      giftWrapDrawerState.isNormalizingGiftWrapLines ||
+      giftWrapDrawerState.isFastAddingGiftWrap ||
+      giftWrapDrawerState.isFastAddingRegularProduct
+    ) {
+      return;
+    }
+    if (!isGiftWrapRow && !hasGiftWrapInCartFromDom) return;
 
     event.preventDefault();
     event.stopPropagation();
@@ -1580,16 +1666,30 @@
       event.stopImmediatePropagation();
     }
 
-    giftWrapDrawerState.isFastAddingGiftWrap = true;
+    if (isGiftWrapRow) {
+      giftWrapDrawerState.isFastAddingGiftWrap = true;
+    } else {
+      giftWrapDrawerState.isFastAddingRegularProduct = true;
+    }
     setDrawerInteractionLock(true);
     plusButton.disabled = true;
     plusButton.classList.add(loadingClass);
     try {
-      await handleAddGiftWrap({ dataset: { giftVariantId: rowVariantId } });
+      if (isGiftWrapRow) {
+        await handleAddGiftWrap({ dataset: { giftVariantId: rowVariantId } });
+      } else {
+        const liveCartData = await getLiveCartData();
+        const quantityInput = row.querySelector('input[data-cart-line]');
+        const cartLine = Number(quantityInput?.dataset?.cartLine || 0);
+        const liveLineItem = await getLiveLineItem({ line: cartLine, cartData: liveCartData });
+        if (!liveLineItem) return;
+        await addRegularProductSplitInstances(liveLineItem, 1);
+      }
     } catch (error) {
-      console.error('Gift wrap fast add failed', error);
+      console.error('Cart fast add on increment failed', error);
     } finally {
       giftWrapDrawerState.isFastAddingGiftWrap = false;
+      giftWrapDrawerState.isFastAddingRegularProduct = false;
       setDrawerInteractionLock(false);
       plusButton.disabled = false;
       plusButton.classList.remove(loadingClass);
@@ -1615,12 +1715,23 @@
     const rowProductId = row.dataset.productId;
     const rowVariantId = row.dataset.variantId;
     if (!rowProductId || !rowVariantId) return;
-    if (String(rowProductId) !== String(configuredGiftWrapProductId)) return;
+    const isGiftWrapRow = String(rowProductId) === String(configuredGiftWrapProductId);
+    const hasGiftWrapInCartFromDom = !!document.querySelector(
+      `.cart-items__table-row[data-product-id="${configuredGiftWrapProductId}"]`
+    );
 
     const currentQuantity = Number(quantityInput.defaultValue || quantityInput.getAttribute('value') || quantityInput.value || '0');
     const quantityDelta = requestedQuantity - currentQuantity;
     if (quantityDelta <= 0) return;
-    if (giftWrapDrawerState.isNormalizingGiftWrapLines || giftWrapDrawerState.isFastAddingGiftWrap) return;
+    if (
+      giftWrapDrawerState.isNormalizingGiftWrapLines ||
+      giftWrapDrawerState.isFastAddingGiftWrap ||
+      giftWrapDrawerState.isFastAddingRegularProduct
+    ) {
+      return;
+    }
+
+    if (!isGiftWrapRow && !hasGiftWrapInCartFromDom) return;
 
     event.preventDefault();
     event.stopPropagation();
@@ -1628,15 +1739,27 @@
       event.stopImmediatePropagation();
     }
 
-    giftWrapDrawerState.isFastAddingGiftWrap = true;
+    if (isGiftWrapRow) {
+      giftWrapDrawerState.isFastAddingGiftWrap = true;
+    } else {
+      giftWrapDrawerState.isFastAddingRegularProduct = true;
+    }
     setDrawerInteractionLock(true);
     quantityInput.value = String(currentQuantity);
     try {
-      await addGiftWrapInstances(rowVariantId, quantityDelta);
+      if (isGiftWrapRow) {
+        await addGiftWrapInstances(rowVariantId, quantityDelta);
+      } else {
+        const liveCartData = await getLiveCartData();
+        const liveLineItem = await getLiveLineItem({ line: cartLine, cartData: liveCartData });
+        if (!liveLineItem) return;
+        await addRegularProductSplitInstances(liveLineItem, quantityDelta);
+      }
     } catch (error) {
-      console.error('Gift wrap quantity interception failed', error);
+      console.error('Product quantity interception failed', error);
     } finally {
       giftWrapDrawerState.isFastAddingGiftWrap = false;
+      giftWrapDrawerState.isFastAddingRegularProduct = false;
       setDrawerInteractionLock(false);
     }
   };
