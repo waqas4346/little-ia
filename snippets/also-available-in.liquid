@@ -118,21 +118,4 @@
     {% endif %}
   {% endfor %}
 
-  <style>
-    /* Match exact styling from variant-main-picker for image thumbnails */
-    .variant-option--image-thumbnails[data-fieldset-index^="also-available-in"] {
-      margin-top: 0;
-      margin-bottom: 18px;
-    }
-
-    .variant-option--image-thumbnails[data-fieldset-index^="also-available-in"] .variant-option__button-label--image-thumbnail[data-current-product="true"],
-    .variant-option--image-thumbnails[data-fieldset-index^="also-available-in"] .variant-option__button-label--image-thumbnail.variant-option__button-label--current-product {
-      border: 1px solid #7295BB;
-    }
-
-    .variant-option--image-thumbnails[data-fieldset-index^="also-available-in"] .variant-option__button-label--image-thumbnail[data-current-product="true"]:hover,
-    .variant-option--image-thumbnails[data-fieldset-index^="also-available-in"] .variant-option__button-label--image-thumbnail.variant-option__button-label--current-product:hover {
-      border-color: #7295BB;
-    }
-  </style>
 {% endif %}

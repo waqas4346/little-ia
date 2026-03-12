@@ -392,12 +392,6 @@
     width: 100%;
   }
 
-  @media screen and (max-width: 749px) {
-    .variant-picker {
-      margin-top: 16px;
-    }
-  }
-
   .variant-picker__form {
     width: 100%;
   }
@@ -1008,6 +1002,26 @@
     gap: 10px;
   }
 
+  @media screen and (max-width: 749px) {
+    /* Force image thumbnails in a row on mobile - override any column layout */
+    .variant-option--image-thumbnails,
+    .variant-option--image-thumbnails[data-fieldset-index^="also-available-in"] {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: wrap !important;
+      align-items: flex-start !important;
+      gap: 10px !important;
+    }
+
+    .variant-option--image-thumbnails .variant-option__button-label--image-thumbnail,
+    .variant-option--image-thumbnails[data-fieldset-index^="also-available-in"] .variant-option__button-label--image-thumbnail {
+      flex: 0 0 64px !important;
+      width: 64px !important;
+      min-width: 64px !important;
+      max-width: 64px !important;
+    }
+  }
+
   .variant-option--image-thumbnails .variant-option__button-label--tile {
     /* Prevent tile styles from applying to image thumbnails */
     padding: 0 !important;
@@ -1091,6 +1105,16 @@
   .variant-option__button-label--image-thumbnail:has(:focus-visible) {
     outline: 2px solid currentColor;
     outline-offset: 2px;
+  }
+
+  .variant-option--image-thumbnails[data-fieldset-index^="also-available-in"] .variant-option__button-label--image-thumbnail[data-current-product="true"],
+  .variant-option--image-thumbnails[data-fieldset-index^="also-available-in"] .variant-option__button-label--image-thumbnail.variant-option__button-label--current-product {
+    border: 1px solid #7295BB;
+  }
+
+  .variant-option--image-thumbnails[data-fieldset-index^="also-available-in"] .variant-option__button-label--image-thumbnail[data-current-product="true"]:hover,
+  .variant-option--image-thumbnails[data-fieldset-index^="also-available-in"] .variant-option__button-label--image-thumbnail.variant-option__button-label--current-product:hover {
+    border-color: #7295BB;
   }
 
   /* Tile styles for Size options */
