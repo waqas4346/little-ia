@@ -183,6 +183,7 @@
     .product-information__grid {
       display: flex;
       flex-direction: column;
+      gap: max(var(--gap), 16px) 0; /* Ensure gap between media/divider and variant picker heading */
     }
 
     .product-details {
@@ -228,8 +229,9 @@
       order: -1 !important;
       width: 100%;
       padding-inline: var(--padding-lg);
-      margin-top: 16px;
-      display: block;
+      margin-top: 32px !important;
+      padding-top: 16px !important; /* Ensures visible gap - padding doesn't collapse */
+      display: block !important;
     }
 
     /* Other product details appear after variant picker */
