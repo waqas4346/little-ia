@@ -1,3 +1,12 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
     "main": {
@@ -7,7 +16,7 @@
           "type": "text",
           "name": "t:names.title",
           "settings": {
-            "text": "<h1>{{ closest.page.title }}<\/h1>",
+            "text": "<h1>{{ closest.page.title }}</h1>",
             "width": "100%",
             "max_width": "normal",
             "alignment": "center",
@@ -74,9 +83,14 @@
       "name": "Page banner",
       "settings": {
         "section_width": "full-width",
-        "image": "shopify:\/\/shop_images\/12_e44d2191-6208-4947-97da-84d122b07f66.png",
+        "banner_height_desktop": 336,
+        "banner_height_mobile": 382,
+        "image": "shopify://shop_images/12_e44d2191-6208-4947-97da-84d122b07f66.png",
         "title": "{{ page.title }}",
-        "description": ""
+        "description": "",
+        "banner_text_color": "",
+        "banner_overlay_color": "",
+        "content_position": "on_top"
       }
     },
     "form": {
@@ -126,7 +140,7 @@
               "type": "text",
               "name": "t:names.heading",
               "settings": {
-                "text": "<h4><strong>GET IN TOUCH<\/strong><\/h4>",
+                "text": "<h4><strong>GET IN TOUCH</strong></h4>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -152,7 +166,7 @@
               "type": "text",
               "name": "t:names.text",
               "settings": {
-                "text": "<p>We'd love to hear from you! If you have any questions, please feel free to email us at <a href=\"mailto:support@izaakazanei.com\" target=\"_blank\" title=\"mailto:support@izaakazanei.com\">support@little-ia.com<\/a>. Alternatively you can use the form below.<\/p>",
+                "text": "<p>We'd love to hear from you! If you have any questions, please feel free to email us at <a href=\"mailto:support@izaakazanei.com\" target=\"_blank\" title=\"mailto:support@izaakazanei.com\">support@little-ia.com</a>. Alternatively you can use the form below.</p>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -257,7 +271,7 @@
               "type": "text",
               "name": "t:names.heading",
               "settings": {
-                "text": "<h4><strong>CONTACT INFO<\/strong><\/h4>",
+                "text": "<h4><strong>CONTACT INFO</strong></h4>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",
@@ -283,7 +297,7 @@
               "type": "text",
               "name": "t:names.text",
               "settings": {
-                "text": "<p><strong>HEAD OFFICE<\/strong><\/p><p>LITTLE IA WORLD GARMENT TRADING CO LLC<br\/>Office 3402-3403 Jumeirah Bay X2 Tower, Cluster X JLT<br\/>Dubai, United Arab Emirates<br\/>Office hours: 9 AM to 6 PM (Monday - Friday) except Public Holidays<br\/>Email: <a href=\"mailto:support@little-ia.com\" target=\"_blank\" title=\"mailto:support@little-ia.com\">support@little-ia.com<\/a><br\/>Tel: +971 4417 9480<\/p><p><strong>Press enquiries: <\/strong><a href=\"mailto:roshni@little-ia.com\" target=\"_blank\" title=\"mailto:roshni@little-ia.com\">roshni@little-ia.com<\/a><\/p><p><strong>Wholesale enquiries: <\/strong><a href=\"mailto:ulka@l.commailto:ulka@little-ia.commailto:ulka@little-iacom\" target=\"_blank\" title=\"mailto:ulka@l.commailto:ulka@little-ia.commailto:ulka@little-iacom\">ulka@little-ia.com<\/a><\/p>",
+                "text": "<p><strong>HEAD OFFICE</strong></p><p>LITTLE IA WORLD GARMENT TRADING CO LLC<br/>Office No. 1, Grand Stores Logistic Centre, DIP 1, Dubai, United Arab Emirates<br/>Office hours: 9 AM to 6 PM, Monday to Friday | 9 AM to 3 PM, Saturday | Closed on Sunday.<br/>Email: <a href=\"mailto:support@little-ia.com\" target=\"_blank\" title=\"mailto:support@little-ia.com\">support@little-ia.com</a><br/>Tel: +971 <a href=\"tel:+971 50 579 5125\">50 579 5125</a></p><p><strong>Press enquiries: </strong><a href=\"mailto:roshni@little-ia.com\" target=\"_blank\" title=\"mailto:roshni@little-ia.com\">roshni@little-ia.com</a></p><p><strong>Wholesale enquiries: </strong><a href=\"mailto:ulka@l.commailto:ulka@little-ia.commailto:ulka@little-iacom\" target=\"_blank\" title=\"mailto:ulka@l.commailto:ulka@little-ia.commailto:ulka@little-iacom\">ulka@little-ia.com</a></p>",
                 "width": "fit-content",
                 "max_width": "normal",
                 "alignment": "left",

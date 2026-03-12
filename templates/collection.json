@@ -13,7 +13,9 @@
       "type": "collection-banner",
       "name": "Collection banner",
       "settings": {
-        "section_width": "full-width"
+        "section_width": "full-width",
+        "banner_height_desktop": 336,
+        "banner_height_mobile": 382
       }
     },
     "sub_collections_fJQhV8": {
@@ -245,8 +247,18 @@
       "name": "Collection Slider",
       "settings": {
         "heading": "explore",
-        "subheading": "All Categories",
-        "collection_list": [],
+        "subheading": "Little IA Partner Brands",
+        "collection_list": [
+          "ck-monbento",
+          "ck-olli-ella",
+          "ck-the-jewel-bar",
+          "ck-omielife",
+          "ck-bob-and-blossom",
+          "ck-mark-design",
+          "takenaka",
+          "corkcicle",
+          "hydro-flask"
+        ],
         "layout_type": "carousel",
         "columns": 4,
         "mobile_card_size": "44cqw",

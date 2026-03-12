@@ -22,7 +22,7 @@
             "icon_size": 32,
             "icon_size_mobile": 22,
             "heading": "<p>COMPLIMENTARY<br/>PERSONALISATION</p>",
-            "sub_heading": "on all items",
+            "sub_heading": "on select items",
             "alignment": "vertical",
             "gap": 8
           },
@@ -36,7 +36,7 @@
             "icon_size": 32,
             "icon_size_mobile": 22,
             "heading": "<p>SAME DAY DELIVERY<br/>IN DUBAI</p>",
-            "sub_heading": "till 12pm",
+            "sub_heading": "orders before 9:30am",
             "alignment": "vertical",
             "gap": 8
           },

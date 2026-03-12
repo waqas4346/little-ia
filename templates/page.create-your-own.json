@@ -1,0 +1,403 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "blocks": {
+        "heading": {
+          "type": "text",
+          "name": "Title",
+          "settings": {
+            "text": "<p>The Wonderful World of</p>",
+            "width": "100%",
+            "max_width": "normal",
+            "alignment": "center",
+            "type_preset": "h2",
+            "font": "var(--font-primary--family)",
+            "font_size": "",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "text_PPJ7CU": {
+          "type": "text",
+          "name": "t:names.text",
+          "settings": {
+            "text": "<p>We make things that work better and last longer. Our products solve real problems with clean design and honest materials.</p>",
+            "width": "100%",
+            "max_width": "none",
+            "alignment": "center",
+            "type_preset": "rte",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "color": "var(--color-foreground)",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "heading",
+        "text_PPJ7CU"
+      ],
+      "disabled": true,
+      "settings": {
+        "content_direction": "column",
+        "gap": 32,
+        "color_scheme": "",
+        "padding-block-start": 48,
+        "padding-block-end": 0
+      }
+    },
+    "page_banner_9wmhRg": {
+      "type": "page-banner",
+      "name": "Page banner",
+      "settings": {
+        "section_width": "full-width",
+        "banner_height_desktop": 336,
+        "banner_height_mobile": 382,
+        "image": "shopify://shop_images/1N0A8534-2_1800x1800_8fdd1dc6-1a35-4d22-99b3-b80ee4ee7b26.jpg",
+        "title": "Create Your Own",
+        "description": "",
+        "banner_text_color": "",
+        "banner_overlay_color": "",
+        "content_position": "on_top"
+      }
+    },
+    "section_FdEmF7": {
+      "type": "section",
+      "blocks": {
+        "image_with_text_E3hJgC": {
+          "type": "image-with-text",
+          "name": "Image with text",
+          "settings": {
+            "image": "shopify://shop_images/Frame_1437254868_1.png",
+            "link": "",
+            "image_ratio": "adapt",
+            "width": "fill",
+            "custom_width": 100,
+            "width_mobile": "fill",
+            "custom_width_mobile": 100,
+            "height": "fit",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0,
+            "heading": "Brand 1",
+            "sub_heading": "",
+            "body_text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,",
+            "links_text": "Shop Now",
+            "link_url": "#"
+          },
+          "blocks": {}
+        },
+        "image_with_text_ywULUh": {
+          "type": "image-with-text",
+          "name": "Image with text",
+          "settings": {
+            "image": "shopify://shop_images/Tezza-8764.jpg",
+            "link": "",
+            "image_ratio": "adapt",
+            "width": "fill",
+            "custom_width": 100,
+            "width_mobile": "fill",
+            "custom_width_mobile": 100,
+            "height": "fit",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0,
+            "heading": "Brand 2",
+            "sub_heading": "",
+            "body_text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,",
+            "links_text": "Shop Now",
+            "link_url": "#"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "image_with_text_E3hJgC",
+        "image_with_text_ywULUh"
+      ],
+      "name": "t:names.multicolumn",
+      "settings": {
+        "content_direction": "row",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "flex-start",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 16,
+        "icons_with_text_inline": false,
+        "section_width": "page-width",
+        "section_height": "",
+        "section_height_custom": 50,
+        "color_scheme": "",
+        "background_media": "none",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_radius": 0,
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "padding-block-start": 48,
+        "padding-block-end": 24
+      }
+    },
+    "section_4HUrtP": {
+      "type": "section",
+      "blocks": {
+        "image_with_text_ecdrC9": {
+          "type": "image-with-text",
+          "name": "Image with text",
+          "settings": {
+            "image": "shopify://shop_images/Frame_1437254868_1.png",
+            "link": "",
+            "image_ratio": "adapt",
+            "width": "fill",
+            "custom_width": 100,
+            "width_mobile": "fill",
+            "custom_width_mobile": 100,
+            "height": "fit",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0,
+            "heading": "Brand 1",
+            "sub_heading": "",
+            "body_text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,",
+            "links_text": "Shop Now",
+            "link_url": "#"
+          },
+          "blocks": {}
+        },
+        "image_with_text_a3kgRH": {
+          "type": "image-with-text",
+          "name": "Image with text",
+          "settings": {
+            "image": "shopify://shop_images/Tezza-8764.jpg",
+            "link": "",
+            "image_ratio": "adapt",
+            "width": "fill",
+            "custom_width": 100,
+            "width_mobile": "fill",
+            "custom_width_mobile": 100,
+            "height": "fit",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0,
+            "heading": "Brand 2",
+            "sub_heading": "",
+            "body_text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,",
+            "links_text": "Shop Now",
+            "link_url": "#"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "image_with_text_ecdrC9",
+        "image_with_text_a3kgRH"
+      ],
+      "name": "t:names.multicolumn",
+      "settings": {
+        "content_direction": "row",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "flex-start",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 16,
+        "icons_with_text_inline": false,
+        "section_width": "page-width",
+        "section_height": "",
+        "section_height_custom": 50,
+        "color_scheme": "",
+        "background_media": "none",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_radius": 0,
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "padding-block-start": 24,
+        "padding-block-end": 24
+      }
+    },
+    "section_mm6Bh6": {
+      "type": "section",
+      "blocks": {
+        "image_with_text_63UPAm": {
+          "type": "image-with-text",
+          "name": "Image with text",
+          "settings": {
+            "image": "shopify://shop_images/Frame_1437254868_1.png",
+            "link": "",
+            "image_ratio": "adapt",
+            "width": "fill",
+            "custom_width": 100,
+            "width_mobile": "fill",
+            "custom_width_mobile": 100,
+            "height": "fit",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0,
+            "heading": "Brand 1",
+            "sub_heading": "",
+            "body_text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,",
+            "links_text": "Shop Now",
+            "link_url": "#"
+          },
+          "blocks": {}
+        },
+        "image_with_text_YrmJhm": {
+          "type": "image-with-text",
+          "name": "Image with text",
+          "settings": {
+            "image": "shopify://shop_images/Tezza-8764.jpg",
+            "link": "",
+            "image_ratio": "adapt",
+            "width": "fill",
+            "custom_width": 100,
+            "width_mobile": "fill",
+            "custom_width_mobile": 100,
+            "height": "fit",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0,
+            "heading": "Brand 2",
+            "sub_heading": "",
+            "body_text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,",
+            "links_text": "Shop Now",
+            "link_url": "#"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "image_with_text_63UPAm",
+        "image_with_text_YrmJhm"
+      ],
+      "disabled": true,
+      "name": "t:names.multicolumn",
+      "settings": {
+        "content_direction": "row",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "flex-start",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 16,
+        "icons_with_text_inline": false,
+        "section_width": "page-width",
+        "section_height": "",
+        "section_height_custom": 50,
+        "color_scheme": "",
+        "background_media": "none",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_radius": 0,
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "padding-block-start": 24,
+        "padding-block-end": 24
+      }
+    },
+    "brands_chzeE6": {
+      "type": "brands",
+      "name": "Brands",
+      "settings": {
+        "image": "shopify://shop_images/silver_gold_1024x1024_2x_0b61361e-9928-467d-92ba-e7c49a86b08a.webp",
+        "title": "Featured Brands",
+        "body": "<p>Add your body text here.</p>",
+        "button_text": "Shop All Brands",
+        "button_url": "#",
+        "section_width": "page-width",
+        "color_scheme": "",
+        "padding-block-start": 48,
+        "padding-block-end": 48
+      }
+    }
+  },
+  "order": [
+    "main",
+    "page_banner_9wmhRg",
+    "section_FdEmF7",
+    "section_4HUrtP",
+    "section_mm6Bh6",
+    "brands_chzeE6"
+  ]
+}

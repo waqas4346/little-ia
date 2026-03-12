@@ -17,9 +17,9 @@
           "settings": {
             "media_type_1": "video",
             "image_1": "shopify://shop_images/Frame_1400008471_2.png",
-            "video_1": "shopify://files/videos/School essentials.mp4",
-            "full_screen_desktop": false,
-            "full_screen_mobile": false,
+            "video_1": "shopify://files/videos/main video.MP4",
+            "full_screen_desktop": true,
+            "full_screen_mobile": true,
             "content_direction": "column",
             "vertical_on_mobile": true,
             "horizontal_alignment": "flex-start",
@@ -32,7 +32,7 @@
             "gap": 12,
             "inherit_color_scheme": false,
             "color_scheme": "scheme-6",
-            "toggle_overlay": false,
+            "toggle_overlay": true,
             "overlay_color": "#00000026",
             "overlay_style": "solid",
             "gradient_direction": "to top",
@@ -123,8 +123,8 @@
           "settings": {
             "media_type_1": "image",
             "image_1": "shopify://shop_images/f31950ff-c215-4e63-8ab2-65b6db9bd76b.jpg",
-            "full_screen_desktop": false,
-            "full_screen_mobile": false,
+            "full_screen_desktop": true,
+            "full_screen_mobile": true,
             "content_direction": "column",
             "vertical_on_mobile": true,
             "horizontal_alignment": "flex-start",
@@ -334,7 +334,13 @@
       "settings": {
         "heading": "explore",
         "subheading": "All Categories",
-        "collection_list": [],
+        "collection_list": [
+          "view-all-newborn",
+          "back-to-school-essentials-1",
+          "view-all-summer-and-travel",
+          "little-ia-partner-brands",
+          "gifts-for-him-her"
+        ],
         "layout_type": "carousel",
         "columns": 4,
         "mobile_card_size": "44cqw",
@@ -459,6 +465,7 @@
         "icon_acMeDi",
         "text_qmbz7c"
       ],
+      "disabled": true,
       "name": "t:names.marquee_section",
       "settings": {
         "movement_direction": "normal",
@@ -567,11 +574,10 @@
       "settings": {
         "collection": "",
         "collection_list": [
-          "personalised-baby-clothing",
-          "knitwear-for-baby",
-          "baby-sleepsuits",
-          "back-to-school-essentials",
-          "backpack"
+          "newborn-bestsellers",
+          "cb-school-bestsellers",
+          "cs_-summer-travel-bestsellers",
+          "little-ia-partrner-brands-bestsellers"
         ],
         "top_label": "shop",
         "section_title": "OUR BESTSELLERS",
@@ -592,6 +598,148 @@
         "color_scheme": "scheme-6",
         "padding-block-start": 48,
         "padding-block-end": 48
+      }
+    },
+    "section_EfcYck": {
+      "type": "section",
+      "blocks": {
+        "image_with_text_fza9wV": {
+          "type": "image-with-text",
+          "name": "Image with text",
+          "settings": {
+            "image": "shopify://shop_images/P7.png",
+            "link": "shopify://pages/create-your-own",
+            "image_ratio": "adapt",
+            "width": "fill",
+            "custom_width": 100,
+            "width_mobile": "fill",
+            "custom_width_mobile": 100,
+            "height": "fit",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0,
+            "heading": "Create your own",
+            "sub_heading": "with love & letters",
+            "body_text": "",
+            "links_text": "personalise now",
+            "link_url": "#"
+          },
+          "blocks": {}
+        },
+        "image_with_text_Ei4Agh": {
+          "type": "image-with-text",
+          "name": "Image with text",
+          "settings": {
+            "image": "shopify://shop_images/1f0a82df-aa0d-430b-a09b-b746a0f5810b.jpg",
+            "link": "shopify://collections/cf-view-all-party-favours",
+            "image_ratio": "adapt",
+            "width": "fill",
+            "custom_width": 100,
+            "width_mobile": "fill",
+            "custom_width_mobile": 100,
+            "height": "fit",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0,
+            "heading": "shop",
+            "sub_heading": "Party favours",
+            "body_text": "",
+            "links_text": "Gifts for Big Celebrations",
+            "link_url": "#"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "image_with_text_fza9wV",
+        "image_with_text_Ei4Agh"
+      ],
+      "name": "t:names.multicolumn",
+      "settings": {
+        "content_direction": "row",
+        "vertical_on_mobile": true,
+        "horizontal_alignment": "flex-start",
+        "vertical_alignment": "flex-start",
+        "align_baseline": false,
+        "horizontal_alignment_flex_direction_column": "flex-start",
+        "vertical_alignment_flex_direction_column": "center",
+        "gap": 16,
+        "icons_with_text_inline": false,
+        "section_width": "page-width",
+        "section_height": "",
+        "section_height_custom": 50,
+        "color_scheme": "scheme-1",
+        "background_media": "none",
+        "video_position": "cover",
+        "background_image_position": "cover",
+        "border": "none",
+        "border_width": 1,
+        "border_opacity": 100,
+        "border_radius": 0,
+        "toggle_overlay": false,
+        "overlay_color": "#00000026",
+        "overlay_style": "solid",
+        "gradient_direction": "to top",
+        "padding-block-start": 60,
+        "padding-block-end": 60
+      }
+    },
+    "collection_slider_WEwAhB": {
+      "type": "collection-slider",
+      "name": "Collection Slider",
+      "settings": {
+        "heading": "explore",
+        "subheading": "All Ages",
+        "collection_list": [
+          "ca-all-ages",
+          "age-0-to-2",
+          "ca-age-1-to-3-years",
+          "ca-age-3-to-5-years",
+          "ca-age-6-to-8",
+          "ca-age-8",
+          "gifts-for-him-her"
+        ],
+        "layout_type": "carousel",
+        "columns": 4,
+        "mobile_card_size": "44cqw",
+        "columns_gap": 12,
+        "icons_style": "chevron",
+        "icons_shape": "circle",
+        "section_width": "page-width",
+        "gap": 12,
+        "color_scheme": "scheme-1",
+        "padding-block-start": 16,
+        "padding-block-end": 30
+      }
+    },
+    "promise_section_fTQwDr": {
+      "type": "promise-section",
+      "name": "Promise Section",
+      "settings": {
+        "heading": "our promise",
+        "heading_icon_left": "none",
+        "heading_image_left": "shopify://shop_images/Vector.png",
+        "heading_icon_right": "none",
+        "heading_icon_size": 40,
+        "subheading": "<p>Eco-friendly, high-quality, and personalised with love. So you can celebrate the magic of childhood with items made to be treasured.</p>",
+        "subheading_icon_left": "heart",
+        "subheading_image_left": "shopify://shop_images/Vector_2.png",
+        "subheading_icon_right": "none",
+        "subheading_image_right": "shopify://shop_images/image_2856.png",
+        "subheading_icon_size": 40,
+        "color_scheme": "scheme-6",
+        "padding-block-start": 25,
+        "padding-block-end": 25
       }
     },
     "hero_NAcLj6": {
@@ -671,7 +819,7 @@
       "name": "t:names.hero",
       "settings": {
         "media_type_1": "image",
-        "image_1": "shopify://shop_images/8a9d114a-71bf-446e-9f5e-6b158e7b31ba.jpg",
+        "image_1": "shopify://shop_images/AOF1189_VSCO.jpg",
         "media_type_2": "image",
         "stack_media_on_mobile": false,
         "custom_mobile_media": false,
@@ -700,7 +848,7 @@
         "section_height_custom": 50,
         "color_scheme": "scheme-63520b57-450b-46e7-829f-b39ea2f7bfc2",
         "toggle_overlay": true,
-        "overlay_color": "#00000026",
+        "overlay_color": "#00000003",
         "overlay_style": "gradient",
         "gradient_direction": "to top",
         "blurred_reflection": false,
@@ -711,29 +859,16 @@
         "margin-block-end": 60
       }
     },
-    "promise_section_fTQwDr": {
-      "type": "promise-section",
-      "name": "Promise Section",
-      "settings": {
-        "heading": "our promise",
-        "heading_icon_left": "none",
-        "heading_image_left": "shopify://shop_images/Vector.png",
-        "heading_icon_right": "none",
-        "heading_icon_size": 40,
-        "subheading": "<p>Eco-friendly, high-quality, and personalised with love. So you can celebrate the magic of childhood with items made to be treasured.</p>",
-        "subheading_icon_left": "heart",
-        "subheading_image_left": "shopify://shop_images/Vector_2.png",
-        "subheading_icon_right": "none",
-        "subheading_image_right": "shopify://shop_images/image_2856.png",
-        "subheading_icon_size": 40,
-        "color_scheme": "scheme-6",
-        "padding-block-start": 25,
-        "padding-block-end": 25
-      }
-    },
     "shop_by_age_nMKDch": {
       "type": "shop-by-age",
       "blocks": {
+        "age_group_cwtEDU": {
+          "type": "age_group",
+          "settings": {
+            "collection": "",
+            "name": ""
+          }
+        },
         "age_group_7NqiHN": {
           "type": "age_group",
           "settings": {
@@ -778,6 +913,7 @@
         }
       },
       "block_order": [
+        "age_group_cwtEDU",
         "age_group_7NqiHN",
         "age_group_6YJmUJ",
         "age_group_BUgV4h",
@@ -785,6 +921,7 @@
         "age_group_wLAYhy",
         "age_group_FMetiH"
       ],
+      "disabled": true,
       "name": "Shop By Age",
       "settings": {
         "heading": "shop",
@@ -806,33 +943,13 @@
     "theme_swatches_KYBFfi": {
       "type": "theme-swatches",
       "blocks": {
-        "theme_swatch_HzcAbg": {
-          "type": "theme-swatch",
-          "name": "Theme Swatch",
-          "settings": {
-            "image": "shopify://shop_images/floral-swatch.png",
-            "link_text": "Floral",
-            "link_url": "shopify://collections/enchanted-floral-collection"
-          },
-          "blocks": {}
-        },
         "theme_swatch_nzWYfB": {
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/seaworld_a2d965b9-fdc2-4abd-a848-ddc7036520f2.png",
+            "image": "shopify://shop_images/seaworld-theme-print.png",
             "link_text": "Seaworld",
             "link_url": "shopify://collections/seaworld"
-          },
-          "blocks": {}
-        },
-        "theme_swatch_e8Tcq3": {
-          "type": "theme-swatch",
-          "name": "Theme Swatch",
-          "settings": {
-            "image": "shopify://shop_images/footbal-swatch.png",
-            "link_text": "Football",
-            "link_url": "shopify://collections/football-collection"
           },
           "blocks": {}
         },
@@ -840,19 +957,19 @@
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/mermaid-swatch.png",
+            "image": "shopify://shop_images/mermaid-theme-print.png",
             "link_text": "Mermaid",
             "link_url": "shopify://collections/mermaid"
           },
           "blocks": {}
         },
-        "theme_swatch_FhURkA": {
+        "theme_swatch_e8Tcq3": {
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/paw-patrol-swatch.png",
-            "link_text": "Paw Patrol",
-            "link_url": "shopify://collections/paw-patrol-collection"
+            "image": "shopify://shop_images/Screenshot_2026-03-11_at_09.42.41.png",
+            "link_text": "Sports",
+            "link_url": "shopify://collections/football-collection"
           },
           "blocks": {}
         },
@@ -866,46 +983,6 @@
           },
           "blocks": {}
         },
-        "theme_swatch_CCBKqH": {
-          "type": "theme-swatch",
-          "name": "Theme Swatch",
-          "settings": {
-            "image": "shopify://shop_images/dinosaur_a217f0a8-e82d-4173-804d-90c460b058b7.png",
-            "link_text": "Dinosaur",
-            "link_url": "shopify://collections/dinosaur-collection"
-          },
-          "blocks": {}
-        },
-        "theme_swatch_9LdTRa": {
-          "type": "theme-swatch",
-          "name": "Theme Swatch",
-          "settings": {
-            "image": "shopify://shop_images/super-hero-swatch.png",
-            "link_text": "Super Hero",
-            "link_url": "shopify://collections/superhero-collection"
-          },
-          "blocks": {}
-        },
-        "theme_swatch_nVrXhJ": {
-          "type": "theme-swatch",
-          "name": "Theme Swatch",
-          "settings": {
-            "image": "shopify://shop_images/pappa-pig-swatch.png",
-            "link_text": "Peppa Pig",
-            "link_url": ""
-          },
-          "blocks": {}
-        },
-        "theme_swatch_jJzkjg": {
-          "type": "theme-swatch",
-          "name": "Theme Swatch",
-          "settings": {
-            "image": "shopify://shop_images/jungle-swatch.png",
-            "link_text": "Jungle",
-            "link_url": "shopify://collections/jungle-animal-collection"
-          },
-          "blocks": {}
-        },
         "theme_swatch_BfBFt6": {
           "type": "theme-swatch",
           "name": "Theme Swatch",
@@ -916,29 +993,89 @@
           },
           "blocks": {}
         },
+        "theme_swatch_FhURkA": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify://shop_images/Paw_patrol.jpg",
+            "link_text": "Paw Patrol",
+            "link_url": "shopify://collections/ck-paw-patrol-collection"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_HzcAbg": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify://shop_images/cosmic_4932991e-a1e1-4143-8868-a0ea02f84a48.jpg",
+            "link_text": "Cosmic",
+            "link_url": "shopify://collections/cb-cosmic"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_CCBKqH": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify://shop_images/birdsong_0989d34f-431a-4839-8d0a-fae8453f48cd.jpg",
+            "link_text": "Birdsong",
+            "link_url": "shopify://collections/birdsong-newborn"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_9LdTRa": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify://shop_images/teddy-sbt.png",
+            "link_text": "Teddy",
+            "link_url": "shopify://collections/superhero-collection"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_nVrXhJ": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify://shop_images/bunny-sbt.png",
+            "link_text": "Bunny",
+            "link_url": "shopify://collections/bunny"
+          },
+          "blocks": {}
+        },
+        "theme_swatch_jJzkjg": {
+          "type": "theme-swatch",
+          "name": "Theme Swatch",
+          "settings": {
+            "image": "shopify://shop_images/Screenshot_2026-03-11_at_09.45.58.png",
+            "link_text": "Fruits",
+            "link_url": "shopify://collections/jungle-animal-collection"
+          },
+          "blocks": {}
+        },
         "theme_swatch_W68fax": {
           "type": "theme-swatch",
           "name": "Theme Swatch",
           "settings": {
-            "image": "shopify://shop_images/rainbow-swatch.png",
-            "link_text": "Rainbow",
+            "image": "shopify://shop_images/retro-theme-print_9acdb285-2a8d-4b23-afc1-9690ef6dc999.png",
+            "link_text": "Abstract",
             "link_url": ""
           },
           "blocks": {}
         }
       },
       "block_order": [
-        "theme_swatch_HzcAbg",
         "theme_swatch_nzWYfB",
-        "theme_swatch_e8Tcq3",
         "theme_swatch_3PCXEY",
-        "theme_swatch_FhURkA",
+        "theme_swatch_e8Tcq3",
         "theme_swatch_QULGAC",
+        "theme_swatch_BfBFt6",
+        "theme_swatch_FhURkA",
+        "theme_swatch_HzcAbg",
         "theme_swatch_CCBKqH",
         "theme_swatch_9LdTRa",
         "theme_swatch_nVrXhJ",
         "theme_swatch_jJzkjg",
-        "theme_swatch_BfBFt6",
         "theme_swatch_W68fax"
       ],
       "name": "Theme Swatches",
@@ -952,12 +1089,13 @@
         "padding-block-end": 47
       }
     },
-    "section_EfcYck": {
+    "section_WHbqJW": {
       "type": "section",
       "blocks": {
-        "image_with_text_fza9wV": {
+        "image_with_text_ViKmpp": {
           "type": "image-with-text",
           "name": "Image with text",
+          "disabled": true,
           "settings": {
             "image": "shopify://shop_images/homepage-back-to-school.png",
             "link": "",
@@ -983,9 +1121,10 @@
           },
           "blocks": {}
         },
-        "image_with_text_Ei4Agh": {
+        "image_with_text_TN6LTc": {
           "type": "image-with-text",
           "name": "Image with text",
+          "disabled": true,
           "settings": {
             "image": "shopify://shop_images/1f0a82df-aa0d-430b-a09b-b746a0f5810b.jpg",
             "link": "",
@@ -1013,8 +1152,8 @@
         }
       },
       "block_order": [
-        "image_with_text_fza9wV",
-        "image_with_text_Ei4Agh"
+        "image_with_text_ViKmpp",
+        "image_with_text_TN6LTc"
       ],
       "name": "t:names.multicolumn",
       "settings": {
@@ -1044,6 +1183,28 @@
         "gradient_direction": "to top",
         "padding-block-start": 60,
         "padding-block-end": 60
+      }
+    },
+    "brands_dHtWbx": {
+      "type": "brands",
+      "name": "Brands",
+      "settings": {
+        "image": "shopify://shop_images/silver_gold_1024x1024_2x_0b61361e-9928-467d-92ba-e7c49a86b08a.webp",
+        "logo": "shopify://shop_images/little-ia-logo.png",
+        "title": "x  ICONIC BRANDS",
+        "body": "<p>Find internationally renowned family favourite brands, alongside homegrown brands and exclusively personalise them.</p>",
+        "brand_logo_1": "shopify://shop_images/olliella-logo.png",
+        "brand_logo_2": "shopify://shop_images/bob-blossom-logo.png",
+        "brand_logo_3": "shopify://shop_images/hydro-flask-logo.png",
+        "brand_logo_4": "shopify://shop_images/le-toy-van-logo.png",
+        "brand_logo_5": "shopify://shop_images/omie-logo.png",
+        "brand_logo_6": "shopify://shop_images/mimi-lula-logo.png",
+        "button_text": "Shop All",
+        "button_url": "shopify://collections/little-ia-partner-brands",
+        "section_width": "page-width",
+        "color_scheme": "scheme-6",
+        "padding-block-start": 60,
+        "padding-block-end": 30
       }
     },
     "product_video_slider_x7cpXz": {
@@ -1261,28 +1422,6 @@
         "padding-block-end": 48
       }
     },
-    "brands_dHtWbx": {
-      "type": "brands",
-      "name": "Brands",
-      "settings": {
-        "image": "shopify://shop_images/silver_gold_1024x1024_2x_0b61361e-9928-467d-92ba-e7c49a86b08a.webp",
-        "logo": "shopify://shop_images/little-ia-logo.png",
-        "title": "x  ICONIC BRANDS",
-        "body": "<p>Find internationally renowned family favourite brands, alongside homegrown brands and exclusively personalise them.</p>",
-        "brand_logo_1": "shopify://shop_images/olliella-logo.png",
-        "brand_logo_2": "shopify://shop_images/bob-blossom-logo.png",
-        "brand_logo_3": "shopify://shop_images/hydro-flask-logo.png",
-        "brand_logo_4": "shopify://shop_images/le-toy-van-logo.png",
-        "brand_logo_5": "shopify://shop_images/omie-logo.png",
-        "brand_logo_6": "shopify://shop_images/mimi-lula-logo.png",
-        "button_text": "Shop All",
-        "button_url": "shopify://collections/little-ia-loves",
-        "section_width": "page-width",
-        "color_scheme": "scheme-6",
-        "padding-block-start": 60,
-        "padding-block-end": 30
-      }
-    },
     "featured_blog_posts_my8KTm": {
       "type": "featured-blog-posts",
       "blocks": {
@@ -1437,6 +1576,7 @@
     },
     "our_story_jzVD6A": {
       "type": "our-story",
+      "disabled": true,
       "name": "Our Story",
       "settings": {
         "image": "shopify://shop_images/out-story.png",
@@ -1458,14 +1598,16 @@
     "collection_slider_3CbK9k",
     "marquee_Nr6HJz",
     "product_list_TXMTEH",
-    "hero_NAcLj6",
+    "section_EfcYck",
+    "collection_slider_WEwAhB",
     "promise_section_fTQwDr",
+    "hero_NAcLj6",
     "shop_by_age_nMKDch",
     "theme_swatches_KYBFfi",
-    "section_EfcYck",
+    "section_WHbqJW",
+    "brands_dHtWbx",
     "product_video_slider_x7cpXz",
     "product_video_slick_slider_yNNgT3",
-    "brands_dHtWbx",
     "featured_blog_posts_my8KTm",
     "our_story_jzVD6A"
   ]
