@@ -19,7 +19,10 @@
   assign personalized_dob = false
   assign personalized_textbox = false
   assign has_cb_personalisation_colors = false
-  assign cb_personalisation_colors = product.metafields.custom.cb_product_personalisation_colors
+  assign cb_personalisation_colors = variant.metafields.custom.cb_personalisation_colors
+  if cb_personalisation_colors == blank or cb_personalisation_colors.value == blank
+    assign cb_personalisation_colors = product.metafields.custom.cb_product_personalisation_colors
+  endif
   if cb_personalisation_colors != blank and cb_personalisation_colors.value != blank
     assign has_cb_personalisation_colors = true
   endif
@@ -265,7 +268,43 @@
         "{{ v.id }}": {{ v_fb | json }}
         {%- assign first_fb = false -%}
         {%- endfor -%}
-      }
+      },
+      "variantColors": {
+        {%- assign product_colors_val = product.metafields.custom.cb_product_personalisation_colors -%}
+        {%- assign first_vc = true -%}
+        {%- for v in product.variants -%}
+        {%- assign v_colors = v.metafields.custom.cb_personalisation_colors -%}
+        {%- if v_colors == blank or v_colors.value == blank -%}
+          {%- assign colors_src = product_colors_val -%}
+        {%- else -%}
+          {%- assign colors_src = v_colors -%}
+        {%- endif -%}
+        {%- unless first_vc -%},{%- endunless -%}
+        "{{ v.id }}": [
+          {%- if colors_src != blank and colors_src.value != blank -%}
+            {%- for metafield_color in colors_src.value -%}
+              {%- assign color_value = metafield_color | strip -%}
+              {%- if color_value != blank -%}
+                {%- unless forloop.first -%},{%- endunless -%}
+                {"value": {{ color_value | json }}, "key": {{ color_value | downcase | json }}}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endif -%}
+        ]
+        {%- assign first_vc = false -%}
+        {%- endfor -%}
+      },
+      "productColors": [
+        {%- if product_colors_val != blank and product_colors_val.value != blank -%}
+          {%- for metafield_color in product_colors_val.value -%}
+            {%- assign color_value = metafield_color | strip -%}
+            {%- if color_value != blank -%}
+              {%- unless forloop.first -%},{%- endunless -%}
+              {"value": {{ color_value | json }}, "key": {{ color_value | downcase | json }}}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      ]
     }
   </script>
   <dialog

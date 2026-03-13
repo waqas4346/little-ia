@@ -192,6 +192,88 @@ export class PersonaliseDialogComponent extends DialogComponent {
       }
       if (placeholder && !fallbackWrap) placeholder.style.display = '';
     }
+
+    // Update color grid for new variant (variant-aware text colours)
+    this.#updateColorGridForVariant(variantKey, map);
+  }
+
+  /**
+   * Rebuilds the color grid when variant changes, using variant/product colors from the map.
+   * @param {string} variantKey - The selected variant ID (string)
+   * @param {{ variantColors?: Record<string, Array<{value: string, key: string}>>, productColors?: Array<{value: string, key: string}> }} map - The cb personalization map
+   * @private
+   */
+  #updateColorGridForVariant(variantKey, map) {
+    const colorGrid = this.refs?.colorGrid || this.querySelector('.personalise-modal__color-grid');
+    if (!colorGrid) return;
+
+    const { variantColors = {}, productColors = [] } = map;
+    const colors = (variantKey && variantColors?.[variantKey]) ?? productColors ?? [];
+
+    // Set up click delegation once (for dynamically added buttons)
+    if (!colorGrid.hasAttribute('data-color-click-delegation')) {
+      colorGrid.setAttribute('data-color-click-delegation', 'true');
+      colorGrid.addEventListener('click', (e) => {
+        const btn = e.target.closest('.personalise-modal__color-button');
+        if (btn) this.selectColor(e);
+      });
+    }
+
+    const colorField = colorGrid.closest('.personalise-modal__field');
+    if (!colorField) return;
+
+    if (colors.length === 0) {
+      colorField.style.display = 'none';
+      this.selectedColor = null;
+      this.personalisationData.color = null;
+      this.updateSaveButton();
+      return;
+    }
+
+    colorField.style.display = '';
+
+    // Build new color buttons (match Liquid structure: label > input + thumbnail with swatch)
+    const fragment = document.createDocumentFragment();
+    colors.forEach(({ value, key }) => {
+      const label = document.createElement('label');
+      label.className = 'personalise-modal__color-button variant-option__button-label variant-option__button-label--image-thumbnail';
+      label.dataset.color = key;
+      label.title = value;
+      label.setAttribute('ref', 'colorButton');
+
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'personalise-color';
+      input.value = value;
+      label.appendChild(input);
+
+      const thumbWrap = document.createElement('div');
+      thumbWrap.className = 'variant-option__image-thumbnail';
+
+      const iconWrap = document.createElement('div');
+      iconWrap.className = 'personalise-modal__color-icon';
+      iconWrap.style.cssText = 'width: 60px; height: 60px;';
+
+      const swatch = document.createElement('span');
+      swatch.className = 'swatch swatch--unscaled';
+      swatch.style.cssText = `--swatch-background: ${key}; background-color: ${key};`;
+      iconWrap.appendChild(swatch);
+      thumbWrap.appendChild(iconWrap);
+      label.appendChild(thumbWrap);
+
+      fragment.appendChild(label);
+    });
+
+    colorGrid.innerHTML = '';
+    colorGrid.appendChild(fragment);
+
+    this.selectedColor = null;
+    this.personalisationData.color = null;
+    this.updateSaveButton();
+    this.updateCbPreviewOverlay();
+
+    // Re-attach input listeners for save button validation
+    this.#attachInputListeners();
   }
 
   /**
