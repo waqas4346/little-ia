@@ -355,9 +355,6 @@
         {% if has_color_option and color_option %}
           {%- liquid
             assign display_option_name = color_option.name
-            if display_option_name contains 'colour' or display_option_name contains 'Colour' or display_option_name contains 'COLOUR'
-              assign display_option_name = display_option_name | replace: 'COLOUR', 'COLOR' | replace: 'Colour', 'Color' | replace: 'colour', 'color'
-            endif
             assign display_option_name_lower = display_option_name | downcase
             if display_option_name_lower contains 'text '
               if display_option_name contains 'Text '
@@ -682,7 +679,7 @@
 
             <div class="personalise-modal__field">
               <label for="personalise-name" class="personalise-modal__label">
-                Name (Free Personlisation) 
+                Name (Free Personalisation) 
               </label>
               <div class="personalise-modal__input-wrapper">
                 <input

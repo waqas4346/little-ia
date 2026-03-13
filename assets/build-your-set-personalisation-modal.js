@@ -331,7 +331,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         </p>
         <div class="personalise-modal__field">
           <label for="build-your-set-personalise-name" class="personalise-modal__label">
-            Name (Free Personlisation)
+            Name (Free Personalisation)
           </label>
           <div class="personalise-modal__input-wrapper">
             <input

@@ -160,7 +160,7 @@
             assign threshold_cents = settings.free_shipping_threshold | default: 45000
             assign threshold_money = threshold_cents | money
           -%}
-          <div class="product-shipping-messages">
+          {% comment %} <div class="product-shipping-messages">
             <div class="shipping-message">
               <span class="shipping-message__icon">
                 {{- 'truck-duotone.svg' | inline_asset_content -}}
@@ -177,7 +177,7 @@
                 Same day delivery, order before 11 AM
               </span>
             </div>
-          </div>
+          </div> {% endcomment %}
 
           {%- if has_quantity_rules -%}
             <div
