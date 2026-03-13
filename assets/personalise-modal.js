@@ -208,6 +208,13 @@ export class PersonaliseDialogComponent extends DialogComponent {
    * @private
    */
   #clearInvalidColorOnVariantChange(variantKey, map) {
+    // Cart drawer dialog: do NOT touch product page forms – we're editing a cart item, not the product page
+    // Only check this dialog's context (not window.cartPersonalizationContext) so product-page dialog
+    // still shows "Please select colour" when user changes variant on product page while cart modal is open
+    if (this.dataset.context === 'cart-drawer') {
+      return;
+    }
+
     const { variantColors = {}, productColors = [] } = map;
     const allowedColors = (variantKey && variantColors?.[variantKey]) ?? productColors ?? [];
     const allowedValues = new Set(allowedColors.flatMap((c) => [c.value?.toLowerCase(), c.key?.toLowerCase()]).filter(Boolean));
@@ -337,6 +344,21 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const { variantColors = {}, productColors = [] } = map;
     const colors = (variantKey && variantColors?.[variantKey]) ?? productColors ?? [];
 
+    // Capture saved color before clearing (for re-apply after grid rebuild when opening for edit)
+    let savedColor = this.personalisationData?.color || this.selectedColor;
+    if (!savedColor) {
+      for (const form of this.#getAllProductForms()) {
+        const colorInput = form.querySelector('input[name="properties[Text Color]"]:checked, input[name="properties[Text Color]"]');
+        if (colorInput?.value) {
+          savedColor = colorInput.value;
+          break;
+        }
+      }
+    }
+    if (!savedColor && this.dataset?.productId && window.currentPersonalisation?.[this.dataset.productId]?.color) {
+      savedColor = window.currentPersonalisation[this.dataset.productId].color;
+    }
+
     // Set up click delegation once (for dynamically added buttons)
     if (!colorGrid.hasAttribute('data-color-click-delegation')) {
       colorGrid.setAttribute('data-color-click-delegation', 'true');
@@ -349,11 +371,14 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const colorField = colorGrid.closest('.personalise-modal__field');
     if (!colorField) return;
 
+    // When variant has no color options, hide the color field and clear selection
     if (colors.length === 0) {
       colorField.style.display = 'none';
+      colorGrid.innerHTML = '';
       this.selectedColor = null;
       this.personalisationData.color = null;
       this.updateSaveButton();
+      this.updateCbPreviewOverlay();
       return;
     }
 
@@ -401,6 +426,32 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
     // Re-attach input listeners for save button validation
     this.#attachInputListeners();
+
+    // Re-apply saved color if valid for this variant (fixes modal open pre-fill when variant map rebuilds grid)
+    if (savedColor) {
+      const allowedValues = new Set(colors.flatMap((c) => [c.value?.toLowerCase(), c.key?.toLowerCase()]).filter(Boolean));
+      if (allowedValues.has(String(savedColor).toLowerCase())) {
+        this.selectColorByName(savedColor);
+        return;
+      }
+    }
+    // When variant changed in modal (or no saved color): select first text color by default
+    // Defer to next frame so DOM is ready; add explicit class for selected swatch (some browsers don't repaint :has(:checked) after programmatic change)
+    requestAnimationFrame(() => {
+      const firstRadio = colorGrid.querySelector('input[type="radio"]');
+      if (firstRadio) {
+        firstRadio.checked = true;
+        const label = firstRadio.closest('.personalise-modal__color-button');
+        if (label) {
+          colorGrid.querySelectorAll('.personalise-modal__color-button').forEach((l) => l.classList.remove('personalise-modal__color-button--selected'));
+          label.classList.add('personalise-modal__color-button--selected');
+        }
+        this.selectedColor = firstRadio.value;
+        this.personalisationData.color = firstRadio.value;
+        this.updateSaveButton();
+        this.updateCbPreviewOverlay();
+      }
+    });
   }
 
   /**
@@ -552,7 +603,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
     const productId = this.dataset?.productId;
 
-    // On product page: update URL and re-render section (media gallery, etc.)
+    // On product page: update URL and dispatch VariantUpdateEvent with fetched HTML so price, media, etc. update
     const productPagePicker = productId
       ? document.querySelector(`variant-picker[data-product-id="${productId}"]`)
       : document.querySelector('variant-picker');
@@ -563,28 +614,47 @@ export class PersonaliseDialogComponent extends DialogComponent {
       if (url.href !== window.location.href) {
         history.replaceState({}, '', url.toString());
       }
-      // Update only the media gallery - do NOT re-render the entire section, as that would
-      // replace the personalise-modal and reset all user-entered personalisation data.
-      const sectionEl = productPagePicker.closest('.shopify-section');
-      if (sectionEl?.id) {
-        const sectionId = normalizeSectionId(sectionEl.id);
-        const currentMediaGallery = sectionEl.querySelector('media-gallery');
-        if (currentMediaGallery) {
-          const fullUrl = url.toString();
-          fetch(fullUrl)
-            .then((r) => r.text())
-            .then((html) => {
-              const doc = new DOMParser().parseFromString(html, 'text/html');
-              const sectionSelector = buildSectionSelector(sectionId);
-              const newSectionEl = doc.getElementById(sectionSelector);
-              const newMediaGallery = newSectionEl?.querySelector('media-gallery');
-              if (newMediaGallery) {
-                morph(currentMediaGallery, newMediaGallery);
-              }
-            })
-            .catch(() => {});
-        }
-      }
+      const fullUrl = url.toString();
+      fetch(fullUrl)
+        .then((r) => r.text())
+        .then((html) => {
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          const textContent = doc.querySelector(`variant-picker[data-product-id="${productId}"] script[type="application/json"]`)?.textContent
+            || doc.querySelector('variant-picker script[type="application/json"]')?.textContent;
+          const variantResource = textContent ? (() => {
+            try {
+              return JSON.parse(textContent);
+            } catch {
+              return { id: Number(variantId) };
+            }
+          })() : { id: Number(variantId) };
+          // Get fresh reference (DOM may have morphed after save)
+          const picker = productId
+            ? document.querySelector(`variant-picker[data-product-id="${productId}"]`)
+            : document.querySelector('variant-picker');
+          if (picker && !picker.closest('#quick-add-modal-content')) {
+            // Morph variant picker from fetched HTML so selected style (swatch/thumbnail) updates correctly
+            const newPicker = doc.querySelector(`variant-picker[data-product-id="${productId}"]`) || doc.querySelector('variant-picker');
+            if (newPicker) {
+              morph(picker, newPicker);
+            }
+            picker.dispatchEvent(new VariantUpdateEvent(variantResource, this.id || 'personalise-dialog', {
+              productId: productId || '',
+              html: doc
+            }));
+          }
+        })
+        .catch(() => {
+          const picker = productId
+            ? document.querySelector(`variant-picker[data-product-id="${productId}"]`)
+            : document.querySelector('variant-picker');
+          if (picker && !picker.closest('#quick-add-modal-content')) {
+            picker.dispatchEvent(new VariantUpdateEvent({ id: Number(variantId) }, this.id || 'personalise-dialog', {
+              productId: productId || '',
+              html: null
+            }));
+          }
+        });
     }
 
     // On quick-add: fetch product page with new variant and directly update the image
@@ -746,11 +816,10 @@ export class PersonaliseDialogComponent extends DialogComponent {
       }
       return null;
     }
-    // Product page: prefer last variant from VariantUpdateEvent (form can lag after morph)
+    // Product page: prefer last variant from VariantUpdateEvent (fires when user selects; form can lag after morph)
     if (this._lastVariantIdFromProductPage) {
       return this._lastVariantIdFromProductPage;
     }
-    // Then form value
     const productForm = this.#getProductForm();
     if (productForm) {
       const variantInput = productForm.querySelector('input[name="id"]');
@@ -758,7 +827,6 @@ export class PersonaliseDialogComponent extends DialogComponent {
         return String(variantInput.value);
       }
     }
-    // Then variant passed when Personalise button was clicked
     if (this._openingVariantId) {
       const id = this._openingVariantId;
       this._openingVariantId = null;
@@ -1097,22 +1165,12 @@ export class PersonaliseDialogComponent extends DialogComponent {
       }
     }
     
-    // Find the product form
-    // PRIORITIZE: If we're in a quick-add modal context, always use that form first
-    // This ensures we read personalization from the correct product in quick-add
+    // Find the product form - prefer form from same context as this dialog (avoids loading wrong product's data)
     let form = null;
-    const quickAddModal = document.querySelector('#quick-add-modal-content');
-    if (quickAddModal) {
-      // If quick-add modal exists, use its form (this is the current product being personalized)
-      form = quickAddModal.querySelector('form[data-type="add-to-cart-form"]');
+    const forms = this.#getAllProductForms();
+    if (forms.length > 0) {
+      form = forms[0];
     }
-    
-    // If not in quick-add context, try closest product-form-component
-    if (!form) {
-      form = this.closest('product-form-component')?.querySelector('form[data-type="add-to-cart-form"]');
-    }
-    
-    // Fallback to any form (but this should rarely happen)
     if (!form) {
       form = document.querySelector('form[data-type="add-to-cart-form"]');
     }
@@ -1521,19 +1579,30 @@ export class PersonaliseDialogComponent extends DialogComponent {
         // Use requestAnimationFrame to ensure DOM is ready
         requestAnimationFrame(() => {
           try {
+            // Sync variant/color grid FIRST so we have correct colors before populating (fixes wrong variant colors on Edit after variant change)
+            this.#syncVariantAndPreviewOnOpen();
             this.#populateFieldsFromSavedData();
             // Set up input listeners after fields are populated
             this.#attachInputListeners();
-            // Sync preview image and variant color selection with current variant
+            // Sync again after populate (populate may have triggered DOM changes)
             this.#syncVariantAndPreviewOnOpen();
+            // Select first color and font by default if none selected
+            this.#selectFirstColorAndFontIfNotSelected();
             // Update dynamic personalization text overlay if variant/product has cb metafields
             this.updateCbPreviewOverlay();
             // Retry sync at intervals (variant picker updates form async after morph - this catches the update)
-            setTimeout(() => this.#syncVariantAndPreviewOnOpen(), 150);
-            setTimeout(() => this.#syncVariantAndPreviewOnOpen(), 350);
+            setTimeout(() => {
+              this.#syncVariantAndPreviewOnOpen();
+              this.#selectFirstColorAndFontIfNotSelected();
+            }, 150);
+            setTimeout(() => {
+              this.#syncVariantAndPreviewOnOpen();
+              this.#selectFirstColorAndFontIfNotSelected();
+            }, 350);
             setTimeout(() => {
               this.#syncVariantAndPreviewOnOpen();
               this._openingVariantId = null; // clear after last retry
+              this.#selectFirstColorAndFontIfNotSelected(); // after grid may have been rebuilt
             }, 550);
           } catch (error) {
             console.error('Error populating fields:', error);
@@ -1546,9 +1615,9 @@ export class PersonaliseDialogComponent extends DialogComponent {
         // Max attempts reached, try to populate anyway
         try {
           this.#populateFieldsFromSavedData();
-          // Set up input listeners after fields are populated
           this.#attachInputListeners();
           this.#syncVariantAndPreviewOnOpen();
+          this.#selectFirstColorAndFontIfNotSelected();
           this.updateCbPreviewOverlay();
         } catch (error) {
           console.error('Error populating fields after max attempts:', error);
@@ -1769,11 +1838,12 @@ export class PersonaliseDialogComponent extends DialogComponent {
       }, 100);
     }
     
-    // Set color selection if saved
-    if (this.personalisationData.color) {
-      setTimeout(() => {
-        this.selectColorByName(this.personalisationData.color);
-      }, 100);
+    // Set color selection if saved (run immediately and retry after sync - #syncVariantAndPreviewOnOpen may rebuild grid)
+    const colorToApply = this.personalisationData.color;
+    if (colorToApply) {
+      this.selectColorByName(colorToApply);
+      setTimeout(() => this.selectColorByName(colorToApply), 100);
+      setTimeout(() => this.selectColorByName(colorToApply), 350);
     }
     
     // Load other fields
@@ -1882,6 +1952,34 @@ export class PersonaliseDialogComponent extends DialogComponent {
     this.updateSaveButton();
   }
   
+  /**
+   * Selects first color and first font by default when modal opens, if none are selected.
+   * @private
+   */
+  #selectFirstColorAndFontIfNotSelected() {
+    const colorGrid = this.refs?.colorGrid || this.querySelector('.personalise-modal__color-grid');
+    const fontGrid = this.refs?.fontGrid || this.querySelector('.personalise-modal__font-grid');
+
+    if (colorGrid) {
+      const hasColor = this.selectedColor || this.personalisationData?.color ||
+        Array.from(colorGrid.querySelectorAll('input[type="radio"]')).some((input) => input.checked);
+      if (!hasColor) {
+        const firstRadio = colorGrid.querySelector('input[type="radio"]');
+        const firstValue = firstRadio?.value || firstRadio?.closest('.personalise-modal__color-button')?.dataset?.color;
+        if (firstValue) this.selectColorByName(firstValue);
+      }
+    }
+
+    if (fontGrid) {
+      const hasFont = this.selectedFont || this.personalisationData?.font;
+      if (!hasFont) {
+        const firstButton = fontGrid.querySelector('.personalise-modal__font-button');
+        const firstFont = firstButton?.dataset?.font;
+        if (firstFont) this.selectFontByName(firstFont);
+      }
+    }
+  }
+
   /**
    * Initializes save button state when dialog opens
    * @private
@@ -2154,25 +2252,35 @@ export class PersonaliseDialogComponent extends DialogComponent {
    */
   selectColorByName(colorName) {
     const colorGrid = this.refs.colorGrid || this.querySelector('.personalise-modal__color-grid');
-    if (!colorGrid) return;
+    if (!colorGrid || !colorName) return;
 
-    // Uncheck all radio inputs
+    // Uncheck all radio inputs and remove selected class
     const radioInputs = colorGrid.querySelectorAll('input[type="radio"]');
     radioInputs.forEach(input => {
       input.checked = false;
     });
+    colorGrid.querySelectorAll('.personalise-modal__color-button').forEach((l) => l.classList.remove('personalise-modal__color-button--selected'));
 
-    // Check the selected radio input
+    // Match case-insensitively (data-color is lowercase, saved value may be original case e.g. "Pink")
+    // Also match by radio value as fallback (some contexts may use different structure)
+    const colorNameLower = String(colorName).toLowerCase().trim();
     const selectedButton = Array.from(colorGrid.querySelectorAll('.personalise-modal__color-button')).find(
-      btn => btn.dataset.color === colorName
+      btn => {
+        const btnColor = (btn.dataset.color || '').toLowerCase();
+        const radioValue = (btn.querySelector('input[type="radio"]')?.value || '').toLowerCase();
+        return btnColor === colorNameLower || (radioValue && radioValue === colorNameLower);
+      }
     );
     if (selectedButton) {
       const radioInput = selectedButton.querySelector('input[type="radio"]');
       if (radioInput) {
         radioInput.checked = true;
       }
-      this.selectedColor = colorName;
-      this.personalisationData.color = colorName;
+      selectedButton.classList.add('personalise-modal__color-button--selected');
+      // Use radio value for consistency (preserves original case for form submission)
+      const storedColor = radioInput?.value || colorName;
+      this.selectedColor = storedColor;
+      this.personalisationData.color = storedColor;
     }
     
     // Update save button state after color selection
@@ -2546,6 +2654,29 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
       // Update hidden form fields if they exist
       this.updateFormFields(filteredPersonalisation);
+
+      // When saving with color after variant change: clear "Please select colour" state immediately
+      // so add-to-cart enables when user checks confirmation (updatePersonaliseButtonText runs later)
+      if (filteredPersonalisation.color && form) {
+        const allForms = this.#getAllProductForms();
+        allForms.forEach((f) => f.removeAttribute('data-personalisation-color-required'));
+        const formComp = form.closest('product-form-component');
+        const pid = formComp?.dataset?.productId || this.dataset?.productId;
+        const searchRoots = [
+          formComp,
+          form.closest('#quick-add-modal-content'),
+          pid ? document.querySelector(`sticky-add-to-cart[data-product-id="${pid}"]`) : null
+        ].filter(Boolean);
+        for (const root of searchRoots) {
+          const msgEl = root.querySelector('[data-personalise-color-required-msg]');
+          if (msgEl) msgEl.style.display = 'none';
+          const confirmation = root.querySelector('[data-personalise-confirmation]');
+          if (confirmation) confirmation.style.display = '';
+        }
+        if (typeof window.updateAddToCartButtonState === 'function') {
+          window.updateAddToCartButtonState();
+        }
+      }
     }
 
     // Dispatch custom event for other components to listen to

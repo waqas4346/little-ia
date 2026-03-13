@@ -37,10 +37,13 @@
                       assign collection_object = collections[collection_handle]
                     endif
                     
-                    # Check for featured_image first
-                    if collection_object.featured_image
+                    # Check for custom.cb_theme_icon metafield first
+                    if collection_object.metafields.custom.cb_theme_icon != blank and collection_object.metafields.custom.cb_theme_icon.value != blank
+                      assign collection_image = collection_object.metafields.custom.cb_theme_icon.value
+                    # Fallback to featured_image
+                    elsif collection_object.featured_image
                       assign collection_image = collection_object.featured_image
-                    # Check for image property
+                    # Fallback to image property
                     elsif collection_object.image
                       assign collection_image = collection_object.image
                     # Fallback to first product image

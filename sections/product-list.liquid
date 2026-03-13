@@ -1004,7 +1004,7 @@
     {% if section.settings.collection_list != blank %}
       {% for collection in section.settings.collection_list %}
         collectionsData['{{ collection.handle }}'] = {
-          title: "{{ collection.title | escape }}",
+          title: {{ collection.title | json }},
           url: "{{ collection.url }}"
         };
       {% endfor %}

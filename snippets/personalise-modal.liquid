@@ -124,10 +124,10 @@
     endif
   endfor
   
-  # Generate unique ID based on context
+  # Generate unique ID based on context (cart-drawer: one per product for correct variant colors)
   assign modal_id = 'personalise-dialog'
   if context == 'cart-drawer'
-    assign modal_id = 'personalise-dialog-cart'
+    assign modal_id = 'personalise-dialog-cart-' | append: product.id
   endif
 
   # Full-screen personalisation: when product metafield custom.cb_full_screen_personalisation is true
@@ -1423,25 +1423,29 @@
     background-color: transparent !important;
   }
 
-  .personalise-modal__color-button:has(:checked) {
+  .personalise-modal__color-button:has(:checked),
+  .personalise-modal__color-button.personalise-modal__color-button--selected {
     border: 1px solid #1D425A;
     border-radius: 50%;
     outline: none;
   }
 
-  .personalise-modal__color-button:has(:checked):hover {
+  .personalise-modal__color-button:has(:checked):hover,
+  .personalise-modal__color-button.personalise-modal__color-button--selected:hover {
     border-color: #1D425A !important;
     background-color: transparent !important;
   }
 
   /* Match the exact styling from variant picker image thumbnails */
-  .personalise-modal__color-button.variant-option__button-label--image-thumbnail:has(:checked) {
+  .personalise-modal__color-button.variant-option__button-label--image-thumbnail:has(:checked),
+  .personalise-modal__color-button.variant-option__button-label--image-thumbnail.personalise-modal__color-button--selected {
     border: 1px solid #1D425A;
     border-radius: 50%;
     outline: none;
   }
 
-  .personalise-modal__color-button.variant-option__button-label--image-thumbnail:has(:checked):hover {
+  .personalise-modal__color-button.variant-option__button-label--image-thumbnail:has(:checked):hover,
+  .personalise-modal__color-button.variant-option__button-label--image-thumbnail.personalise-modal__color-button--selected:hover {
     border-color: #1D425A !important;
     background-color: transparent !important;
   }
@@ -1491,7 +1495,8 @@
     display: block;
   }
 
-  .personalise-modal__color-button:has(:checked) .variant-option__image-thumbnail {
+  .personalise-modal__color-button:has(:checked) .variant-option__image-thumbnail,
+  .personalise-modal__color-button.personalise-modal__color-button--selected .variant-option__image-thumbnail {
     border-radius: 50%;
     overflow: hidden;
   }
