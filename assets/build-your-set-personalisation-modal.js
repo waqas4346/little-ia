@@ -83,7 +83,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     // Build merged personalization field metadata (used for metafield-driven color/font options)
     const mergedCollectedFields = [];
     const mergedColorOptionsMap = new Map();
-    let hasAnyFontField = false;
+    const mergedFontOptionsMap = new Map();
     products.forEach((product) => {
       const fields = Array.isArray(product?.personalization_fields) ? product.personalization_fields : [];
       fields.forEach((field) => {
@@ -100,8 +100,13 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
             }
           });
         }
-        if (field?.field_type === 'font') {
-          hasAnyFontField = true;
+        if (field?.field_type === 'font' && Array.isArray(field.options)) {
+          field.options.forEach((option) => {
+            const v = typeof option === 'object' ? (option?.value ?? option?.label ?? option?.display) : option;
+            const value = String(v ?? '').trim();
+            if (!value || mergedFontOptionsMap.has(value)) return;
+            mergedFontOptionsMap.set(value, { value, label: value, display: value });
+          });
         }
       });
     });
@@ -115,12 +120,12 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         label: 'Text Colour'
       });
     }
-    if (hasAnyFontField) {
+    if (mergedFontOptionsMap.size > 0) {
       mergedCollectedFields.push({
         field_type: 'font',
         name: 'personalise-font',
         type: 'select',
-        options: BuildYourSetPersonaliseDialogComponent.FONT_OPTIONS,
+        options: Array.from(mergedFontOptionsMap.values()),
         required: true,
         label: 'Choose Your Font'
       });
@@ -273,6 +278,29 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
             type: 'radio',
             options: colorOptions,
             required: true
+          });
+        }
+      }
+
+      const fontsMetafield = product.metafields?.custom?.cb_personalisation_fonts?.value
+        || product.variants?.[0]?.metafields?.custom?.cb_personalisation_fonts?.value;
+      if (fontsMetafield && Array.isArray(fontsMetafield) && fontsMetafield.length > 0) {
+        const fontOptions = fontsMetafield
+          .map((entry) => {
+            const fn = entry?.font_name ?? entry?.fields?.font_name?.value ?? entry?.font_name?.value ?? '';
+            const val = String(fn || '').trim();
+            return val ? { value: val, label: val, display: val } : null;
+          })
+          .filter(Boolean);
+        if (fontOptions.length > 0) {
+          result.personalization_fields = result.personalization_fields || [];
+          result.personalization_fields.push({
+            field_type: 'font',
+            name: 'personalise-font',
+            type: 'select',
+            options: fontOptions,
+            required: true,
+            label: 'Choose Your Font'
           });
         }
       }
@@ -508,9 +536,15 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         `;
     }
     
-    // Font selection (metafield-driven via collected personalization_fields)
+    // Font selection (metafield-driven via collected personalization_fields - use collected options, not hardcoded)
     if (font_family_feild) {
-      const fontOptions = BuildYourSetPersonaliseDialogComponent.FONT_OPTIONS;
+      const fontOptions = (collectedFontField && Array.isArray(collectedFontField.options) && collectedFontField.options.length > 0)
+        ? collectedFontField.options.map((opt) => {
+            const v = typeof opt === 'object' ? (opt?.value ?? opt?.label ?? opt?.display) : opt;
+            const val = String(v ?? '').trim();
+            return val ? { value: val, label: val, display: val } : null;
+          }).filter(Boolean)
+        : [];
       const savedFont = (this.personalisationData['personalise-font'] || this.personalisationData['properties[Text Font]'] || '').toString().trim();
       if (fontOptions.length > 0) {
         const fontHTML = fontOptions.map(option => {

@@ -61,14 +61,22 @@
     assign dynamic_max = 9
   endif
   
-  # Font family options from metafield only:
-  # custom.cb_fonts_personalisation
+  # Font family options from metafield: custom.cb_personalisation_fonts (list of cb_personalisation_font metaobjects with font_name)
   assign has_cb_fonts_personalisation = false
-  assign cb_fonts_personalisation = product.metafields.custom.cb_fonts_personalisation
-  if cb_fonts_personalisation != blank
-    if cb_fonts_personalisation.value == true
-      assign has_cb_fonts_personalisation = true
-    elsif cb_fonts_personalisation.value != blank
+  assign cb_personalisation_fonts = variant.metafields.custom.cb_personalisation_fonts
+  if cb_personalisation_fonts == blank or cb_personalisation_fonts.value == blank
+    assign cb_personalisation_fonts = product.metafields.custom.cb_personalisation_fonts
+  endif
+  if cb_personalisation_fonts != blank and cb_personalisation_fonts.value != blank
+    assign font_list = cb_personalisation_fonts.value
+    assign font_count = 0
+    for font_entry in font_list
+      assign fn = font_entry.font_name | default: font_entry.font_name.value
+      if fn != blank
+        assign font_count = font_count | plus: 1
+      endif
+    endfor
+    if font_count > 0
       assign has_cb_fonts_personalisation = true
     endif
   endif
@@ -811,24 +819,14 @@
             <div class="personalise-modal__field">
               <label class="personalise-modal__label">Choose Your Font <span style="color: red;">*</span></label>
               <div class="personalise-modal__font-grid" ref="fontGrid">
-                <button type="button" class="personalise-modal__font-button" data-font="Ballantines" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Ballantines', sans-serif;">Ballantines</span>
-                </button>
-                <button type="button" class="personalise-modal__font-button" data-font="Cormorant Garamond" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Cormorant Garamond', serif;">Cormorant Garamond</span>
-                </button>
-                <button type="button" class="personalise-modal__font-button" data-font="Jester" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Jester', sans-serif;">Jester</span>
-                </button>
-                <button type="button" class="personalise-modal__font-button" data-font="Arial Rounded Bold" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Arial Rounded Bold', sans-serif;">Arial Rounded Bold</span>
-                </button>
-                <button type="button" class="personalise-modal__font-button" data-font="Poppins" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Poppins', sans-serif;">Poppins</span>
-                </button>
-                <button type="button" class="personalise-modal__font-button" data-font="Rochester" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Rochester', cursive;">Rochester</span>
-                </button>
+                {% for font_entry in font_list %}
+                  {% assign font_name = font_entry.font_name | default: font_entry.font_name.value | strip %}
+                  {% if font_name != blank %}
+                    <button type="button" class="personalise-modal__font-button" data-font="{{ font_name | escape }}" ref="fontButton" on:click="/selectFont">
+                      <span style="font-family: '{{ font_name | escape }}', sans-serif;">{{ font_name | escape }}</span>
+                    </button>
+                  {% endif %}
+                {% endfor %}
               </div>
             </div>
           {% endif %}
