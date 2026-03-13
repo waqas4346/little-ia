@@ -14,6 +14,12 @@ function updateBuildYourSetAddToSetState(modalContent) {
   if (!modal?.hasAttribute('data-build-your-set')) return;
   const btn = modal.querySelector('.build-your-set-add-to-session-button');
   if (!btn) return;
+  const colorRequiredMsg = modal.querySelector('[data-personalise-color-required-msg]');
+  const colorRequiredVisible = colorRequiredMsg && colorRequiredMsg.style.display !== 'none' && colorRequiredMsg.offsetParent !== null;
+  if (colorRequiredVisible) {
+    btn.disabled = true;
+    return;
+  }
   const confirmation = modal.querySelector('[data-personalise-confirmation]');
   const checkbox = confirmation?.querySelector('[data-personalise-confirm-checkbox]');
   if (!confirmation || !checkbox) {
@@ -29,6 +35,8 @@ function updateBuildYourSetAddToSetState(modalContent) {
   }
   btn.disabled = !checkbox.checked;
 }
+
+window.updateBuildYourSetAddToSetState = updateBuildYourSetAddToSetState;
 
 export class QuickAddComponent extends Component {
   /** @type {AbortController | null} */

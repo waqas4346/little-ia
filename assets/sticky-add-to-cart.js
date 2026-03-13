@@ -100,6 +100,9 @@ class StickyAddToCartComponent extends Component {
     document.addEventListener(ThemeEvents.cartError, this.#handleCartAddComplete, { signal });
     document.addEventListener(ThemeEvents.quantitySelectorUpdate, this.#handleQuantityUpdate, { signal });
 
+    document.addEventListener('change', this.#onConfirmationOrPersonalisationChange, { signal });
+    document.addEventListener('personalisation-saved', this.#onConfirmationOrPersonalisationChange, { signal });
+
     this.#getInitialQuantity();
   }
 
@@ -318,21 +321,22 @@ class StickyAddToCartComponent extends Component {
     }
     // Restore the current quantity display if needed
     this.#updateButtonText();
-    
+
+    // Re-apply disabled state when "Please select colour" is shown (morph replaces button, losing previous state)
+    this.#applyPersonalisationButtonState();
+
     // Update personalization button text after variant change
-    // Wait a bit for DOM to settle after morphing
+    // Wait a bit for DOM to settle after morphing (personalise modal may run after us)
     setTimeout(() => {
+      this.#applyPersonalisationButtonState();
       if (window.updatePersonaliseButtonText) {
-        // Get the form to pass to the update function
         const productForm = this.#getProductForm();
         const form = productForm?.querySelector('form[data-type="add-to-cart-form"]');
         window.updatePersonaliseButtonText(form);
-        
-        // Also update add to cart button state after updating personalization button
-        // This ensures the button is disabled if personalization is present but not confirmed
         if (window.updateAddToCartButtonState) {
           setTimeout(() => {
             window.updateAddToCartButtonState();
+            this.#applyPersonalisationButtonState();
           }, 50);
         }
       }
@@ -368,6 +372,41 @@ class StickyAddToCartComponent extends Component {
     if (!selectedOptions) return;
     variantTitleElement.textContent = selectedOptions;
   };
+
+  /**
+   * Handles change events (e.g. confirmation checkbox) and personalisation-saved - re-apply sticky button state.
+   */
+  #onConfirmationOrPersonalisationChange = (event) => {
+    if (event.type === 'change' && !event.target?.matches?.('[data-personalise-confirm-checkbox]')) return;
+    if (event.type === 'personalisation-saved' && event.detail?.productId !== this.dataset.productId) return;
+    this.#applyPersonalisationButtonState();
+  };
+
+  /**
+   * Re-applies personalisation-related disabled state to the sticky button.
+   * Needed after morph, which replaces the button and loses the previous disabled state.
+   * Disables when "Please select colour" is active; enables when personalisation is complete.
+   */
+  #applyPersonalisationButtonState() {
+    const form = this.#getProductForm()?.querySelector('form[data-type="add-to-cart-form"]');
+    if (!form || this.dataset.variantAvailable !== 'true') return;
+
+    const colorRequired = form.hasAttribute('data-personalisation-color-required');
+    const stickyButton = this.refs?.addToCartButton || this.querySelector('.sticky-add-to-cart__button');
+    if (!stickyButton) return;
+
+    const confirmation = this.#getProductForm()?.querySelector('[data-personalise-confirmation]');
+    const checkbox = confirmation?.querySelector('[data-personalise-confirm-checkbox]');
+    const confirmationVisible = confirmation && confirmation.offsetParent !== null &&
+      confirmation.style.display !== 'none' &&
+      window.getComputedStyle(confirmation).display !== 'none';
+
+    if (colorRequired) {
+      stickyButton.disabled = true;
+    } else if (confirmationVisible && checkbox?.checked) {
+      stickyButton.disabled = false;
+    }
+  }
 
   /**
    * Handles cart add complete (success or error) - resets puppet flag

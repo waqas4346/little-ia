@@ -195,6 +195,125 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
     // Update color grid for new variant (variant-aware text colours)
     this.#updateColorGridForVariant(variantKey, map);
+
+    // Clear saved color from form/window if it's no longer valid for the new variant
+    this.#clearInvalidColorOnVariantChange(variantKey, map);
+  }
+
+  /**
+   * Clears the saved personalisation color from form and window.currentPersonalisation when the
+   * variant changes and the new variant doesn't support that color. Updates the button text.
+   * @param {string} variantKey - The selected variant ID (string)
+   * @param {{ variantColors?: Record<string, Array<{value: string, key: string}>>, productColors?: Array<{value: string, key: string}> }} map - The cb personalization map
+   * @private
+   */
+  #clearInvalidColorOnVariantChange(variantKey, map) {
+    const { variantColors = {}, productColors = [] } = map;
+    const allowedColors = (variantKey && variantColors?.[variantKey]) ?? productColors ?? [];
+    const allowedValues = new Set(allowedColors.flatMap((c) => [c.value?.toLowerCase(), c.key?.toLowerCase()]).filter(Boolean));
+
+    const productId = this.dataset?.productId;
+    const forms = this.#getAllProductForms();
+
+    let savedColor = null;
+    for (const form of forms) {
+      const colorInput = form.querySelector('input[name="properties[Text Color]"]');
+      if (colorInput?.value) {
+        savedColor = colorInput.value;
+        break;
+      }
+    }
+    if (!savedColor && productId && window.currentPersonalisation?.[productId]?.color) {
+      savedColor = window.currentPersonalisation[productId].color;
+    }
+    if (!savedColor) return;
+
+    const isColorValid = allowedValues.has(savedColor.toLowerCase?.() ?? savedColor);
+    if (isColorValid) return;
+
+    // Clear color from form inputs
+    for (const form of forms) {
+      const colorInput = form.querySelector('input[name="properties[Text Color]"]');
+      if (colorInput) colorInput.remove();
+    }
+    // Clear from window.currentPersonalisation
+    if (productId && window.currentPersonalisation?.[productId]) {
+      delete window.currentPersonalisation[productId].color;
+      if (window.currentPersonalisation._latest?.color) {
+        delete window.currentPersonalisation._latest.color;
+      }
+    }
+
+    if (typeof window.updatePersonaliseButtonText === 'function') {
+      window.updatePersonaliseButtonText(forms[0] || null);
+    }
+
+    // When new variant requires color: show "Please select colour", uncheck and hide confirmation
+    if (allowedColors.length > 0) {
+      this.#showPersonaliseColorRequiredState(productId, forms);
+    }
+  }
+
+  /**
+   * Shows "Please select colour" message, unchecks and hides confirmation when color was cleared due to variant change.
+   * @param {string} productId - The product ID
+   * @param {HTMLFormElement[]} forms - The product forms
+   * @private
+   */
+  #showPersonaliseColorRequiredState(productId, forms) {
+    const searchRoots = forms.map((f) => f.closest('product-form-component') || f.closest('#quick-add-modal-content')).filter(Boolean);
+    const stickyBar = productId ? document.querySelector(`sticky-add-to-cart[data-product-id="${productId}"]`) : null;
+    const uniqueRoots = [...new Set([...searchRoots, ...(stickyBar ? [stickyBar] : [])])];
+
+    for (const form of forms) {
+      form.setAttribute('data-personalisation-color-required', 'true');
+    }
+    for (const searchRoot of uniqueRoots) {
+      const confirmationContainer = searchRoot.querySelector('[data-personalise-confirmation]');
+      const checkbox = confirmationContainer?.querySelector('[data-personalise-confirm-checkbox]');
+      if (checkbox) checkbox.checked = false;
+      if (confirmationContainer) confirmationContainer.style.display = 'none';
+
+      let msgEl = searchRoot.querySelector('[data-personalise-color-required-msg]');
+      if (!msgEl) {
+        msgEl = document.createElement('p');
+        msgEl.className = 'personalise-color-required-msg';
+        msgEl.setAttribute('data-personalise-color-required-msg', '');
+        msgEl.textContent = 'Please select colour';
+        msgEl.style.cssText = 'margin: 0.25rem 0 0 0; color: #c00; font-size: 0.875rem;';
+        const personaliseBtn = searchRoot.querySelector('[data-personalise-button]');
+        if (personaliseBtn && personaliseBtn.nextElementSibling) {
+          personaliseBtn.nextElementSibling.before(msgEl);
+        } else if (personaliseBtn) {
+          personaliseBtn.after(msgEl);
+        } else {
+          searchRoot.querySelector('.product-form-buttons')?.prepend(msgEl);
+        }
+      }
+      if (msgEl) msgEl.style.display = '';
+    }
+
+    if (typeof window.updateAddToCartButtonState === 'function') {
+      window.updateAddToCartButtonState();
+    }
+
+    const quickAddModal = document.getElementById('quick-add-modal-content');
+    if (quickAddModal?.hasAttribute('data-build-your-set') && typeof window.updateBuildYourSetAddToSetState === 'function') {
+      window.updateBuildYourSetAddToSetState(quickAddModal);
+    }
+
+    // Directly disable add to cart (updateAddToCartButtonState may return early when confirmation is hidden)
+    for (const root of uniqueRoots) {
+      const addToCartContainers = root.querySelectorAll('add-to-cart-component');
+      addToCartContainers.forEach((c) => {
+        if (c.refs?.addToCartButton) c.disable();
+      });
+      const sticky = root.tagName === 'STICKY-ADD-TO-CART' ? root : root.querySelector('sticky-add-to-cart');
+      const stickyBtn = sticky?.refs?.addToCartButton || sticky?.querySelector('.sticky-add-to-cart__button');
+      if (stickyBtn && sticky?.dataset?.variantAvailable === 'true') {
+        stickyBtn.disabled = true;
+      }
+    }
   }
 
   /**

@@ -917,7 +917,16 @@
             
             // Check if we have personalisation data (from form inputs)
             const hasPersonalisation = parts.length > 0 || colorText;
-            
+
+            // Hide "Please select colour" message and clear flag when color is present (user re-selected after variant change)
+            if (colorText) {
+              allForms.forEach(f => f.removeAttribute('data-personalisation-color-required'));
+              document.querySelectorAll('[data-personalise-color-required-msg]').forEach(el => { el.style.display = 'none'; });
+            }
+
+            // When color was cleared due to variant change (flag set), don't show confirmation - keep it hidden
+            const colorRequired = allForms.some(f => f.hasAttribute('data-personalisation-color-required'));
+
             if (hasPersonalisation) {
               // Build summary text - prefer sessionStorage data, fallback to form inputs
               let summaryText = 'Personalised:';
@@ -939,53 +948,43 @@
                 button.classList.add('has-summary');
               }
               textSpan.textContent = 'EDIT';
-              
-              // Show and update confirmation checkbox
+
+              // Only show confirmation when NOT in "color required" state (color was cleared due to variant change)
               if (confirmationContainer) {
-                const confirmTextSpan = confirmationContainer.querySelector('[data-personalise-confirm-text]');
-                if (confirmTextSpan) {
-                  // Build dynamic label based on fields found in form or sessionStorage
-                  const fields = [];
-                  
-                  // Check form inputs first (use activeForm which could be quick-add form)
-                  if (activeForm) {
-                    if (activeForm.querySelector('input[name="properties[Name]"]') || activeForm.querySelector('#personalise-name')) {
-                      fields.push('name');
+                if (colorRequired) {
+                  confirmationContainer.style.display = 'none';
+                  if (window.updateAddToCartButtonState) setTimeout(window.updateAddToCartButtonState, 50);
+                } else {
+                  const confirmTextSpan = confirmationContainer.querySelector('[data-personalise-confirm-text]');
+                  if (confirmTextSpan) {
+                    const fields = [];
+                    if (activeForm) {
+                      if (activeForm.querySelector('input[name="properties[Name]"]') || activeForm.querySelector('#personalise-name')) {
+                        fields.push('name');
+                      }
+                      if (activeForm.querySelector('input[name="properties[Name 1]"]')) fields.push('name1');
+                      if (activeForm.querySelector('input[name="properties[Name 2]"]')) fields.push('name2');
+                      if (activeForm.querySelector('input[name="properties[Name 3]"]')) fields.push('name3');
+                      if (activeForm.querySelector('input[name="properties[Name 4]"]')) fields.push('name4');
+                      if (activeForm.querySelector('input[name="properties[Date of Birth]"]') || activeForm.querySelector('#dob_field_val')) {
+                        fields.push('date');
+                      }
+                      if (colorText) fields.push('colour');
+                      if (activeForm.querySelector('input[name="properties[Text Font]"]')) fields.push('font');
+                      if (activeForm.querySelector('input[name="properties[Baby\'s Name]"]')) fields.push('baby name');
+                      if (activeForm.querySelector('input[name="properties[Kid\'s Name]"]')) fields.push('kid name');
+                      if (activeForm.querySelector('input[name="properties[Mum\'s Name]"]')) fields.push('mum name');
                     }
-                    if (activeForm.querySelector('input[name="properties[Name 1]"]')) fields.push('name1');
-                    if (activeForm.querySelector('input[name="properties[Name 2]"]')) fields.push('name2');
-                    if (activeForm.querySelector('input[name="properties[Name 3]"]')) fields.push('name3');
-                    if (activeForm.querySelector('input[name="properties[Name 4]"]')) fields.push('name4');
-                    if (activeForm.querySelector('input[name="properties[Date of Birth]"]') || activeForm.querySelector('#dob_field_val')) {
-                      fields.push('date');
+                    for (const checkForm of allForms) {
+                      if (!checkForm) continue;
+                      if (checkForm.querySelector('input[name="properties[Baby\'s Name]"]') && !fields.includes('baby name')) fields.push('baby name');
+                      if (checkForm.querySelector('input[name="properties[Kid\'s Name]"]') && !fields.includes('kid name')) fields.push('kid name');
+                      if (checkForm.querySelector('input[name="properties[Mum\'s Name]"]') && !fields.includes('mum name')) fields.push('mum name');
                     }
-                    if (colorText) fields.push('colour');
-                    if (activeForm.querySelector('input[name="properties[Text Font]"]')) fields.push('font');
-                    if (activeForm.querySelector('input[name="properties[Baby\'s Name]"]')) fields.push('baby name');
-                    if (activeForm.querySelector('input[name="properties[Kid\'s Name]"]')) fields.push('kid name');
-                    if (activeForm.querySelector('input[name="properties[Mum\'s Name]"]')) fields.push('mum name');
-                  }
-                  
-                  // Also check form inputs if not already checked - check all forms
-                  for (const checkForm of allForms) {
-                    if (!checkForm) continue;
-                    if (checkForm.querySelector('input[name="properties[Baby\'s Name]"]') && !fields.includes('baby name')) {
-                      fields.push('baby name');
-                    }
-                    if (checkForm.querySelector('input[name="properties[Kid\'s Name]"]') && !fields.includes('kid name')) {
-                      fields.push('kid name');
-                    }
-                    if (checkForm.querySelector('input[name="properties[Mum\'s Name]"]') && !fields.includes('mum name')) {
-                      fields.push('mum name');
-                    }
-                  }
-                  
-                  if (fields.length > 0) {
-                    confirmTextSpan.textContent = `I confirm my ${fields.join(', ')} personalisation`;
-                    confirmationContainer.style.display = '';
-                    // Update add to cart button state after showing confirmation
-                    if (window.updateAddToCartButtonState) {
-                      setTimeout(window.updateAddToCartButtonState, 50);
+                    if (fields.length > 0) {
+                      confirmTextSpan.textContent = `I confirm my ${fields.join(', ')} personalisation`;
+                      confirmationContainer.style.display = '';
+                      if (window.updateAddToCartButtonState) setTimeout(window.updateAddToCartButtonState, 50);
                     }
                   }
                 }
@@ -1102,9 +1101,26 @@
           }
           
           // Check if confirmation container is visible
-          const isVisible = personalisationConfirmation.offsetParent !== null || 
+          const isVisible = personalisationConfirmation.offsetParent !== null ||
                             personalisationConfirmation.style.display !== 'none' ||
                             window.getComputedStyle(personalisationConfirmation).display !== 'none';
+
+          // If "Please select colour" state (form flag or visible message), disable
+          const formColorRequired = form.hasAttribute('data-personalisation-color-required');
+          const colorRequiredMsg = productFormComponent.querySelector('[data-personalise-color-required-msg]');
+          const colorRequiredVisible = formColorRequired || (colorRequiredMsg && colorRequiredMsg.style.display !== 'none' && colorRequiredMsg.offsetParent !== null);
+          if (colorRequiredVisible) {
+            const addToCartButtons = productFormComponent.querySelectorAll('add-to-cart-component');
+            addToCartButtons.forEach(container => {
+              if (container.refs?.addToCartButton) container.disable();
+            });
+            const stickyBar = document.querySelector(`sticky-add-to-cart[data-product-id="{{ product.id }}"]`);
+            const stickyButton = stickyBar?.refs?.addToCartButton || stickyBar?.querySelector('.sticky-add-to-cart__button');
+            if (stickyButton && stickyBar.dataset.variantAvailable === 'true') {
+              stickyButton.disabled = true;
+            }
+            return;
+          }
           
           if (!isVisible) {
             // If not visible, personalization not present - don't interfere with button state
@@ -1124,9 +1140,9 @@
           });
           
           // Also handle sticky bar add to cart button
-          const stickyBar = document.querySelector('sticky-add-to-cart');
-          if (stickyBar?.refs?.addToCartButton) {
-            const stickyButton = stickyBar.refs.addToCartButton;
+          const stickyBar = document.querySelector(`sticky-add-to-cart[data-product-id="{{ product.id }}"]`) || document.querySelector('sticky-add-to-cart');
+          const stickyButton = stickyBar?.refs?.addToCartButton || stickyBar?.querySelector('.sticky-add-to-cart__button');
+          if (stickyButton) {
             // Only disable if variant is available (don't override unavailable state)
             if (stickyBar.dataset.variantAvailable === 'true') {
               if (personalisationCheckbox.checked) {

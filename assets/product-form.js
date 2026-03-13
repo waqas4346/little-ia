@@ -222,19 +222,22 @@ class ProductFormComponent extends Component {
   #isPersonalisationConfirmed() {
     const form = this.querySelector('form');
     if (!form) return true; // No form, assume confirmed
-    
+
+    // When color was cleared due to variant change - must re-select before adding
+    if (form.hasAttribute('data-personalisation-color-required')) return false;
+
     const personalisationConfirmation = this.querySelector('[data-personalise-confirmation]');
     const personalisationCheckbox = personalisationConfirmation?.querySelector('[data-personalise-confirm-checkbox]');
-    
+
     if (!personalisationConfirmation || !personalisationCheckbox) return true; // No personalization, assume confirmed
-    
+
     // Check if confirmation container is visible
-    const isVisible = personalisationConfirmation.offsetParent !== null || 
+    const isVisible = personalisationConfirmation.offsetParent !== null ||
                       personalisationConfirmation.style.display !== 'none' ||
                       window.getComputedStyle(personalisationConfirmation).display !== 'none';
-    
+
     if (!isVisible) return true; // Not visible, personalization not present
-    
+
     // If visible, checkbox must be checked
     return personalisationCheckbox.checked;
   }

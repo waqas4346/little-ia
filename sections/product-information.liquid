@@ -687,7 +687,19 @@
                   parts.push('Font: ' + personalisationToUse.font);
                 }
                 const colorText = personalisationToUse.color || '';
-                
+
+                // Hide "Please select colour" message and clear flag when color is present (user re-selected after variant change)
+                if (colorText) {
+                  allForms.forEach(f => f.removeAttribute('data-personalisation-color-required'));
+                  const msgEl = button.closest('product-form-component')?.querySelector('[data-personalise-color-required-msg]') ||
+                                button.closest('#quick-add-modal-content')?.querySelector('[data-personalise-color-required-msg]') ||
+                                button.closest('sticky-add-to-cart')?.querySelector('[data-personalise-color-required-msg]');
+                  if (msgEl) msgEl.style.display = 'none';
+                }
+
+                // When color was cleared due to variant change (flag set), don't show confirmation - keep it hidden
+                const colorRequired = allForms.some(f => f && f.hasAttribute('data-personalisation-color-required'));
+
                 let summaryText = 'Personalised:';
                 if (parts.length > 0) {
                   summaryText += ' ' + parts.join(' | ');
@@ -706,8 +718,12 @@
                 }
                 textSpan.textContent = 'EDIT';
                 
-                // Show and update confirmation checkbox
+                // Show and update confirmation checkbox (hide when color required but missing - variant change cleared it)
                 if (confirmationContainer) {
+                  if (colorRequired) {
+                    confirmationContainer.style.display = 'none';
+                    if (window.updateAddToCartButtonState) setTimeout(window.updateAddToCartButtonState, 50);
+                  } else {
                   const confirmTextSpan = confirmationContainer.querySelector('[data-personalise-confirm-text]');
                   if (confirmTextSpan) {
                     // Build dynamic label based on ALL available fields
@@ -767,6 +783,7 @@
                   }
                   confirmationContainer.style.display = 'block';
                   console.log('Confirmation container displayed');
+                  }
                 } else {
                   console.log('Confirmation container not found for button');
                 }
