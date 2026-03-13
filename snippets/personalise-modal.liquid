@@ -924,17 +924,7 @@
             </div>
           </div>
 
-          <div class="personalise-modal__field">
-            <label class="personalise-modal__label">Choose Font Style</label>
-            <div class="personalise-modal__font-grid" ref="fontGrid">
-              <button type="button" class="personalise-modal__font-button" data-font="Ariel round" ref="fontButton" on:click="/selectFont">Ariel round</button>
-              <button type="button" class="personalise-modal__font-button" data-font="Comic Sans" ref="fontButton" on:click="/selectFont">Comic Sans</button>
-              <button type="button" class="personalise-modal__font-button" data-font="Playfair Display" ref="fontButton" on:click="/selectFont">Playfair Display</button>
-              <button type="button" class="personalise-modal__font-button" data-font="Playball" ref="fontButton" on:click="/selectFont">Playball</button>
-              <button type="button" class="personalise-modal__font-button" data-font="Roboto Serif" ref="fontButton" on:click="/selectFont">Roboto Serif</button>
-              <button type="button" class="personalise-modal__font-button" data-font="Helvetica" ref="fontButton" on:click="/selectFont">Helvetica</button>
-            </div>
-          </div>
+          {% comment %} Font selection only shown when cb_fonts_personalisation metafield is enabled (see main block above) {% endcomment %}
         {% endif %}
 
         <div class="personalise-modal__actions">

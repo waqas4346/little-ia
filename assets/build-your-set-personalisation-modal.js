@@ -181,32 +181,106 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
       }
     }
 
-    // Load existing personalizations
+    // Load existing personalizations and normalize keys for Build Your Set modal
     if (productData.personalizations) {
       this.personalisationData = { ...productData.personalizations };
+      // Normalize property keys so Edit pre-fills correctly
+      if (this.personalisationData['properties[Text Color]'] && !this.personalisationData['personalise-color']) {
+        this.personalisationData['personalise-color'] = this.personalisationData['properties[Text Color]'];
+      }
+      if (this.personalisationData['properties[Text Font]'] && !this.personalisationData['personalise-font']) {
+        this.personalisationData['personalise-font'] = this.personalisationData['properties[Text Font]'];
+      }
     } else {
       this.personalisationData = {};
     }
 
     // Open the dialog first for immediate visual feedback
     this.showDialog();
-    
-    // Generate form fields asynchronously to avoid blocking UI
-    requestAnimationFrame(() => {
-      // Use product tags from session (should already be saved)
-      const productTags = productData.product_tags;
 
-      // Generate form fields based on product tags (same logic as original modal)
-      // If we have tags, use tag-based generation, otherwise fall back to personalization_fields
+    const generateFields = () => {
+      const productTags = productData.product_tags;
+      const personalizationFields = productData.personalization_fields || [];
+
       if (productTags && productTags.length > 0) {
-        this.generateFormFieldsFromTags(productTags, productData.personalization_fields || []);
-      } else if (productData.personalization_fields && productData.personalization_fields.length > 0) {
-        // Fallback to personalization_fields if no tags
-        this.generateFormFields(productData.personalization_fields);
+        this.generateFormFieldsFromTags(productTags, personalizationFields);
+      } else if (personalizationFields.length > 0) {
+        this.generateFormFields(personalizationFields);
+      } else if (Object.keys(this.personalisationData).length > 0) {
+        // Have saved personalisations but no tags/fields - try to fetch product data
+        this.refs.formContainer.innerHTML = '<p class="personalise-modal__loading">Loading personalisation options...</p>';
+        this.#fetchProductDataForEdit(productData).then((enhanced) => {
+          if (enhanced) {
+            productData.product_tags = productData.product_tags || enhanced.tags;
+            productData.personalization_fields = productData.personalization_fields || enhanced.personalization_fields;
+            generateFields();
+          } else {
+            this.refs.formContainer.innerHTML = '<p>No personalization options available for this product.</p>';
+          }
+        }).catch(() => {
+          this.refs.formContainer.innerHTML = '<p>No personalization options available for this product.</p>';
+        });
       } else {
         this.refs.formContainer.innerHTML = '<p>No personalization options available for this product.</p>';
       }
-    });
+    };
+
+    // Generate form fields asynchronously to avoid blocking UI
+    requestAnimationFrame(generateFields);
+  }
+
+  /**
+   * Fetches product data (tags, metafields) when opening edit with missing product_tags/personalization_fields.
+   * @param {Object} productData - Product data from session
+   * @returns {Promise<{tags?: string[], personalization_fields?: Array}>}
+   */
+  async #fetchProductDataForEdit(productData) {
+    let url = productData.product_url;
+    if (!url && productData.product_handle) {
+      url = `/products/${productData.product_handle}`;
+    }
+    if (!url || !url.includes('/products/')) return null;
+
+    try {
+      const jsonUrl = url.replace(/\/$/, '') + (url.endsWith('.json') ? '' : '.json');
+      const res = await fetch(jsonUrl);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const product = data.product;
+      if (!product) return null;
+
+      const result = {};
+      if (product.tags) {
+        result.tags = Array.isArray(product.tags)
+          ? product.tags
+          : String(product.tags).split(',').map((t) => t.trim());
+      }
+
+      const colorMetafield = product.metafields?.custom?.cb_product_personalisation_colors?.value
+        || product.variants?.[0]?.metafields?.custom?.cb_personalisation_colors?.value;
+      if (colorMetafield && Array.isArray(colorMetafield) && colorMetafield.length > 0) {
+        const colorOptions = colorMetafield
+          .map((c) => {
+            const v = (typeof c === 'string' ? c : '').trim();
+            return v ? { value: v, label: v, display: v.toLowerCase() } : null;
+          })
+          .filter(Boolean);
+        if (colorOptions.length > 0) {
+          result.personalization_fields = result.personalization_fields || [];
+          result.personalization_fields.push({
+            field_type: 'text_color',
+            name: 'personalise-color',
+            type: 'radio',
+            options: colorOptions,
+            required: true
+          });
+        }
+      }
+
+      return Object.keys(result).length > 0 ? result : null;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -382,29 +456,43 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         .filter(Boolean);
     }
 
+    // Fallback: if we have saved color but no options (e.g. personalization_fields missing), show at least the saved color
+    const has_text_color = hasTag('personalized_textcolor');
+    const savedColorVal = (this.personalisationData['personalise-color'] || this.personalisationData['properties[Text Color]'] || '').toString().trim();
+    if (colorOptions.length === 0 && savedColorVal && has_text_color) {
+      colorOptions = [{ value: savedColorVal, label: savedColorVal, display: savedColorVal.toLowerCase() }];
+    }
+
     if (colorOptions.length > 0) {
-        const colorHTML = colorOptions.map((option, idx) => {
-          const checked = this.personalisationData['personalise-color'] === option.value ? 'checked' : '';
+        const savedColor = (this.personalisationData['personalise-color'] || this.personalisationData['properties[Text Color]'] || '').toString().trim();
+        // const colorMap = {
+        //   black: '#000000', white: '#ffffff', blue: '#DEE8EF', gold: '#DEB035',
+        //   green: '#E4EFDB', grey: '#E8EBEC', gray: '#E8EBEC', multicolour: '#8B4789',
+        //   orange: '#F8CF89', pink: '#F7DDE2', purple: '#F0D9E6', red: '#BC3725',
+        //   silver: '#DEEBF7', yellow: '#F9F3DB'
+        // };
+        const colorHTML = colorOptions.map((option) => {
+          const checked = savedColor && option.value.toLowerCase() === savedColor.toLowerCase() ? 'checked' : '';
+          const colorKey = option.display.toLowerCase();
+          const swatchColor = (option.display.match(/^#([0-9a-f]{3}){1,2}$/i) ? option.display : colorKey);
           return `
             <label
               class="personalise-modal__color-button variant-option__button-label variant-option__button-label--image-thumbnail"
-              data-color="${option.value}"
-              title="${option.label}"
+              data-color="${option.value.replace(/"/g, '&quot;')}"
+              title="${option.label.replace(/"/g, '&quot;')}"
             >
               <input
                 type="radio"
                 name="personalise-color"
-                value="${option.value}"
+                value="${option.value.replace(/"/g, '&quot;')}"
                 data-field-name="personalise-color"
                 ${checked}
                 required
               >
               <div class="variant-option__image-thumbnail">
-                <div 
-                  class="personalise-modal__color-icon" 
-                  data-color-icon="${option.display}"
-                  style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;"
-                ></div>
+                <div class="personalise-modal__color-icon" style="width: 60px; height: 60px;">
+                  <span class="swatch swatch--unscaled" style="--swatch-background: ${swatchColor}; background-color: ${swatchColor};"></span>
+                </div>
               </div>
             </label>
           `;
@@ -423,10 +511,10 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     // Font selection (metafield-driven via collected personalization_fields)
     if (font_family_feild) {
       const fontOptions = BuildYourSetPersonaliseDialogComponent.FONT_OPTIONS;
-      
+      const savedFont = (this.personalisationData['personalise-font'] || this.personalisationData['properties[Text Font]'] || '').toString().trim();
       if (fontOptions.length > 0) {
         const fontHTML = fontOptions.map(option => {
-          const isSelected = this.personalisationData['personalise-font'] === option.value;
+          const isSelected = savedFont && option.value.trim() === savedFont;
           const selectedClass = isSelected ? 'personalise-modal__font-button--selected' : '';
           return `
             <button type="button" class="personalise-modal__font-button ${selectedClass}" data-font="${option.value}" data-field-name="personalise-font" data-field-value="${option.value}">
@@ -730,15 +818,25 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
           </div>
         `;
       } else if (fieldType === 'radio' && field.options) {
-        // Radio button group (for color selection)
+        // Radio button group (for color selection) - use color map for swatch display
+        // const colorMap = {
+        //   black: '#000000', white: '#ffffff', blue: '#DEE8EF', gold: '#DEB035',
+        //   green: '#E4EFDB', grey: '#E8EBEC', gray: '#E8EBEC', multicolour: '#8B4789',
+        //   orange: '#F8CF89', pink: '#F7DDE2', purple: '#F0D9E6', red: '#BC3725',
+        //   silver: '#DEEBF7', yellow: '#F9F3DB'
+        // };
+        // const savedVal = (this.personalisationData[fieldName] || this.personalisationData['properties[Text Color]'] || '').toString().trim();
         const radioHTML = field.options.map((option, optIndex) => {
           const optionValue = typeof option === 'string' ? option : option.value;
           const optionLabel = typeof option === 'string' ? option : (option.label || optionValue);
-          const checked = this.personalisationData[fieldName] === optionValue ? 'checked' : '';
+          const checked = savedVal && String(optionValue).toLowerCase() === savedVal.toLowerCase() ? 'checked' : '';
           const radioId = `build-your-set-${fieldName}-${optIndex}`;
-          
+          const displayVal = typeof option === 'object' ? option.display : null;
+          const colorKey = String(optionValue).toLowerCase();
+          const swatchColor = (displayVal && displayVal !== 'transparent' && displayVal !== 'rgba(0, 0, 0, 0)' ? displayVal : null) ||
+            (optionValue.match(/^#([0-9a-f]{3}){1,2}$/i) ? optionValue : colorKey);
           return `
-            <label class="personalise-modal__color-button" data-color="${optionValue}" title="${optionLabel}">
+            <label class="personalise-modal__color-button variant-option__button-label variant-option__button-label--image-thumbnail" data-color="${optionValue}" title="${optionLabel}">
               <input
                 type="radio"
                 id="${radioId}"
@@ -748,8 +846,11 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
                 ${checked}
                 ${required ? 'required' : ''}
               />
-              ${option.display ? `<span class="swatch" style="background-color: ${option.display}"></span>` : ''}
-              <span>${optionLabel}</span>
+              <div class="variant-option__image-thumbnail">
+                <div class="personalise-modal__color-icon" style="width: 60px; height: 60px;">
+                  <span class="swatch swatch--unscaled" style="--swatch-background: ${swatchColor}; background-color: ${swatchColor};"></span>
+                </div>
+              </div>
             </label>
           `;
         }).join('');
@@ -766,11 +867,12 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         `;
       } else if (fieldType === 'select' && field.options && field.field_type === 'font') {
         // Font buttons (for font selection - rendered as buttons, not select)
+        const savedFont = (this.personalisationData[fieldName] || this.personalisationData['properties[Text Font]'] || '').toString().trim();
         const fontButtonsHTML = field.options.map((option, optIndex) => {
           const optionValue = typeof option === 'string' ? option : option.value;
           const optionLabel = typeof option === 'string' ? option : (option.label || optionValue);
           const optionDisplay = typeof option === 'string' ? option : (option.display || optionLabel);
-          const isSelected = this.personalisationData[fieldName] === optionValue;
+          const isSelected = savedFont && String(optionValue).trim() === savedFont.trim();
           const selectedClass = isSelected ? 'personalise-modal__font-button--selected' : '';
           
           return `

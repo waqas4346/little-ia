@@ -274,23 +274,31 @@ export class PersonaliseDialogComponent extends DialogComponent {
       if (checkbox) checkbox.checked = false;
       if (confirmationContainer) confirmationContainer.style.display = 'none';
 
-      let msgEl = searchRoot.querySelector('[data-personalise-color-required-msg]');
-      if (!msgEl) {
-        msgEl = document.createElement('p');
-        msgEl.className = 'personalise-color-required-msg';
-        msgEl.setAttribute('data-personalise-color-required-msg', '');
-        msgEl.textContent = 'Please select colour';
-        msgEl.style.cssText = 'margin: 0.25rem 0 0 0; color: #c00; font-size: 0.875rem;';
-        const personaliseBtn = searchRoot.querySelector('[data-personalise-button]');
-        if (personaliseBtn && personaliseBtn.nextElementSibling) {
-          personaliseBtn.nextElementSibling.before(msgEl);
-        } else if (personaliseBtn) {
-          personaliseBtn.after(msgEl);
-        } else {
-          searchRoot.querySelector('.product-form-buttons')?.prepend(msgEl);
+      // Skip "Please select colour" message in sticky bar (user preference: don't show in sticky bar)
+      const isStickyBar = searchRoot.tagName === 'STICKY-ADD-TO-CART';
+      if (!isStickyBar) {
+        let msgEl = searchRoot.querySelector('[data-personalise-color-required-msg]');
+        if (!msgEl) {
+          msgEl = document.createElement('p');
+          msgEl.className = 'personalise-color-required-msg';
+          msgEl.setAttribute('data-personalise-color-required-msg', '');
+          msgEl.textContent = 'Please again select text colour for this variant';
+          msgEl.style.cssText = 'margin: 0.25rem 0 0 0; color: #c00; font-size: 0.875rem;';
+          const personaliseBtn = searchRoot.querySelector('[data-personalise-button]');
+          if (personaliseBtn && personaliseBtn.nextElementSibling) {
+            personaliseBtn.nextElementSibling.before(msgEl);
+          } else if (personaliseBtn) {
+            personaliseBtn.after(msgEl);
+          } else {
+            searchRoot.querySelector('.product-form-buttons')?.prepend(msgEl);
+          }
         }
+        if (msgEl) msgEl.style.display = '';
+      } else {
+        // Ensure any existing message in sticky bar stays hidden
+        const msgEl = searchRoot.querySelector('[data-personalise-color-required-msg]');
+        if (msgEl) msgEl.style.display = 'none';
       }
-      if (msgEl) msgEl.style.display = '';
     }
 
     if (typeof window.updateAddToCartButtonState === 'function') {

@@ -224,22 +224,36 @@ export class BuildYourSetStickyBarComponent extends Component {
       productElement.className = 'build-your-set-sticky-bar__product';
       productElement.dataset.productIndex = index;
 
-      // Build personalisation text - only values separated by |
-      let personalisationText = '';
+      // Build personalisation display - values separated by |, color as swatch
+      let personalisationHtml = '';
       const hasPersonalizations = item.personalizations && Object.keys(item.personalizations).length > 0;
+      const colorKeys = ['personalise-color', 'color', 'properties[Text Color]'];
+      const colorMap = {
+        black: '#000000', white: '#ffffff', blue: '#DEE8EF', gold: '#DEB035',
+        green: '#E4EFDB', grey: '#E8EBEC', gray: '#E8EBEC', multicolour: '#8B4789',
+        orange: '#F8CF89', pink: '#F7DDE2', purple: '#F0D9E6', red: '#BC3725',
+        silver: '#DEEBF7', yellow: '#F9F3DB'
+      };
+      const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
       if (hasPersonalizations) {
         const parts = [];
         const personalizations = item.personalizations;
-        
-        // Iterate through all personalization keys and collect only values
         Object.keys(personalizations).forEach(key => {
           const value = personalizations[key];
           if (value && value.toString().trim() && value !== 'null' && value !== 'undefined') {
-            parts.push(value.toString().trim());
+            const val = value.toString().trim();
+            const isColor = colorKeys.includes(key);
+            if (isColor) {
+              const colorKey = val.toLowerCase();
+              const bgColor = colorMap[colorKey] || val;
+              const titleEscaped = escapeHtml(val);
+              parts.push(`<span class="personalise-summary__color"><span class="personalise-summary__swatch" style="background-color: ${bgColor}" title="${titleEscaped}"></span></span>`);
+            } else {
+              parts.push(escapeHtml(val));
+            }
           }
         });
-        
-        personalisationText = parts.join(' | ');
+        personalisationHtml = parts.join(' | ');
       }
 
       const imageUrl = item.featured_image || (item.images && item.images[0]) || '';
@@ -259,9 +273,9 @@ export class BuildYourSetStickyBarComponent extends Component {
         <div class="build-your-set-sticky-bar__product-info">
           <h4 class="build-your-set-sticky-bar__product-name">${productName}</h4>
           <div class="build-your-set-sticky-bar__product-price">${price}</div>
-          ${personalisationText ? `
+          ${personalisationHtml ? `
             <div class="build-your-set-sticky-bar__product-personalisation">
-              <span class="build-your-set-sticky-bar__personalisation-text">${personalisationText}</span>
+              <span class="build-your-set-sticky-bar__personalisation-text">${personalisationHtml}</span>
               ${showEditButton ? `
                 <button class="build-your-set-sticky-bar__product-edit-personalisation" data-product-index="${index}" data-product-id="${item.product_id}" data-variant-id="${item.variant_id}" aria-label="Edit personalization for ${productName}">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">

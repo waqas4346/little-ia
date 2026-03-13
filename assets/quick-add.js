@@ -1135,9 +1135,11 @@ export class QuickAddComponent extends Component {
     if (productData.needs_personalization) {
       const personalizationFields = [];
       
-      // Find the personalise modal/dialog
-      const personaliseModal = document.querySelector('personalise-dialog');
+      // Find the personalise modal/dialog - prefer the one inside modalContent (the product we're adding)
+      const personaliseModalInContent = modalContent.querySelector('personalise-dialog');
+      const personaliseModal = personaliseModalInContent || document.querySelector('personalise-dialog');
       const personaliseModalContent = personaliseModal?.querySelector('.personalise-modal') || 
+                                      modalContent.querySelector('.personalise-modal') ||
                                       document.querySelector('.personalise-modal');
       
       if (personaliseModalContent) {

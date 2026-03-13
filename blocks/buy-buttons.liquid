@@ -934,16 +934,29 @@
                 summaryText += ' ' + parts.join(' | ');
               }
               if (colorText) {
+                const colorMap = {
+                  black: '#000000', white: '#ffffff', blue: '#DEE8EF', gold: '#DEB035',
+                  green: '#E4EFDB', grey: '#E8EBEC', gray: '#E8EBEC', multicolour: '#8B4789',
+                  orange: '#F8CF89', pink: '#F7DDE2', purple: '#F0D9E6', red: '#BC3725',
+                  silver: '#DEEBF7', yellow: '#F9F3DB'
+                };
+                const colorKey = String(colorText).toLowerCase().trim();
+                const colorEscaped = String(colorText).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                const swatchHtml = '<span class="personalise-summary__color"><span class="personalise-summary__swatch" style="background-color: ' + (colorMap[colorKey] || colorText) + '" title="' + colorEscaped + '"></span></span>';
                 if (parts.length > 0) {
-                  summaryText += ' (' + colorText + ')';
+                  summaryText += ' (' + swatchHtml + ')';
                 } else {
-                  summaryText += ' ' + colorText;
+                  summaryText += ' ' + swatchHtml;
                 }
               }
               
-              // Show summary and update text
+              // Show summary and update text (innerHTML when swatch present, else textContent)
               if (summarySpan) {
-                summarySpan.textContent = summaryText;
+                if (colorText) {
+                  summarySpan.innerHTML = summaryText;
+                } else {
+                  summarySpan.textContent = summaryText;
+                }
                 summarySpan.style.display = '';
                 button.classList.add('has-summary');
               }
@@ -1752,6 +1765,23 @@
     white-space: nowrap;
   }
 
+  .personalise-button__summary .personalise-summary__color {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    vertical-align: middle;
+  }
+
+  .personalise-button__summary .personalise-summary__swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 2px;
+    vertical-align: middle;
+  }
+
   /* Personalisation Confirmation Checkbox */
   .personalise-confirmation {
     margin-top: var(--margin-md);
@@ -1827,7 +1857,8 @@
       padding: 10px;
       height: auto;
       flex: auto;
-
+      gap: 2px;
+      flex-wrap: wrap;
     }
     .sticky-add-to-cart__actions .personalise-button:has(.add-to-cart-button) {
       width: 100%;
