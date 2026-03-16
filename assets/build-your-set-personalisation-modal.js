@@ -346,11 +346,18 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     const has_mum_name = tagsLowercase.includes('mum_name');
     const show_name_tabs = has_baby_name || has_kid_name || has_mum_name;
     
-    // Determine max length
+    // Determine max length from personalise_N tag (personalise_1, personalise_2, personalise_5, etc.)
     let dynamic_max = 9;
-    if (tagsLowercase.includes('personalise_5')) dynamic_max = 5;
-    else if (tagsLowercase.includes('personalise_7')) dynamic_max = 7;
-    else if (tagsLowercase.includes('personalise_9')) dynamic_max = 9;
+    for (const tag of tagsLowercase) {
+      if (tag.startsWith('personalise_')) {
+        const suffix = tag.split('_').pop();
+        const num = parseInt(suffix, 10);
+        if (!isNaN(num) && num >= 1 && num <= 50) {
+          dynamic_max = num;
+          break;
+        }
+      }
+    }
     
     const collectedFontField = Array.isArray(collectedFields)
       ? collectedFields.find((field) => field?.field_type === 'font' && Array.isArray(field.options) && field.options.length > 0)
@@ -370,9 +377,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     // Name tabs (Baby/Kid/Mum)
     if (show_name_tabs) {
       fieldsHTML += `
-        <p class="personalise-modal__instructions">
-          Maximum 9 characters. No special characters.
-        </p>
         <div class="personalise-name-tabs" data-name-tabs>
           <div class="personalise-name-tabs__tablist" role="tablist">
             ${has_baby_name ? `
@@ -399,6 +403,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
                   <input type="text" class="personalise-name-tabs__input" name="properties[Baby's Name]" placeholder="Enter the Name or Initials" maxlength="9" data-field-name="properties[Baby's Name]" value="${this.personalisationData["properties[Baby's Name]"] || ''}" />
                   <span class="personalise-name-tabs__counter"><span data-count="baby">${(this.personalisationData["properties[Baby's Name]"] || '').length}</span>/9</span>
                 </div>
+                <p class="personalise-modal__info-text">Maximum 9 characters. No special characters.</p>
               </div>
             ` : ''}
             ${has_kid_name ? `
@@ -408,6 +413,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
                   <input type="text" class="personalise-name-tabs__input" name="properties[Kid's Name]" placeholder="Enter the Name or Initials" maxlength="9" data-field-name="properties[Kid's Name]" value="${this.personalisationData["properties[Kid's Name]"] || ''}" />
                   <span class="personalise-name-tabs__counter"><span data-count="kid">${(this.personalisationData["properties[Kid's Name]"] || '').length}</span>/9</span>
                 </div>
+                <p class="personalise-modal__info-text">Maximum 9 characters. No special characters.</p>
               </div>
             ` : ''}
             ${has_mum_name ? `
@@ -417,6 +423,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
                   <input type="text" class="personalise-name-tabs__input" name="properties[Mum's Name]" placeholder="Enter the Name or Initials" maxlength="9" data-field-name="properties[Mum's Name]" value="${this.personalisationData["properties[Mum's Name]"] || ''}" />
                   <span class="personalise-name-tabs__counter"><span data-count="mum">${(this.personalisationData["properties[Mum's Name]"] || '').length}</span>/9</span>
                 </div>
+                <p class="personalise-modal__info-text">Maximum 9 characters. No special characters.</p>
               </div>
             ` : ''}
           </div>
@@ -428,9 +435,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     // Don't use show_personalized (cust_personalized) alone - it's too general
     if ((personalized_name || personalized_textbox) && !show_name_tabs) {
       fieldsHTML += `
-        <p class="personalise-modal__instructions">
-          Maximum ${dynamic_max} characters. No special characters.
-        </p>
         <div class="personalise-modal__field">
           <label for="build-your-set-personalise-name" class="personalise-modal__label">
             Name (Free Personalisation)
@@ -450,6 +454,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
               <span data-count="personalise-name">${(this.personalisationData['personalise-name'] || '').length}</span>/${dynamic_max}
             </span>
           </div>
+          <p class="personalise-modal__info-text">Maximum ${dynamic_max} characters. No special characters.</p>
         </div>
       `;
     }
@@ -745,32 +750,6 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
       return;
     }
 
-    // Find the first text/name field to determine maxLength for instructions
-    const firstTextField = fields.find(f => {
-      const isTextType = f.type === 'text' || f.type === 'name' || !f.type;
-      const hasMaxLength = f.maxlength || f.maxLength;
-      const isNameField = f.name?.toLowerCase().includes('name') || 
-                         f.name?.includes("personalise-name") ||
-                         f.name?.includes("Baby's Name") ||
-                         f.name?.includes("Kid's Name") ||
-                         f.name?.includes("Mum's Name");
-      return isTextType && (isNameField || hasMaxLength);
-    });
-    
-    // Get maxLength from the first text field, or default to 9
-    const maxLength = firstTextField ? (firstTextField.maxlength || firstTextField.maxLength || 9) : 9;
-    
-    // Add instruction text before form fields if there's a text field with maxLength
-    // Show it for name fields or any text field with maxlength <= 20 (typical for personalization)
-    if (firstTextField && (maxLength <= 20 || firstTextField.name?.toLowerCase().includes('name'))) {
-      const instructionsHTML = `
-        <p class="personalise-modal__instructions">
-          Maximum ${maxLength} characters. No special characters.
-        </p>
-      `;
-      this.refs.formContainer.insertAdjacentHTML('beforeend', instructionsHTML);
-    }
-
     fields.forEach((field, index) => {
       const fieldType = field.type || 'text';
       const fieldName = field.name || field.key || `field_${index}`;
@@ -783,6 +762,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
 
       if (fieldType === 'text' || fieldType === 'name') {
         // Text input field
+        const showMaxInfo = maxLength <= 20 || fieldName?.toLowerCase().includes('name');
         fieldHTML = `
           <div class="personalise-modal__field">
             <label for="build-your-set-${fieldName}" class="personalise-modal__label">
@@ -804,6 +784,7 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
                 <span data-count="${fieldName}">${(this.personalisationData[fieldName] || '').length}</span>/${maxLength}
               </span>
             </div>
+            ${showMaxInfo ? `<p class="personalise-modal__info-text">Maximum ${maxLength} characters. No special characters.</p>` : ''}
           </div>
         `;
       } else if (fieldType === 'textarea' || fieldType === 'textbox') {

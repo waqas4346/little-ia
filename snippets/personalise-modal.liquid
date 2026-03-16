@@ -27,6 +27,7 @@
     assign has_cb_personalisation_colors = true
   endif
   
+  assign dynamic_max = 9
   for cust_tag in product.tags
     assign cust_tag_lowercase = cust_tag | downcase
     if cust_tag_lowercase contains 'cust_personalized'
@@ -42,23 +43,18 @@
       assign personalized_textbox = true
     endif
     if cust_tag_lowercase contains 'personalise_'
-      assign maxlength = cust_tag_lowercase | split: '_'
+      assign parts = cust_tag_lowercase | split: '_'
+      assign suffix = parts | last
+      assign num = suffix | plus: 0
+      if num >= 1 and num <= 50
+        assign dynamic_max = num
+      endif
     endif
   endfor
   
   # Text colour: metafield only (no tag fallback)
   if has_cb_personalisation_colors
     assign personalized_textcolour = true
-  endif
-  
-  # Determine character limit
-  assign dynamic_max = 9
-  if product.tags contains 'personalise_5'
-    assign dynamic_max = 5
-  elsif product.tags contains 'personalise_7'
-    assign dynamic_max = 7
-  elsif product.tags contains 'personalise_9'
-    assign dynamic_max = 9
   endif
   
   # Font family options from metafield: custom.cb_personalisation_fonts (list of cb_personalisation_font metaobjects with font_name)
@@ -337,21 +333,6 @@
           </span>
           <span>Personalise Your Product</span>
         </h2>
-        {% if show_name_tabs %}
-          <p class="personalise-modal__instructions personalise-modal__instructions--mobile">
-            Maximum 9 characters. No special characters.
-          </p>
-        {% elsif show_personalized or personalized_name or personalized_textbox %}
-          {% if personalized_name %}
-            <p class="personalise-modal__instructions personalise-modal__instructions--mobile">
-              Maximum {{ dynamic_max }} characters. No special characters.
-            </p>
-          {% endif %}
-        {% else %}
-          <p class="personalise-modal__instructions personalise-modal__instructions--mobile">
-            Maximum 9 characters. No special characters.
-          </p>
-        {% endif %}
       </div>
 
       <!-- Left Section: Product Preview (40%) -->
@@ -564,9 +545,6 @@
 
         {% if show_name_tabs %}
           <!-- Baby/Kid/Mum Name Tabs -->
-          <p class="personalise-modal__instructions">
-            Maximum 9 characters. No special characters.
-          </p>
           <div class="personalise-name-tabs" data-name-tabs>
             <div class="personalise-name-tabs__tablist" role="tablist">
               {% assign first_tab_active = true %}
@@ -653,6 +631,7 @@
                       <span ref="babyCharCount">0</span>/9
                     </span>
                   </div>
+                  <p class="personalise-modal__info-text">Maximum 9 characters. No special characters.</p>
                 </div>
                 {% assign first_panel_active = false %}
               {% endif %}
@@ -681,6 +660,7 @@
                       <span ref="kidCharCount">0</span>/9
                     </span>
                   </div>
+                  <p class="personalise-modal__info-text">Maximum 9 characters. No special characters.</p>
                 </div>
                 {% assign first_panel_active = false %}
               {% endif %}
@@ -709,6 +689,7 @@
                       <span ref="mumCharCount">0</span>/9
                     </span>
                   </div>
+                  <p class="personalise-modal__info-text">Maximum 9 characters. No special characters.</p>
                 </div>
                 {% assign first_panel_active = false %}
               {% endif %}
@@ -718,10 +699,6 @@
 
         {% if show_personalized or personalized_name or personalized_textbox %}
           {% if personalized_name %}
-            <p class="personalise-modal__instructions">
-              Maximum {{ dynamic_max }} characters. No special characters.
-            </p>
-
             <div class="personalise-modal__field">
               <label for="personalise-name" class="personalise-modal__label">
                 Name (Free Personalisation) 
@@ -740,8 +717,8 @@
                 <span class="personalise-modal__counter" ref="charCounter">
                   <span ref="charCount">0</span>/{{ dynamic_max }}
                 </span>
-                {% comment %} <p class="personalise-modal__info-text">Maximum {{ dynamic_max }} characters. No special character</p> {% endcomment %}
               </div>
+              <p class="personalise-modal__info-text">Maximum {{ dynamic_max }} characters. No special characters.</p>
             </div>
           {% endif %}
 
@@ -895,10 +872,6 @@
             </div>
           {% endif %}
         {% else %}
-          <p class="personalise-modal__instructions">
-            Maximum 9 characters. No special characters.
-          </p>
-
           <div class="personalise-modal__field">
             <label for="personalise-name" class="personalise-modal__label">
               Name (Free Personalisation)
@@ -918,6 +891,7 @@
                 <span ref="charCount">0</span>/9
               </span>
             </div>
+            <p class="personalise-modal__info-text">Maximum 9 characters. No special characters.</p>
           </div>
 
           {% comment %} Font selection only shown when cb_fonts_personalisation metafield is enabled (see main block above) {% endcomment %}
