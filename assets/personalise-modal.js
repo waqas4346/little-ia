@@ -132,7 +132,8 @@ export class PersonaliseDialogComponent extends DialogComponent {
 
   /**
    * Updates the dynamic personalization preview when the selected variant changes.
-   * Uses variant metafields if variant has both required; else product metafields if product has both.
+   * Image hierarchy: variant metafield → product metafield → variant featured → product featured.
+   * Position is optional (used for overlay when available).
    * @param {string} variantId - The selected variant ID
    */
   #updateCbPreviewForVariant(variantId) {
@@ -147,18 +148,21 @@ export class PersonaliseDialogComponent extends DialogComponent {
     let imageUrl = '';
     let positionJson = '';
 
-    if (variantKey && variants && variants[variantKey]?.image && variants[variantKey]?.position) {
+    // Use variant image when available (position optional)
+    if (variantKey && variants && variants[variantKey]?.image) {
       showDynamic = true;
       imageUrl = variants[variantKey].image;
-      positionJson = typeof variants[variantKey].position === 'string'
-        ? variants[variantKey].position
-        : JSON.stringify(variants[variantKey].position);
-    } else if (product?.image && product?.position) {
+      const pos = variants[variantKey].position;
+      if (pos != null && pos !== 'null') {
+        positionJson = typeof pos === 'string' ? pos : JSON.stringify(pos);
+      }
+    } else if (product?.image) {
       showDynamic = true;
       imageUrl = product.image;
-      positionJson = typeof product.position === 'string'
-        ? product.position
-        : JSON.stringify(product.position);
+      const pos = product.position;
+      if (pos != null && pos !== 'null') {
+        positionJson = typeof pos === 'string' ? pos : JSON.stringify(pos);
+      }
     }
 
     const dynamicWrap = this.querySelector('[data-cb-dynamic-wrap]');

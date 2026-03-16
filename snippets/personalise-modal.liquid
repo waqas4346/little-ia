@@ -147,31 +147,31 @@
     assign auto_open_personalisation = true
   endif
 
-  # Dynamic personalization preview: show if selected variant OR product has required position metafield.
-  # Required: cb_personalization_position (also check typo poisition).
-  # Check selected variant first; if it has position, use variant. Else check product.
+  # Dynamic personalization preview: image hierarchy (no position required for image).
+  # Image: variant metafield → product metafield → variant featured → product featured.
+  # Position: used for overlay when available (variant or product).
   assign show_cb_dynamic_preview = false
   assign cb_personalization_image_url = ''
   assign cb_personalization_position_json = ''
 
-  assign variant_has_image = false
-  assign variant_has_position = false
   assign variant_image_val = variant.metafields.custom.cb_personalization_image
+  assign variant_has_image = false
   if variant_image_val != blank and variant_image_val.value != blank
     assign variant_has_image = true
   endif
   assign variant_pos_val = variant.metafields.custom.cb_personalization_position | default: variant.metafields.custom.cb_personalization_poisition
+  assign variant_has_position = false
   if variant_pos_val != blank and variant_pos_val.value != blank
     assign variant_has_position = true
   endif
 
-  assign product_has_image = false
-  assign product_has_position = false
   assign product_image_val = product.metafields.custom.cb_personalization_image
+  assign product_has_image = false
   if product_image_val != blank and product_image_val.value != blank
     assign product_has_image = true
   endif
   assign product_pos_val = product.metafields.custom.cb_personalization_position | default: product.metafields.custom.cb_personalization_poisition
+  assign product_has_position = false
   if product_pos_val != blank and product_pos_val.value != blank
     assign product_has_position = true
   endif
@@ -190,37 +190,35 @@
     assign variant_fallback_image = product_fallback_image
   endif
 
-  if variant_has_position
+  # Image: variant metafield → product metafield → variant featured → product featured (no position required)
+  if variant_has_image
+    assign cb_personalization_image_url = variant_image_val.value | image_url: width: 600
+  elsif product_has_image
+    assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
+  else
+    assign cb_personalization_image_url = variant_fallback_image
+  endif
+
+  assign show_cb_dynamic_preview = false
+  if cb_personalization_image_url != blank
     assign show_cb_dynamic_preview = true
-    if variant_has_image
-      assign cb_personalization_image_url = variant_image_val.value | image_url: width: 600
-    elsif product_has_image
-      assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
-    else
-      assign cb_personalization_image_url = variant_fallback_image
-    endif
+  endif
+
+  if variant_has_position
     assign cb_personalization_position_json = variant_pos_val.value | json
   elsif product_has_position
-    assign show_cb_dynamic_preview = true
-    if variant_has_image
-      assign cb_personalization_image_url = variant_image_val.value | image_url: width: 600
-    elsif product_has_image
-      assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
-    else
-      assign cb_personalization_image_url = variant_fallback_image
-    endif
     assign cb_personalization_position_json = product_pos_val.value | json
   endif
 
   # Build variant/product cb personalization map for JS (used when variant changes)
   assign product_image_url = ''
   assign product_position_json = ''
+  if product_has_image
+    assign product_image_url = product_image_val.value | image_url: width: 600
+  else
+    assign product_image_url = product_fallback_image
+  endif
   if product_has_position
-    if product_has_image
-      assign product_image_url = product_image_val.value | image_url: width: 600
-    else
-      assign product_image_url = product_fallback_image
-    endif
     assign product_position_json = product_pos_val.value | json
   endif
 %}
@@ -245,11 +243,12 @@
             {%- assign v_pos_effective = product_pos_val -%}
           {%- endif -%}
         {%- endif -%}
-        {%- if v_pos_effective != blank and v_pos_effective.value != blank -%}
         {%- unless first_variant_entry -%},{%- endunless -%}
         "{{ v.id }}": {
           {%- if v_img != blank and v_img.value != blank -%}
           "image": {{ v_img.value | image_url: width: 600 | json }},
+          {%- elsif product_has_image -%}
+          "image": {{ product_image_val.value | image_url: width: 600 | json }},
           {%- else -%}
             {%- if v.featured_image -%}
               {%- assign v_fb = v.featured_image | image_url: width: 600 -%}
@@ -258,10 +257,9 @@
             {%- endif -%}
           "image": {{ v_fb | json }},
           {%- endif -%}
-          "position": {{ v_pos_effective.value | json }}
+          "position": {%- if v_pos_effective != blank and v_pos_effective.value != blank -%}{{ v_pos_effective.value | json }}{%- else -%}null{%- endif -%}
         }
         {%- assign first_variant_entry = false -%}
-        {%- endif -%}
         {%- endfor -%}
       },
       "variantFallbackImages": {

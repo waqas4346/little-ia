@@ -1,6 +1,6 @@
 import { morph } from '@theme/morph';
 import { Component } from '@theme/component';
-import { CartUpdateEvent, ThemeEvents, VariantSelectedEvent } from '@theme/events';
+import { CartUpdateEvent, ThemeEvents, VariantSelectedEvent, VariantUpdateEvent } from '@theme/events';
 import { DialogComponent, DialogCloseEvent, DialogOpenEvent } from '@theme/dialog';
 import { mediaQueryLarge, isMobileBreakpoint, getIOSVersion, onAnimationEnd } from '@theme/utilities';
 
@@ -1427,6 +1427,9 @@ export class QuickAddComponent extends Component {
   #replaceAddToCartButtonForBuildYourSet(modalContent) {
     if (!modalContent) return;
     
+    // Reset stored variant when setting up (new product loaded)
+    delete modalContent.dataset.currentVariantId;
+    
     // Find the add-to-cart button(s) in the modal
     const addToCartButtons = modalContent.querySelectorAll('add-to-cart-component, [ref="addToCartButton"], button[type="submit"][name="add"]');
     const productForm = modalContent.querySelector('product-form-component');
@@ -1435,8 +1438,8 @@ export class QuickAddComponent extends Component {
     
     const productId = productForm.dataset.productId;
     
-    // Find the form to get variant ID and quantity
-    const form = modalContent.querySelector('form[data-type="add-to-cart-form"]');
+    // Find the form (from product-form-component - same form Add to Cart uses)
+    const form = productForm.querySelector('form[data-type="add-to-cart-form"]');
     if (!form) return;
     
     // Hide all existing add-to-cart buttons
@@ -1457,9 +1460,14 @@ export class QuickAddComponent extends Component {
     
     if (!customButton) {
       // Get variant ID from form (needed to collect product data)
-      const variantIdInput = form.querySelector('input[name="id"][ref="variantId"]');
-      const variantId = variantIdInput?.value;
-      
+      const variantIdInput = form.querySelector('input[name="id"][ref="variantId"]') ||
+                            form.querySelector('input[name="id"]');
+      let variantId = variantIdInput?.value;
+      if (!variantId) {
+        const variantPicker = modalContent.querySelector('variant-picker, variant-main-picker');
+        const checkedOption = variantPicker?.querySelector('input[data-variant-id]:checked');
+        variantId = checkedOption?.dataset?.variantId;
+      }
       if (!variantId) {
         return;
       }
@@ -1499,6 +1507,45 @@ export class QuickAddComponent extends Component {
             .catch(() => {
               // Silently fail - tags will be fetched when needed
             });
+      }
+      
+      // Store initial variant on modal (VariantUpdateEvent listener will update when user changes)
+      modalContent.dataset.currentVariantId = variantId;
+      
+      // Listen for variant changes - disable Add to Set during change, enable when complete
+      if (!modalContent.dataset.bysVariantListener) {
+        modalContent.dataset.bysVariantListener = 'true';
+        const dialog = modalContent.closest('dialog');
+        if (dialog) {
+          // Disable when user starts changing variant
+          dialog.addEventListener(ThemeEvents.variantSelected, (e) => {
+            if (!modalContent.contains(e.target)) return;
+            const btn = modalContent.querySelector('.build-your-set-add-to-session-button');
+            if (btn) {
+              btn.disabled = true;
+              // Safety: re-enable after 5s if VariantUpdateEvent never fires (e.g. fetch fails)
+              setTimeout(() => {
+                if (btn.disabled) {
+                  btn.disabled = false;
+                  updateBuildYourSetAddToSetState(modalContent);
+                }
+              }, 5000);
+            }
+          }, { capture: true });
+          // Enable when variant change completes and store new variant
+          dialog.addEventListener(ThemeEvents.variantUpdate, (e) => {
+            if (!modalContent.contains(e.target)) return;
+            const productIdMatch = !e.detail?.data?.productId || e.detail.data.productId === (modalContent.querySelector('product-form-component')?.dataset?.productId || '');
+            if (productIdMatch && e.detail?.resource?.id) {
+              modalContent.dataset.currentVariantId = String(e.detail.resource.id);
+            }
+            const btn = modalContent.querySelector('.build-your-set-add-to-session-button');
+            if (btn) {
+              btn.disabled = false;
+              updateBuildYourSetAddToSetState(modalContent); // Re-apply personalisation/confirmation state
+            }
+          }, { capture: true });
+        }
       }
       
       // Store product data in button data attribute (tags will be updated async)
@@ -1543,16 +1590,24 @@ export class QuickAddComponent extends Component {
         // Get modal content fresh from DOM (may have changed since button creation)
         const currentModalContent = document.getElementById('quick-add-modal-content') || modalContent;
         
-        // Get fresh variant ID from form at click time (user may have changed variant)
-        const currentForm = currentModalContent.querySelector('form[data-type="add-to-cart-form"]');
-        let variantId = productData.variant_id;
-        if (currentForm) {
-          const variantIdInput = currentForm.querySelector('input[name="id"][ref="variantId"]');
-          if (variantIdInput && variantIdInput.value) {
-            variantId = variantIdInput.value;
-            // Update variant ID in product data
-            productData.variant_id = variantId;
-          }
+        // Prefer variant we captured from VariantUpdateEvent (most reliable - fires when user selects)
+        let variantId = currentModalContent.dataset?.currentVariantId || productData.variant_id;
+        
+        // Fallback: read from form or variant picker (in case event didn't fire yet)
+        const currentProductForm = currentModalContent.querySelector('product-form-component');
+        const currentForm = currentProductForm?.querySelector('form[data-type="add-to-cart-form"]');
+        if (!variantId && currentForm) {
+          const formData = new FormData(currentForm);
+          const formVariantId = formData.get('id');
+          variantId = formVariantId ? String(formVariantId).trim() : currentForm.querySelector('input[name="id"]')?.value;
+        }
+        if (!variantId) {
+          const variantPicker = currentModalContent.querySelector('variant-picker');
+          const checkedOption = variantPicker?.querySelector('input[data-variant-id]:checked');
+          variantId = checkedOption?.dataset?.variantId;
+        }
+        if (variantId) {
+          productData.variant_id = variantId;
         }
         
         // Collect fresh price information at click time (may have changed with variant)
@@ -1837,8 +1892,8 @@ export class QuickAddComponent extends Component {
           }
         };
         
-        // Get quantity from form
-        const quantityInput = form.querySelector('input[name="quantity"]');
+        // Get quantity from form (use currentForm which reflects latest DOM)
+        const quantityInput = currentForm?.querySelector('input[name="quantity"]');
         const quantity = quantityInput ? Number(quantityInput.value) || 1 : 1;
         const storageKey = 'build-your-set-session-cart';
         let sessionCart = [];
