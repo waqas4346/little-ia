@@ -203,35 +203,38 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     // Open the dialog first for immediate visual feedback
     this.showDialog();
 
-    const generateFields = () => {
-      const productTags = productData.product_tags;
-      const personalizationFields = productData.personalization_fields || [];
+    const generateFields = (enhanced) => {
+      const tags = enhanced?.tags || productData.product_tags;
+      const personalizationFields = enhanced?.personalization_fields || productData.personalization_fields || [];
 
-      if (productTags && productTags.length > 0) {
-        this.generateFormFieldsFromTags(productTags, personalizationFields);
+      if (tags && tags.length > 0) {
+        this.generateFormFieldsFromTags(tags, personalizationFields);
       } else if (personalizationFields.length > 0) {
         this.generateFormFields(personalizationFields);
-      } else if (Object.keys(this.personalisationData).length > 0) {
-        // Have saved personalisations but no tags/fields - try to fetch product data
-        this.refs.formContainer.innerHTML = '<p class="personalise-modal__loading">Loading personalisation options...</p>';
-        this.#fetchProductDataForEdit(productData).then((enhanced) => {
-          if (enhanced) {
-            productData.product_tags = productData.product_tags || enhanced.tags;
-            productData.personalization_fields = productData.personalization_fields || enhanced.personalization_fields;
-            generateFields();
-          } else {
-            this.refs.formContainer.innerHTML = '<p>No personalization options available for this product.</p>';
-          }
-        }).catch(() => {
-          this.refs.formContainer.innerHTML = '<p>No personalization options available for this product.</p>';
-        });
       } else {
         this.refs.formContainer.innerHTML = '<p>No personalization options available for this product.</p>';
       }
     };
 
-    // Generate form fields asynchronously to avoid blocking UI
-    requestAnimationFrame(generateFields);
+    // Always fetch variant-specific options when we have product_url + variant_id (from sticky bar).
+    // Stored personalization_fields may be wrong (e.g. variant 2 in set but fields from variant 1).
+    const shouldFetch = productData.product_url && productData.variant_id && productData.needs_personalization;
+    if (shouldFetch) {
+      this.refs.formContainer.innerHTML = '<p class="personalise-modal__loading">Loading personalisation options...</p>';
+      this.#fetchProductDataForEdit(productData).then((enhanced) => {
+        if (enhanced) {
+          productData.product_tags = productData.product_tags || enhanced.tags;
+          productData.personalization_fields = enhanced.personalization_fields || productData.personalization_fields;
+          generateFields(enhanced);
+        } else {
+          generateFields(null);
+        }
+      }).catch(() => {
+        generateFields(null);
+      });
+    } else {
+      requestAnimationFrame(() => generateFields(null));
+    }
   }
 
   /**
@@ -261,7 +264,14 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
           : String(product.tags).split(',').map((t) => t.trim());
       }
 
-      const colorMetafield = product.metafields?.custom?.cb_product_personalisation_colors?.value
+      // Use variant_id from session to get variant-specific options (variant 2 has color C, not A/B from variant 1)
+      const variantId = productData.variant_id ? String(productData.variant_id) : null;
+      const targetVariant = variantId && product.variants
+        ? product.variants.find((v) => String(v.id) === variantId)
+        : null;
+
+      const colorMetafield = (targetVariant?.metafields?.custom?.cb_personalisation_colors?.value)
+        || product.metafields?.custom?.cb_product_personalisation_colors?.value
         || product.variants?.[0]?.metafields?.custom?.cb_personalisation_colors?.value;
       if (colorMetafield && Array.isArray(colorMetafield) && colorMetafield.length > 0) {
         const colorOptions = colorMetafield
@@ -282,7 +292,8 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
         }
       }
 
-      const fontsMetafield = product.metafields?.custom?.cb_personalisation_fonts?.value
+      const fontsMetafield = (targetVariant?.metafields?.custom?.cb_personalisation_fonts?.value)
+        || product.metafields?.custom?.cb_personalisation_fonts?.value
         || product.variants?.[0]?.metafields?.custom?.cb_personalisation_fonts?.value;
       if (fontsMetafield && Array.isArray(fontsMetafield) && fontsMetafield.length > 0) {
         const fontOptions = fontsMetafield

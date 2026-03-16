@@ -456,22 +456,26 @@ export class PersonaliseDialogComponent extends DialogComponent {
       }
     }
     // When variant changed in modal (or no saved color): select first text color by default
-    // Defer to next frame so DOM is ready; add explicit class for selected swatch (some browsers don't repaint :has(:checked) after programmatic change)
-    requestAnimationFrame(() => {
-      const firstRadio = colorGrid.querySelector('input[type="radio"]');
-      if (firstRadio) {
-        firstRadio.checked = true;
-        const label = firstRadio.closest('.personalise-modal__color-button');
-        if (label) {
-          colorGrid.querySelectorAll('.personalise-modal__color-button').forEach((l) => l.classList.remove('personalise-modal__color-button--selected'));
-          label.classList.add('personalise-modal__color-button--selected');
+    // Only auto-select when the dialog is OPEN – avoids capturing unintended values when user
+    // changes variant in quick-add without ever opening personalise (e.g. Add to Set bug)
+    const dialog = this.refs?.dialog || this.querySelector('dialog');
+    if (dialog?.open) {
+      requestAnimationFrame(() => {
+        const firstRadio = colorGrid.querySelector('input[type="radio"]');
+        if (firstRadio) {
+          firstRadio.checked = true;
+          const label = firstRadio.closest('.personalise-modal__color-button');
+          if (label) {
+            colorGrid.querySelectorAll('.personalise-modal__color-button').forEach((l) => l.classList.remove('personalise-modal__color-button--selected'));
+            label.classList.add('personalise-modal__color-button--selected');
+          }
+          this.selectedColor = firstRadio.value;
+          this.personalisationData.color = firstRadio.value;
+          this.updateSaveButton();
+          this.updateCbPreviewOverlay();
         }
-        this.selectedColor = firstRadio.value;
-        this.personalisationData.color = firstRadio.value;
-        this.updateSaveButton();
-        this.updateCbPreviewOverlay();
-      }
-    });
+      });
+    }
   }
 
   /**

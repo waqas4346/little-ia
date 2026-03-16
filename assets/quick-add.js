@@ -1537,7 +1537,35 @@ export class QuickAddComponent extends Component {
             if (!modalContent.contains(e.target)) return;
             const productIdMatch = !e.detail?.data?.productId || e.detail.data.productId === (modalContent.querySelector('product-form-component')?.dataset?.productId || '');
             if (productIdMatch && e.detail?.resource?.id) {
-              modalContent.dataset.currentVariantId = String(e.detail.resource.id);
+              const newVariantId = String(e.detail.resource.id);
+              modalContent.dataset.currentVariantId = newVariantId;
+              // Re-collect productData for the new variant so personalization_fields match (e.g. variant 2 has color C, not A/B)
+              const btn = modalContent.querySelector('.build-your-set-add-to-session-button');
+              if (btn) {
+                requestAnimationFrame(() => {
+                  const productForm = modalContent.querySelector('product-form-component');
+                  const productId = productForm?.dataset?.productId;
+                  if (productId) {
+                    const freshProductData = this.#collectProductInformation(modalContent, productId, newVariantId);
+                    const existingJson = btn.getAttribute('data-product-data');
+                    if (existingJson) {
+                      try {
+                        const existing = JSON.parse(existingJson);
+                        // Preserve product_tags (fetched async) and product_url/product_handle if fresh missed them
+                        const merged = {
+                          ...freshProductData,
+                          product_tags: existing.product_tags || freshProductData.product_tags,
+                          product_url: freshProductData.product_url || existing.product_url,
+                          product_handle: freshProductData.product_handle || existing.product_handle
+                        };
+                        btn.setAttribute('data-product-data', JSON.stringify(merged));
+                      } catch (_) {
+                        btn.setAttribute('data-product-data', JSON.stringify(freshProductData));
+                      }
+                    }
+                  }
+                });
+              }
             }
             const btn = modalContent.querySelector('.build-your-set-add-to-session-button');
             if (btn) {
@@ -1638,24 +1666,28 @@ export class QuickAddComponent extends Component {
           }
         }
         
-        // Collect fresh personalizations from the modal at click time
+        // Build Your Set: only collect SAVED personalisations (from form).
+        // The form gets populated when user clicks Save in the personalise modal.
+        // Do NOT read from the personalise modal DOM – that would capture:
+        // - auto-selected color when variant changes (user never opened modal)
+        // - draft selections when user closed modal without saving
         const personalizations = {};
-        const personaliseModal = currentModalContent.querySelector('personalise-dialog') || 
-                                 document.querySelector('personalise-dialog');
-        const personaliseModalContent = personaliseModal?.querySelector('.personalise-modal') || 
-                                        currentModalContent.querySelector('.personalise-modal') ||
-                                        document.querySelector('.personalise-modal');
-        
-        if (personaliseModalContent) {
-          // Collect name input
-          const nameInput = personaliseModalContent.querySelector('input[name="personalise-name"]');
-          if (nameInput && nameInput.value) {
-            personalizations['personalise-name'] = nameInput.value;
+        const form = currentModalContent.querySelector('form[data-type="add-to-cart-form"]');
+        if (form) {
+          // Check for personalise-name in form
+          const formNameInput = form.querySelector('input[name="personalise-name"]');
+          if (formNameInput && formNameInput.value) {
+            personalizations['personalise-name'] = formNameInput.value;
           }
-          
-          // Collect all properties inputs
-          const propertyInputs = personaliseModalContent.querySelectorAll('input[name^="properties["]');
-          propertyInputs.forEach((input) => {
+          if (Object.keys(personalizations).length === 0) {
+            const namePropInput = form.querySelector('input[name="properties[Name]"]');
+            if (namePropInput && namePropInput.value) {
+              personalizations['personalise-name'] = namePropInput.value;
+            }
+          }
+          // Check for properties in form (Save personalisation writes to hidden/radio inputs)
+          const formPropertyInputs = form.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
+          formPropertyInputs.forEach((input) => {
             if (input.type === 'radio') {
               if (input.checked && input.value) {
                 const propName = input.name.match(/properties\[(.+)\]/)?.[1];
@@ -1670,94 +1702,6 @@ export class QuickAddComponent extends Component {
               }
             }
           });
-          
-          // Collect textareas
-          const propertyTextareas = personaliseModalContent.querySelectorAll('textarea[name^="properties["]');
-          propertyTextareas.forEach((textarea) => {
-            if (textarea.value) {
-              const propName = textarea.name.match(/properties\[(.+)\]/)?.[1];
-              if (propName) {
-                personalizations[`properties[${propName}]`] = textarea.value;
-              }
-            }
-          });
-          
-          // Collect color selection (from radio buttons)
-          const colorRadio = personaliseModalContent.querySelector('input[name="personalise-color"]:checked, input[type="radio"][name*="color"]:checked');
-          if (colorRadio && colorRadio.value) {
-            personalizations['personalise-color'] = colorRadio.value;
-          }
-          
-          // Collect font selection - try multiple methods (prioritize button selection as most reliable)
-          let fontValue = null;
-          
-          // Method 1: Try to get from selected font button (uses --selected class) - most reliable
-          const selectedFontButton = personaliseModalContent.querySelector('.personalise-modal__font-button--selected');
-          if (selectedFontButton) {
-            fontValue = selectedFontButton.getAttribute('data-font') || selectedFontButton.textContent?.trim();
-          }
-          
-          // Method 2: Try to get from personalise modal component instance (custom element)
-          if (!fontValue && personaliseModal) {
-            // @ts-ignore - personalise-dialog is a custom element with these properties
-            if (typeof personaliseModal.selectedFont === 'string' && personaliseModal.selectedFont) {
-              fontValue = personaliseModal.selectedFont;
-            // @ts-ignore
-            } else if (personaliseModal.personalisationData && personaliseModal.personalisationData.font) {
-              // @ts-ignore
-              fontValue = personaliseModal.personalisationData.font;
-            }
-          }
-          
-          // Method 3: Try hidden input
-          if (!fontValue) {
-            const fontInput = personaliseModalContent.querySelector('input[name="personalise-font"], input[type="hidden"][name*="font"]');
-            if (fontInput && fontInput.value) {
-              fontValue = fontInput.value;
-            }
-          }
-          
-          // Method 4: Fallback to active class
-          if (!fontValue) {
-            const activeFontButton = personaliseModalContent.querySelector('.personalise-modal__font-button.active, [data-font].active');
-            if (activeFontButton) {
-              fontValue = activeFontButton.getAttribute('data-font') || activeFontButton.textContent?.trim();
-            }
-          }
-          
-          if (fontValue) {
-            personalizations['personalise-font'] = fontValue;
-          }
-        }
-        
-        // Also check the form directly in case personalizations are there
-        if (Object.keys(personalizations).length === 0) {
-          const form = currentModalContent.querySelector('form[data-type="add-to-cart-form"]');
-          if (form) {
-            // Check for personalise-name in form
-            const formNameInput = form.querySelector('input[name="personalise-name"]');
-            if (formNameInput && formNameInput.value) {
-              personalizations['personalise-name'] = formNameInput.value;
-            }
-            
-            // Check for properties in form (include hidden - Save personalisation writes to hidden inputs)
-            const formPropertyInputs = form.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
-            formPropertyInputs.forEach((input) => {
-              if (input.type === 'radio') {
-                if (input.checked && input.value) {
-                  const propName = input.name.match(/properties\[(.+)\]/)?.[1];
-                  if (propName) {
-                    personalizations[`properties[${propName}]`] = input.value;
-                  }
-                }
-              } else if (input.value) {
-                const propName = input.name.match(/properties\[(.+)\]/)?.[1];
-                if (propName) {
-                  personalizations[`properties[${propName}]`] = input.value;
-                }
-              }
-            });
-          }
         }
         
         // Normalise keys to match Build Your Set modal (so Edit pre-fills all fields)
