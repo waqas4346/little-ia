@@ -231,7 +231,7 @@
     }
 
     /* Typography styles for slideshow */
-    /* Target text blocks and rte-formatter elements within slide content */
+    /* Uses color scheme variables so per-slide Color scheme works */
     @media screen and (min-width: 750px) {
       .slide__content .text-block h1,
       .slide__content .text-block h2,
@@ -250,7 +250,7 @@
         font-weight: 500 !important;
         font-size: 54px !important;
         line-height: 125% !important;
-        color: #1D425A !important;
+        color: var(--color-foreground-heading) !important;
       }
 
       .slide__content .text-block p,
@@ -260,7 +260,7 @@
         font-weight: 400 !important;
         font-size: 18px !important;
         line-height: 160% !important;
-        color: #1D425A !important;
+        color: var(--color-foreground) !important;
       }
 
       .slide__content .text-block p strong,
@@ -271,7 +271,7 @@
         font-size: 30px !important;
         line-height: 160% !important;
         letter-spacing: 0% !important;
-        color: #7295BB !important;
+        color: var(--color-primary-button-background, var(--color-primary)) !important;
       }
     }
 
@@ -293,7 +293,7 @@
         font-weight: 500 !important;
         font-size: 24px !important;
         line-height: 125% !important;
-        color: #1D425A !important;
+        color: var(--color-foreground-heading) !important;
       }
 
       .slide__content .text-block p,
@@ -303,7 +303,7 @@
         font-weight: 400 !important;
         font-size: 14px !important;
         line-height: 160% !important;
-        color: #1D425A !important;
+        color: var(--color-foreground) !important;
         text-align: center !important;
       }
 
@@ -315,7 +315,7 @@
         font-size: 24px !important;
         line-height: 160% !important;
         letter-spacing: 0% !important;
-        color: #7295BB !important;
+        color: var(--color-primary-button-background, var(--color-primary)) !important;
       }
     }
   }
@@ -448,7 +448,7 @@
       "type": "color_scheme",
       "id": "color_scheme",
       "label": "t:settings.color_scheme",
-      "default": "primary"
+      "default": "scheme-1"
     },
     {
       "type": "header",
@@ -580,7 +580,7 @@
           "settings": {
             "horizontal_alignment_flex_direction_column": "center",
             "inherit_color_scheme": false,
-            "color_scheme": "scheme-6",
+            "color_scheme": "scheme-1",
             "padding-inline-start": 48,
             "padding-inline-end": 48,
             "padding-block-start": 48,
@@ -615,7 +615,7 @@
           "settings": {
             "horizontal_alignment_flex_direction_column": "center",
             "inherit_color_scheme": false,
-            "color_scheme": "scheme-6",
+            "color_scheme": "scheme-1",
             "padding-inline-start": 48,
             "padding-inline-end": 48,
             "padding-block-start": 48,

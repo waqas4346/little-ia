@@ -515,9 +515,9 @@
             </div>
           </dialog>
           
-          {%- comment -%} Personalise Modal for cart editing {%- endcomment -%}
+          {%- comment -%} Personalise Modal for cart editing - one per product so variant colors match the line item {%- endcomment -%}
           {%- if cart.items.size > 0 -%}
-            {%- assign first_item_with_personalization = null -%}
+            {%- assign rendered_product_ids = ',' -%}
             {%- for item in cart.items -%}
               {%- liquid
                 assign has_personalization = false
@@ -537,13 +537,16 @@
                   endif
                 endfor
               -%}
-              {%- if has_personalization and first_item_with_personalization == null -%}
-                {%- assign first_item_with_personalization = item -%}
-                {%- break -%}
+              {%- if has_personalization -%}
+                {%- assign product_id_str = item.product.id | append: '' -%}
+                {%- assign product_id_check = ',' | append: product_id_str | append: ',' -%}
+                {%- unless rendered_product_ids contains product_id_check -%}
+                  {%- assign rendered_product_ids = rendered_product_ids | append: product_id_str | append: ',' -%}
+                  {% render 'personalise-modal', product: item.product, variant: item.variant, context: 'cart-drawer' %}
+                {%- endunless -%}
               {%- endif -%}
             {%- endfor -%}
-            {%- if first_item_with_personalization -%}
-              {% render 'personalise-modal', product: first_item_with_personalization.product, variant: first_item_with_personalization.variant, context: 'cart-drawer' %}
+            {%- if rendered_product_ids != '' -%}
               <script src="{{ 'personalise-modal.js' | asset_url }}" type="module"></script>
             {%- endif -%}
           {%- endif -%}

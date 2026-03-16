@@ -43,6 +43,7 @@
   style="
     --swatch-background: {{ swatch_value }};
     {% if swatch.image and settings.show_variant_image == false %} --swatch-focal-point: {{ swatch.image.presentation.focal_point }};{% endif %}
+     {% if swatch.image %}  background-repeat: no-repeat; background-size: cover; {% endif %}
   "
 >
 </span>

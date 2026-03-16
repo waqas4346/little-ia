@@ -93,12 +93,7 @@
                 {%- liquid
                   assign display_option_name = product_option.name
                   
-                  # Replace "colour" with "color" (case-insensitive)
-                  if display_option_name contains 'colour' or display_option_name contains 'Colour' or display_option_name contains 'COLOUR'
-                    assign display_option_name = display_option_name | replace: 'COLOUR', 'COLOR' | replace: 'Colour', 'Color' | replace: 'colour', 'color'
-                  endif
-                  
-                  # Check for "Text " prefix (case-insensitive) and remove it (for "Text colour" -> "color")
+                  # Check for "Text " prefix (case-insensitive) and remove it (for "Text colour" -> "colour")
                   assign display_option_name_lower = display_option_name | downcase
                   if display_option_name_lower contains 'text '
                     if display_option_name contains 'Text '
@@ -300,12 +295,7 @@
             # Clean option name for display
             assign display_option_name = product_option.name
             
-            # Replace "colour" with "color" (case-insensitive)
-            if display_option_name contains 'colour' or display_option_name contains 'Colour' or display_option_name contains 'COLOUR'
-              assign display_option_name = display_option_name | replace: 'COLOUR', 'COLOR' | replace: 'Colour', 'Color' | replace: 'colour', 'color'
-            endif
-            
-            # Check for "Text " prefix (case-insensitive) and remove it (for "Text colour" -> "color")
+            # Check for "Text " prefix (case-insensitive) and remove it (for "Text colour" -> "colour")
             assign display_option_name_lower = display_option_name | downcase
             if display_option_name_lower contains 'text '
               if display_option_name contains 'Text '

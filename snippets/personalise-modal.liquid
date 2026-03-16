@@ -19,11 +19,15 @@
   assign personalized_dob = false
   assign personalized_textbox = false
   assign has_cb_personalisation_colors = false
-  assign cb_personalisation_colors = product.metafields.custom.cb_product_personalisation_colors
+  assign cb_personalisation_colors = variant.metafields.custom.cb_personalisation_colors
+  if cb_personalisation_colors == blank or cb_personalisation_colors.value == blank
+    assign cb_personalisation_colors = product.metafields.custom.cb_product_personalisation_colors
+  endif
   if cb_personalisation_colors != blank and cb_personalisation_colors.value != blank
     assign has_cb_personalisation_colors = true
   endif
   
+  assign dynamic_max = 9
   for cust_tag in product.tags
     assign cust_tag_lowercase = cust_tag | downcase
     if cust_tag_lowercase contains 'cust_personalized'
@@ -39,7 +43,12 @@
       assign personalized_textbox = true
     endif
     if cust_tag_lowercase contains 'personalise_'
-      assign maxlength = cust_tag_lowercase | split: '_'
+      assign parts = cust_tag_lowercase | split: '_'
+      assign suffix = parts | last
+      assign num = suffix | plus: 0
+      if num >= 1 and num <= 50
+        assign dynamic_max = num
+      endif
     endif
   endfor
   
@@ -48,24 +57,22 @@
     assign personalized_textcolour = true
   endif
   
-  # Determine character limit
-  assign dynamic_max = 9
-  if product.tags contains 'personalise_5'
-    assign dynamic_max = 5
-  elsif product.tags contains 'personalise_7'
-    assign dynamic_max = 7
-  elsif product.tags contains 'personalise_9'
-    assign dynamic_max = 9
-  endif
-  
-  # Font family options from metafield only:
-  # custom.cb_fonts_personalisation
+  # Font family options from metafield: custom.cb_personalisation_fonts (list of cb_personalisation_font metaobjects with font_name)
   assign has_cb_fonts_personalisation = false
-  assign cb_fonts_personalisation = product.metafields.custom.cb_fonts_personalisation
-  if cb_fonts_personalisation != blank
-    if cb_fonts_personalisation.value == true
-      assign has_cb_fonts_personalisation = true
-    elsif cb_fonts_personalisation.value != blank
+  assign cb_personalisation_fonts = variant.metafields.custom.cb_personalisation_fonts
+  if cb_personalisation_fonts == blank or cb_personalisation_fonts.value == blank
+    assign cb_personalisation_fonts = product.metafields.custom.cb_personalisation_fonts
+  endif
+  if cb_personalisation_fonts != blank and cb_personalisation_fonts.value != blank
+    assign font_list = cb_personalisation_fonts.value
+    assign font_count = 0
+    for font_entry in font_list
+      assign fn = font_entry.font_name | default: font_entry.font_name.value
+      if fn != blank
+        assign font_count = font_count | plus: 1
+      endif
+    endfor
+    if font_count > 0
       assign has_cb_fonts_personalisation = true
     endif
   endif
@@ -113,10 +120,10 @@
     endif
   endfor
   
-  # Generate unique ID based on context
+  # Generate unique ID based on context (cart-drawer: one per product for correct variant colors)
   assign modal_id = 'personalise-dialog'
   if context == 'cart-drawer'
-    assign modal_id = 'personalise-dialog-cart'
+    assign modal_id = 'personalise-dialog-cart-' | append: product.id
   endif
 
   # Full-screen personalisation: when product metafield custom.cb_full_screen_personalisation is true
@@ -136,31 +143,31 @@
     assign auto_open_personalisation = true
   endif
 
-  # Dynamic personalization preview: show if selected variant OR product has required position metafield.
-  # Required: cb_personalization_position (also check typo poisition).
-  # Check selected variant first; if it has position, use variant. Else check product.
+  # Dynamic personalization preview: image hierarchy (no position required for image).
+  # Image: variant metafield → product metafield → variant featured → product featured.
+  # Position: used for overlay when available (variant or product).
   assign show_cb_dynamic_preview = false
   assign cb_personalization_image_url = ''
   assign cb_personalization_position_json = ''
 
-  assign variant_has_image = false
-  assign variant_has_position = false
   assign variant_image_val = variant.metafields.custom.cb_personalization_image
+  assign variant_has_image = false
   if variant_image_val != blank and variant_image_val.value != blank
     assign variant_has_image = true
   endif
   assign variant_pos_val = variant.metafields.custom.cb_personalization_position | default: variant.metafields.custom.cb_personalization_poisition
+  assign variant_has_position = false
   if variant_pos_val != blank and variant_pos_val.value != blank
     assign variant_has_position = true
   endif
 
-  assign product_has_image = false
-  assign product_has_position = false
   assign product_image_val = product.metafields.custom.cb_personalization_image
+  assign product_has_image = false
   if product_image_val != blank and product_image_val.value != blank
     assign product_has_image = true
   endif
   assign product_pos_val = product.metafields.custom.cb_personalization_position | default: product.metafields.custom.cb_personalization_poisition
+  assign product_has_position = false
   if product_pos_val != blank and product_pos_val.value != blank
     assign product_has_position = true
   endif
@@ -179,48 +186,78 @@
     assign variant_fallback_image = product_fallback_image
   endif
 
-  if variant_has_position
+  # Image: variant metafield → product metafield → variant featured → product featured (no position required)
+  if variant_has_image
+    assign cb_personalization_image_url = variant_image_val.value | image_url: width: 600
+  elsif product_has_image
+    assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
+  else
+    assign cb_personalization_image_url = variant_fallback_image
+  endif
+
+  assign show_cb_dynamic_preview = false
+  if cb_personalization_image_url != blank
     assign show_cb_dynamic_preview = true
-    if variant_has_image
-      assign cb_personalization_image_url = variant_image_val.value | image_url: width: 600
-    elsif product_has_image
-      assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
-    else
-      assign cb_personalization_image_url = variant_fallback_image
-    endif
+  endif
+
+  if variant_has_position
     assign cb_personalization_position_json = variant_pos_val.value | json
   elsif product_has_position
-    assign show_cb_dynamic_preview = true
-    if variant_has_image
-      assign cb_personalization_image_url = variant_image_val.value | image_url: width: 600
-    elsif product_has_image
-      assign cb_personalization_image_url = product_image_val.value | image_url: width: 600
-    else
-      assign cb_personalization_image_url = variant_fallback_image
-    endif
     assign cb_personalization_position_json = product_pos_val.value | json
   endif
 
   # Build variant/product cb personalization map for JS (used when variant changes)
   assign product_image_url = ''
   assign product_position_json = ''
+  if product_has_image
+    assign product_image_url = product_image_val.value | image_url: width: 600
+  else
+    assign product_image_url = product_fallback_image
+  endif
   if product_has_position
-    if product_has_image
-      assign product_image_url = product_image_val.value | image_url: width: 600
-    else
-      assign product_image_url = product_fallback_image
-    endif
     assign product_position_json = product_pos_val.value | json
+  endif
+
+  # DOB position (custom.cb_dob_personalization_poisition) - variant first, then product
+  assign variant_dob_pos_val = variant.metafields.custom.cb_dob_personalization_poisition
+  assign product_dob_pos_val = product.metafields.custom.cb_dob_personalization_poisition
+  assign variant_has_dob_position = false
+  if variant_dob_pos_val != blank and variant_dob_pos_val.value != blank
+    assign variant_has_dob_position = true
+  endif
+  assign product_has_dob_position = false
+  if product_dob_pos_val != blank and product_dob_pos_val.value != blank
+    assign product_has_dob_position = true
+  endif
+  assign cb_dob_personalization_position_json = ''
+  if variant_has_dob_position
+    assign cb_dob_personalization_position_json = variant_dob_pos_val.value | json
+  elsif product_has_dob_position
+    assign cb_dob_personalization_position_json = product_dob_pos_val.value | json
+  endif
+  assign has_dob_personalisation = personalized_dob
+  if product.tags contains 'optional_fields'
+    assign has_dob_personalisation = true
+  endif
+  assign show_dob_overlay = false
+  if has_dob_personalisation and cb_dob_personalization_position_json != blank
+    assign show_dob_overlay = true
+  endif
+
+  assign product_dob_position_json = ''
+  if product_has_dob_position
+    assign product_dob_position_json = product_dob_pos_val.value | json
   endif
 %}
 
-<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}" data-product-id="{{ product.id }}"{% if has_color_option %} data-has-color-variant="true"{% endif %}{% if full_screen_personalisation %} data-full-screen-personalisation="true"{% endif %}{% if auto_open_personalisation and context != 'cart-drawer' %} data-auto-open-personalisation="true"{% endif %}{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}>
+<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}" data-product-id="{{ product.id }}"{% if has_color_option %} data-has-color-variant="true"{% endif %}{% if full_screen_personalisation %} data-full-screen-personalisation="true"{% endif %}{% if auto_open_personalisation and context != 'cart-drawer' %} data-auto-open-personalisation="true"{% endif %}{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}{% if show_dob_overlay %} data-cb-dob-personalization-position="{{ cb_dob_personalization_position_json | escape }}"{% endif %}>
   {%- comment -%} Variant metafields for dynamic preview when variant changes - keyed by variant ID {%- endcomment -%}
   <script type="application/json" data-cb-personalization-variants>
     {
       "product": {
         "image": {{ product_image_url | json }},
         "position": {{ product_position_json | json }},
+        "dobPosition": {{ product_dob_position_json | json }},
         "fallbackImage": {{ product_fallback_image | json }}
       },
       "variants": {
@@ -234,11 +271,19 @@
             {%- assign v_pos_effective = product_pos_val -%}
           {%- endif -%}
         {%- endif -%}
-        {%- if v_pos_effective != blank and v_pos_effective.value != blank -%}
+        {%- assign v_dob_pos = v.metafields.custom.cb_dob_personalization_poisition -%}
+        {%- assign v_dob_pos_effective = v_dob_pos -%}
+        {%- if v_dob_pos_effective == blank or v_dob_pos_effective.value == blank -%}
+          {%- if product_has_dob_position -%}
+            {%- assign v_dob_pos_effective = product_dob_pos_val -%}
+          {%- endif -%}
+        {%- endif -%}
         {%- unless first_variant_entry -%},{%- endunless -%}
         "{{ v.id }}": {
           {%- if v_img != blank and v_img.value != blank -%}
           "image": {{ v_img.value | image_url: width: 600 | json }},
+          {%- elsif product_has_image -%}
+          "image": {{ product_image_val.value | image_url: width: 600 | json }},
           {%- else -%}
             {%- if v.featured_image -%}
               {%- assign v_fb = v.featured_image | image_url: width: 600 -%}
@@ -247,10 +292,10 @@
             {%- endif -%}
           "image": {{ v_fb | json }},
           {%- endif -%}
-          "position": {{ v_pos_effective.value | json }}
+          "position": {%- if v_pos_effective != blank and v_pos_effective.value != blank -%}{{ v_pos_effective.value | json }}{%- else -%}null{%- endif -%},
+          "dobPosition": {%- if v_dob_pos_effective != blank and v_dob_pos_effective.value != blank -%}{{ v_dob_pos_effective.value | json }}{%- else -%}null{%- endif -%}
         }
         {%- assign first_variant_entry = false -%}
-        {%- endif -%}
         {%- endfor -%}
       },
       "variantFallbackImages": {
@@ -265,7 +310,43 @@
         "{{ v.id }}": {{ v_fb | json }}
         {%- assign first_fb = false -%}
         {%- endfor -%}
-      }
+      },
+      "variantColors": {
+        {%- assign product_colors_val = product.metafields.custom.cb_product_personalisation_colors -%}
+        {%- assign first_vc = true -%}
+        {%- for v in product.variants -%}
+        {%- assign v_colors = v.metafields.custom.cb_personalisation_colors -%}
+        {%- if v_colors == blank or v_colors.value == blank -%}
+          {%- assign colors_src = product_colors_val -%}
+        {%- else -%}
+          {%- assign colors_src = v_colors -%}
+        {%- endif -%}
+        {%- unless first_vc -%},{%- endunless -%}
+        "{{ v.id }}": [
+          {%- if colors_src != blank and colors_src.value != blank -%}
+            {%- for metafield_color in colors_src.value -%}
+              {%- assign color_value = metafield_color | strip -%}
+              {%- if color_value != blank -%}
+                {%- unless forloop.first -%},{%- endunless -%}
+                {"value": {{ color_value | json }}, "key": {{ color_value | downcase | json }}}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endif -%}
+        ]
+        {%- assign first_vc = false -%}
+        {%- endfor -%}
+      },
+      "productColors": [
+        {%- if product_colors_val != blank and product_colors_val.value != blank -%}
+          {%- for metafield_color in product_colors_val.value -%}
+            {%- assign color_value = metafield_color | strip -%}
+            {%- if color_value != blank -%}
+              {%- unless forloop.first -%},{%- endunless -%}
+              {"value": {{ color_value | json }}, "key": {{ color_value | downcase | json }}}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      ]
     }
   </script>
   <dialog
@@ -292,21 +373,6 @@
           </span>
           <span>Personalise Your Product</span>
         </h2>
-        {% if show_name_tabs %}
-          <p class="personalise-modal__instructions personalise-modal__instructions--mobile">
-            Maximum 9 characters. No special characters.
-          </p>
-        {% elsif show_personalized or personalized_name or personalized_textbox %}
-          {% if personalized_name %}
-            <p class="personalise-modal__instructions personalise-modal__instructions--mobile">
-              Maximum {{ dynamic_max }} characters. No special characters.
-            </p>
-          {% endif %}
-        {% else %}
-          <p class="personalise-modal__instructions personalise-modal__instructions--mobile">
-            Maximum 9 characters. No special characters.
-          </p>
-        {% endif %}
       </div>
 
       <!-- Left Section: Product Preview (40%) -->
@@ -323,6 +389,7 @@
             ref="previewImage"
           >
           <div class="personalise-modal__preview-text-overlay" ref="previewTextOverlay" aria-hidden="true"></div>
+          <div class="personalise-modal__preview-text-overlay personalise-modal__preview-dob-overlay" ref="previewDobOverlay" aria-hidden="true" style="display: none;"></div>
         </div>
         {% if product_image %}
           {% liquid
@@ -355,9 +422,6 @@
         {% if has_color_option and color_option %}
           {%- liquid
             assign display_option_name = color_option.name
-            if display_option_name contains 'colour' or display_option_name contains 'Colour' or display_option_name contains 'COLOUR'
-              assign display_option_name = display_option_name | replace: 'COLOUR', 'COLOR' | replace: 'Colour', 'Color' | replace: 'colour', 'color'
-            endif
             assign display_option_name_lower = display_option_name | downcase
             if display_option_name_lower contains 'text '
               if display_option_name contains 'Text '
@@ -522,9 +586,6 @@
 
         {% if show_name_tabs %}
           <!-- Baby/Kid/Mum Name Tabs -->
-          <p class="personalise-modal__instructions">
-            Maximum 9 characters. No special characters.
-          </p>
           <div class="personalise-name-tabs" data-name-tabs>
             <div class="personalise-name-tabs__tablist" role="tablist">
               {% assign first_tab_active = true %}
@@ -611,6 +672,7 @@
                       <span ref="babyCharCount">0</span>/9
                     </span>
                   </div>
+                  <p class="personalise-modal__info-text">Maximum 9 characters. No special characters.</p>
                 </div>
                 {% assign first_panel_active = false %}
               {% endif %}
@@ -639,6 +701,7 @@
                       <span ref="kidCharCount">0</span>/9
                     </span>
                   </div>
+                  <p class="personalise-modal__info-text">Maximum 9 characters. No special characters.</p>
                 </div>
                 {% assign first_panel_active = false %}
               {% endif %}
@@ -667,6 +730,7 @@
                       <span ref="mumCharCount">0</span>/9
                     </span>
                   </div>
+                  <p class="personalise-modal__info-text">Maximum 9 characters. No special characters.</p>
                 </div>
                 {% assign first_panel_active = false %}
               {% endif %}
@@ -676,13 +740,9 @@
 
         {% if show_personalized or personalized_name or personalized_textbox %}
           {% if personalized_name %}
-            <p class="personalise-modal__instructions">
-              Maximum {{ dynamic_max }} characters. No special characters.
-            </p>
-
             <div class="personalise-modal__field">
               <label for="personalise-name" class="personalise-modal__label">
-                Name (Free Personlisation) 
+                Name (Free Personalisation) 
               </label>
               <div class="personalise-modal__input-wrapper">
                 <input
@@ -698,8 +758,8 @@
                 <span class="personalise-modal__counter" ref="charCounter">
                   <span ref="charCount">0</span>/{{ dynamic_max }}
                 </span>
-                {% comment %} <p class="personalise-modal__info-text">Maximum {{ dynamic_max }} characters. No special character</p> {% endcomment %}
               </div>
+              <p class="personalise-modal__info-text">Maximum {{ dynamic_max }} characters. No special characters.</p>
             </div>
           {% endif %}
 
@@ -775,24 +835,14 @@
             <div class="personalise-modal__field">
               <label class="personalise-modal__label">Choose Your Font <span style="color: red;">*</span></label>
               <div class="personalise-modal__font-grid" ref="fontGrid">
-                <button type="button" class="personalise-modal__font-button" data-font="Ballantines" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Ballantines', sans-serif;">Ballantines</span>
-                </button>
-                <button type="button" class="personalise-modal__font-button" data-font="Cormorant Garamond" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Cormorant Garamond', serif;">Cormorant Garamond</span>
-                </button>
-                <button type="button" class="personalise-modal__font-button" data-font="Jester" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Jester', sans-serif;">Jester</span>
-                </button>
-                <button type="button" class="personalise-modal__font-button" data-font="Arial Rounded Bold" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Arial Rounded Bold', sans-serif;">Arial Rounded Bold</span>
-                </button>
-                <button type="button" class="personalise-modal__font-button" data-font="Poppins" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Poppins', sans-serif;">Poppins</span>
-                </button>
-                <button type="button" class="personalise-modal__font-button" data-font="Rochester" ref="fontButton" on:click="/selectFont">
-                  <span style="font-family: 'Rochester', cursive;">Rochester</span>
-                </button>
+                {% for font_entry in font_list %}
+                  {% assign font_name = font_entry.font_name | default: font_entry.font_name.value | strip %}
+                  {% if font_name != blank %}
+                    <button type="button" class="personalise-modal__font-button" data-font="{{ font_name | escape }}" ref="fontButton" on:click="/selectFont">
+                      <span style="font-family: '{{ font_name | escape }}', sans-serif;">{{ font_name | escape }}</span>
+                    </button>
+                  {% endif %}
+                {% endfor %}
               </div>
             </div>
           {% endif %}
@@ -863,10 +913,6 @@
             </div>
           {% endif %}
         {% else %}
-          <p class="personalise-modal__instructions">
-            Maximum 9 characters. No special characters.
-          </p>
-
           <div class="personalise-modal__field">
             <label for="personalise-name" class="personalise-modal__label">
               Name (Free Personalisation)
@@ -886,19 +932,10 @@
                 <span ref="charCount">0</span>/9
               </span>
             </div>
+            <p class="personalise-modal__info-text">Maximum 9 characters. No special characters.</p>
           </div>
 
-          <div class="personalise-modal__field">
-            <label class="personalise-modal__label">Choose Font Style</label>
-            <div class="personalise-modal__font-grid" ref="fontGrid">
-              <button type="button" class="personalise-modal__font-button" data-font="Ariel round" ref="fontButton" on:click="/selectFont">Ariel round</button>
-              <button type="button" class="personalise-modal__font-button" data-font="Comic Sans" ref="fontButton" on:click="/selectFont">Comic Sans</button>
-              <button type="button" class="personalise-modal__font-button" data-font="Playfair Display" ref="fontButton" on:click="/selectFont">Playfair Display</button>
-              <button type="button" class="personalise-modal__font-button" data-font="Playball" ref="fontButton" on:click="/selectFont">Playball</button>
-              <button type="button" class="personalise-modal__font-button" data-font="Roboto Serif" ref="fontButton" on:click="/selectFont">Roboto Serif</button>
-              <button type="button" class="personalise-modal__font-button" data-font="Helvetica" ref="fontButton" on:click="/selectFont">Helvetica</button>
-            </div>
-          </div>
+          {% comment %} Font selection only shown when cb_fonts_personalisation metafield is enabled (see main block above) {% endcomment %}
         {% endif %}
 
         <div class="personalise-modal__actions">
@@ -1399,25 +1436,29 @@
     background-color: transparent !important;
   }
 
-  .personalise-modal__color-button:has(:checked) {
+  .personalise-modal__color-button:has(:checked),
+  .personalise-modal__color-button.personalise-modal__color-button--selected {
     border: 1px solid #1D425A;
     border-radius: 50%;
     outline: none;
   }
 
-  .personalise-modal__color-button:has(:checked):hover {
+  .personalise-modal__color-button:has(:checked):hover,
+  .personalise-modal__color-button.personalise-modal__color-button--selected:hover {
     border-color: #1D425A !important;
     background-color: transparent !important;
   }
 
   /* Match the exact styling from variant picker image thumbnails */
-  .personalise-modal__color-button.variant-option__button-label--image-thumbnail:has(:checked) {
+  .personalise-modal__color-button.variant-option__button-label--image-thumbnail:has(:checked),
+  .personalise-modal__color-button.variant-option__button-label--image-thumbnail.personalise-modal__color-button--selected {
     border: 1px solid #1D425A;
     border-radius: 50%;
     outline: none;
   }
 
-  .personalise-modal__color-button.variant-option__button-label--image-thumbnail:has(:checked):hover {
+  .personalise-modal__color-button.variant-option__button-label--image-thumbnail:has(:checked):hover,
+  .personalise-modal__color-button.variant-option__button-label--image-thumbnail.personalise-modal__color-button--selected:hover {
     border-color: #1D425A !important;
     background-color: transparent !important;
   }
@@ -1467,7 +1508,8 @@
     display: block;
   }
 
-  .personalise-modal__color-button:has(:checked) .variant-option__image-thumbnail {
+  .personalise-modal__color-button:has(:checked) .variant-option__image-thumbnail,
+  .personalise-modal__color-button.personalise-modal__color-button--selected .variant-option__image-thumbnail {
     border-radius: 50%;
     overflow: hidden;
   }
