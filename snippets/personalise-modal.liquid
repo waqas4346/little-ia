@@ -217,15 +217,47 @@
   if product_has_position
     assign product_position_json = product_pos_val.value | json
   endif
+
+  # DOB position (custom.cb_dob_personalization_poisition) - variant first, then product
+  assign variant_dob_pos_val = variant.metafields.custom.cb_dob_personalization_poisition
+  assign product_dob_pos_val = product.metafields.custom.cb_dob_personalization_poisition
+  assign variant_has_dob_position = false
+  if variant_dob_pos_val != blank and variant_dob_pos_val.value != blank
+    assign variant_has_dob_position = true
+  endif
+  assign product_has_dob_position = false
+  if product_dob_pos_val != blank and product_dob_pos_val.value != blank
+    assign product_has_dob_position = true
+  endif
+  assign cb_dob_personalization_position_json = ''
+  if variant_has_dob_position
+    assign cb_dob_personalization_position_json = variant_dob_pos_val.value | json
+  elsif product_has_dob_position
+    assign cb_dob_personalization_position_json = product_dob_pos_val.value | json
+  endif
+  assign has_dob_personalisation = personalized_dob
+  if product.tags contains 'optional_fields'
+    assign has_dob_personalisation = true
+  endif
+  assign show_dob_overlay = false
+  if has_dob_personalisation and cb_dob_personalization_position_json != blank
+    assign show_dob_overlay = true
+  endif
+
+  assign product_dob_position_json = ''
+  if product_has_dob_position
+    assign product_dob_position_json = product_dob_pos_val.value | json
+  endif
 %}
 
-<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}" data-product-id="{{ product.id }}"{% if has_color_option %} data-has-color-variant="true"{% endif %}{% if full_screen_personalisation %} data-full-screen-personalisation="true"{% endif %}{% if auto_open_personalisation and context != 'cart-drawer' %} data-auto-open-personalisation="true"{% endif %}{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}>
+<personalise-dialog id="{{ modal_id }}" data-context="{{ context | default: 'product-page' }}" data-product-id="{{ product.id }}"{% if has_color_option %} data-has-color-variant="true"{% endif %}{% if full_screen_personalisation %} data-full-screen-personalisation="true"{% endif %}{% if auto_open_personalisation and context != 'cart-drawer' %} data-auto-open-personalisation="true"{% endif %}{% if show_cb_dynamic_preview %} data-cb-personalization-image="{{ cb_personalization_image_url }}" data-cb-personalization-position="{{ cb_personalization_position_json | escape }}"{% endif %}{% if show_dob_overlay %} data-cb-dob-personalization-position="{{ cb_dob_personalization_position_json | escape }}"{% endif %}>
   {%- comment -%} Variant metafields for dynamic preview when variant changes - keyed by variant ID {%- endcomment -%}
   <script type="application/json" data-cb-personalization-variants>
     {
       "product": {
         "image": {{ product_image_url | json }},
         "position": {{ product_position_json | json }},
+        "dobPosition": {{ product_dob_position_json | json }},
         "fallbackImage": {{ product_fallback_image | json }}
       },
       "variants": {
@@ -237,6 +269,13 @@
         {%- if v_pos_effective == blank or v_pos_effective.value == blank -%}
           {%- if product_has_position -%}
             {%- assign v_pos_effective = product_pos_val -%}
+          {%- endif -%}
+        {%- endif -%}
+        {%- assign v_dob_pos = v.metafields.custom.cb_dob_personalization_poisition -%}
+        {%- assign v_dob_pos_effective = v_dob_pos -%}
+        {%- if v_dob_pos_effective == blank or v_dob_pos_effective.value == blank -%}
+          {%- if product_has_dob_position -%}
+            {%- assign v_dob_pos_effective = product_dob_pos_val -%}
           {%- endif -%}
         {%- endif -%}
         {%- unless first_variant_entry -%},{%- endunless -%}
@@ -253,7 +292,8 @@
             {%- endif -%}
           "image": {{ v_fb | json }},
           {%- endif -%}
-          "position": {%- if v_pos_effective != blank and v_pos_effective.value != blank -%}{{ v_pos_effective.value | json }}{%- else -%}null{%- endif -%}
+          "position": {%- if v_pos_effective != blank and v_pos_effective.value != blank -%}{{ v_pos_effective.value | json }}{%- else -%}null{%- endif -%},
+          "dobPosition": {%- if v_dob_pos_effective != blank and v_dob_pos_effective.value != blank -%}{{ v_dob_pos_effective.value | json }}{%- else -%}null{%- endif -%}
         }
         {%- assign first_variant_entry = false -%}
         {%- endfor -%}
@@ -349,6 +389,7 @@
             ref="previewImage"
           >
           <div class="personalise-modal__preview-text-overlay" ref="previewTextOverlay" aria-hidden="true"></div>
+          <div class="personalise-modal__preview-text-overlay personalise-modal__preview-dob-overlay" ref="previewDobOverlay" aria-hidden="true" style="display: none;"></div>
         </div>
         {% if product_image %}
           {% liquid

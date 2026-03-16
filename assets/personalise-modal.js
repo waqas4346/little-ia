@@ -197,6 +197,22 @@ export class PersonaliseDialogComponent extends DialogComponent {
       if (placeholder && !fallbackWrap) placeholder.style.display = '';
     }
 
+    // DOB position: variant first, then product
+    let dobPositionJson = '';
+    if (variantKey && variants && variants[variantKey]?.dobPosition != null && variants[variantKey].dobPosition !== 'null') {
+      const pos = variants[variantKey].dobPosition;
+      dobPositionJson = typeof pos === 'string' ? pos : JSON.stringify(pos);
+    } else if (product?.dobPosition != null && product.dobPosition !== 'null') {
+      const pos = product.dobPosition;
+      dobPositionJson = typeof pos === 'string' ? pos : JSON.stringify(pos);
+    }
+    if (dobPositionJson) {
+      this.dataset.cbDobPersonalizationPosition = dobPositionJson;
+    } else {
+      delete this.dataset.cbDobPersonalizationPosition;
+    }
+    this.updateDobPreviewOverlay();
+
     // Update color grid for new variant (variant-aware text colours)
     this.#updateColorGridForVariant(variantKey, map);
 
@@ -900,8 +916,14 @@ export class PersonaliseDialogComponent extends DialogComponent {
       if (input.dataset.hasSaveButtonListener) return;
       
       input.dataset.hasSaveButtonListener = 'true';
-      input.addEventListener('input', () => this.updateSaveButton());
-      input.addEventListener('change', () => this.updateSaveButton());
+      input.addEventListener('input', () => {
+        this.updateSaveButton();
+        if (input.name === 'properties[Date of Birth]' || input.id === 'dob_field_val') this.updateDobPreviewOverlay();
+      });
+      input.addEventListener('change', () => {
+        this.updateSaveButton();
+        if (input.name === 'properties[Date of Birth]' || input.id === 'dob_field_val') this.updateDobPreviewOverlay();
+      });
     });
     
     // Listen for checkbox changes
@@ -928,6 +950,7 @@ export class PersonaliseDialogComponent extends DialogComponent {
       }
     }
     this.updateSaveButton();
+    this.updateCbPreviewOverlay();
   }
 
   /**
@@ -1397,9 +1420,15 @@ export class PersonaliseDialogComponent extends DialogComponent {
       // Update overlay position on resize (dynamic personalization; position in px from visible image rect)
       if (this.dataset.cbPersonalizationImage) {
         if (!this._cbPreviewResizeHandler) {
-          this._cbPreviewResizeHandler = () => this.updateCbPreviewOverlay();
+          this._cbPreviewResizeHandler = () => {
+            this.updateCbPreviewOverlay();
+            this.updateDobPreviewOverlay();
+          };
         }
         window.addEventListener('resize', this._cbPreviewResizeHandler);
+      }
+      if (this.dataset.cbDobPersonalizationPosition) {
+        this.updateDobPreviewOverlay();
       }
 
       // Only add keydown listener for Escape key, NOT click listener
@@ -2090,6 +2119,118 @@ export class PersonaliseDialogComponent extends DialogComponent {
     const bottomPx = wrapH - vT - (vH * (1 - yPct / 100));
     overlay.style.left = Math.round(leftPx) + 'px';
     overlay.style.bottom = Math.round(bottomPx) + 'px';
+    this.updateDobPreviewOverlay();
+  }
+
+  /**
+   * Updates the DOB preview overlay on the dynamic preview image when the product has
+   * cb_dob_personalization_poisition metafield (variant or product). Positions overlay in pixels
+   * from the visible (object-fit: contain) image rect.
+   */
+  updateDobPreviewOverlay() {
+    const positionJson = this.dataset.cbDobPersonalizationPosition;
+    if (!positionJson) {
+      const dobOverlay = (this.refs && this.refs.previewDobOverlay) || this.querySelector('.personalise-modal__preview-dob-overlay');
+      if (dobOverlay) {
+        dobOverlay.style.display = 'none';
+        dobOverlay.textContent = '';
+      }
+      return;
+    }
+
+    const wrap = this.querySelector('.personalise-modal__preview-image-wrap');
+    const img = wrap && wrap.querySelector('.personalise-modal__preview-image--dynamic');
+    if (img && !img.complete) {
+      img.addEventListener('load', () => this.updateDobPreviewOverlay(), { once: true });
+    }
+
+    const dobOverlay = (this.refs && this.refs.previewDobOverlay) || this.querySelector('.personalise-modal__preview-dob-overlay');
+    if (!dobOverlay) return;
+
+    let position;
+    try {
+      position = typeof positionJson === 'string' ? JSON.parse(positionJson) : positionJson;
+    } catch (e) {
+      dobOverlay.style.display = 'none';
+      return;
+    }
+
+    // Get DOB value from either personalized_dob or optional_fields input
+    const dobInput = this.refs?.dobInput || this.querySelector('input[name="properties[Date of Birth]"]');
+    const optionalDobInput = this.refs?.optionalDobInput || this.querySelector('#dob_field_val');
+    let dobValue = '';
+    if (dobInput?.value?.trim()) {
+      dobValue = dobInput.value.trim();
+    } else if (optionalDobInput?.value) {
+      const d = new Date(optionalDobInput.value);
+      if (!isNaN(d.getTime())) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        dobValue = `${dd}-${mm}-${yyyy}`;
+      }
+    } else if (this.personalisationData?.dob) {
+      dobValue = this.personalisationData.dob;
+    } else if (this.personalisationData?.optionalDob) {
+      dobValue = this.personalisationData.optionalDob;
+    }
+
+    if (!dobValue) {
+      dobOverlay.style.display = 'none';
+      dobOverlay.textContent = '';
+      return;
+    }
+
+    const xPct = position.x != null ? Number(position.x) : 20;
+    const yPct = position.y != null ? Number(position.y) : 20;
+    const fontSize = position.font_size != null ? Number(position.font_size) : 20;
+
+    const supported = this.#getSupportedPersonalisationFields();
+    const colorName = supported.color ? ((this.personalisationData && this.personalisationData.color) || this.selectedColor || '') : '';
+    const fontName = supported.font ? ((this.personalisationData && this.personalisationData.font) || this.selectedFont || '') : '';
+
+    const colorMap = {
+      black: '#000000',
+      white: '#ffffff',
+      blue: '#DEE8EF',
+      gold: '#DEB035',
+      green: '#E4EFDB',
+      grey: '#E8EBEC',
+      gray: '#E8EBEC',
+      multicolour: '#8B4789',
+      orange: '#F8CF89',
+      pink: '#F7DDE2',
+      purple: '#F0D9E6',
+      red: '#BC3725',
+      silver: '#DEEBF7',
+      yellow: '#F9F3DB'
+    };
+    const colorKey = colorName && colorName.toLowerCase ? colorName.toLowerCase() : '';
+    const cssColor = (colorKey && colorMap[colorKey]) || colorName || '';
+
+    dobOverlay.textContent = dobValue;
+    dobOverlay.style.fontSize = `${fontSize}px`;
+    dobOverlay.style.fontFamily = fontName ? `"${fontName}", sans-serif` : '';
+    dobOverlay.style.transform = 'translate(-50%, 50%)';
+    dobOverlay.style.top = '';
+    dobOverlay.style.color = (supported.color && cssColor) ? cssColor : 'inherit';
+    dobOverlay.style.display = '';
+
+    if (!wrap || !img || !img.naturalWidth) return;
+    const wrapW = wrap.clientWidth;
+    const wrapH = wrap.clientHeight;
+    if (!wrapW || !wrapH) return;
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+    const scale = Math.min(wrapW / nw, wrapH / nh);
+    const vW = nw * scale;
+    const vH = nh * scale;
+    const vL = (wrapW - vW) / 2;
+    const vT = (wrapH - vH) / 2;
+    const leftPx = vL + (vW * xPct / 100);
+    const bottomPx = wrapH - vT - (vH * (1 - yPct / 100));
+    dobOverlay.style.left = Math.round(leftPx) + 'px';
+    dobOverlay.style.bottom = Math.round(bottomPx) + 'px';
   }
 
   /**
