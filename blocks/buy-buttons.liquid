@@ -105,6 +105,10 @@
 
             </span>
             <span class="personalise-button__text" data-personalise-text>PERSONALISE IT</span>
+            <span class="personalise-button__remove" data-personalise-remove tabindex="0" role="button">
+              <span class="personalise-button__remove-icon">{{- 'icon-close.svg' | inline_asset_content -}}</span>
+              <span>Remove</span>
+            </span>
             </div>
           </button>
 
@@ -1069,6 +1073,132 @@
     }, 100);
   }
 
+  // Personalisation property names to clear when removing
+  var PERSONALISATION_PROP_NAMES = [
+    'Name', 'Name 1', 'Name 2', 'Name 3', 'Name 4',
+    "Baby's Name", "Kid's Name", "Mum's Name",
+    'Date of Birth', 'Personalise Date of Birth',
+    'Text Color', 'Text Font', 'School Year', 'Personalisation:', 'Message', 'Time', 'Weight'
+  ];
+
+  function clearPersonalisationFromForms(forms) {
+    if (!forms || !forms.length) return;
+    forms.forEach(function(form) {
+      if (!form) return;
+      PERSONALISATION_PROP_NAMES.forEach(function(prop) {
+        var sel = 'input[name="properties[' + prop + ']"], textarea[name="properties[' + prop + ']"]';
+        form.querySelectorAll(sel).forEach(function(el) { el.remove(); });
+      });
+      var dobFieldVal = form.querySelector('#dob_field_val');
+      if (dobFieldVal) dobFieldVal.value = '';
+    });
+  }
+
+  function clearPersonalisationFromModal(productId) {
+    var modals = productId
+      ? document.querySelectorAll('personalise-dialog[data-product-id="' + productId + '"]')
+      : document.querySelectorAll('personalise-dialog');
+    modals.forEach(function(modal) {
+      if (!modal) return;
+      modal.querySelectorAll('input, textarea').forEach(function(el) {
+        var n = (el.name || '').replace(/^properties\[|\]$/g, '');
+        var isPersonalisation = PERSONALISATION_PROP_NAMES.indexOf(n) >= 0 ||
+          el.id === 'personalise-name' || el.id === 'dob_field_val' ||
+          el.name === 'personalise-name';
+        if (isPersonalisation && el.value !== undefined) el.value = '';
+      });
+      modal.querySelectorAll('input[type="radio"][name^="personalise"], .personalise-modal__color-grid input[type="radio"]').forEach(function(r) { r.checked = false; });
+      modal.querySelectorAll('.personalise-modal__font-button').forEach(function(btn) {
+        btn.classList.remove('personalise-modal__font-button--selected');
+      });
+    });
+  }
+
+  document.addEventListener('click', function(ev) {
+    var removeEl = ev.target.closest('[data-personalise-remove]');
+    if (!removeEl) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+
+    var button = removeEl.closest('[data-personalise-button]');
+    if (!button) return;
+
+    var buttonProductId = null;
+    var quickAddModal = button.closest('#quick-add-modal-content');
+    if (quickAddModal) {
+      var qFormComponent = quickAddModal.querySelector('product-form-component');
+      buttonProductId = qFormComponent?.dataset?.productId;
+    }
+    if (!buttonProductId) {
+      var formComponent = button.closest('product-form-component');
+      buttonProductId = formComponent?.dataset?.productId;
+    }
+    if (!buttonProductId) {
+      var stickyCart = button.closest('sticky-add-to-cart');
+      buttonProductId = stickyCart?.dataset?.productId;
+    }
+
+    var allForms = [];
+    if (quickAddModal) {
+      quickAddModal.querySelectorAll('form[data-type="add-to-cart-form"]').forEach(function(f) {
+        var pid = f.closest('product-form-component')?.dataset?.productId;
+        if (!buttonProductId || pid === buttonProductId || pid === String(buttonProductId)) {
+          allForms.push(f);
+        }
+      });
+    } else {
+      document.querySelectorAll('product-form-component').forEach(function(fc) {
+        var qa = document.querySelector('#quick-add-modal-content');
+        if (qa && qa.contains(fc)) return;
+        if (buttonProductId && (fc.dataset?.productId === buttonProductId || fc.dataset?.productId === String(buttonProductId))) {
+          var f = fc.querySelector('form[data-type="add-to-cart-form"]');
+          if (f && !allForms.includes(f)) allForms.push(f);
+        }
+      });
+    }
+
+    clearPersonalisationFromForms(allForms);
+    clearPersonalisationFromModal(buttonProductId);
+    if (window.currentPersonalisation) {
+      if (buttonProductId) delete window.currentPersonalisation[buttonProductId];
+      delete window.currentPersonalisation._latest;
+    }
+
+    // Clear "Please select text colour" state when personalisation is removed
+    allForms.forEach(function(f) { if (f) f.removeAttribute('data-personalisation-color-required'); });
+    document.querySelectorAll('[data-personalise-color-required-msg]').forEach(function(el) { el.style.display = 'none'; });
+
+    var noteContainer = button.parentElement?.querySelector('[data-personalise-note]');
+    if (!noteContainer) {
+      var formButtons = button.closest('.product-form-buttons');
+      if (formButtons) noteContainer = formButtons.querySelector('[data-personalise-note]');
+    }
+    if (noteContainer) noteContainer.style.display = 'none';
+
+    var confirmationContainer = button.nextElementSibling;
+    if (!confirmationContainer || !confirmationContainer.classList?.contains('personalise-confirmation')) {
+      confirmationContainer = button.parentElement?.querySelector('[data-personalise-confirmation]');
+    }
+    if (!confirmationContainer) {
+      var formButtons = button.closest('.product-form-buttons');
+      if (formButtons) confirmationContainer = formButtons.querySelector('[data-personalise-confirmation]');
+    }
+    if (confirmationContainer) {
+      confirmationContainer.style.display = 'none';
+      var cb = confirmationContainer.querySelector('[data-personalise-confirm-checkbox]');
+      if (cb) cb.checked = false;
+    }
+
+    setTimeout(function() {
+      if (typeof window.updatePersonaliseButtonText === 'function') {
+        window.updatePersonaliseButtonText(allForms[0] || null);
+      }
+      if (window.updateAddToCartButtonState) window.updateAddToCartButtonState();
+      document.dispatchEvent(new CustomEvent('personalisation-saved', { detail: { form: allForms[0], productId: buttonProductId }, bubbles: true }));
+    }, 50);
+  }, true);
+
   // Set up event listeners (document only; event is also dispatched on dialog and bubbles)
   try {
     document.addEventListener('personalisation-saved', handlePersonalisationSaved);
@@ -1136,7 +1266,16 @@
           }
           
           if (!isVisible) {
-            // If not visible, personalization not present - don't interfere with button state
+            // Confirmation hidden = no personalisation requiring confirmation - enable add to cart
+            const addToCartButtons = productFormComponent.querySelectorAll('add-to-cart-component');
+            addToCartButtons.forEach(container => {
+              if (container.refs?.addToCartButton) container.enable();
+            });
+            const stickyBar = document.querySelector(`sticky-add-to-cart[data-product-id="{{ product.id }}"]`) || document.querySelector('sticky-add-to-cart');
+            const stickyButton = stickyBar?.refs?.addToCartButton || stickyBar?.querySelector('.sticky-add-to-cart__button');
+            if (stickyButton && stickyBar?.dataset?.variantAvailable === 'true') {
+              stickyButton.disabled = false;
+            }
             return;
           }
           
@@ -1724,6 +1863,7 @@
   /* When summary is visible, space between left and right */
   .personalise-button.has-summary {
     justify-content: space-between;
+    flex-wrap: wrap;
   }
   
   .icon-tex-container {
@@ -1780,6 +1920,35 @@
     border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 50%;
     vertical-align: middle;
+  }
+
+  .personalise-button__remove {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    padding-left: 6px;
+    border-left: 1px solid rgba(114, 149, 187, 0.4);
+    cursor: pointer;
+    color: #7295BB;
+    font-size: var(--font-size--sm);
+    font-weight: 500;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .personalise-button__remove-icon {
+    display: inline-flex;
+    width: 14px;
+    height: 14px;
+  }
+
+  .personalise-button__remove-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .personalise-button:not(.has-summary) .personalise-button__remove {
+    display: none !important;
   }
 
   /* Personalisation Confirmation Checkbox */
