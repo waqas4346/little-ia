@@ -112,6 +112,10 @@
 
             </span>
             <span class="personalise-button__text" data-personalise-text>PERSONALISE IT</span>
+            <span class="personalise-button__remove" data-personalise-remove tabindex="0" role="button">
+              <span class="personalise-button__remove-icon">{{- 'icon-close.svg' | inline_asset_content -}}</span>
+              <span>Remove</span>
+            </span>
            </div>
           </button>
           {% endif %}
@@ -1029,7 +1033,7 @@
     color: #ffffff !important;
     border: none !important;
     font-weight: 500;
-    width: 100%;
+    width: 50%;
   }
 
   .sticky-add-to-cart__button:hover:not(:disabled) {

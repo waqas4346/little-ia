@@ -923,10 +923,12 @@ export class PersonaliseDialogComponent extends DialogComponent {
       input.addEventListener('input', () => {
         this.updateSaveButton();
         if (input.name === 'properties[Date of Birth]' || input.id === 'dob_field_val') this.updateDobPreviewOverlay();
+        else this.updateCbPreviewOverlay();
       });
       input.addEventListener('change', () => {
         this.updateSaveButton();
         if (input.name === 'properties[Date of Birth]' || input.id === 'dob_field_val') this.updateDobPreviewOverlay();
+        else this.updateCbPreviewOverlay();
       });
     });
     
@@ -2037,16 +2039,21 @@ export class PersonaliseDialogComponent extends DialogComponent {
   updateCbPreviewOverlay() {
     const imageUrl = this.dataset.cbPersonalizationImage;
     const positionJson = this.dataset.cbPersonalizationPosition;
-    if (!imageUrl || !positionJson) return;
+
+    const overlay = (this.refs && this.refs.previewTextOverlay) || this.querySelector('.personalise-modal__preview-text-overlay');
+
+    // When no position (e.g. variant has image but no position), clear overlay so previous variant's text doesn't persist
+    if (!imageUrl || !positionJson) {
+      if (overlay) overlay.textContent = '';
+      return;
+    }
+    if (!overlay) return;
 
     const wrap = this.querySelector('.personalise-modal__preview-image-wrap');
     const img = wrap && wrap.querySelector('.personalise-modal__preview-image--dynamic');
     if (img && !img.complete) {
       img.addEventListener('load', () => this.updateCbPreviewOverlay(), { once: true });
     }
-
-    const overlay = (this.refs && this.refs.previewTextOverlay) || this.querySelector('.personalise-modal__preview-text-overlay');
-    if (!overlay) return;
 
     let position;
     try {

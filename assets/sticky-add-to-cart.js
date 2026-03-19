@@ -403,7 +403,9 @@ class StickyAddToCartComponent extends Component {
 
     if (colorRequired) {
       stickyButton.disabled = true;
-    } else if (confirmationVisible && checkbox?.checked) {
+    } else if (confirmationVisible) {
+      stickyButton.disabled = !checkbox?.checked;
+    } else {
       stickyButton.disabled = false;
     }
   }

@@ -96,152 +96,123 @@
   class="mega-menu__list list-unstyled"
   style="--menu-image-border-radius: {{ image_border_radius }}px;"
 >
-  {% for link in parent_link.links %}
+  {% if parent_link.links.size >= 2 and menu_content_type == 'collection_image' %}
+    {%- comment -%} First column: separate container. Rest: grouped in second container so nothing ever wraps under first. {%- endcomment -%}
+    {% assign first_link = parent_link.links.first %}
     {% liquid
-      # Decide whether to open a column span, and how many columns of the grid to span
-      if forloop.first or open_column_span == false
-        assign open_column_span = true
-
-        # Don't allow orphan links in a column
-        assign break_after_modulo = link.links.size | modulo: links_before_wrap
-        if break_after_modulo == 1
-          assign links_before_wrap = links_before_wrap | minus: 1
-        endif
-        assign break_after_float = links_before_wrap | times: 1.0
-        assign column_span = link.links.size | divided_by: break_after_float | ceil | at_least: 1
-        assign column_count = column_count | plus: column_span
-        assign should_break_columns = true
-
-        if menu_content_type == 'collection_images'
-          assign should_break_columns = false
-          # For collection image mode, we have an 8-column grid when 4 or fewer parent links are used. Set column span to 2 in that case, otherwise use 1 column
-          if parent_link.links.size <= 4
-            assign span_class = 'mega-menu__column--wide-collection-image'
-          else
-            assign span_class = 'mega-menu__column--span-1'
-          endif
-        elsif menu_content_type == 'collection_image'
-          # For collection_image mode, use normal column span logic
-          assign span_class = 'mega-menu__column--span-' | append: column_span
-        else
-          # For all other modes, column span is determined by the number of links in the parent link
-          assign span_class = 'mega-menu__column--span-' | append: column_span
-        endif
-        echo '<li class="mega-menu__column ' | append: span_class | append: '">'
+      assign break_after_modulo = first_link.links.size | modulo: links_before_wrap
+      if break_after_modulo == 1
+        assign first_links_before_wrap = links_before_wrap | minus: 1
+      else
+        assign first_links_before_wrap = links_before_wrap
       endif
+      assign break_after_float = first_links_before_wrap | times: 1.0
+      assign first_column_span = first_link.links.size | divided_by: break_after_float | ceil | at_least: 1
+      assign column_count = column_count | plus: first_column_span
     %}
-    <div>
-      <a
-        href="{{ link.url }}"
-        class="mega-menu__link {% if link.links != blank %}mega-menu__link--parent{% endif %}"
-          {% if menu_content_type == 'collection_image' and link.type == 'collection_link' %}
-            data-collection-handle="{{ link.object.handle }}"
-            data-collection-image-link="true"
-            {% liquid
-              assign collection_image_url = ''
-              if link.object.featured_image
-                assign collection_image_url = link.object.featured_image | image_url: width: 1200
-              elsif link.object.products.size > 0
-                assign product_with_image = link.object.products | where: 'featured_image' | first
-                if product_with_image.featured_image
-                  assign collection_image_url = product_with_image.featured_image | image_url: width: 1200
-                endif
-              endif
+    <li class="mega-menu__column mega-menu__column--first mega-menu__column--span-{{ first_column_span }}">
+      {% render 'mega-menu-column',
+        link: first_link,
+        menu_content_type: menu_content_type,
+        parent_link: parent_link,
+        column_span: first_column_span,
+        should_break_columns: true,
+        links_before_wrap: first_links_before_wrap,
+        grid_columns_count: grid_columns_count,
+        grid_columns_count_tablet: grid_columns_count_tablet,
+        grid_columns_count_collection_images: grid_columns_count_collection_images,
+        settings: settings
+      %}
+    </li>
+    <li class="mega-menu__rest-columns">
+      <div class="mega-menu__rest-grid">
+        {% for link in parent_link.links offset: 1 %}
+          {% liquid
+            assign break_after_modulo = link.links.size | modulo: links_before_wrap
+            if break_after_modulo == 1
+              assign rest_links_before_wrap = links_before_wrap | minus: 1
+            else
+              assign rest_links_before_wrap = links_before_wrap
+            endif
+            assign break_after_float = rest_links_before_wrap | times: 1.0
+            assign column_span = link.links.size | divided_by: break_after_float | ceil | at_least: 1
+            assign column_count = column_count | plus: column_span
+          %}
+          <div class="mega-menu__column mega-menu__column--span-1">
+            {% render 'mega-menu-column',
+              link: link,
+              menu_content_type: menu_content_type,
+              parent_link: parent_link,
+              column_span: column_span,
+              should_break_columns: true,
+              links_before_wrap: rest_links_before_wrap,
+              grid_columns_count: grid_columns_count,
+              grid_columns_count_tablet: grid_columns_count_tablet,
+              grid_columns_count_collection_images: grid_columns_count_collection_images,
+              settings: settings
             %}
-            {% if collection_image_url != blank %}
-              data-collection-image-url="{{ collection_image_url }}"
-            {% endif %}
-          {% endif %}
-      >
-        {% if menu_content_type == 'collection_images' %}
-          {%- capture collection_image_sizes -%}
-            {%- if parent_link.links.size <= 4 -%}
-              {%- assign columns_per_item = 2 -%}
-            {%- else -%}
-              {%- assign columns_per_item = 1 -%}
-            {%- endif -%}
-            {%- render 'util-mega-menu-img-sizes-attr',
-              menu_content_type: 'collection_images',
-              settings: settings,
-              grid_columns: grid_columns_count,
-              grid_columns_tablet: grid_columns_count_tablet,
-              grid_columns_collection_images: grid_columns_count_collection_images,
-              parent_links_size: parent_link.links.size,
-              columns_per_item: columns_per_item
-            -%}
-          {%- endcapture -%}
+          </div>
+        {% endfor %}
+      </div>
+    </li>
+  {% else %}
+    {% for link in parent_link.links %}
+      {% liquid
+        if forloop.first or open_column_span == false
+          assign open_column_span = true
+          assign break_after_modulo = link.links.size | modulo: links_before_wrap
+          if break_after_modulo == 1
+            assign links_before_wrap = links_before_wrap | minus: 1
+          endif
+          assign break_after_float = links_before_wrap | times: 1.0
+          assign column_span = link.links.size | divided_by: break_after_float | ceil | at_least: 1
+          assign column_count = column_count | plus: column_span
+          assign should_break_columns = true
 
-          {% render 'link-featured-image', link: link, class: 'mega-menu__link-image', sizes: collection_image_sizes %}
-        {% endif %}
-        <span
-          class="mega-menu__link-title wrap-text"
-        >
-          {{- link.title -}}
-        </span>
-      </a>
-      {% if link.links != blank %}
-        <ul
-          class="list-unstyled"
-          {% if should_break_columns %}
-            style="column-count: {{ column_span }};"
-          {% endif %}
-        >
-          {% for childLink in link.links %}
-            {% assign break_after_modulo = forloop.index | modulo: links_before_wrap %}
-          <li
-            {% if break_after_modulo == 0 and should_break_columns %}
-              style="break-after: column;"
-            {% endif %}
-          >
-              <a
-                href="{{ childLink.url }}"
-                class="mega-menu__link"
-                {% if menu_content_type == 'collection_image' and childLink.type == 'collection_link' %}
-                  data-collection-handle="{{ childLink.object.handle }}"
-                  data-collection-image-link="true"
-                    {% liquid
-                      assign child_collection_image_url = ''
-                      if childLink.object.featured_image
-                        assign child_collection_image_url = childLink.object.featured_image | image_url: width: 1200
-                      elsif childLink.object.products.size > 0
-                        assign child_product_with_image = childLink.object.products | where: 'featured_image' | first
-                        if child_product_with_image.featured_image
-                          assign child_collection_image_url = child_product_with_image.featured_image | image_url: width: 1200
-                        endif
-                      endif
-                    %}
-                  {% if child_collection_image_url != blank %}
-                    data-collection-image-url="{{ child_collection_image_url }}"
-                  {% endif %}
-                {% endif %}
-              >
-                <span class="mega-menu__link-title wrap-text">{{- childLink.title -}}</span>
-              </a>
-            </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    </div>
-
-    {% liquid
-      # Check conditions for closing the span at the end of each iteration, then close the span if needed
-      assign next_linklist = parent_link.links[forloop.index]
-
-      if forloop.last
-        assign open_column_span = false
-      elsif menu_content_type == 'collection_images'
-        assign open_column_span = false
-      elsif next_linklist.links != blank
-        assign open_column_span = false
-      elsif link.links != blank and next_linklist.links == blank
-        assign open_column_span = false
-      endif
-
-      if open_column_span == false
-        echo '</li>'
-      endif
-    %}
-  {% endfor %}
+          if menu_content_type == 'collection_images'
+            assign should_break_columns = false
+            if parent_link.links.size <= 4
+              assign span_class = 'mega-menu__column--wide-collection-image'
+            else
+              assign span_class = 'mega-menu__column--span-1'
+            endif
+          elsif menu_content_type == 'collection_image'
+            assign span_class = 'mega-menu__column--span-' | append: column_span
+          else
+            assign span_class = 'mega-menu__column--span-' | append: column_span
+          endif
+          echo '<li class="mega-menu__column ' | append: span_class | append: '">'
+        endif
+      %}
+      {% render 'mega-menu-column',
+        link: link,
+        menu_content_type: menu_content_type,
+        parent_link: parent_link,
+        column_span: column_span,
+        should_break_columns: should_break_columns,
+        links_before_wrap: links_before_wrap,
+        grid_columns_count: grid_columns_count,
+        grid_columns_count_tablet: grid_columns_count_tablet,
+        grid_columns_count_collection_images: grid_columns_count_collection_images,
+        settings: settings
+      %}
+      {% liquid
+        assign next_linklist = parent_link.links[forloop.index]
+        if forloop.last
+          assign open_column_span = false
+        elsif menu_content_type == 'collection_images'
+          assign open_column_span = false
+        elsif next_linklist.links != blank
+          assign open_column_span = false
+        elsif link.links != blank and next_linklist.links == blank
+          assign open_column_span = false
+        endif
+        if open_column_span == false
+          echo '</li>'
+        endif
+      %}
+    {% endfor %}
+  {% endif %}
 </ul>
 
 {% liquid

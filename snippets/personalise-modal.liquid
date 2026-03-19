@@ -939,6 +939,11 @@
         {% endif %}
 
         <div class="personalise-modal__actions">
+          {% if product.metafields.custom.cb_personalisation_note.value %}
+            <p class="personalise-modal__note">
+              Note: Personalisation applies to eligible products only
+            </p>
+          {% endif %}
           <button
             type="button"
             class="personalise-modal__save-button button button--primary"
@@ -1010,6 +1015,14 @@
   @font-face {
     font-family: 'Rochester';
     src: url({{ 'PERSONALISATION FONTS/Rochester-Regular.ttf' | asset_url }}) format('truetype');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'QTCoronation';
+    src: url({{ 'PERSONALISATION FONTS/QTCoronation.otf' | asset_url }}) format('opentype');
     font-style: normal;
     font-weight: 400;
     font-display: swap;
@@ -1381,6 +1394,7 @@
   .personalise-modal__font-button[data-font="Playball"] { font-family: 'Playball', cursive; }
   .personalise-modal__font-button[data-font="Roboto Serif"] { font-family: 'Roboto Serif', serif; }
   .personalise-modal__font-button[data-font="Helvetica"] { font-family: Helvetica, sans-serif; }
+  .personalise-modal__font-button[data-font="QTCoronation"] { font-family: 'QTCoronation', sans-serif; }
 
   .personalise-modal__info-text {
     font-size: var(--font-size--sm);
@@ -1527,6 +1541,15 @@
     padding-block-start: var(--padding-xl);
   }
 
+  .personalise-modal__note {
+    flex-basis: 100%;
+    margin: 0 0 var(--margin-sm) 0;
+    font-size: var(--font-size--sm);
+    line-height: 1.4;
+    color: #1D425A;
+    font-weight: 700;
+  }
+
   .personalise-modal__save-button {
     flex: 1;
     background-color: #7295BB;
@@ -1637,7 +1660,7 @@
     }
 
     .personalise-modal__actions {
-      flex-direction: column;
+      /* flex-direction: column; */
     }
 
     .personalise-modal__save-button,

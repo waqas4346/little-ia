@@ -15,7 +15,8 @@ export class BuildYourSetPersonaliseDialogComponent extends DialogComponent {
     { value: 'Jester', label: 'Jester', display: 'Jester' },
     { value: 'Arial Rounded Bold', label: 'Arial Rounded Bold', display: 'Arial Rounded Bold' },
     { value: 'Poppins', label: 'Poppins', display: 'Poppins' },
-    { value: 'Rochester', label: 'Rochester', display: 'Rochester' }
+    { value: 'Rochester', label: 'Rochester', display: 'Rochester' },
+    { value: 'QTCoronation', label: 'QTCoronation', display: 'QTCoronation' }
   ];
 
   connectedCallback() {

@@ -530,6 +530,32 @@
     grid-column: span 4;
   }
 
+  /* First column: separate container. Rest: grouped so nothing ever wraps under first. */
+  .mega-menu__column--first {
+    grid-column: 1;
+  }
+
+  .mega-menu__rest-columns {
+    grid-column: 2 / -1;
+    min-width: 0;
+  }
+
+  .mega-menu__rest-grid {
+    display: grid;
+    grid-template-columns: repeat(calc(var(--menu-columns-desktop) - 1), minmax(0, 1fr));
+    gap: var(--menu-vertical-gap) var(--menu-horizontal-gap);
+  }
+
+  @media screen and (max-width: 989px) {
+    .mega-menu__rest-grid {
+      grid-template-columns: repeat(calc(var(--menu-columns-tablet) - 1), minmax(0, 1fr));
+    }
+  }
+
+  .mega-menu__rest-grid .mega-menu__column {
+    min-width: 0;
+  }
+
   .mega-menu__column--wide-collection-image {
     grid-column: span 1;
 
@@ -574,7 +600,8 @@
       grid-column: span var(--menu-columns-desktop);
     }
 
-    .mega-menu__column:first-child {
+    /* Only first container (Featured), not first in rest grid */
+    & > .mega-menu__column:first-child {
       border-right: 1px solid #E3E3E3;
     }
   }
